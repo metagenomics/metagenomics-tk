@@ -10,19 +10,22 @@ params.shuffle = 400
 
 process bwa_index {
     scratch "/vol/scratch"
+    conda 'bwa=0.7.17'
+    cpus 20
     input:
       tuple val(id), path(representatives)
     output:
       tuple val("${id}") ,path('*.{amb,ann,bwt,pac,sa,fa}')
     shell:
       """
-      /vol/spool/longKmer/swift_objectstorage/GenomeAbundance/bwa-0.7.17/bwa index !{representatives}
+      bwa index !{representatives}
       """
 }
 
 process map_bwa {
     cpus 20
     scratch "/vol/scratch"
+    conda 'bwa=0.7.17'
     publishDir params.out + "/bwa"
     input:
       tuple path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
@@ -35,6 +38,7 @@ process map_bwa {
 process map_bwa_cami {
     cpus 20
     scratch "/vol/scratch"
+    conda 'bwa=0.7.17'
     publishDir params.out + "/bwa"
     input:
       tuple path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
@@ -52,6 +56,19 @@ process bwa_count {
       path "${sample}.count"
     shell:
     template('count.sh')
+}
+
+process coverm_count {
+    scratch "/vol/scratch"
+    conda 'bioconda::coverm=0.6.0'
+    cpus 5
+    publishDir params.out + "/count"
+    input:
+      tuple val(ID), val(sample), path(mapping), path(index), path(list_of_representatives)
+    output:
+      path("${ID}_${sample}_out", type: "dir")
+    shell:
+    template('coverm.sh')
 }
 
 process shuff {
@@ -115,14 +132,15 @@ workflow bwa {
      id
      representatives
      samples
+     list_of_representatives
    main:
      samples | splitCsv(sep: '\t', header: true) | set {samples_split}
      id | combine(representatives) | bwa_index | combine(samples_split) \
       | combine(representatives) \
       | map{ it -> [it[2].READS, it[2].SAMPLE, it[0], it[3], it[1]] } \
-      | view() \
       | set {index}
-     map_bwa(index)
+     map_bwa(index) | combine(list_of_representatives) | view() | coverm_count
+
 }
 
 workflow {
