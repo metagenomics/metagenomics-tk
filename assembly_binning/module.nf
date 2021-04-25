@@ -258,7 +258,7 @@ process runTrimmomatic {
 //    scratch "/vol/scratch"
 
     input:
-    tuple val(sample), file(genomeReads)
+    tuple val(sample), file(genomeReads1), file(genomeReads2)
 
     output:
     tuple val("${sample}"), path("*_R1.p.fastq.gz"), path("*_R2.p.fastq.gz")
@@ -274,8 +274,8 @@ process runTrimmomatic {
     trimmomatic \
     PE -phred33 \
     -threads ${task.cpus} \
-    ${genomeReads[0]} \
-    ${genomeReads[1]} \
+    ${genomeReads1} \
+    ${genomeReads2} \
     $fq_1_paired \
     $fq_1_unpaired \
     $fq_2_paired \
@@ -304,14 +304,14 @@ process runBBMapInterleave {
     container 'quay.io/biocontainers/bbmap:38.90--he522d1c_1'
 
     input:
-    tuple val(sample), path(read1, stageAs: "read1.gz"), path(read2, stageAs: "read2.gz")
+    tuple val(sample), path(read1, stageAs: "read1.fq.gz"), path(read2, stageAs: "read2.fq.gz")
 
     output:
     tuple val("${sample}"), path("reads.fq.gz")
 
     shell:
     """
-    reformat.sh in1=read1.gz in2=read2.gz out=reads.fq.gz
+    reformat.sh in1=read1.fq.gz in2=read2.fq.gz out=reads.fq.gz
     """
 }
 
@@ -329,7 +329,7 @@ process runBBMapDeinterleave {
     tuple val(sample), path(interleaved_reads, stageAs: "interleaved.fq.gz")
 
     output:
-    tuple val("${sample}"), path("read1"), path("read2")
+    tuple val("${sample}"), path("read1.fq.gz"), path("read2.fq.gz")
 
     shell:
     """
