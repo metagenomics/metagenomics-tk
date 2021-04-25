@@ -64,7 +64,7 @@ process runMegahit {
 
     shell:
     '''
-    megahit -t 16 --12 !{fastqs}
+    megahit -t !{task.cpus} --12 !{fastqs}
     TYPE="megahit" 
     mkdir !{sample}
     mv megahit_out/final.contigs.fa !{sample}/
