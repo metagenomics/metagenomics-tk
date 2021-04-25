@@ -53,7 +53,7 @@ process runMegahit {
 
     when params.megahit
 
-    cpus 16
+    cpus 28
     input:
     tuple val(sample), path(fastqs, stageAs: 'fastq.fq.gz')
 
