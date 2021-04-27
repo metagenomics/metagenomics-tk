@@ -13,6 +13,8 @@ params.getreads = false
 params.sra = false
 params.interleaved = false
 params.deinterleaved = false
+params.gtdb_database = ""
+params.gtdb = false
 
 
 process runMetaSpades {
@@ -21,7 +23,7 @@ process runMetaSpades {
 
     scratch "/vol/scratch"
 
-    publishDir params.output + "/assembly/spades/"
+    publishDir "${params.output}/${sample}/assembly/metaspades/" 
 
     cpus 28
 
@@ -32,8 +34,6 @@ process runMetaSpades {
 
     output:
     tuple val("${sample}"), env(TYPE), path("${sample}/contigs.fasta"), emit: metabat
-    tuple val("${sample}"), env(TYPE), path("${sample}/contigs.fasta"), emit: bowtie
-    tuple val("${sample}"), env(TYPE), path("${sample}/contigs.fasta"), emit: metaquast
 
     shell:
     '''
@@ -49,7 +49,7 @@ process runMegahit {
 
     scratch "/vol/scratch"
 
-    publishDir params.output + "/assembly/megahit/"
+    publishDir "${params.output}/${sample}/assembly/megahit/" 
 
     when params.megahit
 
@@ -59,8 +59,6 @@ process runMegahit {
 
     output:
     tuple val("${sample}"), env(TYPE), path("${sample}/final.contigs.fa"), emit: metabat
-    tuple val("${sample}"), env(TYPE), path("${sample}/final.contigs.fa"), emit: bowtie
-    tuple val("${sample}"), env(TYPE), path("${sample}/final.contigs.fa"), emit: metaquast
 
     shell:
     '''
@@ -80,6 +78,8 @@ process runBowtie {
     maxForks 40
 
     scratch "/vol/scratch"
+
+    publishDir "${params.output}/${sample}/mapping/bowtie/" 
 
     errorStrategy 'ignore'
 
@@ -108,19 +108,18 @@ process runMetabat {
 
     errorStrategy 'ignore'
 
+    publishDir "${params.output}/${sample}/binning/metabat/" 
+
     when params.metabat
 
     cpus 28
-
-    publishDir params.output + "/binning/metabat"
 
     input:
     tuple val(sample), val(TYPE), path(contigs), path(bam)
 
     output:
-    tuple val("${sample}"), env(NEW_TYPE), file("${TYPE}_${sample}/bin*"), optional: true, emit: checkm
-    tuple val("${sample}"), env(NEW_TYPE), file("${TYPE}_${sample}/bin*"), emit: metaquast
-    tuple val("${sample}"), env(NEW_TYPE), file("${TYPE}_${sample}/bin*"), path(bam), emit: samtools
+    tuple val("${sample}"), env(NEW_TYPE), file("${TYPE}_${sample}/bin*"), optional: true, emit: bins
+    tuple val("${sample}"), val("${TYPE}"), file("${TYPE}_${sample}/bin*"), optional: true, emit: bins_assembler
 
     shell:
     '''
@@ -143,15 +142,13 @@ process runMaxBin {
 
     when params.maxbin
 
-    publishDir params.output + "/binning/maxbin/"
+    publishDir "${params.output}/${sample}/binning/maxbin/" 
 
     input:
     tuple val(sample), val(TYPE), path(contigs), path(reads)
 
     output:
-    tuple val("${sample}"), env(NEW_TYPE), file("${TYPE}_${sample}/out.*.fasta"), optional: true, emit: checkm
-    tuple val("${sample}"), env(NEW_TYPE), file("${TYPE}_${sample}/out.*.fasta"), emit: metaquast
-    tuple val("${sample}"), val(NEW_TYPE), file("${TYPE}_${sample}/out.*.fasta"), emit: samtools
+    tuple val("${sample}"), env(NEW_TYPE), file("${TYPE}_${sample}/out.*.fasta"), optional: true, emit: bins
 
     shell:
     '''
@@ -162,14 +159,13 @@ process runMaxBin {
 }
 
 
-
 process runCheckM {
 
     container 'pbelmann/checkm:0.12.0'
 
-    errorStrategy 'retry'
+  //  errorStrategy 'retry'
 
-    publishDir params.output + "/checkm"
+    publishDir "${params.output}/${sample}/checkm/" 
 
     when params.checkm
 
@@ -183,8 +179,7 @@ process runCheckM {
     tuple val(sample), val(TYPE), path(bins) 
 
     output:
-    tuple file("${sample}_${TYPE}_checkm.txt"), val("${TYPE}")
-
+    tuple path("${sample}_${TYPE}_checkm.txt", type: "file"), val("${TYPE}")
 
     shell:
     '''
@@ -203,17 +198,87 @@ process runCheckM {
     checkm lineage_set out out/marker &> lineage.log
     checkm analyze -x $FILE_ENDING -t !{task.cpus} out/marker . out &> analyze.log
     DIRECTORY=$(mktemp -d --suffix=.checkm_out  -p .)   
-    checkm qa --tab_table -t !{task.cpus} -f ${DIRECTORY}/checkm.txt out/marker out  &> qa.log
+    checkm qa --tab_table -t !{task.cpus} -f ${DIRECTORY}/!{sample}_!{TYPE}_checkm.txt out/marker out  &> qa.log
+    sed  "s/^/!{sample}\t/g" ${DIRECTORY}/!{sample}_!{TYPE}_checkm.txt > !{sample}_!{TYPE}_checkm.txt
     '''
 }
+
+
+process runGtdbtk {
+
+    container 'ecogenomic/gtdbtk:1.4.1'
+
+    publishDir "${params.output}/${sample}/gtdb/" 
+
+    when params.gtdb
+
+    containerOptions " --user 1000:1000  --volume ${params.gtdb_database}:/refdata"
+   
+//    scratch "/vol/scratch"
+
+    cpus 28
+
+    input:
+    tuple val(sample), val(TYPE), path(bins, stageAs: "bin*.fa") 
+
+    output:
+    tuple path("${sample}_${TYPE}_gtdbtk.bac120.summary.tsv"), val("${TYPE}")
+
+    shell:
+    '''
+    count=`ls -1 *.fasta 2>/dev/null | wc -l`
+    if [ $count != 0 ]
+    then 
+       FILE_ENDING=".fasta"
+    else
+       FILE_ENDING=".fa"
+    fi
+
+    mkdir output
+     
+    ls -1 bin*.fa > bin.id
+    readlink -f bin*.fa > bin.path
+    paste -d$'\t' bin.path bin.id > input.tsv
+    gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus}  --extension ${FILE_ENDING}
+    sed  "s/^/!{sample}\t/g" output/gtdbtk.bac120.summary.tsv > !{sample}_!{TYPE}_gtdbtk.bac120.summary.tsv 
+    '''
+}
+
+
+
+process prokka {
+
+    container 'staphb/prokka:1.14.5'
+
+    scratch "/vol/scratch"
+
+//    publishDir "${params.output}/${sample}/prokka/" 
+
+//    errorStrategy 'retry'
+
+//    time '3h'
+
+    cpus 28
+
+    input:
+    tuple file(bam), file(bai), file(binFile), sampleName 
+
+    output:
+    tuple file("out/*.gff"), file("${binFile}"), file("${bam}"), file("${bai}"), val("${sampleName}") 
+
+    shell:
+    '''
+    prokka --cpus 0 !{binFile} --outdir out
+    '''
+}
+
 
 
 process runGetReads {
 
     //container 'biocontainers/samtools:v1.7.0_cv4'
 
-    publishDir params.output + "/reads/bins/"
-
+    publishDir "${params.output}/${sample}/reads/bins/" 
 
     errorStrategy 'retry'
 
@@ -251,14 +316,14 @@ process runTrimmomatic {
 
     cpus 28
 
-    publishDir params.output + "/reads/"
+    publishDir "${params.output}/${sample}/reads/" 
 
     container 'quay.io/biocontainers/trimmomatic:0.39--hdfd78af_2'
 
 //    scratch "/vol/scratch"
 
     input:
-    tuple val(sample), file(genomeReads1), file(genomeReads2)
+    tuple val(sample), path(genomeReads1), path(genomeReads2)
 
     output:
     tuple val("${sample}"), path("*_R1.p.fastq.gz"), path("*_R2.p.fastq.gz")
@@ -297,7 +362,7 @@ process runBBMapInterleave {
 
     cpus 28
 
-    publishDir params.output + "/reads/"
+    publishDir "${params.output}/${sample}/reads/" 
 
 //    scratch "/vol/scratch"
 
@@ -319,7 +384,7 @@ process runBBMapDeinterleave {
 
     cpus 28
 
-    publishDir params.output + "/reads/"
+    publishDir "${params.output}/${sample}/reads/" 
 
 //    scratch "/vol/scratch"
 
@@ -347,20 +412,22 @@ workflow assembly_binning {
      input_reads | runMegahit | set { megahit }
      input_reads | runMetaSpades | set { metaspades }
 
-     metaspades.bowtie | mix(megahit.bowtie) | join(input_reads | mix(input_reads), by: 0) | runBowtie | set { bam }
      metaspades.metabat | mix(megahit.metabat) |  set{contigs}
+     contigs | join(input_reads | mix(input_reads), by: 0) | runBowtie | set { bam }
 
      contigs | join(bam, by: [0, 1]) | runMetabat | set { metabat }
      contigs | join(input_reads | mix(input_reads), by: 0) | runMaxBin | set { maxbin }
 
-     metabat.checkm | mix(maxbin.checkm) \
-       | runCheckM | set{ checkm }
+     metabat.bins | mix(maxbin.bins) | set {bins}
 
-     checkm | collectFile(skip: 1, newLine: false, keepHeader: true, storeDir: params.output + "/checkm/"){ item ->
-       [ "${item[1]}.txt", item[0].text + '\n' ]
-     }
+     bins | runCheckM | set{ checkm }
+     bins | runGtdbtk
 
-     metabat.samtools | mix(maxbin.samtools | join(bam, by: [0,1]))| flatMap({n -> bufferMetabatSamtools(n)}) | runGetReads
+//     checkm | collectFile(skip: 1, newLine: false, keepHeader: true, storeDir: params.output + "/checkm/"){ item ->
+//       [ "${item[1]}.txt", item[0].text + '\n' ]
+//     }
+
+     metabat.bins_assembler | join(bam, by: [0,1]) |  flatMap({n -> bufferMetabatSamtools(n)})  | runGetReads
 }
 
 workflow assembly_binning_input {
