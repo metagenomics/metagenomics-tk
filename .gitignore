@@ -6,3 +6,5 @@ trace*
 timeline*
 report*
 out
+*camiClient.jar*
+test/data

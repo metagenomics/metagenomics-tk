@@ -248,6 +248,7 @@ process runGtdbtk {
 
 
 
+
 process prokka {
 
     container 'staphb/prokka:1.14.5'
@@ -352,6 +353,36 @@ process runTrimmomatic {
 }
 
 
+
+process runFastp {
+
+    cpus 28
+
+    publishDir "${params.output}/${sample}/reads/"
+
+    container 'quay.io/biocontainers/fastp:0.20.1--h2e03b76_1'
+
+//    scratch "/vol/scratch
+
+    input:
+    tuple val(sample), path(genomeReads1), path(genomeReads2)
+
+    output:
+    tuple val("${sample}"), path("*_R1.p.fastq.gz"), path("*_R2.p.fastq.gz"), emit: fastq
+    path("*_report.html"), emit: html_report
+    
+
+    script:
+    fq_1_paired = sample + '_R1.p.fastq.gz'
+    fq_1_unpaired = sample + '_R1.s.fastq.gz'
+    fq_2_paired = sample + '_R2.p.fastq.gz'
+    fq_2_unpaired = sample + '_R2.s.fastq.gz'
+    """
+    fastp -i ${genomeReads1} -I ${genomeReads2} -o $fq_1_paired -O $fq_2_paired -w ${task.cpus} -h ${sample}_report.html
+    """
+}
+
+
 def bufferMetabatSamtools(metabat){
   def chunkList = [];
   metabat[2].each {
@@ -409,7 +440,8 @@ workflow assembly_binning {
    take: 
      input_split_raw_reads
    main:
-     input_split_raw_reads | runTrimmomatic | runBBMapInterleave | set{input_reads}
+     input_split_raw_reads | runFastp 
+     runFastp.out.fastq | runBBMapInterleave | set{input_reads}
       
      input_reads | runMegahit | set { megahit }
      input_reads | runMetaSpades | set { metaspades }
