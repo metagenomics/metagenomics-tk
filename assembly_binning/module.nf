@@ -81,7 +81,7 @@ process runBowtie {
 
     publishDir "${params.output}/${sample}/mapping/bowtie/" 
 
-    errorStrategy 'ignore'
+    errorStrategy 'retry'
 
     cpus 28
 
@@ -163,7 +163,7 @@ process runCheckM {
 
     container 'pbelmann/checkm:0.12.0'
 
-  //  errorStrategy 'retry'
+    errorStrategy 'retry'
 
     publishDir "${params.output}/${sample}/checkm/" 
 
@@ -208,13 +208,15 @@ process runGtdbtk {
 
     container 'ecogenomic/gtdbtk:1.4.1'
 
+    errorStrategy 'ignore'
+
     publishDir "${params.output}/${sample}/gtdb/" 
 
     when params.gtdb
 
     containerOptions " --user 1000:1000  --volume ${params.gtdb_database}:/refdata"
    
-//    scratch "/vol/scratch"
+    scratch "/vol/scratch"
 
     cpus 28
 
