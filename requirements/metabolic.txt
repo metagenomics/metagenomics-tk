@@ -1,0 +1,2 @@
+carveme==1.5.0
+smetana==1.1.0
