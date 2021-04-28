@@ -2,3 +2,7 @@
 work
 .nextflow
 nextflow
+trace*
+timeline*
+report*
+out
