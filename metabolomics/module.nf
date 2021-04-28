@@ -7,7 +7,7 @@ params.input="/raid/simba/bins_path_id_checkm_fixed_n50_fakedcoverage_final_chec
 process carve {
     cpus 2
     publishDir params.out + "/carveme"
-    conda '/vol/spool/CAMI/CAMI_MOUSEGUT/test/almeida/conda/envs/carveme_env'
+ //   conda '/vol/spool/CAMI/CAMI_MOUSEGUT/test/almeida/conda/envs/carveme_env'
     input:
       tuple path(mag_faa), val(id)
     output:
@@ -23,7 +23,7 @@ process smetana_detailed {
     cpus 14
     errorStrategy 'ignore'
     publishDir params.out + "/smetana/detailed"
-    conda '/vol/spool/CAMI/CAMI_MOUSEGUT/test/almeida/conda/envs/carveme_env'
+ //   conda '/vol/spool/CAMI/CAMI_MOUSEGUT/test/almeida/conda/envs/carveme_env'
     input:
       tuple path(xmls), val(dataset_id)
     output:
@@ -38,7 +38,7 @@ process smetana_global {
     cpus 14
     errorStrategy 'ignore'
     publishDir params.out + "/smetana/global"
-    conda '/vol/spool/CAMI/CAMI_MOUSEGUT/test/almeida/conda/envs/carveme_env'
+ //   conda '/vol/spool/CAMI/CAMI_MOUSEGUT/test/almeida/conda/envs/carveme_env'
     input:
       tuple path(xmls), val(dataset_id)
     output:
@@ -53,7 +53,7 @@ process analyse {
     conda 'jq'
     cpus 2
     publishDir params.out + "/metabolites"
-    conda '/vol/spool/CAMI/CAMI_MOUSEGUT/test/almeida/conda/envs/carveme_env'
+ //   conda '/vol/spool/CAMI/CAMI_MOUSEGUT/test/almeida/conda/envs/carveme_env'
     input:
       tuple path(mag_json), val(id)
     output:
@@ -68,7 +68,7 @@ process analyse {
 
 
 process build_json {
-    conda 'bioconda::cobra python=3.8'
+//    conda 'bioconda::cobra python=3.8'
     cpus 2
     publishDir params.out + "/json_output"
     input:
@@ -85,7 +85,7 @@ process build_json {
 process prodigal {
     cpus 1
     publishDir params.out + "/prodigal"
-    conda 'prodigal'
+//    conda 'prodigal'
     input:
       tuple val(id), path(mag)
     output:
