@@ -362,8 +362,6 @@ process runFastp {
 
     container 'quay.io/biocontainers/fastp:0.20.1--h2e03b76_1'
 
-//    scratch "/vol/scratch
-
     input:
     tuple val(sample), path(genomeReads1), path(genomeReads2)
 
@@ -396,8 +394,6 @@ process runBBMapInterleave {
     cpus 28
 
     publishDir "${params.output}/${sample}/reads/" 
-
-//    scratch "/vol/scratch"
 
     container 'quay.io/biocontainers/bbmap:38.90--he522d1c_1'
 
@@ -455,11 +451,15 @@ workflow assembly_binning {
      metabat.bins | mix(maxbin.bins) | set {bins}
 
      bins | runCheckM | set{ checkm }
-     bins | runGtdbtk
+     bins | runGtdbtk | set{ gtdb}
 
-//     checkm | collectFile(skip: 1, newLine: false, keepHeader: true, storeDir: params.output + "/checkm/"){ item ->
-//       [ "${item[1]}.txt", item[0].text + '\n' ]
-//     }
+     checkm | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+       [ "${item[1]}_checkm.tsv", item[0].text  ]
+     }
+
+     gtdb | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+       [ "${item[1]}_gtdbtk.tsv", item[0].text  ]
+     }
 
      metabat.bins_assembler | join(bam, by: [0,1]) |  flatMap({n -> bufferMetabatSamtools(n)})  | runGetReads
 }
