@@ -3,61 +3,89 @@ nextflow.enable.dsl=2
 params.out="out"
 //params.input="/raid/simba/representatives_ids_dataset.tsv"
 params.input="/raid/simba/bins_path_id_checkm_fixed_n50_fakedcoverage_final_checkm_filtered_id_dataset.tsv"
+params.smetana_detailed=false
 
 process carve {
     cpus 2
-    publishDir params.out + "/carveme"
- //   conda '/vol/spool/CAMI/CAMI_MOUSEGUT/test/almeida/conda/envs/carveme_env'
+    time '1h'
+    errorStrategy 'ignore'
+    publishDir "${params.out}/${sample}/carveme"
     input:
-      tuple path(mag_faa), val(id)
+      tuple val(sample), val(id), path(mag_faa)
     output:
-      tuple path("${id}.xml"), val("${id}"), emit: model
+      tuple val("${sample}"), val("${id}"), path("${id}.xml"), emit: model
     shell:
     '''
     carve !{mag_faa} -o !{id}.xml
     '''
 }
 
+process memote {
+    cpus 1
+    errorStrategy 'ignore'
+    publishDir "${params.out}/${sample}/memote"
+    input:
+      tuple val(sample), val(id), path(model)
+    output:
+      tuple val("${sample}"), val("${id}"), path("${sample}_${id}_report.json.gz"), emit: report_json
+      tuple val("${sample}"), val("${id}"), path("${sample}_${id}_report.html"), emit: report_html
+      tuple val("${sample}"), val("${id}"), path("${sample}_${id}_metrics.tsv"), emit: report_tsv
+    shell:
+    '''
+    memote run --solver cplex --filename !{sample}_!{id}_report.json.gz !{model}
+    memote report snapshot --solver cplex --filename !{sample}_!{id}_report.html !{model}
+    values=$(zcat !{sample}_!{id}_report.json.gz  | jq ' [ .tests.test_stoichiometric_consistency.duration, 
+               .tests.test_reaction_mass_balance.metric, 
+               .tests.test_reaction_charge_balance.metric, 
+               .tests.test_find_disconnected.metric, 
+               .tests.test_find_reactions_unbounded_flux_default_condition.metric ] | @tsv ')
+    title=$(zcat !{sample}_!{id}_report.json.gz  | jq ' [ .tests.test_stoichiometric_consistency.title, 
+               .tests.test_reaction_mass_balance.title, 
+               .tests.test_reaction_charge_balance.title, 
+               .tests.test_find_disconnected.title, 
+               .tests.test_find_reactions_unbounded_flux_default_condition.title ] | @tsv ')
+    echo -e "!{id}\t$title" > !{sample}_!{id}_metrics.tsv
+    echo -e "!{id}\t$values" >> !{sample}_!{id}_metrics.tsv
+
+    '''
+}
 
 process smetana_detailed {
     cpus 14
     errorStrategy 'ignore'
-    publishDir params.out + "/smetana/detailed"
- //   conda '/vol/spool/CAMI/CAMI_MOUSEGUT/test/almeida/conda/envs/carveme_env'
+    publishDir "${params.out}/${sample}/smetana/detailed/"
+    when params.smetana_detailed
     input:
-      tuple path(xmls), val(dataset_id)
+      tuple val(sample), path(xmls) 
     output:
-      path("${dataset_id}_detailed.tsv")
+      path("${sample}_detailed.tsv")
     shell:
     '''
-    smetana !{xmls} -d -o !{dataset_id}
+    smetana !{xmls} -d -o !{sample}
     '''
 }
 
 process smetana_global {
     cpus 14
     errorStrategy 'ignore'
-    publishDir params.out + "/smetana/global"
- //   conda '/vol/spool/CAMI/CAMI_MOUSEGUT/test/almeida/conda/envs/carveme_env'
+    publishDir "${params.out}/${sample}/smetana/global/"
     input:
-      tuple path(xmls), val(dataset_id)
+      tuple val(sample), path(xmls) 
     output:
-      path("${dataset_id}_global.tsv")
+      path("${sample}_global.tsv")
     shell:
     '''
-    smetana !{xmls} -o !{dataset_id}
+    smetana !{xmls} -o !{sample}
     '''
 }
 
 process analyse {
-    conda 'jq'
     cpus 2
-    publishDir params.out + "/metabolites"
- //   conda '/vol/spool/CAMI/CAMI_MOUSEGUT/test/almeida/conda/envs/carveme_env'
+    publishDir "${params.out}/${sample}/metabolites/"
     input:
-      tuple path(mag_json), val(id)
+      tuple val(sample), val(id), path(mag_json)  
     output:
-      tuple path("*.tsv"), val("${id}"), emit: model
+      tuple val("${sample}"), val("${id}"), path("*.tsv"), emit: model
     shell:
     '''
     getProducts.sh !{mag_json} > !{id}_products.tsv
@@ -68,28 +96,27 @@ process analyse {
 
 
 process build_json {
-//    conda 'bioconda::cobra python=3.8'
     cpus 2
-    publishDir params.out + "/json_output"
+    publishDir "${params.out}/${sample}/json_output"
+    errorStrategy 'retry'
     input:
-      tuple path(mag_xml), val(id)
+      tuple val(sample), val(id), path(mag_xml)
     output:
-      tuple path("${id}.json"), val("${id}"), emit: model
+      tuple val("${sample}"), val("${id}"), path("${id}.json"), emit: model
     shell:
     '''
-    sbml_to_json.py !{mag_xml} !{id}.json
+    sbml_to_json.py !{mag_xml} !{id}.json cache
     '''
 }
 
 
 process prodigal {
     cpus 1
-    publishDir params.out + "/prodigal"
-//    conda 'prodigal'
+    publishDir "${params.out}/${sample}/prodigal"
     input:
-      tuple val(id), path(mag)
+      tuple val(sample), val(id), path(mag)
     output:
-      tuple path("*.faa"), val("${id}"), emit: protein
+      tuple val("${sample}"), val("${id}"), path("*.faa"), emit: protein
     shell:
     '''
     prodigal -i !{mag} -a  !{mag}.faa
@@ -102,14 +129,17 @@ workflow analyse_metabolites {
      bins
    main:
     Channel.from(file(bins)) | splitCsv(sep: '\t', header: true) \
-       | filter({ it.COMPLETENESS.toFloat() > 49 }) \
-       | filter({ it.CONTAMINATION.toFloat() < 5 })
+//       | filter({ it.COMPLETENESS.toFloat() > 49 }) \
+//       | filter({ it.CONTAMINATION.toFloat() < 5 })
        | map { it -> [it.DATASET, it.BIN, it.PATH]}
        | set{binsChannel}
 
-//     Channel.from(file(bins)) | splitCsv(sep: "\t") | set{binsChannel}  
-     binsChannel | map { it -> [it[1], it[2]]} | prodigal | carve | build_json | analyse 
-     carve.out | join(binsChannel, by:1) | groupTuple(by:2) | map{ it -> it[1,2]} | (smetana_detailed & smetana_global) 
+     binsChannel | prodigal | carve | build_json | analyse 
+     carve.out | memote  
+     carve.out | groupTuple(by:0) | map{ it -> it[0,2]} | set { model_group } 
+     model_group | smetana_detailed 
+     model_group | smetana_global
+
    emit:
      carve_xml = carve.out.model
 }
