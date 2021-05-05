@@ -15,13 +15,12 @@ params.interleaved = false
 params.deinterleaved = false
 params.gtdb_database = ""
 params.gtdb = false
-
+params.skip = false
+params.buffer = 30
 
 process runMetaSpades {
 
     container 'quay.io/biocontainers/spades:3.15.2--h95f258a_1'
-
-    scratch "/vol/scratch"
 
     publishDir "${params.output}/${sample}/assembly/metaspades/" 
 
@@ -33,7 +32,7 @@ process runMetaSpades {
     tuple val(sample), path(fastqs, stageAs: 'fastq.fq.gz')
 
     output:
-    tuple val("${sample}"), env(TYPE), path("${sample}/contigs.fasta"), emit: metabat
+    tuple val("${sample}"), env(TYPE), path("${sample}/contigs.fasta"), emit: contigs
 
     shell:
     '''
@@ -47,8 +46,6 @@ process runMegahit {
 
     container 'vout/megahit:release-v1.2.9'
 
-    scratch "/vol/scratch"
-
     publishDir "${params.output}/${sample}/assembly/megahit/" 
 
     when params.megahit
@@ -58,7 +55,7 @@ process runMegahit {
     tuple val(sample), path(fastqs, stageAs: 'fastq.fq.gz')
 
     output:
-    tuple val("${sample}"), env(TYPE), path("${sample}/final.contigs.fa"), emit: metabat
+    tuple val("${sample}"), env(TYPE), path("${sample}/final.contigs.fa"), emit: contigs
 
     shell:
     '''
@@ -76,8 +73,6 @@ process runBowtie {
     container 'pbelmann/bowtie2:0.11.0'
 
     maxForks 40
-
-    scratch "/vol/scratch"
 
     publishDir "${params.output}/${sample}/mapping/bowtie/" 
 
@@ -103,8 +98,6 @@ process runBowtie {
 process runMetabat {
 
     container 'metabat/metabat:v2.15-4-ga101cde'
-
-    scratch "/vol/scratch"
 
     errorStrategy 'ignore'
 
@@ -135,7 +128,6 @@ process runMaxBin {
 
     container 'quay.io/biocontainers/maxbin2:2.2.7--he1b5a44_1'
 
-    scratch "/vol/scratch"
   //  errorStrategy 'ignore'
 
     cpus 28
@@ -163,7 +155,7 @@ process runCheckM {
 
     container 'pbelmann/checkm:0.12.0'
 
-    errorStrategy 'retry'
+    errorStrategy 'ignore'
 
     publishDir "${params.output}/${sample}/checkm/" 
 
@@ -171,15 +163,13 @@ process runCheckM {
 
     containerOptions " --user 1000:1000  --volume ${params.database}:/.checkm "
    
-    scratch "/vol/scratch"
-
     cpus 14
 
     input:
     tuple val(sample), val(TYPE), path(bins) 
 
     output:
-    tuple path("${sample}_${TYPE}_checkm.txt", type: "file"), val("${TYPE}")
+    tuple path("chunk_*_${sample}_${TYPE}_checkm.txt", type: "file"), val("${TYPE}")
 
     shell:
     '''
@@ -197,9 +187,9 @@ process runCheckM {
     checkm tree_qa out &> tree_qa.log
     checkm lineage_set out out/marker &> lineage.log
     checkm analyze -x $FILE_ENDING -t !{task.cpus} out/marker . out &> analyze.log
-    DIRECTORY=$(mktemp -d --suffix=.checkm_out  -p .)   
-    checkm qa --tab_table -t !{task.cpus} -f ${DIRECTORY}/!{sample}_!{TYPE}_checkm.txt out/marker out  &> qa.log
-    sed  "s/^/!{sample}\t/g" ${DIRECTORY}/!{sample}_!{TYPE}_checkm.txt > !{sample}_!{TYPE}_checkm.txt
+    FILE=$(mktemp chunk_XXXXXXXXXX_!{sample}_!{TYPE}_checkm.txt)
+    checkm qa --tab_table -t !{task.cpus} -f !{sample}_!{TYPE}_checkm.txt out/marker out  &> qa.log
+    sed "s/^/!{sample}\t/g" !{sample}_!{TYPE}_checkm.txt > $FILE
     '''
 }
 
@@ -216,15 +206,14 @@ process runGtdbtk {
 
     containerOptions " --user 1000:1000  --volume ${params.gtdb_database}:/refdata"
    
-    scratch "/vol/scratch"
-
-    cpus 28
+    cpus 7
 
     input:
     tuple val(sample), val(TYPE), path(bins, stageAs: "bin*.fa") 
 
     output:
-    tuple path("${sample}_${TYPE}_gtdbtk.bac120.summary.tsv"), val("${TYPE}")
+    tuple path("chunk_*_${sample}_${TYPE}_gtdbtk.bac120.summary.tsv"), val("${TYPE}"), optional: true, emit: bacteria
+    tuple path("chunk_*_${sample}_${TYPE}_gtdbtk.ar122.summary.tsv"), val("${TYPE}"), optional: true, emit: archea
 
     shell:
     '''
@@ -242,7 +231,12 @@ process runGtdbtk {
     readlink -f bin*.fa > bin.path
     paste -d$'\t' bin.path bin.id > input.tsv
     gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus}  --extension ${FILE_ENDING}
-    sed  "s/^/!{sample}\t/g" output/gtdbtk.bac120.summary.tsv > !{sample}_!{TYPE}_gtdbtk.bac120.summary.tsv 
+    touch output/gtdbtk.bac120.summary.tsv
+    touch output/gtdbtk.ar122.summary.tsv
+    FILE_BAC=$(mktemp chunk_XXXXXXXXXX_!{sample}_!{TYPE}_gtdbtk.bac120.summary.tsv)
+    FILE_ARC=$(mktemp chunk_XXXXXXXXXX_!{sample}_!{TYPE}_gtdbtk.ar122.summary.tsv)
+    sed "s/^/!{sample}\t/g" output/gtdbtk.bac120.summary.tsv > $FILE_BAC 
+    sed "s/^/!{sample}\t/g" output/gtdbtk.ar122.summary.tsv > $FILE_ARC 
     '''
 }
 
@@ -252,8 +246,6 @@ process runGtdbtk {
 process prokka {
 
     container 'staphb/prokka:1.14.5'
-
-    scratch "/vol/scratch"
 
 //    publishDir "${params.output}/${sample}/prokka/" 
 
@@ -275,6 +267,27 @@ process prokka {
     '''
 }
 
+process getMappingQuality {
+
+    container 'quay.io/biocontainers/samtools:1.12--h9aed4be_1'
+
+    publishDir "${params.output}/${sample}/mapping/bowtie/"
+
+    errorStrategy 'retry'
+
+    cpus 1
+
+    input:
+    tuple val(sample), val(TYPE), path(bam) 
+
+    output:
+    tuple val("${sample}"), val("${TYPE}"), file("${sample}_${TYPE}_flagstat.tsv"), emit: flagstat_raw
+    tuple val("${sample}"), val("${TYPE}"), file("${sample}_${TYPE}_flagstat_passed.tsv"), emit: flagstat_passed
+    tuple val("${sample}"), val("${TYPE}"), file("${sample}_${TYPE}_flagstat_failed.tsv"), emit: flagstat_failed
+
+    shell:
+    template 'mapping_quality.sh'
+}
 
 
 process runGetReads {
@@ -284,8 +297,6 @@ process runGetReads {
     publishDir "${params.output}/${sample}/reads/bins/" 
 
     errorStrategy 'retry'
-
-    scratch "/vol/scratch"
 
     when params.getreads
 
@@ -322,8 +333,6 @@ process runTrimmomatic {
     publishDir "${params.output}/${sample}/reads/" 
 
     container 'quay.io/biocontainers/trimmomatic:0.39--hdfd78af_2'
-
-//    scratch "/vol/scratch"
 
     input:
     tuple val(sample), path(genomeReads1), path(genomeReads2)
@@ -367,7 +376,9 @@ process runFastp {
 
     output:
     tuple val("${sample}"), path("*_R1.p.fastq.gz"), path("*_R2.p.fastq.gz"), emit: fastq
-    path("*_report.html"), emit: html_report
+    path("*_fastp_report.html"), emit: html_report
+    path("*_fastp_report.json"), emit: json_report
+    path("fastp_summary"), emit: fastp_summary
     
 
     script:
@@ -375,9 +386,7 @@ process runFastp {
     fq_1_unpaired = sample + '_R1.s.fastq.gz'
     fq_2_paired = sample + '_R2.p.fastq.gz'
     fq_2_unpaired = sample + '_R2.s.fastq.gz'
-    """
-    fastp -i ${genomeReads1} -I ${genomeReads2} -o $fq_1_paired -O $fq_2_paired -w ${task.cpus} -h ${sample}_report.html
-    """
+    template 'fastp.sh'
 }
 
 
@@ -385,6 +394,14 @@ def bufferMetabatSamtools(metabat){
   def chunkList = [];
   metabat[2].each {
      chunkList.add([metabat[0],metabat[1], metabat[3], it]);
+  }
+  return chunkList;
+}
+
+def bufferBins(binning){
+  def chunkList = [];
+  binning[2].each {
+     chunkList.add([binning[0],binning[1], it]);
   }
   return chunkList;
 }
@@ -409,13 +426,58 @@ process runBBMapInterleave {
     """
 }
 
+process runMegahitInterleaved {
+
+    cpus 28
+
+    publishDir "${params.output}/${sample}/assembly/megahit/" 
+
+    errorStrategy 'ignore'
+
+    container 'vout/megahit:release-v1.2.9'
+
+    input:
+    tuple val(sample), path(interleaved_reads, stageAs: "interleaved.fq.gz")
+
+    output:
+    tuple val("${sample}"), env(TYPE), path("${sample}/final.contigs.fa"), emit: contigs
+    tuple val("${sample}"), path("interleaved.fastp.fq.gz"), emit: reads_processed
+    tuple val("${sample}"), path("fastp_summary.tsv"), emit: fastp_summary
+
+
+    shell:
+    template 'megahit_interleaved.sh'
+
+}
+
+process runMegahitSplit {
+
+    cpus 28
+
+    publishDir "${params.output}/${sample}/assembly/megahit/" 
+
+    errorStrategy 'ignore'
+
+    container 'vout/megahit:release-v1.2.9'
+
+    input:
+    tuple val(sample), path(read1, stageAs: "read1.fq.gz"), path(read2, stageAs: "read2.fq.gz")
+
+    output:
+    tuple val("${sample}"), env(TYPE), path("${sample}/final.contigs.fa"), emit: contigs
+    tuple val("${sample}"), path("interleaved.fastp.fq.gz"), emit: reads_processed
+    tuple val("${sample}"), path("fastp_summary.tsv"), emit: fastp_summary
+
+    shell:
+    template 'megahit_split.sh'
+
+}
+
 process runBBMapDeinterleave {
 
     cpus 28
 
     publishDir "${params.output}/${sample}/reads/" 
-
-//    scratch "/vol/scratch"
 
     container 'quay.io/biocontainers/bbmap:38.90--he522d1c_1'
 
@@ -432,56 +494,114 @@ process runBBMapDeinterleave {
 }
 
 
+workflow binning {
+   take: 
+     contigs
+     input_reads
+   main:
+     contigs | join(input_reads | mix(input_reads), by: 0) | runBowtie | set { bam }
+     bam | getMappingQuality 
+     
+     getMappingQuality.out.flagstat_passed | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+       [ "flagstat_passed.tsv", item[2].text  ]
+     }
+
+     getMappingQuality.out.flagstat_failed | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+       [ "flagstat_failed.tsv", item[2].text  ]
+     }
+
+     contigs | join(bam, by: [0, 1]) | runMetabat | set { metabat }
+     contigs | join(input_reads | mix(input_reads), by: 0) | runMaxBin | set { maxbin }
+
+    // metabat.bins | mix(maxbin.bins) | set {bins}
+     postprocess(metabat.bins, bam)
+}
+
+
+workflow postprocess {
+   take: 
+     bins
+     bam
+   main:
+     bins | flatMap({n -> bufferBins(n)}) | groupTuple(by: [0,1], size: params.buffer, remainder: true) | set{bufferedBins}
+
+     bufferedBins | runCheckM | set{ checkm }
+     bufferedBins | runGtdbtk | set{ gtdb}
+
+     checkm | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+       [ "${item[1]}_checkm.tsv", item[0].text  ]
+     }
+
+     gtdb.bacteria | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+       [ "${item[1]}_bacteria_gtdbtk.tsv", item[0].text  ]
+     }
+
+     gtdb.archea | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+       [ "${item[1]}_archea_gtdbtk.tsv", item[0].text  ]
+     }
+
+     bins | join(bam, by: [0,1]) |  flatMap({n -> bufferMetabatSamtools(n)})  | runGetReads
+}
+
+
 workflow assembly_binning {
    take: 
      input_split_raw_reads
    main:
      input_split_raw_reads | runFastp 
      runFastp.out.fastq | runBBMapInterleave | set{input_reads}
+
+     runFastp.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+          [ "fastp_summary.tsv", item[1].text  ]
+     }
       
      input_reads | runMegahit | set { megahit }
      input_reads | runMetaSpades | set { metaspades }
 
-     metaspades.metabat | mix(megahit.metabat) |  set{contigs}
-     contigs | join(input_reads | mix(input_reads), by: 0) | runBowtie | set { bam }
-
-     contigs | join(bam, by: [0, 1]) | runMetabat | set { metabat }
-     contigs | join(input_reads | mix(input_reads), by: 0) | runMaxBin | set { maxbin }
-
-     metabat.bins | mix(maxbin.bins) | set {bins}
-
-     bins | runCheckM | set{ checkm }
-     bins | runGtdbtk | set{ gtdb}
-
-     checkm | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
-       [ "${item[1]}_checkm.tsv", item[0].text  ]
-     }
-
-     gtdb | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
-       [ "${item[1]}_gtdbtk.tsv", item[0].text  ]
-     }
-
-     metabat.bins_assembler | join(bam, by: [0,1]) |  flatMap({n -> bufferMetabatSamtools(n)})  | runGetReads
+     metaspades.contigs | mix(megahit.contigs) |  set{contigs}
+     binning(contigs, input_reads)
 }
+
 
 workflow assembly_binning_input {
      take:
        reads
      main:
        if(params.interleaved){
-          reads | splitCsv(sep: '\t', header: true) \
-           | map { it -> [ it.SAMPLE, it.READS ]} \
-           | runBBMapDeinterleave | set{ input_reads }
+          if(params.skip){
+            reads | splitCsv(sep: '\t', header: true) \
+             | map { it -> [ it.SAMPLE, it.READS ]} \
+             | runMegahitInterleaved 
+            binning(runMegahitInterleaved.out.contigs, runMegahitInterleaved.out.reads_processed)
+
+            runMegahitInterleaved.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+              [ "fastp_summary.tsv", item[1].text  ]
+            }
+
+          } else {
+            reads | splitCsv(sep: '\t', header: true) \
+             | map { it -> [ it.SAMPLE, it.READS ]} \
+             | runBBMapDeinterleave | assembly_binning
+          }
        }
 
        if(params.deinterleaved){
-          reads | splitCsv(sep: '\t', header: true) \
-           | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} \
-           | set{ input_reads }
+          if(params.skip){
+            reads | splitCsv(sep: '\t', header: true) \
+             | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} \
+             | runMegahitSplit 
+            binning(runMegahitSplit.out.contigs, runMegahitSplit.out.reads_processed)
+            runMegahitSplit.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+              [ "fastp_summary.tsv", item[1].text ]
+            }
+          } else {
+            reads | splitCsv(sep: '\t', header: true) \
+             | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} \
+             | assembly_binning
+          }
        }
-
-       assembly_binning(input_reads)
 }
+
 
 workflow assembly_binning_input_sra  {
      if(params.sra){
