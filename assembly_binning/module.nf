@@ -14,17 +14,18 @@ params.sra = false
 params.interleaved = false
 params.deinterleaved = false
 params.gtdb_database = ""
+params.checkm_database = ""
 params.gtdb = false
 params.skip = false
 params.buffer = 30
 
 process runMetaSpades {
 
+    label 'large'
+
     container 'quay.io/biocontainers/spades:3.15.2--h95f258a_1'
 
     publishDir "${params.output}/${sample}/assembly/metaspades/" 
-
-    cpus 28
 
     when params.metaspades
 
@@ -43,6 +44,8 @@ process runMetaSpades {
 
 
 process runMegahit {
+
+    label 'large'
 
     container 'vout/megahit:release-v1.2.9'
 
@@ -71,6 +74,8 @@ process runMegahit {
 process runBowtie {
 
     container 'pbelmann/bowtie2:0.11.0'
+
+    label 'large'
 
     maxForks 40
 
@@ -101,25 +106,25 @@ process runMetabat {
 
     errorStrategy 'ignore'
 
+    label 'large'
+
     publishDir "${params.output}/${sample}/binning/metabat/" 
 
     when params.metabat
-
-    cpus 28
 
     input:
     tuple val(sample), val(TYPE), path(contigs), path(bam)
 
     output:
-    tuple val("${sample}"), env(NEW_TYPE), file("${TYPE}_${sample}/bin*"), optional: true, emit: bins
-    tuple val("${sample}"), val("${TYPE}"), file("${TYPE}_${sample}/bin*"), optional: true, emit: bins_assembler
+    tuple val("${sample}"), env(NEW_TYPE), file("${TYPE}/bin*"), optional: true, emit: bins
+    tuple val("${sample}"), val("${TYPE}"), file("${TYPE}/bin*"), optional: true, emit: bins_assembler
 
     shell:
     '''
     NEW_TYPE="!{TYPE}_metabat"
     runMetaBat.sh !{contigs} !{bam}
-    mkdir !{TYPE}_!{sample}
-    mv $(basename !{contigs})*/bin* !{TYPE}_!{sample}
+    mkdir !{TYPE}
+    mv $(basename !{contigs})*/bin* !{TYPE}
     '''
 }
 
@@ -130,7 +135,7 @@ process runMaxBin {
 
   //  errorStrategy 'ignore'
 
-    cpus 28
+    label 'large'
 
     when params.maxbin
 
@@ -161,9 +166,9 @@ process runCheckM {
 
     when params.checkm
 
-    containerOptions " --user 1000:1000  --volume ${params.database}:/.checkm "
-   
-    cpus 14
+    containerOptions " --user 1000:1000  --volume ${params.checkm_database}:/.checkm "
+
+    label 'medium'
 
     input:
     tuple val(sample), val(TYPE), path(bins) 
@@ -198,7 +203,11 @@ process runGtdbtk {
 
     container 'ecogenomic/gtdbtk:1.4.1'
 
-    errorStrategy 'ignore'
+//    errorStrategy 'ignore'
+
+    label 'small'
+
+    scratch false
 
     publishDir "${params.output}/${sample}/gtdb/" 
 
@@ -206,8 +215,6 @@ process runGtdbtk {
 
     containerOptions " --user 1000:1000  --volume ${params.gtdb_database}:/refdata"
    
-    cpus 7
-
     input:
     tuple val(sample), val(TYPE), path(bins, stageAs: "bin*.fa") 
 
@@ -251,9 +258,7 @@ process prokka {
 
 //    errorStrategy 'retry'
 
-//    time '3h'
-
-    cpus 28
+    label 'large'
 
     input:
     tuple file(bam), file(bai), file(binFile), sampleName 
@@ -275,7 +280,7 @@ process getMappingQuality {
 
     errorStrategy 'retry'
 
-    cpus 1
+    label 'tiny'
 
     input:
     tuple val(sample), val(TYPE), path(bam) 
@@ -300,7 +305,7 @@ process runGetReads {
 
     when params.getreads
 
-    cpus 1
+    label 'tiny'
 
     input:
     tuple val(sample), val(TYPE), path(bam), path(bin) 
@@ -328,7 +333,7 @@ process runGetReads {
 
 process runTrimmomatic {
 
-    cpus 28
+    label 'large'
 
     publishDir "${params.output}/${sample}/reads/" 
 
@@ -365,7 +370,7 @@ process runTrimmomatic {
 
 process runFastp {
 
-    cpus 28
+    label 'large'
 
     publishDir "${params.output}/${sample}/reads/"
 
@@ -408,7 +413,7 @@ def bufferBins(binning){
 
 process runBBMapInterleave {
 
-    cpus 28
+    label 'large'
 
     publishDir "${params.output}/${sample}/reads/" 
 
@@ -428,7 +433,7 @@ process runBBMapInterleave {
 
 process runMegahitInterleaved {
 
-    cpus 28
+    label 'large'
 
     publishDir "${params.output}/${sample}/assembly/megahit/" 
 
@@ -440,7 +445,7 @@ process runMegahitInterleaved {
     tuple val(sample), path(interleaved_reads, stageAs: "interleaved.fq.gz")
 
     output:
-    tuple val("${sample}"), env(TYPE), path("${sample}/final.contigs.fa"), emit: contigs
+    tuple val("${sample}"), env(TYPE), path("final.contigs.fa"), emit: contigs
     tuple val("${sample}"), path("interleaved.fastp.fq.gz"), emit: reads_processed
     tuple val("${sample}"), path("fastp_summary.tsv"), emit: fastp_summary
 
@@ -452,7 +457,7 @@ process runMegahitInterleaved {
 
 process runMegahitSplit {
 
-    cpus 28
+    label 'large'
 
     publishDir "${params.output}/${sample}/assembly/megahit/" 
 
@@ -464,7 +469,7 @@ process runMegahitSplit {
     tuple val(sample), path(read1, stageAs: "read1.fq.gz"), path(read2, stageAs: "read2.fq.gz")
 
     output:
-    tuple val("${sample}"), env(TYPE), path("${sample}/final.contigs.fa"), emit: contigs
+    tuple val("${sample}"), env(TYPE), path("final.contigs.fa"), emit: contigs
     tuple val("${sample}"), path("interleaved.fastp.fq.gz"), emit: reads_processed
     tuple val("${sample}"), path("fastp_summary.tsv"), emit: fastp_summary
 
@@ -475,7 +480,7 @@ process runMegahitSplit {
 
 process runBBMapDeinterleave {
 
-    cpus 28
+    label 'large'
 
     publishDir "${params.output}/${sample}/reads/" 
 

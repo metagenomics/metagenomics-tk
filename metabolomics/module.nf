@@ -6,8 +6,11 @@ params.input="/raid/simba/bins_path_id_checkm_fixed_n50_fakedcoverage_final_chec
 params.smetana_detailed=false
 
 process carve {
-    cpus 2
-    time '1h'
+
+    label 'tiny'
+
+    time '10h'
+
     errorStrategy 'ignore'
     publishDir "${params.out}/${sample}/carveme"
     input:
@@ -21,15 +24,20 @@ process carve {
 }
 
 process memote {
-    cpus 1
+    label 'tiny'
+
     errorStrategy 'ignore'
+
     publishDir "${params.out}/${sample}/memote"
+
     input:
       tuple val(sample), val(id), path(model)
+
     output:
       tuple val("${sample}"), val("${id}"), path("${sample}_${id}_report.json.gz"), emit: report_json
       tuple val("${sample}"), val("${id}"), path("${sample}_${id}_report.html"), emit: report_html
       tuple val("${sample}"), val("${id}"), path("${sample}_${id}_metrics.tsv"), emit: report_tsv
+
     shell:
     '''
     memote run --solver cplex --filename !{sample}_!{id}_report.json.gz !{model}
@@ -51,14 +59,21 @@ process memote {
 }
 
 process smetana_detailed {
-    cpus 14
+
+    label 'large'
+
     errorStrategy 'ignore'
+
     publishDir "${params.out}/${sample}/smetana/detailed/"
+
     when params.smetana_detailed
+
     input:
       tuple val(sample), path(xmls) 
+
     output:
       path("${sample}_detailed.tsv")
+
     shell:
     '''
     smetana !{xmls} -d -o !{sample}
@@ -66,13 +81,19 @@ process smetana_detailed {
 }
 
 process smetana_global {
-    cpus 14
+
+    label 'large'
+
     errorStrategy 'ignore'
+
     publishDir "${params.out}/${sample}/smetana/global/"
+
     input:
       tuple val(sample), path(xmls) 
+
     output:
       path("${sample}_global.tsv")
+
     shell:
     '''
     smetana !{xmls} -o !{sample}
@@ -80,12 +101,17 @@ process smetana_global {
 }
 
 process analyse {
-    cpus 2
+
+    label 'tiny'
+
     publishDir "${params.out}/${sample}/metabolites/"
+
     input:
       tuple val(sample), val(id), path(mag_json)  
+
     output:
       tuple val("${sample}"), val("${id}"), path("*.tsv"), emit: model
+
     shell:
     '''
     getProducts.sh !{mag_json} > !{id}_products.tsv
@@ -96,7 +122,8 @@ process analyse {
 
 
 process build_json {
-    cpus 2
+
+    label 'tiny'
     publishDir "${params.out}/${sample}/json_output"
     errorStrategy 'retry'
     input:
@@ -111,7 +138,7 @@ process build_json {
 
 
 process prodigal {
-    cpus 1
+    label 'tiny'
     publishDir "${params.out}/${sample}/prodigal"
     input:
       tuple val(sample), val(id), path(mag)

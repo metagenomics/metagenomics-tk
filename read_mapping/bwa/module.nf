@@ -9,9 +9,8 @@ params.all_representatives = "/raid/CAMI/CAMI_MOUSEGUT/readmapping/workflow_all_
 params.shuffle = 400
 
 process bwa_index {
-    scratch "/vol/scratch"
-    conda 'bwa=0.7.17'
-    cpus 20
+    conda ' bioconda::bwa=0.7.17'
+    label 'large'
     input:
       tuple val(id), path(representatives)
     output:
@@ -23,9 +22,8 @@ process bwa_index {
 }
 
 process map_bwa {
-    cpus 20
-    scratch "/vol/scratch"
-    conda 'bwa=0.7.17'
+    label 'large'
+    conda 'bioconda::bwa=0.7.17'
     publishDir params.out + "/bwa"
     input:
       tuple path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
@@ -36,9 +34,8 @@ process map_bwa {
 }
 
 process map_bwa_cami {
-    cpus 20
-    scratch "/vol/scratch"
-    conda 'bwa=0.7.17'
+    label 'large'
+    conda 'bioconda::bwa=0.7.17'
     publishDir params.out + "/bwa"
     input:
       tuple path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
@@ -49,6 +46,7 @@ process map_bwa_cami {
 }
 
 process bwa_count {
+    label 'tiny'
     publishDir params.out + "/count"
     input:
       tuple val(ID), path(sample), path(mapping)
@@ -59,9 +57,8 @@ process bwa_count {
 }
 
 process coverm_count {
-    scratch "/vol/scratch"
-    conda 'bioconda::coverm=0.6.0'
-    cpus 5
+//   conda 'bioconda::coverm'
+    label 'small'
     publishDir params.out + "/count"
     input:
       tuple val(ID), val(sample), path(mapping), path(index), path(list_of_representatives)
@@ -73,6 +70,7 @@ process coverm_count {
 
 process shuff {
     publishDir params.out + "/sample"
+    label 'tiny'
     input:
       path file_of_bins
       each samples_number
@@ -86,7 +84,7 @@ process shuff {
 
 process create_mapping {
     publishDir params.out + "/mapping"
-    scratch "/vol/scratch"
+    label 'tiny'
     input:
       path representatives_sample
     output:

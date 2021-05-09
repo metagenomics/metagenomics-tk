@@ -7,7 +7,5 @@ cat fastp.json | jq -r  ' [.summary.before_filtering] | (map(keys) | add | uniqu
 megahit -t !{task.cpus} -1  read1_1.fastp.fq.gz  -2 read2_1.fastp.fq.gz
 paste <(zcat read1_1.fastp.fq.gz)  <(zcat read2_1.fastp.fq.gz) | paste - - - - | awk -v OFS="\n" -v FS="\t" '{print($1,$3,$5,$7,$2,$4,$6,$8)}'  | pigz --best --processes ${PIGZ_COMPRESSION_THREADS} > interleaved.fastp.fq.gz
 TYPE="megahit"
-mkdir !{sample}
-
-mv megahit_out/final.contigs.fa !{sample}/
-
+CONTIG_NAME=!{sample}_$RANDOM_$RANDOM
+cat megahit_out/final.contigs.fa | seqkit replace  -p '(^\w*)' -r "\${1}_$CONTIG_NAME" > final.contigs.fa
