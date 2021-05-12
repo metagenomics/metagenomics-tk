@@ -39,3 +39,9 @@ You can run the pipeline by specifying the environment:
 ```
 ./nextflow  /vol/spool/meta/main.nf -profile conda -resume  --environment /vol/spool/conda/anaconda3/envs/metabolic  --input /vol/spool/meta/test/data/table.tsv
 ```
+
+# Run Full Pipeline
+
+```
+./nextflow run main.nf -work-dir /raid1/test -profile local,conda -resume -entry run_pipeline -params-file full_pipeline_params.yml
+```

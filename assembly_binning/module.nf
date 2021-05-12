@@ -18,14 +18,17 @@ params.checkm_database = ""
 params.gtdb = false
 params.skip = false
 params.buffer = 30
+params.ending = ".fa"
 
 process runMetaSpades {
 
     label 'large'
 
-    container 'quay.io/biocontainers/spades:3.15.2--h95f258a_1'
+    tag "$sample"
 
-    publishDir "${params.output}/${sample}/assembly/metaspades/" 
+    container 'quay.io/biocontainers/spades:${metaspades_tag}'
+
+    publishDir "${params.output}/${sample}/assembly/metaspades/${metaspades_tag}" 
 
     when params.metaspades
 
@@ -47,11 +50,13 @@ process runMegahit {
 
     label 'large'
 
-    container 'vout/megahit:release-v1.2.9'
+    tag "$sample"
 
-    publishDir "${params.output}/${sample}/assembly/megahit/" 
+    container "vout/megahit:${megahit_tag}"
 
-    when params.megahit
+    publishDir "${params.output}/${sample}/assembly/megahit/${megahit_tag}" 
+
+    when params.containsKey("megahit") && params.assembly == "megahit"
 
     cpus 28
     input:
@@ -73,13 +78,13 @@ process runMegahit {
 
 process runBowtie {
 
-    container 'pbelmann/bowtie2:0.11.0'
+    container "pbelmann/bowtie2:${params.bowtie_tag}"
 
     label 'large'
 
-    maxForks 40
+    tag "$sample"
 
-    publishDir "${params.output}/${sample}/mapping/bowtie/" 
+    publishDir "${params.output}/${sample}/mapping/bowtie/${params.bowtie_tag}" 
 
     errorStrategy 'retry'
 
@@ -102,15 +107,17 @@ process runBowtie {
 
 process runMetabat {
 
-    container 'metabat/metabat:v2.15-4-ga101cde'
+    container "metabat/metabat:${params.metabat_tag}"
 
     errorStrategy 'ignore'
 
+    tag "$sample"
+
     label 'large'
 
-    publishDir "${params.output}/${sample}/binning/metabat/" 
+    publishDir "${params.output}/${sample}/binning/metabat/${params.metabat_tag}" 
 
-    when params.metabat
+    when params.containsKey("binning") && params.binning == "metabat"
 
     input:
     tuple val(sample), val(TYPE), path(contigs), path(bam)
@@ -131,15 +138,17 @@ process runMetabat {
 
 process runMaxBin {
 
-    container 'quay.io/biocontainers/maxbin2:2.2.7--he1b5a44_1'
+    container "quay.io/biocontainers/maxbin2:${params.maxbin_tag}"
 
   //  errorStrategy 'ignore'
 
     label 'large'
 
+    tag "$sample"
+
     when params.maxbin
 
-    publishDir "${params.output}/${sample}/binning/maxbin/" 
+    publishDir "${params.output}/${sample}/binning/maxbin/${params.maxbin_tag}" 
 
     input:
     tuple val(sample), val(TYPE), path(contigs), path(reads)
@@ -158,15 +167,15 @@ process runMaxBin {
 
 process runCheckM {
 
-    container 'pbelmann/checkm:0.12.0'
+    container "pbelmann/checkm:${params.checkm_tag}"
 
     errorStrategy 'ignore'
 
-    publishDir "${params.output}/${sample}/checkm/" 
+    publishDir "${params.output}/${sample}/checkm/${params.checkm_tag}" 
 
-    when params.checkm
+    when params.postprocessing.containsKey("checkm")
 
-    containerOptions " --user 1000:1000  --volume ${params.checkm_database}:/.checkm "
+    containerOptions " --user 1000:1000  --volume ${params.postprocessing.checkm.database}:/.checkm "
 
     label 'medium'
 
@@ -174,7 +183,7 @@ process runCheckM {
     tuple val(sample), val(TYPE), path(bins) 
 
     output:
-    tuple path("chunk_*_${sample}_${TYPE}_checkm.txt", type: "file"), val("${TYPE}")
+    tuple path("chunk_*_${sample}_${TYPE}_checkm.txt", type: "file"), val("${sample}"),  val("${TYPE}")
 
     shell:
     '''
@@ -193,27 +202,34 @@ process runCheckM {
     checkm lineage_set out out/marker &> lineage.log
     checkm analyze -x $FILE_ENDING -t !{task.cpus} out/marker . out &> analyze.log
     FILE=$(mktemp chunk_XXXXXXXXXX_!{sample}_!{TYPE}_checkm.txt)
-    checkm qa --tab_table -t !{task.cpus} -f !{sample}_!{TYPE}_checkm.txt out/marker out  &> qa.log
-    sed "s/^/!{sample}\t/g" !{sample}_!{TYPE}_checkm.txt > $FILE
+    checkm qa --tab_table -t !{task.cpus} -f checkm.txt out/marker out  &> qa.log
+
+    echo "SAMPLE\tBIN_ID\tMarker lineage\t# genomes\t# markers\t# marker sets\t0\t1\t2\t3\t4\t5+\tCOMPLETENESS\tCONTAMINATION\tHETEROGENEITY" > checkm_tmp.tsv
+    tail -n +2 checkm.txt | sed "s/^/!{sample}\t!{sample}_/g"  >> checkm_tmp.tsv
+
+    echo "PATH" > path.tsv
+    tail -n +2 checkm.txt | cut -f 1 | sed "s/$/${FILE_ENDING}/g" | xargs -I {} readlink -f {} >> path.tsv
+
+    paste -d$'\t' path.tsv checkm_tmp.tsv > $FILE 
     '''
 }
 
 
 process runGtdbtk {
 
-    container 'ecogenomic/gtdbtk:1.4.1'
+    container "ecogenomic/gtdbtk:${params.gtdbtk_tag}"
 
-//    errorStrategy 'ignore'
+    errorStrategy 'ignore'
 
-    label 'small'
+    label 'medium'
 
     scratch false
 
-    publishDir "${params.output}/${sample}/gtdb/" 
+    publishDir "${params.output}/${sample}/gtdb/${params.gtdbtk_tag}" 
 
-    when params.gtdb
+    when params.postprocessing.containsKey("gtdb")
 
-    containerOptions " --user 1000:1000  --volume ${params.gtdb_database}:/refdata"
+    containerOptions " --user 1000:1000  --volume ${params.postprocessing.gtdb.database}:/refdata"
    
     input:
     tuple val(sample), val(TYPE), path(bins, stageAs: "bin*.fa") 
@@ -233,7 +249,6 @@ process runGtdbtk {
     fi
 
     mkdir output
-     
     ls -1 bin*.fa > bin.id
     readlink -f bin*.fa > bin.path
     paste -d$'\t' bin.path bin.id > input.tsv
@@ -252,9 +267,9 @@ process runGtdbtk {
 
 process prokka {
 
-    container 'staphb/prokka:1.14.5'
+    container "staphb/prokka:${prokka_tag}"
 
-//    publishDir "${params.output}/${sample}/prokka/" 
+//    publishDir "${params.output}/${sample}/prokka/${prokka_tag}" 
 
 //    errorStrategy 'retry'
 
@@ -275,6 +290,8 @@ process prokka {
 process getMappingQuality {
 
     container 'quay.io/biocontainers/samtools:1.12--h9aed4be_1'
+
+    tag "$sample"
 
     publishDir "${params.output}/${sample}/mapping/bowtie/"
 
@@ -300,6 +317,8 @@ process runGetReads {
     //container 'biocontainers/samtools:v1.7.0_cv4'
 
     publishDir "${params.output}/${sample}/reads/bins/" 
+
+    tag "$sample"
 
     errorStrategy 'retry'
 
@@ -335,9 +354,11 @@ process runTrimmomatic {
 
     label 'large'
 
+    tag "$sample"
+
     publishDir "${params.output}/${sample}/reads/" 
 
-    container 'quay.io/biocontainers/trimmomatic:0.39--hdfd78af_2'
+    container "quay.io/biocontainers/trimmomatic:${params.trimmomatic_tag}"
 
     input:
     tuple val(sample), path(genomeReads1), path(genomeReads2)
@@ -372,9 +393,11 @@ process runFastp {
 
     label 'large'
 
-    publishDir "${params.output}/${sample}/reads/"
+    tag "$sample"
 
-    container 'quay.io/biocontainers/fastp:0.20.1--h2e03b76_1'
+    publishDir "${params.output}/${sample}/reads/fastp/${params.fastp_tag}"
+
+    container "quay.io/biocontainers/fastp:${params.fastp_tag}"
 
     input:
     tuple val(sample), path(genomeReads1), path(genomeReads2)
@@ -415,9 +438,11 @@ process runBBMapInterleave {
 
     label 'large'
 
-    publishDir "${params.output}/${sample}/reads/" 
+    tag "$sample"
 
-    container 'quay.io/biocontainers/bbmap:38.90--he522d1c_1'
+    publishDir "${params.output}/${sample}/reads/bbmap/" 
+
+    container "quay.io/biocontainers/bbmap:${params.bbmap_tag}"
 
     input:
     tuple val(sample), path(read1, stageAs: "read1.fq.gz"), path(read2, stageAs: "read2.fq.gz")
@@ -435,11 +460,15 @@ process runMegahitInterleaved {
 
     label 'large'
 
-    publishDir "${params.output}/${sample}/assembly/megahit/" 
+    tag "$sample"
+
+    publishDir "${params.output}/${sample}/assembly/megahit/${params.megahit_tag}" 
+
+    when params.containsKey("megahit") && params.assembly == "megahit"
 
     errorStrategy 'ignore'
 
-    container 'vout/megahit:release-v1.2.9'
+    container "vout/megahit:release-v1.2.9:${params.megahit_tag}"
 
     input:
     tuple val(sample), path(interleaved_reads, stageAs: "interleaved.fq.gz")
@@ -455,15 +484,20 @@ process runMegahitInterleaved {
 
 }
 
+
 process runMegahitSplit {
 
     label 'large'
 
-    publishDir "${params.output}/${sample}/assembly/megahit/" 
+    tag "$sample"
+
+    publishDir "${params.output}/${sample}/assembly/megahit/${params.megahit_tag}" 
 
     errorStrategy 'ignore'
 
-    container 'vout/megahit:release-v1.2.9'
+    when params.containsKey("megahit") && params.assembly == "megahit"
+
+    container "vout/megahit:${params.megahit_tag}"
 
     input:
     tuple val(sample), path(read1, stageAs: "read1.fq.gz"), path(read2, stageAs: "read2.fq.gz")
@@ -482,9 +516,11 @@ process runBBMapDeinterleave {
 
     label 'large'
 
-    publishDir "${params.output}/${sample}/reads/" 
+    tag "$sample"
 
-    container 'quay.io/biocontainers/bbmap:38.90--he522d1c_1'
+    publishDir "${params.output}/${sample}/reads/bbmap/${params.bbmap_tag}" 
+
+    container "quay.io/biocontainers/bbmap:${params.bbmap_tag}"
 
     input:
     tuple val(sample), path(interleaved_reads, stageAs: "interleaved.fq.gz")
@@ -520,6 +556,9 @@ workflow binning {
 
     // metabat.bins | mix(maxbin.bins) | set {bins}
      postprocess(metabat.bins, bam)
+   emit:
+     postprocess.out
+
 }
 
 
@@ -530,22 +569,29 @@ workflow postprocess {
    main:
      bins | flatMap({n -> bufferBins(n)}) | groupTuple(by: [0,1], size: params.buffer, remainder: true) | set{bufferedBins}
 
-     bufferedBins | runCheckM | set{ checkm }
+     bufferedBins | runCheckM  | set{ checkm }
      bufferedBins | runGtdbtk | set{ gtdb}
 
      checkm | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
        [ "${item[1]}_checkm.tsv", item[0].text  ]
      }
 
+     checkm  | groupTuple(by: 2, remainder: true) | map { it -> it[0] }  | flatten | map { it -> file(it) } | collectFile(keepHeader: true, newLine: false ){ item -> [ "bin_attributes.tsv", item.text ] } | splitCsv(sep: '\t', header: true)  \
+       | map { it -> { it.put('COVERAGE', 0); it} } | map { it -> { it.put('N50', 0); it} }  | set{ bins_info } 
+
      gtdb.bacteria | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
        [ "${item[1]}_bacteria_gtdbtk.tsv", item[0].text  ]
-     }
+     } 
 
      gtdb.archea | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
        [ "${item[1]}_archea_gtdbtk.tsv", item[0].text  ]
      }
 
      bins | join(bam, by: [0,1]) |  flatMap({n -> bufferMetabatSamtools(n)})  | runGetReads
+
+   emit:
+     bins_info
+
 }
 
 
@@ -565,6 +611,8 @@ workflow assembly_binning {
 
      metaspades.contigs | mix(megahit.contigs) |  set{contigs}
      binning(contigs, input_reads)
+   emit:
+     binning.out
 }
 
 
@@ -572,8 +620,8 @@ workflow assembly_binning_input {
      take:
        reads
      main:
-       if(params.interleaved){
-          if(params.skip){
+       if(params.mode.interleaved){
+          if(params.mode.skip){
             reads | splitCsv(sep: '\t', header: true) \
              | map { it -> [ it.SAMPLE, it.READS ]} \
              | runMegahitInterleaved 
@@ -590,11 +638,13 @@ workflow assembly_binning_input {
           }
        }
 
-       if(params.deinterleaved){
-          if(params.skip){
+       if(!params.mode.interleaved){
+          if(params.mode.skip){
             reads | splitCsv(sep: '\t', header: true) \
              | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} \
              | runMegahitSplit 
+             
+            runMegahitSplit.out.reads_processed | set { processed_reads}
             binning(runMegahitSplit.out.contigs, runMegahitSplit.out.reads_processed)
             runMegahitSplit.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
               [ "fastp_summary.tsv", item[1].text ]
@@ -605,12 +655,15 @@ workflow assembly_binning_input {
              | assembly_binning
           }
        }
+    emit:
+      bins = binning.out
+      processed_reads = processed_reads
 }
 
 
 workflow assembly_binning_input_sra  {
      if(params.sra){
-        Channel.fromSRA(['SRR6820513'], apiKey: '9b9acc33c35f7283d76c63eb407a849d1608') | view() | set{ input_reads }
+        Channel.fromSRA(['SRR6820513'], apiKey: '9b9acc33c35f7283d76c63eb407a849d1608')  | set{ input_reads }
      }
      assembly_binning(input_reads)
 }

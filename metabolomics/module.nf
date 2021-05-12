@@ -8,7 +8,7 @@ params.smetana_detailed=false
 process carve {
 
     label 'tiny'
-
+    tag "$sample $id"
     time '10h'
 
     errorStrategy 'ignore'
@@ -27,6 +27,8 @@ process memote {
     label 'tiny'
 
     errorStrategy 'ignore'
+
+    tag "$sample $id"
 
     publishDir "${params.out}/${sample}/memote"
 
@@ -62,6 +64,8 @@ process smetana_detailed {
 
     label 'large'
 
+    tag "$sample"
+
     errorStrategy 'ignore'
 
     publishDir "${params.out}/${sample}/smetana/detailed/"
@@ -84,6 +88,8 @@ process smetana_global {
 
     label 'large'
 
+    tag "$sample"
+
     errorStrategy 'ignore'
 
     publishDir "${params.out}/${sample}/smetana/global/"
@@ -103,6 +109,7 @@ process smetana_global {
 process analyse {
 
     label 'tiny'
+    tag "$sample $id"
 
     publishDir "${params.out}/${sample}/metabolites/"
 
@@ -122,7 +129,7 @@ process analyse {
 
 
 process build_json {
-
+    tag "$sample $id"
     label 'tiny'
     publishDir "${params.out}/${sample}/json_output"
     errorStrategy 'retry'
@@ -138,6 +145,7 @@ process build_json {
 
 
 process prodigal {
+    tag "$sample $id"
     label 'tiny'
     publishDir "${params.out}/${sample}/prodigal"
     input:
@@ -150,15 +158,23 @@ process prodigal {
     '''
 }
 
+workflow analyse_metabolites_file {
+   take:
+     bins
+   main:
+    Channel.from(file(bins)) | analyse_metabolites
+
+   emit:
+     carve_xml = carve.out.model
+}
 
 workflow analyse_metabolites {
    take:
      bins
    main:
-    Channel.from(file(bins)) | splitCsv(sep: '\t', header: true) \
 //       | filter({ it.COMPLETENESS.toFloat() > 49 }) \
 //       | filter({ it.CONTAMINATION.toFloat() < 5 })
-       | map { it -> [it.DATASET, it.BIN, it.PATH]}
+       bins | map { it -> [it.SAMPLE, it.BIN_ID, it.PATH]}
        | set{binsChannel}
 
      binsChannel | prodigal | carve | build_json | analyse 

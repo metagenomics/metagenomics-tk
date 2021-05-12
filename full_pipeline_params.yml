@@ -1,0 +1,18 @@
+mode:
+  interleaved: false
+  skip: true
+environment: "/vol/spool/conda/anaconda3/envs/metabolic"
+input: "/vol/spool/meta/test/test_samples_split.tsv"
+output: "/vol/spool/meta/out_pipeline"
+assembly: "megahit"
+binning: "metabat"
+postprocessing:
+  gtdb:
+    database: "/vol/spool/gtdb/release95"
+  checkm:
+    database: "/vol/spool/checkm/"
+dereplication:
+  representative_ani_cutoff: 0.95
+  minimum_completeness: 0
+  maximum_contamination: 5000
+  pyani_parameters: '-m ANIb'

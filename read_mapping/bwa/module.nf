@@ -1,7 +1,7 @@
 nextflow.enable.dsl=2
 
 params.samples = "/raid/CAMI/CAMI_MOUSEGUT/readmapping/workflow_all_reads/samples.tsv"
-params.out = "out"
+params.output = "out"
 params.mapping = "/vol/spool/CAMI/CAMI_MOUSEGUT/mapping/workflow/representatives_sample1.tsv_mapping"
 params.representatives = "/vol/spool/CAMI/CAMI_MOUSEGUT/mapping/workflow/representatives_sample1_test.fa"  
 params.number_samples = 20
@@ -24,7 +24,7 @@ process bwa_index {
 process map_bwa {
     label 'large'
     conda 'bioconda::bwa=0.7.17'
-    publishDir params.out + "/bwa"
+    publishDir "${params.output}/${sample}/bwa"
     input:
       tuple path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
     output:
@@ -36,7 +36,7 @@ process map_bwa {
 process map_bwa_cami {
     label 'large'
     conda 'bioconda::bwa=0.7.17'
-    publishDir params.out + "/bwa"
+    publishDir "${params.output}/${sample}/bwa"
     input:
       tuple path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
     output:
@@ -47,7 +47,7 @@ process map_bwa_cami {
 
 process bwa_count {
     label 'tiny'
-    publishDir params.out + "/count"
+    publishDir "${params.output}/${sample}/count"
     input:
       tuple val(ID), path(sample), path(mapping)
     output:
@@ -59,7 +59,7 @@ process bwa_count {
 process coverm_count {
 //   conda 'bioconda::coverm'
     label 'small'
-    publishDir params.out + "/count"
+    publishDir "${params.output}/${sample}/count"
     input:
       tuple val(ID), val(sample), path(mapping), path(index), path(list_of_representatives)
     output:
@@ -69,7 +69,7 @@ process coverm_count {
 }
 
 process shuff {
-    publishDir params.out + "/sample"
+    publishDir params.output + "/sample"
     label 'tiny'
     input:
       path file_of_bins
@@ -83,7 +83,7 @@ process shuff {
 }
 
 process create_mapping {
-    publishDir params.out + "/mapping"
+    publishDir params.output + "/mapping"
     label 'tiny'
     input:
       path representatives_sample
