@@ -8,3 +8,4 @@ report*
 out
 *camiClient.jar*
 test/data
+bin/__pycache__
