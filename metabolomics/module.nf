@@ -88,9 +88,7 @@ process smetana_detailed {
 process smetana_global {
 
     label 'large'
-
     tag "$sample"
-
     errorStrategy 'ignore'
 
     publishDir "${params.output}/${sample}/smetana/global/"
