@@ -94,7 +94,7 @@ workflow assembly_binning_input {
 
 workflow assembly_binning_input_sra  {
      if(params.sra){
-        Channel.fromSRA(['SRR6820513'], apiKey: '9b9acc33c35f7283d76c63eb407a849d1608')  | set{ input_reads }
+        Channel.fromSRA(['SRR6820513'], apiKey: '')  | set{ input_reads }
      }
      //assembly_binning(input_reads)
 }
