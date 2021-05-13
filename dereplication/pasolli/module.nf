@@ -78,7 +78,7 @@ process selectRepresentative {
 
     container "pbelmann/python-env:${params.python_env_tag}"
 
-    publishDir params.output
+    publishDir "${params.output}/dereplication"
 
     label 'medium'
 
@@ -142,7 +142,7 @@ process getCluster {
 
     label 'tiny'
 
-    publishDir params.output
+    publishDir "${params.output}/dereplication"
 
     container "pbelmann/python-env:${params.python_env_tag}"
 
@@ -172,7 +172,7 @@ process finalize {
     val finalized
     file cluster 
 
-    publishDir params.output
+    publishDir "${params.output}/dereplication"
 
     output:
     file 'final_clusters.tsv' 

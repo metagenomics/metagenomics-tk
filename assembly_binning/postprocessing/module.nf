@@ -188,18 +188,18 @@ workflow run_postprocess {
      bufferedBins | runCheckM  | set{ checkm }
      bufferedBins | runGtdbtk | set{ gtdb}
 
-     checkm | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+     checkm | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "${item[1]}_checkm.tsv", item[0].text  ]
      }
 
      checkm  | groupTuple(by: 2, remainder: true) | map { it -> it[0] }  | flatten | map { it -> file(it) } | collectFile(keepHeader: true, newLine: false ){ item -> [ "bin_attributes.tsv", item.text ] } | splitCsv(sep: '\t', header: true)  \
        | map { it -> { it.put('COVERAGE', 0); it} } | map { it -> { it.put('N50', 0); it} }  | set{ bins_info } 
 
-     gtdb.bacteria | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+     gtdb.bacteria | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "${item[1]}_bacteria_gtdbtk.tsv", item[0].text  ]
      } 
 
-     gtdb.archea | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+     gtdb.archea | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "${item[1]}_archea_gtdbtk.tsv", item[0].text  ]
      }
 

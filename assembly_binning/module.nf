@@ -41,7 +41,7 @@ workflow assembly_binning_input {
             run_binning(runMegahitInterleaved.out.contigs, runMegahitInterleaved.out.reads_processed)
             run_postprocess(run_binning.out.bins, run_binning.out.mapping)
 
-            runMegahitInterleaved.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+            runMegahitInterleaved.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
               [ "fastp_summary.tsv", item[1].text  ]
             }
           } else {
@@ -52,7 +52,7 @@ workflow assembly_binning_input {
             run_binning(run_assembly.out.contigs, run_assembly.out.reads_processed)
             run_postprocess(run_binning.out.bins, run_binning.out.mapping)
 
-            run_assembly.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+            run_assembly.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"  ){ item ->
               [ "fastp_summary.tsv", item[1].text  ]
             }
 
@@ -70,7 +70,7 @@ workflow assembly_binning_input {
 
             run_binning(runMegahitSplit.out.contigs, runMegahitSplit.out.reads_processed)
             run_postprocess(run_binning.out.bins, run_binning.out.mapping)
-            runMegahitSplit.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+            runMegahitSplit.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
               [ "fastp_summary.tsv", item[1].text ]
             }
           } else {
@@ -81,7 +81,7 @@ workflow assembly_binning_input {
             run_binning(run_assembly.out.contigs, run_assembly.out.reads_processed)
             run_postprocess(run_binning.out.bins, run_binning.out.mapping)
 
-            run_assembly.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+            run_assembly.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"  ){ item ->
               [ "fastp_summary.tsv", item[1].text  ]
             }
           }

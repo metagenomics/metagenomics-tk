@@ -16,7 +16,7 @@ clean :
 test_clean:
 	- rm -rf test/reads
 
-init_test: test_clean
+test/reads: test_clean
 	- mkdir -p test/reads/small
 	- wget https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz -P test/reads/small/
 	- wget https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1.fq.gz -P test/reads/small/

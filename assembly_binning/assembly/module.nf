@@ -231,7 +231,7 @@ workflow run_assembly {
      input_split_raw_reads | runFastp 
      runFastp.out.fastq | runBBMapInterleave | set{input_reads}
 
-     runFastp.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+     runFastp.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
           [ "fastp_summary.tsv", item[1].text  ]
      }
       

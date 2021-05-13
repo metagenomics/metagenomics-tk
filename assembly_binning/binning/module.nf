@@ -132,11 +132,11 @@ workflow run_binning {
      contigs | join(input_reads | mix(input_reads), by: 0) | runBowtie | set { bam }
      bam | getMappingQuality 
      
-     getMappingQuality.out.flagstat_passed | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+     getMappingQuality.out.flagstat_passed | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "flagstat_passed.tsv", item[2].text  ]
      }
 
-     getMappingQuality.out.flagstat_failed | collectFile(newLine: false, keepHeader: true, storeDir: params.output ){ item ->
+     getMappingQuality.out.flagstat_failed | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "flagstat_failed.tsv", item[2].text  ]
      }
 
