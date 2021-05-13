@@ -5,6 +5,8 @@ nextflow
 trace*
 timeline*
 report*
+timeline.html*
+dag.dot*
 out
 *camiClient.jar*
 test/data

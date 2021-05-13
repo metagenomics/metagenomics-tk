@@ -1,13 +1,13 @@
 nextflow.enable.dsl=2
 
+//readmapping
+params.mapping_samples
+params.list_of_representatives
+
 include { analyse_metabolites } from './metabolomics/module'
 include { bwa } from './read_mapping/bwa/module'
 include { assembly_binning_input } from './assembly_binning/module'
 include { dereplicate_file; dereplicate_list } from './dereplication/pasolli/module'
-
-//readmapping
-params.mapping_samples
-params.list_of_representatives
 
 workflow {
     analyse_metabolites(params.input)

@@ -1,6 +1,6 @@
 nextflow.enable.dsl=2
 
-params.out="out"
+//params.output="out"
 //params.input="/raid/simba/representatives_ids_dataset.tsv"
 params.input="/raid/simba/bins_path_id_checkm_fixed_n50_fakedcoverage_final_checkm_filtered_id_dataset.tsv"
 params.smetana_detailed=false
@@ -12,7 +12,7 @@ process carve {
     time '10h'
 
     errorStrategy 'ignore'
-    publishDir "${params.out}/${sample}/carveme"
+    publishDir "${params.output}/${sample}/carveme"
     input:
       tuple val(sample), val(id), path(mag_faa)
     output:
@@ -30,7 +30,7 @@ process memote {
 
     tag "$sample $id"
 
-    publishDir "${params.out}/${sample}/memote"
+    publishDir "${params.output}/${sample}/memote"
 
     input:
       tuple val(sample), val(id), path(model)
@@ -68,7 +68,7 @@ process smetana_detailed {
 
     errorStrategy 'ignore'
 
-    publishDir "${params.out}/${sample}/smetana/detailed/"
+    publishDir "${params.output}/${sample}/smetana/detailed/"
 
     when params.smetana_detailed
 
@@ -92,7 +92,7 @@ process smetana_global {
 
     errorStrategy 'ignore'
 
-    publishDir "${params.out}/${sample}/smetana/global/"
+    publishDir "${params.output}/${sample}/smetana/global/"
 
     input:
       tuple val(sample), path(xmls) 
@@ -111,7 +111,7 @@ process analyse {
     label 'tiny'
     tag "$sample $id"
 
-    publishDir "${params.out}/${sample}/metabolites/"
+    publishDir "${params.output}/${sample}/metabolites/"
 
     input:
       tuple val(sample), val(id), path(mag_json)  
@@ -131,7 +131,7 @@ process analyse {
 process build_json {
     tag "$sample $id"
     label 'tiny'
-    publishDir "${params.out}/${sample}/json_output"
+    publishDir "${params.output}/${sample}/json_output"
     errorStrategy 'retry'
     input:
       tuple val(sample), val(id), path(mag_xml)
@@ -147,7 +147,7 @@ process build_json {
 process prodigal {
     tag "$sample $id"
     label 'tiny'
-    publishDir "${params.out}/${sample}/prodigal"
+    publishDir "${params.output}/${sample}/prodigal"
     input:
       tuple val(sample), val(id), path(mag)
     output:
@@ -174,7 +174,7 @@ workflow analyse_metabolites {
    main:
 //       | filter({ it.COMPLETENESS.toFloat() > 49 }) \
 //       | filter({ it.CONTAMINATION.toFloat() < 5 })
-       bins | map { it -> [it.SAMPLE, it.BIN_ID, it.PATH]}
+       bins | view() | map { it -> [it.SAMPLE, it.BIN_ID, it.PATH]}
        | set{binsChannel}
 
      binsChannel | prodigal | carve | build_json | analyse 
