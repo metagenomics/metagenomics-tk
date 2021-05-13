@@ -16,3 +16,4 @@ dereplication:
   minimum_completeness: 0
   maximum_contamination: 5000
   pyani_parameters: '-m ANIb'
+metabolomics:

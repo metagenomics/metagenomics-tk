@@ -10,6 +10,7 @@ process carve {
     label 'tiny'
     tag "$sample $id"
     time '10h'
+    when params.containsKey("metabolomics")
 
     errorStrategy 'ignore'
     publishDir "${params.output}/${sample}/carveme"
@@ -147,6 +148,7 @@ process build_json {
 process prodigal {
     tag "$sample $id"
     label 'tiny'
+    when params.containsKey("metabolomics")
     publishDir "${params.output}/${sample}/prodigal"
     input:
       tuple val(sample), val(id), path(mag)
@@ -174,7 +176,7 @@ workflow analyse_metabolites {
    main:
 //       | filter({ it.COMPLETENESS.toFloat() > 49 }) \
 //       | filter({ it.CONTAMINATION.toFloat() < 5 })
-       bins | view() | map { it -> [it.SAMPLE, it.BIN_ID, it.PATH]}
+       bins | map { it -> [it.SAMPLE, it.BIN_ID, it.PATH]}
        | set{binsChannel}
 
      binsChannel | prodigal | carve | build_json | analyse 
