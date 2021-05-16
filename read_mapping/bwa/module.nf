@@ -11,6 +11,7 @@ params.shuffle = 400
 process bwa_index {
     conda ' bioconda::bwa=0.7.17'
     label 'large'
+    when params.containsKey("read_mapping")
     input:
       tuple val(id), path(representatives)
     output:
@@ -24,6 +25,7 @@ process bwa_index {
 process map_bwa {
     label 'large'
     conda 'bioconda::bwa=0.7.17'
+    when params.containsKey("read_mapping")
     publishDir "${params.output}/${sample}/bwa"
     input:
       tuple path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
@@ -57,7 +59,7 @@ process bwa_count {
 }
 
 process coverm_count {
-//   conda 'bioconda::coverm'
+    when params.containsKey("read_mapping")
     label 'small'
     publishDir "${params.output}/${sample}/count"
     input:

@@ -7,14 +7,16 @@ output: "/vol/spool/meta/out_pipeline"
 assembly: "megahit"
 binning: "metabat"
 postprocessing:
-  buffer: 100
   gtdb:
+    buffer: 100
     database: "/vol/spool/gtdb/release95"
   checkm:
     database: "/vol/spool/checkm/"
+    buffer: 100
 dereplication:
   representative_ani_cutoff: 0.95
   minimum_completeness: 0
   maximum_contamination: 5000
   pyani_parameters: '-m ANIb'
 metabolomics:
+read_mapping:
