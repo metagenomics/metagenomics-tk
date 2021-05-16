@@ -5,13 +5,16 @@ small_read1 = ${small_reads_folder}/read1_1.fq.gz
 small_read2 = ${small_reads_folder}/read1_1.fq.gz 
 full_run = ${CURRENT_DIR}/example_params/full_pipeline_params.yml
 
-.PHONY : clean init_test
+.PHONY : clean init_test test_clean run_small_full_test
 clean :
 	- rm .nextflow.log*
 	- rm report.html*
 	- rm timeline.html*
 	- rm trace.txt*
 	- rm dag.dot*
+
+nextflow:
+	- wget -qO- https://get.nextflow.io | bash
 
 test_clean:
 	- rm -rf test/reads

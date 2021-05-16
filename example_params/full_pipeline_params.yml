@@ -7,6 +7,7 @@ output: "/vol/spool/meta/out_pipeline"
 assembly: "megahit"
 binning: "metabat"
 postprocessing:
+  buffer: 100
   gtdb:
     database: "/vol/spool/gtdb/release95"
   checkm:

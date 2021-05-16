@@ -13,7 +13,7 @@ process runCheckM {
 
     containerOptions " --user 1000:1000  --volume ${params.postprocessing.checkm.database}:/.checkm "
 
-    label 'medium'
+    label 'large'
 
     input:
     tuple val(sample), val(TYPE), path(bins) 
@@ -55,11 +55,13 @@ process runGtdbtk {
 
     container "ecogenomic/gtdbtk:${params.gtdbtk_tag}"
 
-    errorStrategy 'ignore'
+//    errorStrategy 'ignore'
 
     label 'medium'
 
-    scratch false
+//    maxForks 10
+
+//    cpus 28
 
     publishDir "${params.output}/${sample}/gtdb/${params.gtdbtk_tag}" 
 
@@ -68,7 +70,7 @@ process runGtdbtk {
     containerOptions " --user 1000:1000  --volume ${params.postprocessing.gtdb.database}:/refdata"
    
     input:
-    tuple val(sample), val(TYPE), path(bins, stageAs: "bin*.fa") 
+    tuple val(sample), val(TYPE), path(bins) 
 
     output:
     tuple path("chunk_*_${sample}_${TYPE}_gtdbtk.bac120.summary.tsv"), val("${TYPE}"), optional: true, emit: bacteria
@@ -85,9 +87,8 @@ process runGtdbtk {
     fi
 
     mkdir output
-    ls -1 bin*.fa > bin.id
     readlink -f bin*.fa > bin.path
-    paste -d$'\t' bin.path bin.id > input.tsv
+    paste -d$'\t' bin.path <(for p in $(cat bin.path); do basename $p; done) > input.tsv
     gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus}  --extension ${FILE_ENDING}
     touch output/gtdbtk.bac120.summary.tsv
     touch output/gtdbtk.ar122.summary.tsv
@@ -187,7 +188,7 @@ workflow run_postprocess {
      bins
      bam
    main:
-     bins | flatMap({n -> bufferBins(n)}) | groupTuple(by: [0,1], size: params.buffer, remainder: true) | set{bufferedBins}
+     bins | flatMap({n -> bufferBins(n)}) | groupTuple(by: [0,1], size: params.postprocessing.buffer, remainder: true) | set{bufferedBins}
 
      bufferedBins | runCheckM  | set{ checkm }
      bufferedBins | runGtdbtk | set{ gtdb}
