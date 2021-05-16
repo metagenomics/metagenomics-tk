@@ -188,10 +188,13 @@ workflow run_postprocess {
      bins
      bam
    main:
-     bins | flatMap({n -> bufferBins(n)}) | groupTuple(by: [0,1], size: params.postprocessing.buffer, remainder: true) | set{bufferedBins}
+     bins | flatMap({n -> bufferBins(n)}) | set {binList}
 
-     bufferedBins | runCheckM  | set{ checkm }
-     bufferedBins | runGtdbtk | set{ gtdb}
+     binList | groupTuple(by: [0,1], size: params.postprocessing.checkm.buffer, remainder: true) \
+        | runCheckM  | set{ checkm }
+
+     binList |  groupTuple(by: [0,1], size: params.postprocessing.gtdbtk.buffer, remainder: true) \
+        | runGtdbtk | set{ gtdb }
 
      checkm | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "${item[1]}_checkm.tsv", item[0].text  ]

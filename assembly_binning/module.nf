@@ -17,7 +17,6 @@ params.gtdb_database = ""
 params.checkm_database = ""
 params.gtdb = false
 params.skip = false
-params.postprocessing.buffer = 30
 params.ending = ".fa"
 
 
