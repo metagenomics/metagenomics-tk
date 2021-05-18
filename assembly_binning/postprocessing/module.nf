@@ -91,11 +91,11 @@ process runGtdbtk {
     FILE_BAC=$(mktemp chunk_XXXXXXXXXX_!{sample}_!{TYPE}_gtdbtk.bac120.summary.tsv)
     FILE_ARC=$(mktemp chunk_XXXXXXXXXX_!{sample}_!{TYPE}_gtdbtk.ar122.summary.tsv)
 
-    sed "s/^/SAMPLE\t/g"  <(head -n 1 output/gtdbtk.bac120.summary.tsv) > $FILE_BAC 
-    sed "s/^/!{sample}\t/g"  <(tail -n 2 output/gtdbtk.bac120.summary.tsv) >> $FILE_BAC 
+    sed "s/^/SAMPLE\t/g" <(head -n 1 output/gtdbtk.bac120.summary.tsv) > $FILE_BAC 
+    sed "s/^/!{sample}\t/g"  <(tail -n +2 output/gtdbtk.bac120.summary.tsv) >> $FILE_BAC 
 
-    sed "s/^/SAMPLE\t/g" output/gtdbtk.ar122.summary.tsv > $FILE_ARC 
-    sed "s/^/!{sample}\t/g" output/gtdbtk.ar122.summary.tsv >> $FILE_ARC 
+    sed "s/^/SAMPLE\t/g" <(head -n 1 output/gtdbtk.ar122.summary.tsv) > $FILE_ARC 
+    sed "s/^/!{sample}\t/g" <(tail -n +2 output/gtdbtk.ar122.summary.tsv) >> $FILE_ARC 
     '''
 }
 
