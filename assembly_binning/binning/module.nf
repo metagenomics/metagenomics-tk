@@ -124,6 +124,17 @@ def bufferBins(binning){
   return chunkList;
 }
 
+
+def aslist(element){
+  if(element instanceof Collection){
+    return element;
+  } else {
+    return [element];
+  }
+}
+
+
+
 workflow run_binning {
    take: 
      contigs
@@ -143,9 +154,11 @@ workflow run_binning {
      contigs | join(bam, by: [0, 1]) | runMetabat | set { metabat }
      contigs | join(input_reads | mix(input_reads), by: 0) | runMaxBin | set { maxbin }
 
+     metabat.bins | map({ it -> it[2] = aslist(it[2]); it  }) | set{ bins_list}
+
     // metabat.bins | mix(maxbin.bins) | set {bins}
    emit:
-     bins = metabat.bins
+     bins = bins_list
      mapping = bam
 }
 
