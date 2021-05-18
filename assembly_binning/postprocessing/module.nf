@@ -55,13 +55,9 @@ process runGtdbtk {
 
     container "ecogenomic/gtdbtk:${params.gtdbtk_tag}"
 
-//    errorStrategy 'ignore'
+    errorStrategy 'ignore'
 
-    label 'medium'
-
-//    maxForks 10
-
-//    cpus 28
+    label 'large'
 
     publishDir "${params.output}/${sample}/gtdb/${params.gtdbtk_tag}" 
 
@@ -197,7 +193,7 @@ workflow run_postprocess {
         | runGtdbtk | set{ gtdb }
 
      checkm | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-       [ "${item[1]}_checkm.tsv", item[0].text  ]
+       [ "checkm.tsv", item[0].text  ]
      }
 
      checkm  | groupTuple(by: 2, remainder: true) | map { it -> it[0] }  | flatten | map { it -> file(it) } | collectFile(keepHeader: true, newLine: false ){ item -> [ "bin_attributes.tsv", item.text ] } | splitCsv(sep: '\t', header: true)  \
