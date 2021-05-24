@@ -24,7 +24,8 @@ process runMash {
 
     shell:
     '''
-    mash sketch -o reference !{fof}
+    ls -1 input*.txt > input_list.txt
+    mash sketch -o reference -l input_list.txt
     mash dist -p !{task.cpus} reference.msh  reference.msh | cut -f 1,2,3 > distance.tsv
     for i in $(ls input*.txt); do echo "$i\t$(readlink -f $i)";  done > mapping.tsv
     '''
@@ -234,10 +235,17 @@ workflow dereplicate {
        | collectFile(newLine: true) | set { all_ani }
 
      getCluster(representatives.clusters, all_ani, genomes_table_file)
-     finalize(representativesToCompareC.finalize, clusters | map {it -> it[1] })
+     finalize(representativesToCompareC.finalize, representatives.clusters)
    
      getCluster.out.final_clusters | splitCsv(sep: '\t', header: true) \
-       | filter({ it.REPRESENTATIVE.toFloat() == 1 }) | map { it -> it['GENOME'] } | collectFile(newLine: true) | set { representatives }
+       | filter({ it.REPRESENTATIVE.toFloat() == 1 }) | map { it -> it['GENOME'] } | collectFile(newLine: true) | set { representatives_cluster }
+
+     finalize.out | splitCsv(sep: '\t', header: true) \
+       | filter({ it.REPRESENTATIVE.toFloat() == 1 }) | map { it -> it['GENOME'] } | collectFile(newLine: true) | set { representatives_finalize }
+
+     representatives_cluster | mix(representatives_finalize) | set{representatives}
+
+
   emit:
      representatives
 }

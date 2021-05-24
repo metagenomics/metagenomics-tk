@@ -74,15 +74,14 @@ process runMetabat {
     tuple val(sample), val(TYPE), path(contigs), path(bam)
 
     output:
-    tuple val("${sample}"), env(NEW_TYPE), file("${TYPE}/bin*"), optional: true, emit: bins
-    tuple val("${sample}"), val("${TYPE}"), file("${TYPE}/bin*"), optional: true, emit: bins_assembler
+    tuple val("${sample}"), env(NEW_TYPE), file("${TYPE}/*bin*"), optional: true, emit: bins
 
     shell:
     '''
     NEW_TYPE="!{TYPE}_metabat"
     runMetaBat.sh !{contigs} !{bam}
     mkdir !{TYPE}
-    mv $(basename !{contigs})*/bin* !{TYPE}
+    for bin in $(basename !{contigs})*/bin* ; do mv $bin !{TYPE}/!{sample}_$(basename ${bin}) ; done
     '''
 }
 
