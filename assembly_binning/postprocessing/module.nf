@@ -41,7 +41,7 @@ process runCheckM {
     checkm qa --tab_table -t !{task.cpus} -f checkm.txt out/marker out  &> qa.log
 
     echo "SAMPLE\tBIN_ID\tMarker lineage\t# genomes\t# markers\t# marker sets\t0\t1\t2\t3\t4\t5+\tCOMPLETENESS\tCONTAMINATION\tHETEROGENEITY" > checkm_tmp.tsv
-    tail -n +2 checkm.txt | sed "s/^/!{sample}\t!{sample}_/g"  >> checkm_tmp.tsv
+    tail -n +2 checkm.txt | sed "s/^/!{sample}\t/g"  >> checkm_tmp.tsv
 
     echo "PATH" > path.tsv
     tail -n +2 checkm.txt | cut -f 1 | sed "s/$/${FILE_ENDING}/g" | xargs -I {} readlink -f {} >> path.tsv
