@@ -197,6 +197,7 @@ process runMegahitSplit {
     tuple val("${sample}"), path("fastp_summary_before.tsv"), emit: fastp_summary_before
     tuple val("${sample}"), path("fastp_summary_after.tsv"), emit: fastp_summary_after
     tuple val("${sample}"), path("fastp.json"), emit: fastp_summary
+    tuple val("${sample}"), path("*_report.html"), emit: fastp_summary_html
 
     shell:
     template 'megahit_split.sh'
