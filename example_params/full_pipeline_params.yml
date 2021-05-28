@@ -6,6 +6,7 @@ input: "/vol/spool/meta/test/test_samples_split.tsv"
 output: "/vol/spool/meta/out_pipeline"
 assembly: "megahit"
 binning: "metabat"
+tempdir: "tmp"
 postprocessing:
   gtdb:
     buffer: 100

@@ -36,7 +36,7 @@ workflow run_pipeline {
     dereplicate_list(assembly_binning_input.out.bins)
     representatives_list = dereplicate_list.out
     representatives_list | splitCsv(sep: '\t') \
-       |  map { it -> file(it[0]) } | collectFile(){ item -> [ "representatives.fasta", item.text ] } | set { representatives_fasta }  
+       |  map { it -> file(it[0]) } | collectFile(tempDir: file(params.tempdir),sort: false){ item -> [ "representatives.fasta", item.text ] } | set { representatives_fasta }  
 
     bwa(Channel.from('1'), representatives_fasta, samples, representatives_list)
 
