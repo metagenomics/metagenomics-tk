@@ -1,4 +1,15 @@
 CURRENT_DIR = $(shell pwd)
+
+ifndef PROFILE
+	override PROFILE = "local,conda"
+endif
+
+ifndef WORK_DIR
+	override WORK_DIR = "work"
+endif
+
+
+
 small_reads_folder = ${CURRENT_DIR}/test/reads/small
 reads_split_test = ${small_reads_folder}/reads_split.tsv
 small_read1 = ${small_reads_folder}/read1_1.fq.gz 
@@ -29,4 +40,4 @@ test/reads: test_clean
 
 run_small_full_test: init_test
 	- echo "${WORK_DIR}"
-	- ./nextflow run main.nf -work-dir ${WORK_DIR} -profile local,conda -resume -entry run_pipeline -params-file ${full_run} 
+	- ./nextflow run main.nf -work-dir ${WORK_DIR} -profile ${PROFILE} -resume -entry run_pipeline -params-file ${full_run} 
