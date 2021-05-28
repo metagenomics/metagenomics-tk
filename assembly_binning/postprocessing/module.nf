@@ -13,7 +13,7 @@ process runCheckM {
 
     containerOptions " --user 1000:1000  --volume ${params.postprocessing.checkm.database}:/.checkm "
 
-    label 'large'
+    label 'medium'
 
     input:
     tuple val(sample), val(TYPE), path(bins) 
