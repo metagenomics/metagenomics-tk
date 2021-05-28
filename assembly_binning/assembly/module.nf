@@ -194,7 +194,9 @@ process runMegahitSplit {
     output:
     tuple val("${sample}"), env(TYPE), path("final.contigs.fa"), emit: contigs
     tuple val("${sample}"), path("interleaved.fastp.fq.gz"), emit: reads_processed
-    tuple val("${sample}"), path("fastp_summary.tsv"), emit: fastp_summary
+    tuple val("${sample}"), path("fastp_summary_before.tsv"), emit: fastp_summary_before
+    tuple val("${sample}"), path("fastp_summary_after.tsv"), emit: fastp_summary_after
+    tuple val("${sample}"), path("fastp.json"), emit: fastp_summary
 
     shell:
     template 'megahit_split.sh'
@@ -231,9 +233,14 @@ workflow run_assembly {
      input_split_raw_reads | runFastp 
      runFastp.out.fastq | runBBMapInterleave | set{input_reads}
 
-     runFastp.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
-          [ "fastp_summary.tsv", item[1].text  ]
+     runFastp.out.fastp_summary_before | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
+          [ "fastp_summary_before.tsv", item[1].text  ]
      }
+
+     runFastp.out.fastp_summary_after | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
+          [ "fastp_summary_after.tsv", item[1].text  ]
+     }
+ 
       
      input_reads | runMegahit | set { megahit }
      input_reads | runMetaSpades | set { metaspades }
