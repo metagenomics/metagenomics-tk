@@ -1,7 +1,8 @@
 nextflow.enable.dsl=2
 
+params.ending = ".fa"
 
-process runCheckM {
+process pCheckM {
 
     container "pbelmann/checkm:${params.checkm_tag}"
 
@@ -9,9 +10,9 @@ process runCheckM {
 
     publishDir "${params.output}/${sample}/checkm/${params.checkm_tag}" 
 
-    when params.postprocessing.containsKey("checkm")
+    when params.steps.magAttributes.containsKey("checkm")
 
-    containerOptions " --user 1000:1000  --volume ${params.postprocessing.checkm.database}:/.checkm "
+    containerOptions " --user 1000:1000  --volume ${params.steps.magAttributes.checkm.database}:/.checkm "
 
     label 'medium'
 
@@ -51,7 +52,7 @@ process runCheckM {
 }
 
 
-process runGtdbtk {
+process pGtdbtk {
 
     container "ecogenomic/gtdbtk:${params.gtdbtk_tag}"
 
@@ -61,9 +62,9 @@ process runGtdbtk {
 
     publishDir "${params.output}/${sample}/gtdb/${params.gtdbtk_tag}" 
 
-    when params.postprocessing.containsKey("gtdb")
+    when params.steps.magAttributes.containsKey("gtdb")
 
-    containerOptions " --user 1000:1000  --volume ${params.postprocessing.gtdb.database}:/refdata"
+    containerOptions " --user 1000:1000  --volume ${params.steps.magAttributes.gtdb.database}:/refdata"
    
     input:
     tuple val(sample), val(TYPE), path(bins) 
@@ -83,7 +84,7 @@ process runGtdbtk {
     fi
 
     mkdir output
-    readlink -f *.fa > bin.path
+    readlink -f !{bins} > bin.path
     paste -d$'\t' bin.path <(for p in $(cat bin.path); do basename $p; done) > input.tsv
     gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus}  --extension ${FILE_ENDING}
     touch output/gtdbtk.bac120.summary.tsv
@@ -100,9 +101,7 @@ process runGtdbtk {
 }
 
 
-
-
-process prokka {
+process pProkka {
 
     container "staphb/prokka:${prokka_tag}"
 
@@ -125,7 +124,7 @@ process prokka {
 }
 
 
-process runGetReads {
+process pGetReads {
 
     //container 'biocontainers/samtools:v1.7.0_cv4'
 
@@ -179,25 +178,25 @@ def bufferBins(binning){
   return chunkList;
 }
 
-workflow run_postprocess {
+workflow wMagAttributes {
    take: 
      bins
      bam
    main:
      bins | flatMap({n -> bufferBins(n)}) | set {binList}
+     binList | groupTuple(by: [0,1], size: params.steps.magAttributes.checkm.buffer, remainder: true) \
+        | pCheckM  | set{ checkm }
 
-     binList | groupTuple(by: [0,1], size: params.postprocessing.checkm.buffer, remainder: true) \
-        | runCheckM  | set{ checkm }
-
-     binList |  groupTuple(by: [0,1], size: params.postprocessing.gtdbtk.buffer, remainder: true) \
-        | runGtdbtk | set{ gtdb }
+     binList |  groupTuple(by: [0,1], size: params.steps.magAttributes.gtdb.buffer, remainder: true) \
+        | pGtdbtk | set{ gtdb }
 
      checkm | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "checkm.tsv", item[0].text  ]
      }
 
-     checkm  | groupTuple(by: 2, remainder: true) | map { it -> it[0] }  | flatten | map { it -> file(it) } | collectFile(keepHeader: true, newLine: false ){ item -> [ "bin_attributes.tsv", item.text ] } | splitCsv(sep: '\t', header: true)  \
-       | map { it -> { it.put('COVERAGE', 0); it} } | map { it -> { it.put('N50', 0); it} }  | set{ bins_info } 
+     checkm | groupTuple(by: 2, remainder: true) | map { it -> it[0] }  | flatten | map { it -> file(it) } \
+       | collectFile(keepHeader: true, newLine: false ){ item -> [ "bin_attributes.tsv", item.text ] } \
+       | splitCsv(sep: '\t', header: true) | set{ bins_info } 
 
      gtdb.bacteria | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "${item[1]}_bacteria_gtdbtk.tsv", item[0].text  ]
@@ -207,7 +206,7 @@ workflow run_postprocess {
        [ "${item[1]}_archea_gtdbtk.tsv", item[0].text  ]
      }
 
-    // bins | join(bam, by: [0,1]) |  flatMap({n -> bufferMetabatSamtools(n)})  | runGetReads
+    // bins | join(bam, by: [0,1]) |  flatMap({n -> bufferMetabatSamtools(n)})  | pGetReads
 
    emit:
      bins_info

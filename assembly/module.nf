@@ -1,6 +1,6 @@
 nextflow.enable.dsl=2
 
-process runMetaSpades {
+process pMetaSpades {
 
     label 'large'
 
@@ -26,7 +26,7 @@ process runMetaSpades {
 }
 
 
-process runMegahit {
+process pMegahit {
 
     label 'large'
 
@@ -36,9 +36,8 @@ process runMegahit {
 
     publishDir "${params.output}/${sample}/assembly/megahit/${megahit_tag}" 
 
-    when params.containsKey("megahit") && params.assembly == "megahit"
+    when params.steps.assembly.containsKey("megahit")
 
-    cpus 28
     input:
     tuple val(sample), path(fastqs, stageAs: 'fastq.fq.gz')
 
@@ -55,7 +54,7 @@ process runMegahit {
 }
 
 
-process runTrimmomatic {
+process pTrimmomatic {
 
     label 'large'
 
@@ -94,7 +93,7 @@ process runTrimmomatic {
 
 
 
-process runFastp {
+process pFastp {
 
     label 'large'
 
@@ -123,7 +122,7 @@ process runFastp {
 }
 
 
-process runBBMapInterleave {
+process pBBMapInterleave {
 
     label 'large'
 
@@ -145,7 +144,7 @@ process runBBMapInterleave {
     """
 }
 
-process runMegahitInterleaved {
+process pMegahitInterleaved {
 
     label 'large'
 
@@ -153,7 +152,7 @@ process runMegahitInterleaved {
 
     publishDir "${params.output}/${sample}/assembly/megahit/${params.megahit_tag}" 
 
-    when params.containsKey("megahit") && params.assembly == "megahit"
+    when params.steps.mags_generation.assembly == "megahit"
 
     errorStrategy 'ignore'
 
@@ -174,7 +173,7 @@ process runMegahitInterleaved {
 }
 
 
-process runMegahitSplit {
+process pMegahitSplit {
 
     label 'large'
 
@@ -184,7 +183,7 @@ process runMegahitSplit {
 
     errorStrategy 'ignore'
 
-    when params.containsKey("megahit") && params.assembly == "megahit"
+    when params.steps.assembly.containsKey("megahit")
 
     container "vout/megahit:${params.megahit_tag}"
 
@@ -192,19 +191,19 @@ process runMegahitSplit {
     tuple val(sample), path(read1, stageAs: "read1.fq.gz"), path(read2, stageAs: "read2.fq.gz")
 
     output:
-    tuple val("${sample}"), env(TYPE), path("final.contigs.fa"), emit: contigs
+    tuple val("${sample}"), env(TYPE), path("${sample}_final.contigs.fa.gz"), emit: contigs
     tuple val("${sample}"), path("interleaved.fastp.fq.gz"), emit: reads_processed
     tuple val("${sample}"), path("fastp_summary_before.tsv"), emit: fastp_summary_before
     tuple val("${sample}"), path("fastp_summary_after.tsv"), emit: fastp_summary_after
     tuple val("${sample}"), path("fastp.json"), emit: fastp_summary
     tuple val("${sample}"), path("*_report.html"), emit: fastp_summary_html
+    tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigs_stats
 
     shell:
     template 'megahit_split.sh'
-
 }
 
-process runBBMapDeinterleave {
+process pBBMapDeinterleave {
 
     label 'large'
 
@@ -227,24 +226,24 @@ process runBBMapDeinterleave {
 }
 
 
-workflow run_assembly {
+workflow wAssembly {
    take: 
      input_split_raw_reads
    main:
-     input_split_raw_reads | runFastp 
-     runFastp.out.fastq | runBBMapInterleave | set{input_reads}
+     input_split_raw_reads | pFastp 
+     pFastp.out.fastq | pBBMapInterleave | set{input_reads}
 
-     runFastp.out.fastp_summary_before | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
+     pFastp.out.fastp_summary_before | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
           [ "fastp_summary_before.tsv", item[1].text  ]
      }
 
-     runFastp.out.fastp_summary_after | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
+     pFastp.out.fastp_summary_after | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
           [ "fastp_summary_after.tsv", item[1].text  ]
      }
  
       
-     input_reads | runMegahit | set { megahit }
-     input_reads | runMetaSpades | set { metaspades }
+     input_reads | pMegahit | set { megahit }
+     input_reads | pMetaSpades | set { metaspades }
 
      metaspades.contigs | mix(megahit.contigs) |  set{contigs}
    emit:
@@ -253,3 +252,114 @@ workflow run_assembly {
      fastp_summary = runFastp.out.fastp_summary
 }
 
+
+// Fastq interleaved, QC and Assembler are executed in one process
+workflow _wFastqSplitSkip {
+       take:
+         reads_table
+       main:
+            reads_table | splitCsv(sep: '\t', header: true) \
+             | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} \
+             | pMegahitSplit 
+             
+            pMegahitSplit.out.reads_processed | set { processed_reads}
+
+            pMegahitSplit.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
+              [ "fastp_summary.tsv", item[1].text ]
+            }
+
+            pMegahitSplit.out.fastp_summary_after | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
+              [ "fastp_summary_after.tsv", item[1].text ]
+            }
+
+            pMegahitSplit.out.fastp_summary_before | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
+              [ "fastp_summary_before.tsv", item[1].text ]
+            }
+
+            pMegahitSplit.out.contigs_stats | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
+              [ "contigs_stats.tsv", item[1].text ]
+            }
+
+      emit:
+        contigs = pMegahitSplit.out.contigs
+        processed_reads = processed_reads
+}
+
+
+// Fastq split, QC and Assembler are executed in sepearate processes
+workflow _wFastqSplitSeperate {
+       take:
+         reads_table
+       main:
+         reads_table | splitCsv(sep: '\t', header: true) \
+          | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} \
+          | wAssembly
+
+         run_assembly.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"  ){ item ->
+            [ "fastp_summary.tsv", item[1].text  ]
+         }
+
+} 
+
+// Fastq interleaved, QC and Assembler are executed in once process
+workflow _wFastqInterleavedSkip {
+       take:
+         reads_table
+       main:
+         reads_table | splitCsv(sep: '\t', header: true) \
+          | map { it -> [ it.SAMPLE, it.READS ]} \
+          | pMegahitInterleaved     
+
+         pMegahitInterleaved.out.reads_processed | set { processed_reads}
+         pMegahitInterleaved.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
+           [ "fastp_summary.tsv", item[1].text  ]
+         }
+}
+
+
+// Fastq interleaved, QC and Assembler are executed in seperate processes
+workflow _wFastqInterleavedSeperate {
+       take:
+         reads_table
+       main:
+         reads_table | splitCsv(sep: '\t', header: true) \
+          | map { it -> [ it.SAMPLE, it.READS ]} \
+          | pBBMapDeinterleave | pAssembly
+         pAssembly.out.fastp_summary | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"  ){ item ->
+           [ "fastp_summary.tsv", item[1].text  ]
+         }
+}
+
+
+/*
+ * Takes a tab separated file of files containing reads as input and produces assembly, 
+ * binning results and contamination, completeness and taxonomy reports for mags.
+ * Input file with columns seperated by tabs:
+ * Dataset_ID Left_Read Right_Read
+ *
+ * Left and right read could be https, s3 links or file path.
+ * 
+ */
+workflow wAssemblyFile {
+     take:
+       reads
+     main:
+       if(params.steps.assembly.interleaved){
+          if(params.steps.assembly.skip){
+            _wFastqInterleavedSkip(reads)
+          } else {
+            _wFastqInterleavedSeperate(reads)
+          }
+       }
+
+       if(!params.steps.assembly.interleaved){
+          if(params.steps.assembly.skip){
+           results = _wFastqSplitSkip(reads)
+          } else {
+           _wFastqSplitSeperate(reads)
+          }
+      }
+    emit:
+      contigs = results.contigs
+      processed_reads = results.processed_reads
+}

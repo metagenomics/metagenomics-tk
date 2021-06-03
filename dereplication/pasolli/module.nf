@@ -1,14 +1,14 @@
 nextflow.enable.dsl=2
 
-params.minimum_completeness = 50
-params.maximum_contamination = 5
-params.cutoff = 0.05
-params.pyani_parameters = "-m ANIb"
-params.representative_ani_cutoff = 0.95
-params.method = "ANI"
-params.buffer = 10
+params.steps.dereplication.minimumCompleteness = 50
+params.steps.dereplication.maximumContamination = 5
+params.steps.dereplication.cutoff = 0.05
+params.steps.dereplication.pyaniParameters = "-m ANIb"
+params.steps.dereplication.representativeAniCutoff = 0.95
+params.steps.dereplication.method = "ANI"
+params.steps.dereplication.buffer = 10
 
-process runMash {
+process pMash {
 
     container "quay.io/biocontainers/mash:${params.mash_tag}"
 
@@ -17,26 +17,73 @@ process runMash {
     label 'large'
 
     input:
-    path fof, stageAs: 'input*.txt' 
+    path bins, stageAs: 'input*.txt'
 
     output:
     tuple file('distance.tsv'), file('mapping.tsv')
 
     shell:
     '''
-    ls -1 input*.txt > input_list.txt
-    mash sketch -o reference -l input_list.txt
+    ls -1 input*.txt > list.txt
+    mash sketch -o reference -l list.txt
     mash dist -p !{task.cpus} reference.msh  reference.msh | cut -f 1,2,3 > distance.tsv
     for i in $(ls input*.txt); do echo "$i\t$(readlink -f $i)";  done > mapping.tsv
     '''
 }
 
-process renameMashDistances {
+
+process pMashSketch {
+
+    container "quay.io/biocontainers/mash:${params.mash_tag}"
+
+    errorStrategy 'retry'
+
+    label 'small'
+
+    input:
+    path bins, stageAs: 'input*.txt'
+
+    output:
+    path('reference.msh'), emit: sketch
+    path('mapping.tsv'), emit: mapping
+
+    shell:
+    '''
+    ls -1 input*.txt > list.txt
+    mash sketch -o reference -l list.txt
+    for i in $(ls input*.txt); do echo "$i\t$(readlink -f $i)";  done > mapping.tsv
+    '''
+}
+
+
+process pMashDist {
+
+    container "quay.io/biocontainers/mash:${params.mash_tag}"
+
+    errorStrategy 'retry'
+
+    label 'large'
+
+    input:
+    path sketches
+
+    output:
+    file('distances.tsv')
+
+    shell:
+    '''
+    mash paste final_sketch !{sketches}
+    mash dist -p !{task.cpus} final_sketch.msh final_sketch.msh | cut -f 1,2,3 > distances.tsv
+    '''
+}
+
+process pRenameMashDistances {
 
     errorStrategy 'retry'
 
     input:
-    tuple file('distances.tsv'), file('mapping.tsv') 
+    file('distances.tsv')
+    file('mapping.tsv') 
 
     output:
     file 'distances.mapped.tsv' 
@@ -48,7 +95,7 @@ process renameMashDistances {
     '''
 }
 
-process clusterDistances {
+process pClusterDistances {
 
     errorStrategy 'retry'
 
@@ -65,11 +112,11 @@ process clusterDistances {
     shell:
     '''
     mkdir out
-    cluster.py -i distances.tsv -c !{params.cutoff} -o out
+    cluster.py -i distances.tsv -c !{params.steps.dereplication.cutoff} -o out
     '''
 }
 
-process selectRepresentative {
+process pSelectRepresentative {
 
     errorStrategy 'retry'
 
@@ -92,7 +139,7 @@ process selectRepresentative {
 }
 
 
-process runANIb {
+process pANIb {
 
     errorStrategy 'retry'
 
@@ -105,7 +152,7 @@ process runANIb {
     container "leightonpritchard/average_nucleotide_identity:${params.ani_tag}"
 
     when:
-    params.method.contains("ANI")
+    params.steps.dereplication.method.contains("ANI")
 
     output:
     file("*.out/out.tsv") 
@@ -115,7 +162,7 @@ process runANIb {
 }
 
 
-process runTETRA {
+process pTETRA {
 
     errorStrategy 'retry'
 
@@ -131,13 +178,13 @@ process runTETRA {
     file("*.out/out.tsv") 
 
     when:
-    params.method.contains("TETRA")
+    params.steps.dereplication.method.contains("TETRA")
 
     shell:
     template 'tetra.sh'
 }
 
-process getCluster {
+process pGetCluster {
 
     errorStrategy 'retry'
 
@@ -160,12 +207,12 @@ process getCluster {
     '''
     mkdir out
     cat <(echo "GENOME_A\tGENOME_B\tANI")  <(sed 's/ /\t/g' !{ani_values}) > ani_values.tsv
-    get_final_cluster.py -i !{genomeAttributes} -c !{cluster} -r ani_values.tsv -o out  -a !{params.dereplication.representative_ani_cutoff}
+    get_final_cluster.py -i !{genomeAttributes} -c !{cluster} -r ani_values.tsv -o out  -a !{params.steps.dereplication.representativeAniCutoff}
     cp out/representatives.tsv final_clusters.tsv
     '''
 }
 
-process finalize {
+process pFinalize {
 
     errorStrategy 'retry'
 
@@ -184,38 +231,43 @@ process finalize {
     '''
 }
 
-workflow dereplicate_file {
+workflow wDereplicateFile {
    take:
      genomes_table_file    
    main:
-//     if( !params.output || !params.genomes_table) error "Please provide --genomes_table and --output parameters"
-     genomes_table_file | dereplicate
-     
+     genomes_table_file | _wDereplicate
 }
 
 
-workflow dereplicate_list {
+workflow wDereplicateList {
    take:
-     genomes_list    
+     genomes_list 
    main:
-     genomes_list | map( it ->  "BIN_ID\tCOMPLETENESS\tCOVERAGE\tCONTAMINATION\tHETEROGENEITY\tPATH\tN50\n${it['BIN_ID']}\t${it['COMPLETENESS']}\t${it['COVERAGE']}\t${it['CONTAMINATION']}\t${it['HETEROGENEITY']}\t${it['PATH']}\t${it['N50']}\n" ) | collectFile(newLine: false, keepHeader: true) | dereplicate 
+    genomes_list | map( it -> "${it['BIN_ID']}\t${it['COMPLETENESS']}\t${it['COVERAGE']}\t${it['CONTAMINATION']}\t${it['HETEROGENEITY']}\t${it['PATH']}\t${it['N50']}" ) \
+       | collectFile(seed: "BIN_ID\tCOMPLETENESS\tCOVERAGE\tCONTAMINATION\tHETEROGENEITY\tPATH\tN50", newLine: true, keepHeader: false) \
+       | _wDereplicate
    emit:
-     dereplicate.out
+     _wDereplicate.out
 }
 
 
-workflow dereplicate {
+workflow _wDereplicate {
    take:
      genomes_table_file
    main:
      genomes_table_file | splitCsv(sep: '\t', header: true)  \
-       | filter({ it.COMPLETENESS.toFloat() >= params.dereplication.minimum_completeness }) \
-       | filter({ it.CONTAMINATION.toFloat() <= params.dereplication.maximum_contamination }) \
+       | filter({ it.COMPLETENESS.toFloat() >= params.steps.dereplication.minimumCompleteness }) \
+       | filter({ it.CONTAMINATION.toFloat() <= params.steps.dereplication.maximumContamination }) \
        | map { it -> it.PATH } | collect | set {mags} 
 
-     mags | runMash | renameMashDistances | clusterDistances | set { clusters }
+     MASH_BUFFER = 5000
+     mags | flatten | buffer(size: 5000, remainder: true) | pMashSketch 
+     pMashSketch.out.mapping | collectFile(name: 'mapping.txt', newLine: true, skip:0) | set { mappings }
+     pMashSketch.out.sketch | collect | pMashDist | set { distances } 
+     
+     pRenameMashDistances(distances, mappings) | pClusterDistances | set { clusters }
 
-     selectRepresentative(genomes_table_file, clusters) | set { representatives }
+     pSelectRepresentative(genomes_table_file, clusters) | set { representatives }
 
      representatives.representatives | splitCsv(sep: '\t') | ifEmpty('DONE') | branch { finalize: it=='DONE' 
          other: it!='DONE' } | set { representativesToCompareC }
@@ -225,22 +277,22 @@ workflow dereplicate {
         mag2: mags[1]
      } |  set { result }
 
-     result.mag1 | map(it -> file(it)) | buffer(size: params.buffer, remainder: true) | set { mag1 }
-     result.mag2 | map(it -> file(it)) | buffer(size: params.buffer, remainder: true) | set { mag2 }
+     result.mag1 | map(it -> file(it)) | buffer(size: params.steps.dereplication.buffer, remainder: true) | set { mag1 }
+     result.mag2 | map(it -> file(it)) | buffer(size: params.steps.dereplication.buffer, remainder: true) | set { mag2 }
 
-     runANIb(mag1, mag2)
-     runTETRA(mag1, mag2)
+     pANIb(mag1, mag2)
+     pTETRA(mag1, mag2)
 
-     runANIb.out | mix(runTETRA.out) \
+     pANIb.out | mix(pTETRA.out) \
        | collectFile(newLine: true) | set { all_ani }
 
-     getCluster(representatives.clusters, all_ani, genomes_table_file)
-     finalize(representativesToCompareC.finalize, representatives.clusters)
+     pGetCluster(representatives.clusters, all_ani, genomes_table_file)
+     pFinalize(representativesToCompareC.finalize, representatives.clusters)
    
-     getCluster.out.final_clusters | splitCsv(sep: '\t', header: true) \
+     pGetCluster.out.final_clusters | splitCsv(sep: '\t', header: true) \
        | filter({ it.REPRESENTATIVE.toFloat() == 1 }) | map { it -> it['GENOME'] } | collectFile(newLine: true) | set { representatives_cluster }
 
-     finalize.out | splitCsv(sep: '\t', header: true) \
+     pFinalize.out | splitCsv(sep: '\t', header: true) \
        | filter({ it.REPRESENTATIVE.toFloat() == 1 }) | map { it -> it['GENOME'] } | collectFile(newLine: true) | set { representatives_finalize }
 
      representatives_cluster | mix(representatives_finalize) | set{representatives}
@@ -248,9 +300,4 @@ workflow dereplicate {
 
   emit:
      representatives
-}
-
-
-workflow {
-   dereplicate_file(Channel.value(file(params.genomes_table)))
 }

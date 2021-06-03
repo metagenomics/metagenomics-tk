@@ -39,5 +39,4 @@ test/reads: test_clean
 	- echo "test2\t${small_read1}\t${small_read2}" >> ${reads_split_test}
 
 run_small_full_test: init_test
-	- echo "${WORK_DIR}"
-	- ./nextflow run main.nf -work-dir ${WORK_DIR} -profile ${PROFILE} -resume -entry run_pipeline -params-file ${full_run} 
+	- ./nextflow run main.nf -work-dir ${WORK_DIR} -profile ${PROFILE} -resume -entry wPipeline -params-file ${full_run} 
