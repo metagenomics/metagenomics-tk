@@ -128,7 +128,7 @@ process pGetReads {
 
     //container 'biocontainers/samtools:v1.7.0_cv4'
 
-    publishDir "${params.output}/${sample}/reads/bins/" 
+   // publishDir "${params.output}/${sample}/reads/bins/" 
 
     tag "$sample"
 
@@ -170,7 +170,8 @@ def bufferMetabatSamtools(metabat){
   return chunkList;
 }
 
-def bufferBins(binning){
+
+def flattenBins(binning){
   def chunkList = [];
   binning[2].each {
      chunkList.add([binning[0],binning[1], it]);
@@ -178,12 +179,13 @@ def bufferBins(binning){
   return chunkList;
 }
 
+
 workflow wMagAttributes {
    take: 
      bins
      bam
    main:
-     bins | flatMap({n -> bufferBins(n)}) | set {binList}
+     bins | flatMap({n -> flattenBins(n)}) | set {binList}
      binList | groupTuple(by: [0,1], size: params.steps.magAttributes.checkm.buffer, remainder: true) \
         | pCheckM  | set{ checkm }
 
