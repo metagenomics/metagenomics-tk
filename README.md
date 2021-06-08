@@ -65,6 +65,8 @@ You can run the pipeline by specifying the environment:
 
 1. Process names should start `p`
 
+2. Processes should contain as input and output the sample id and/or the bin, contig id.
+
 ## Other
 
 1. Magic numbers hould not be used.
