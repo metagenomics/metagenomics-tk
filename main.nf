@@ -7,6 +7,8 @@ include { wMagAttributes } from './magAttributes/module.nf'
 include { wDereplicateFile; wDereplicateList } from './dereplication/pasolli/module'
 include { wReadMappingBwa } from './readMapping/bwa/module'
 include { wAnalyseMetabolites } from './metabolomics/module'
+include { wUnmappedReadsList; wUnmappedReadsFile } from './sampleAnalysis/module'
+include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './fragmentRecruitment/frhit/module'
 
 
 def mapJoin(channel_a, channel_b, key){
@@ -36,6 +38,15 @@ workflow mags_generation {
 //    mags_generation_file(Channel.fromPath(params.input))
 }
 
+workflow wUnmappedReads {
+     wUnmappedReadsFile(Channel.fromPath(params?.steps?.sampleAnalysis?.reads), Channel.fromPath(params?.steps?.sampleAnalysis?.bins))
+}
+
+
+workflow wFragmentRecruitment {
+     wFragmentRecruitmentFile(Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.samples), Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
+}
+
 
 /*
 * 
@@ -48,7 +59,8 @@ workflow mags_generation {
 * Left and right read could be https, s3 links or file path. 
 */
 workflow wPipeline {
-    file(params.tempdir).mkdirs()
+    representativeGenomesTempDir = params.tempdir + "/representativeGenomes"
+    file(representativeGenomesTempDir).mkdirs()
 
     wAssemblyFile(Channel.fromPath(params.input))
 
@@ -59,6 +71,9 @@ workflow wPipeline {
 
     wBinning(wAssemblyFile.out.contigs, wAssemblyFile.out.processed_reads)
 
+    wUnmappedReads(wAssemblyFile.out.processed_reads, wBinning.out.bins)
+    _wFragmentRecruitment(wUnmappedReads.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
+
     wMagAttributes(wBinning.out.bins, wBinning.out.mapping)
     mapJoin(wMagAttributes.out.bins_info, wBinning.out.bins_stats, "BIN_ID") | set { binsStats  }
 
@@ -68,7 +83,7 @@ workflow wPipeline {
     REPRESENTATIVES_PATH_IDX = 0
     representativesList | splitCsv(sep: '\t') \
        |  map { it -> file(it[REPRESENTATIVES_PATH_IDX]) } \
-       | collectFile(tempDir: file(params.tempdir)){ item -> [ "representatives.fasta", item.text ] } \
+       | collectFile(tempDir: representativeGenomesTempDir){ item -> [ "representatives.fasta", item.text ] } \
        | set { representativesFasta }  
 
     wReadMappingBwa(Channel.from('1'), representativesFasta, samples, representativesList)
