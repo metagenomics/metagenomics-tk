@@ -1,0 +1,6 @@
+tempdir: "tmp"
+output: "/vol/spool/meta/out_pipeline"
+steps:
+  sampleAnalysis:
+    reads: "/vol/spool/meta/test/sampleAnalysis/samples.tsv"
+    bins: "/vol/spool/meta/test/sampleAnalysis/bins.tsv"

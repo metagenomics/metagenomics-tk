@@ -9,13 +9,18 @@ steps:
     megahit:
   binning:
     metabat:
+  sampleAnalysis:
   magAttributes:
     gtdb:
-      buffer: 100
+      buffer: 1000
       database: "/vol/spool/gtdb/release95"
     checkm:
       database: "/vol/spool/checkm/"
-      buffer: 100
+      buffer: 200
+  fragmentRecruitment:
+    frhit:
+      genomes: "/vol/spool/meta/test/data/bin.*.fa"
+      sort: true
   dereplication:
     representativeAniCutoff: 0.95
     minimumCompleteness: 0
@@ -25,4 +30,4 @@ steps:
     smetana:
       - detailed
       - global
-  ReadMapping:
+  readMapping:
