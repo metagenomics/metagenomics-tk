@@ -10,7 +10,7 @@ params.shuffle = 400
 
 process pBwaIndex {
     conda 'bioconda::bwa=0.7.17'
-    container 'quay.io/biocontainers/bwa:!{params.bwa_tag}'
+    container "quay.io/biocontainers/bwa:${params.bwa_tag}"
     label 'large'
     when params.steps.containsKey("readMapping")
     input:
@@ -26,7 +26,7 @@ process pBwaIndex {
 process pMapBwa {
     label 'large'
     conda 'bioconda::bwa=0.7.17'
-    container 'pbelmann/bwa-samtools:!{params.samtools_bwa_tag}'
+    container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
     when params.steps.containsKey("readMapping")
     publishDir "${params.output}/${bin_shuffle_id}/bwa"
     input:
@@ -40,7 +40,7 @@ process pMapBwa {
 process pMapBwaCami {
     label 'large'
     conda 'bioconda::bwa=0.7.17'
-    container 'pbelmann/bwa-samtools:!{params.samtools_bwa_tag}'
+    container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
     publishDir "${params.output}/${sample}/bwa"
     input:
       tuple path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
