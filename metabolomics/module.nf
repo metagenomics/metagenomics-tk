@@ -112,7 +112,7 @@ process pAnalyse {
     label 'tiny'
     tag "$sample $id"
 
-    publishDir "${params.output}/${sample}/gsmm_tsv/"
+    publishDir "${params.output}/${sample}/gsmmTsv/"
 
     input:
       tuple val(sample), val(id), path(mag_json)  
@@ -132,7 +132,7 @@ process pAnalyse {
 process pBuildJson {
     tag "$sample $id"
     label 'tiny'
-    publishDir "${params.output}/${sample}/gsmm_json"
+    publishDir "${params.output}/${sample}/gsmmJson"
     errorStrategy 'retry'
     input:
       tuple val(sample), val(id), path(mag_xml)
