@@ -57,7 +57,7 @@ You can run the pipeline by specifying the environment:
 
 1. Worfklow names that can not be used directly and are just meant for internal use should start with an underscore.
 
-2. Every Workflow should contain a short description of the functionality. 
+2. At least every workflow that can be used by other external workflows should contain a short description of the functionality. 
 
 3. Workflow names must start with `w`. 
 
