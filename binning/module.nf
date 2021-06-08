@@ -1,5 +1,6 @@
 nextflow.enable.dsl=2
 params.maxbin = false
+params.pBowtieMode = "mapping_reads"
 
 
 process pGetMappingQuality {
@@ -8,7 +9,7 @@ process pGetMappingQuality {
 
     tag "$sample"
 
-    publishDir "${params.output}/${sample}/mapping/bowtie/"
+    publishDir "${params.output}/${sample}/contigMapping/bowtie/"
 
     errorStrategy 'retry'
 
@@ -27,7 +28,6 @@ process pGetMappingQuality {
 }
 
 
-
 process pBowtie {
 
     container "pbelmann/bowtie2:${params.bowtie_tag}"
@@ -36,7 +36,7 @@ process pBowtie {
 
     tag "$sample"
 
-    publishDir "${params.output}/${sample}/mapping/bowtie/${params.bowtie_tag}" 
+    publishDir "${params.output}/${sample}/contigMapping/bowtie/${params.bowtie_tag}" 
 
     errorStrategy 'retry'
 
@@ -46,13 +46,14 @@ process pBowtie {
     tuple val(sample), val(TYPE), path(contigs), path(fastqs, stageAs: 'fastq.fq.gz')
 
     output:
-    tuple val("${sample}"), val("${TYPE}"), file("${TYPE}_${sample}.bam"), emit: bam
+    tuple val("${sample}"), val("${TYPE}"), file("${TYPE}_${sample}.bam"), optional: true, emit: mappedReads
+    tuple val("${sample}"), val("${TYPE}"), file("${sample}_bowtie_stats.txt"), optional: true, emit: stats
 
     shell:
     '''
     INDEX=!{sample}.index
     bowtie2-build --threads 28 --quiet !{contigs} $INDEX 
-    bowtie2 -p 28 --quiet --very-sensitive -x $INDEX --interleaved fastq.fq.gz | samtools view -F 3584 --threads 28 -bS - | samtools sort -l 9 --threads 28 - > !{TYPE}_!{sample}.bam
+    bowtie2 -p !{task.cpus}  --quiet --very-sensitive -x $INDEX --interleaved fastq.fq.gz 2> !{sample}_bowtie_stats.txt | samtools view -F 3584 --threads 28 -bS - | samtools sort -l 9 --threads 28 - > !{TYPE}_!{sample}.bam
     '''
 }
 
@@ -137,8 +138,8 @@ workflow wBinning {
      contigs
      input_reads
    main:
-     contigs | join(input_reads | mix(input_reads), by: 0) | pBowtie | set { bam }
-     bam | pGetMappingQuality 
+     contigs | join(input_reads | mix(input_reads), by: 0) | pBowtie
+     pBowtie.out.mappedReads | pGetMappingQuality 
      
      pGetMappingQuality.out.flagstat_passed | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "flagstat_passed.tsv", item[2].text  ]
@@ -148,7 +149,7 @@ workflow wBinning {
        [ "flagstat_failed.tsv", item[2].text  ]
      }
 
-     contigs | join(bam, by: [0, 1]) | pMetabat | set { metabat }
+     contigs | join(pBowtie.out.mappedReads, by: [0, 1]) | pMetabat | set { metabat }
      contigs | join(input_reads | mix(input_reads), by: 0) | pMaxBin | set { maxbin }
 
      metabat.bins | map({ it -> it[2] = aslist(it[2]); it  }) | set{ bins_list }
@@ -165,7 +166,7 @@ workflow wBinning {
    emit:
      bins_stats = bins_stats
      bins = bins_list
-     mapping = bam
+     mapping = pBowtie.out.mappedReads
 }
 
 
