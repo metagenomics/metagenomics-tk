@@ -1,12 +1,12 @@
 nextflow.enable.dsl=2
 
-params.steps.dereplication.minimumCompleteness = 50
-params.steps.dereplication.maximumContamination = 5
-params.steps.dereplication.cutoff = 0.05
-params.steps.dereplication.pyaniParameters = "-m ANIb"
-params.steps.dereplication.representativeAniCutoff = 0.95
-params.steps.dereplication.method = "ANI"
-params.steps.dereplication.buffer = 10
+params?.steps?.dereplication?.minimumCompleteness = 50
+params?.steps?.dereplication?.maximumContamination = 5
+params?.steps?.dereplication?.cutoff = 0.05
+params?.steps?.dereplication?.pyaniParameters = "-m ANIb"
+params?.steps?.dereplication?.representativeAniCutoff = 0.95
+params?.steps?.dereplication?.method = "ANI"
+params?.steps?.dereplication?.buffer = 10
 
 process pMash {
 
