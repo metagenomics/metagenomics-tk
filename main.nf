@@ -71,8 +71,8 @@ workflow wPipeline {
 
     wBinning(wAssemblyFile.out.contigs, wAssemblyFile.out.processed_reads)
 
-    wUnmappedReads(wAssemblyFile.out.processed_reads, wBinning.out.bins)
-    _wFragmentRecruitment(wUnmappedReads.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
+    wUnmappedReadsList(wAssemblyFile.out.processed_reads, wBinning.out.bins)
+    wFragmentRecruitmentList(wUnmappedReadsList.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
 
     wMagAttributes(wBinning.out.bins, wBinning.out.mapping)
     mapJoin(wMagAttributes.out.bins_info, wBinning.out.bins_stats, "BIN_ID") | set { binsStats  }
