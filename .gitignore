@@ -11,3 +11,4 @@ out
 *camiClient.jar*
 test/data
 bin/__pycache__
+work_*
