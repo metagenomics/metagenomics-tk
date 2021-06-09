@@ -14,7 +14,7 @@ process pFrHit {
 
     publishDir "${params.output}/${sample}/fragmentRecruitment"
 
-//    container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
+    container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
 
     when params.steps.containsKey("fragmentRecruitment")
 
@@ -36,7 +36,7 @@ process pFrHit {
     fr-hit -c 95 -f 1 -m ${HALF_AVG_LEN} -T !{task.cpus} -a reads.fasta -d !{genomesCombined} -o coverage/out.psl
     if [ -s "coverage/out.psl" ] 
     then
-      psl2sam.pl out.psl | samtools view -bT !{genomesCombined} - | samtools calmd -E - genomes | samtools sort > !{sample}.bam 2> /dev/null
+      psl2sam.pl coverage/out.psl | samtools view -bT !{genomesCombined} - | samtools calmd -E - genomes | samtools sort > !{sample}.bam 2> /dev/null
       coverm genome -t !{task.cpus} --min-covered-fraction 0 -b !{sample}.bam --genome-fasta-list !{genomesList} --methods count --output-file coverage/readCount.tsv
       coverm genome -t !{task.cpus} --min-covered-fraction 0 -b !{sample}.bam --genome-fasta-list !{genomesList} --methods covered_fraction --output-file coverage/coveredFraction.tsv
       coverm genome -t !{task.cpus} --min-covered-fraction 0 -b !{sample}.bam --genome-fasta-list !{genomesList} --methods covered_bases --output-file coverage/coveredBases.tsv
@@ -58,11 +58,11 @@ process pUnzip {
   file x
 
   output:
-  file out
+  file("${x.baseName}")
 
   script:
   """
-  < $x zcat > out
+  < $x zcat > ${x.baseName}
   """
 }
 
@@ -90,7 +90,7 @@ process pCombinedAlignmentAnalysis {
     shell:
     '''
     mkdir coverage
-    samtools merge --reference !{genomesCombined} -@ !{task.cpus} combined_alignments.bam !{alignments}
+    samtools merge -@ !{task.cpus} combined_alignments.bam !{alignments}
     coverm genome -t !{task.cpus} --min-covered-fraction 0 -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods count --output-file coverage/readCount.tsv
     coverm genome -t !{task.cpus} --min-covered-fraction 0 -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods covered_fraction --output-file coverage/coveredFraction.tsv
     coverm genome -t !{task.cpus} --min-covered-fraction 0 -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods covered_bases --output-file coverage/coveredBases.tsv
@@ -135,10 +135,13 @@ workflow _wFragmentRecruitment {
      fragmentRecruitmentGenomes = params.tempdir + "/fragmentRecruitmentGenomes"
      file(fragmentRecruitmentGenomes).mkdirs()
 
-     genomes | collectFile(newLine: true){genome -> ["genomes_list", file(genome).path]} | set { genomesList } 
      genomes | branch { compressed: file(it).name.endsWith(".gz"); uncompressed: !file(it).name.endsWith(".gz") } | set { fileState }
      
-     fileState.uncompressed | mix(fileState.compressed | pUnzip) | collectFile(tempDir: fragmentRecruitmentGenomes, sort: params?.steps?.fragmentRecruitment?.frhit?.sort){ genome -> ["genomes",genome.text] } \
+     fileState.compressed | pUnzip | set{unzippedGenomes}
+     fileState.uncompressed | mix(unzippedGenomes) | collectFile(newLine: true){genome -> ["genomes_list", file(genome).path]} | set { genomesList } 
+
+     fileState.uncompressed | mix(unzippedGenomes) \
+       | collectFile(tempDir: fragmentRecruitmentGenomes, sort: params?.steps?.fragmentRecruitment?.frhit?.sort){ genome -> ["genomes",genome.text] } \
        | combine(genomesList) | set { genomesCombined }
 
      SAMPLE_NAME_IDX = 0
