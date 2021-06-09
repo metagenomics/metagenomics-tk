@@ -36,7 +36,7 @@ process pFrHit {
     fr-hit -c 95 -f 1 -m ${HALF_AVG_LEN} -T !{task.cpus} -a reads.fasta -d !{genomesCombined} -o coverage/out.psl
     if [ -s "coverage/out.psl" ] 
     then
-      psl2sam.pl coverage/out.psl | samtools view -bT !{genomesCombined} - | samtools calmd -E - genomes | samtools sort > !{sample}.bam 2> /dev/null
+      psl2sam.pl coverage/out.psl | samtools view -bT !{genomesCombined} - | samtools calmd -E - genomes | samtools view -Sb - | samtools sort -o - out > !{sample}.bam 2> /dev/null
       coverm genome -t !{task.cpus} --min-covered-fraction 0 -b !{sample}.bam --genome-fasta-list !{genomesList} --methods count --output-file coverage/readCount.tsv
       coverm genome -t !{task.cpus} --min-covered-fraction 0 -b !{sample}.bam --genome-fasta-list !{genomesList} --methods covered_fraction --output-file coverage/coveredFraction.tsv
       coverm genome -t !{task.cpus} --min-covered-fraction 0 -b !{sample}.bam --genome-fasta-list !{genomesList} --methods covered_bases --output-file coverage/coveredBases.tsv
