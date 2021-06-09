@@ -12,3 +12,4 @@ out
 test/data
 bin/__pycache__
 work_*
+test/reads
