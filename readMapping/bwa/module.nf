@@ -8,10 +8,11 @@ params.number_samples = 20
 params.all_representatives = "/raid/CAMI/CAMI_MOUSEGUT/readmapping/workflow_all_reads/representatives.tsv" 
 params.shuffle = 400
 
-process bwa_index {
-    conda ' bioconda::bwa=0.7.17'
+process pBwaIndex {
+    conda 'bioconda::bwa=0.7.17'
+    container "quay.io/biocontainers/bwa:${params.bwa_tag}"
     label 'large'
-    when params.containsKey("read_mapping")
+    when params.steps.containsKey("readMapping")
     input:
       tuple val(id), path(representatives)
     output:
@@ -22,22 +23,24 @@ process bwa_index {
       """
 }
 
-process map_bwa {
+process pMapBwa {
     label 'large'
     conda 'bioconda::bwa=0.7.17'
-    when params.containsKey("read_mapping")
-    publishDir "${params.output}/${sample}/bwa"
+    container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
+    when params.steps.containsKey("readMapping")
+    publishDir "${params.output}/${bin_shuffle_id}/bwa"
     input:
       tuple path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
     output:
-      tuple val("${ID}"), val(bin_shuffle_id), path("*bam.sorted"), path("*bam.sorted.bai")
+      tuple val("${ID}"), val(bin_shuffle_id), path("*bam"), path("*bam.bai")
     shell:
     template('bwa.sh')
 }
 
-process map_bwa_cami {
+process pMapBwaCami {
     label 'large'
     conda 'bioconda::bwa=0.7.17'
+    container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
     publishDir "${params.output}/${sample}/bwa"
     input:
       tuple path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
@@ -47,9 +50,9 @@ process map_bwa_cami {
     template('bwa.sh')
 }
 
-process bwa_count {
+process pBwaCount {
     label 'tiny'
-    publishDir "${params.output}/${sample}/count"
+    publishDir "${params.output}/${sample}/coverm"
     input:
       tuple val(ID), path(sample), path(mapping)
     output:
@@ -58,8 +61,8 @@ process bwa_count {
     template('count.sh')
 }
 
-process coverm_count {
-    when params.containsKey("read_mapping")
+process pCovermCount {
+    when params.steps.containsKey("readMapping")
     label 'small'
     publishDir "${params.output}/${sample}/count"
     input:
@@ -70,7 +73,7 @@ process coverm_count {
     template('coverm.sh')
 }
 
-process shuff {
+process pShuff {
     publishDir params.output + "/sample"
     label 'tiny'
     input:
@@ -84,7 +87,7 @@ process shuff {
     '''
 }
 
-process create_mapping {
+process pCreateMapping {
     publishDir params.output + "/mapping"
     label 'tiny'
     input:
@@ -99,7 +102,7 @@ process create_mapping {
     '''
 }
 
-workflow create_samples {
+workflow pCreateSamples {
    main:
      shuff(Channel.value(params.all_representatives), 1..params.number_samples)
      create_mapping(shuff.out.tsv)
@@ -109,7 +112,7 @@ workflow create_samples {
 }
 
 
-workflow bwa_multiple {
+workflow wBwaMultiple {
     take:
       representatives_file
       samples
@@ -117,17 +120,16 @@ workflow bwa_multiple {
     main:
       samples \
        | splitCsv(sep: '\t', header: true) | set {samples_split}
-      representatives_file | bwa_index | combine(samples_split) \
+      representatives_file | pBwaIndex | combine(samples_split) \
        | combine(representatives_file, by: 0) \
        | map{ it -> [it[2].READS, it[2].SAMPLE, it[0], it[3], it[1]] } \
-       | view() \
        | set { index }
-      map_bwa_cami(index) | set { sam_gz  }
-      sam_gz | combine(mapping, by: 0) | map { it -> it[(1..3)] } | bwa_count
+      pMapBwaCami(index) | set { sam_gz  }
+      sam_gz | combine(mapping, by: 0) | map { it -> it[(1..3)] } | pBwaCount
 
 }
 
-workflow bwa {
+workflow wReadMappingBwa {
    take: 
      id
      representatives
@@ -135,15 +137,15 @@ workflow bwa {
      list_of_representatives
    main:
      samples | splitCsv(sep: '\t', header: true) | set {samples_split}
-     id | combine(representatives) | bwa_index | combine(samples_split) \
+     id | combine(representatives) | pBwaIndex | combine(samples_split) \
       | combine(representatives) \
       | map{ it -> [it[2].READS, it[2].SAMPLE, it[0], it[3], it[1]] } \
       | set {index}
-     map_bwa(index) | combine(list_of_representatives) | view() | coverm_count
+     pMapBwa(index) | combine(list_of_representatives) | pCovermCount
 
 }
 
 workflow {
-   create_samples() 
-   bwa_multiple(create_samples.out.bin_sample_mapping_fa, channel.fromPath(params.samples), create_samples.out.bin_sample_mapping_tsv)
+   wCreateSamples() 
+   wBwaMultiple(wCreateSamples.out.bin_sample_mapping_fa, channel.fromPath(params.samples), create_samples.out.bin_sample_mapping_tsv)
 }

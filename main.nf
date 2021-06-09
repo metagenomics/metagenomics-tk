@@ -1,47 +1,92 @@
 nextflow.enable.dsl=2
 
-//readmapping
-params.mapping_samples
-params.list_of_representatives
 
-include { analyse_metabolites } from './metabolomics/module'
-include { bwa } from './read_mapping/bwa/module'
-include { assembly_binning_input } from './assembly_binning/module'
-include { dereplicate_file; dereplicate_list } from './dereplication/pasolli/module'
+include { wAssemblyFile } from './assembly/module'
+include { wBinning } from './binning/module.nf'
+include { wMagAttributes } from './magAttributes/module.nf'
+include { wDereplicateFile; wDereplicateList } from './dereplication/pasolli/module'
+include { wReadMappingBwa } from './readMapping/bwa/module'
+include { wAnalyseMetabolites } from './metabolomics/module'
+include { wUnmappedReadsList; wUnmappedReadsFile } from './sampleAnalysis/module'
+include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './fragmentRecruitment/frhit/module'
+
+
+def mapJoin(channel_a, channel_b, key){
+    channel_a \
+        | map{ it -> [it[key], it] } \
+        | cross(channel_b | map{it -> [it[key], it]}) \
+        | map { it[0][1] + it[1][1] }
+}
+
 
 workflow {
-    analyse_metabolites(params.input)
+//   analyse_metabolites(params.input)
 }
+
 
 workflow run_dereplication {
-    dereplicate_file(Channel.from(file(params.input)))
+//   dereplicate_file(Channel.from(file(params.input)))
 }
+
 
 workflow run_bwa {
-    bwa(Channel.from('1'), Channel.from(params.input), Channel.fromPath(params.mapping_samples),Channel.fromPath(params.list_of_representatives))
+//    bwa(Channel.from('1'), Channel.from(params.input), Channel.fromPath(params.mapping_samples),Channel.fromPath(params.list_of_representatives))
 }
 
-workflow run_assembly_binning {
-    assembly_binning_input(Channel.fromPath(params.input))
+
+workflow mags_generation {
+//    mags_generation_file(Channel.fromPath(params.input))
 }
 
-workflow run_pipeline {
-    assembly_binning_input(Channel.fromPath(params.input))
+workflow wUnmappedReads {
+     wUnmappedReadsFile(Channel.fromPath(params?.steps?.sampleAnalysis?.reads), Channel.fromPath(params?.steps?.sampleAnalysis?.bins))
+}
 
-    assembly_binning_input.out.processed_reads \
+
+workflow wFragmentRecruitment {
+     wFragmentRecruitmentFile(Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.samples), Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
+}
+
+
+/*
+* 
+* Main workflow entrypoint. Takes list of files containing reads as input and produces assembly, binning, dereplication and metabolomics 
+* results depending on the specification of the input.yml.
+* 
+* Input file with columns seperated by tabs: 
+* Dataset_ID Left_Read Right_Read
+*
+* Left and right read could be https, s3 links or file path. 
+*/
+workflow wPipeline {
+    representativeGenomesTempDir = params.tempdir + "/representativeGenomes"
+    file(representativeGenomesTempDir).mkdirs()
+
+    wAssemblyFile(Channel.fromPath(params.input))
+
+    wAssemblyFile.out.processed_reads \
         | map { it -> "${it[0]}\t${it[1]}" } \
         | collectFile(seed: "SAMPLE\tREADS", name: 'test.txt', newLine: true) \
         | set { samples }
 
-    dereplicate_list(assembly_binning_input.out.bins)
-    representatives_list = dereplicate_list.out
-    representatives_list | splitCsv(sep: '\t') \
-       |  map { it -> file(it[0]) } | collectFile(){ item -> [ "representatives.fasta", item.text ] } | set { representatives_fasta }  
+    wBinning(wAssemblyFile.out.contigs, wAssemblyFile.out.processed_reads)
 
-    bwa(Channel.from('1'), representatives_fasta, samples, representatives_list)
+    wUnmappedReadsList(wAssemblyFile.out.processed_reads, wBinning.out.bins)
+    wFragmentRecruitmentList(wUnmappedReadsList.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
 
-    assembly_binning_input.out.bins | map { it -> "${it.BIN_ID}\t${it.PATH}\t${it.SAMPLE}" } \
-       | collectFile(newLine: true, seed: "BIN_ID\tPATH\tSAMPLE") | set { bin_attributes}
+    wMagAttributes(wBinning.out.bins, wBinning.out.mapping)
+    mapJoin(wMagAttributes.out.bins_info, wBinning.out.bins_stats, "BIN_ID") | set { binsStats  }
 
-    assembly_binning_input.out.bins | analyse_metabolites
+    wDereplicateList(binsStats)
+    representativesList = wDereplicateList.out
+
+    REPRESENTATIVES_PATH_IDX = 0
+    representativesList | splitCsv(sep: '\t') \
+       |  map { it -> file(it[REPRESENTATIVES_PATH_IDX]) } \
+       | collectFile(tempDir: representativeGenomesTempDir){ item -> [ "representatives.fasta", item.text ] } \
+       | set { representativesFasta }  
+
+    wReadMappingBwa(Channel.from('1'), representativesFasta, samples, representativesList)
+
+    binsStats | wAnalyseMetabolites
 }

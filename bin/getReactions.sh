@@ -1,1 +1,1 @@
-cat $1 | jq '.|.reactions[] |.name ' | sort
+zcat $1 | jq '.|.reactions[] |.name ' | sort

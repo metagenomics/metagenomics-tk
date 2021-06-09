@@ -1,22 +1,33 @@
-mode:
-  interleaved: false
-  skip: true
+tempdir: "tmp"
 environment: "/vol/spool/conda/anaconda3/envs/metabolic"
-input: "/vol/spool/meta/test/test_samples_split.tsv"
-output: "/vol/spool/meta/out_pipeline"
-assembly: "megahit"
-binning: "metabat"
-postprocessing:
-  gtdb:
-    buffer: 100
-    database: "/vol/spool/gtdb/release95"
-  checkm:
-    database: "/vol/spool/checkm/"
-    buffer: 100
-dereplication:
-  representative_ani_cutoff: 0.95
-  minimum_completeness: 0
-  maximum_contamination: 5000
-  pyani_parameters: '-m ANIb'
-metabolomics:
-read_mapping:
+input: "test/reads/small/reads_split.tsv"
+output: "output"
+steps:
+  assembly:
+    interleaved: false
+    skip: true
+    megahit:
+  binning:
+    metabat:
+  sampleAnalysis:
+  magAttributes:
+    gtdb:
+      buffer: 1000
+      database: "/vol/spool/gtdb/release95"
+    checkm:
+      database: "/vol/spool/checkm/"
+      buffer: 200
+  fragmentRecruitment:
+    frhit:
+      genomes: "/vol/spool/meta/test/data/bin.*.fa"
+      sort: true
+  dereplication:
+    representativeAniCutoff: 0.95
+    minimumCompleteness: 0
+    maximumContamination: 5000
+    pyaniParameters: '-m ANIb'
+    #  metabolomics:
+    #    smetana:
+    #      - detailed
+    #      - global
+  readMapping:

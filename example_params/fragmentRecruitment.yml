@@ -1,0 +1,9 @@
+tempdir: "tmp"
+environment: "/vol/spool/conda/anaconda3/envs/metabolic"
+output: "/vol/spool/meta/out_pipeline"
+steps:
+  fragmentRecruitment:
+    frhit:
+      genomes: "/vol/spool/meta/test/data/bin.*.fa.gz"
+      samples: "/vol/spool/meta/test/sampleAnalysis/samples.tsv"
+      sort: true

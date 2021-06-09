@@ -1,30 +1,25 @@
 nextflow.enable.dsl=2
 
-//params.output="out"
-//params.input="/raid/simba/representatives_ids_dataset.tsv"
-params.input="/raid/simba/bins_path_id_checkm_fixed_n50_fakedcoverage_final_checkm_filtered_id_dataset.tsv"
-params.smetana_detailed=false
-
-process carve {
+process pCarveMe {
 
     label 'tiny'
     tag "$sample $id"
     time '10h'
-    when params.containsKey("metabolomics")
+    when params.steps.containsKey("metabolomics")
 
     errorStrategy 'ignore'
     publishDir "${params.output}/${sample}/carveme"
     input:
       tuple val(sample), val(id), path(mag_faa)
     output:
-      tuple val("${sample}"), val("${id}"), path("${id}.xml"), emit: model
+      tuple val("${sample}"), val("${id}"), path("${id}.xml.gz"), emit: model
     shell:
     '''
-    carve !{mag_faa} -o !{id}.xml
+    carve !{mag_faa} -o !{id}.xml.gz
     '''
 }
 
-process memote {
+process pMemote {
     label 'tiny'
 
     errorStrategy 'ignore'
@@ -61,7 +56,7 @@ process memote {
     '''
 }
 
-process smetana_detailed {
+process pSmetanaDetailed {
 
     label 'large'
 
@@ -71,7 +66,7 @@ process smetana_detailed {
 
     publishDir "${params.output}/${sample}/smetana/detailed/"
 
-    when params.smetana_detailed
+    when params?.steps?.metabolomics?.smetana?.contains("detailed")
 
     input:
       tuple val(sample), path(xmls) 
@@ -85,11 +80,12 @@ process smetana_detailed {
     '''
 }
 
-process smetana_global {
+process pSmetanaGlobal {
 
     label 'large'
     tag "$sample"
     errorStrategy 'ignore'
+    when params?.steps?.metabolomics?.smetana?.contains("global")
 
     publishDir "${params.output}/${sample}/smetana/global/"
 
@@ -105,12 +101,12 @@ process smetana_global {
     '''
 }
 
-process analyse {
+process pAnalyse {
 
     label 'tiny'
     tag "$sample $id"
 
-    publishDir "${params.output}/${sample}/metabolites/"
+    publishDir "${params.output}/${sample}/gsmmTsv/"
 
     input:
       tuple val(sample), val(id), path(mag_json)  
@@ -127,48 +123,49 @@ process analyse {
 }
 
 
-process build_json {
+process pBuildJson {
     tag "$sample $id"
     label 'tiny'
-    publishDir "${params.output}/${sample}/json_output"
+    publishDir "${params.output}/${sample}/gsmmJson"
     errorStrategy 'retry'
     input:
       tuple val(sample), val(id), path(mag_xml)
     output:
-      tuple val("${sample}"), val("${id}"), path("${id}.json"), emit: model
+      tuple val("${sample}"), val("${id}"), path("${id}.json.gz"), emit: model
     shell:
     '''
-    sbml_to_json.py !{mag_xml} !{id}.json cache
+    sbml_to_json.py !{mag_xml} !{id}.json
+    gzip --best !{id}.json
     '''
 }
 
 
-process prodigal {
+process pProdigal {
     tag "$sample $id"
     label 'tiny'
-    when params.containsKey("metabolomics")
+    when params?.steps.containsKey("metabolomics")
     publishDir "${params.output}/${sample}/prodigal"
     input:
       tuple val(sample), val(id), path(mag)
     output:
-      tuple val("${sample}"), val("${id}"), path("*.faa"), emit: protein
+      tuple val("${sample}"), val("${id}"), path("*.faa.gz"), emit: protein
     shell:
     '''
-    prodigal -i !{mag} -a  !{mag}.faa
+    cat !{mag} | prodigal -a !{mag}.faa
+    gzip --best !{mag}.faa
     '''
 }
 
-workflow analyse_metabolites_file {
+workflow wAnalyseMetabolitesFile {
    take:
      bins
    main:
     Channel.from(file(bins)) | analyse_metabolites
-
    emit:
      carve_xml = carve.out.model
 }
 
-workflow analyse_metabolites {
+workflow wAnalyseMetabolites {
    take:
      bins
    main:
@@ -177,17 +174,12 @@ workflow analyse_metabolites {
        bins | map { it -> [it.SAMPLE, it.BIN_ID, it.PATH]}
        | set{binsChannel}
 
-     binsChannel | prodigal | carve | build_json | analyse 
-     carve.out | memote  
-     carve.out | groupTuple(by:0) | map{ it -> it[0,2]} | set { model_group } 
-     model_group | smetana_detailed 
-     model_group | smetana_global
+     binsChannel | pProdigal | pCarveMe | pBuildJson | pAnalyse 
+     pCarveMe.out | pMemote  
+     pCarveMe.out | groupTuple(by:0) | map{ it -> it[0,2]} | set { model_group } 
+     model_group | pSmetanaDetailed 
+     model_group | pSmetanaGlobal
 
    emit:
-     carve_xml = carve.out.model
-}
-
-
-workflow {
-   analyse_metabolites(params.input) 
+     carve_xml = pCarveMe.out.model
 }
