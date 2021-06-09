@@ -35,8 +35,8 @@ nextflow:
 
 test/reads/small:
 	- mkdir -p test/reads/small
-	- wget https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz -P test/reads/small/
-	- wget https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1.fq.gz -P test/reads/small/
+	- wget -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz -P test/reads/small/
+	- wget -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1.fq.gz -P test/reads/small/
 	- echo "SAMPLE\tREADS1\tREADS2" > ${reads_split_test}
 	- echo "test1\t${small_read1}\t${small_read2}" >> ${reads_split_test}
 	- echo "test2\t${small_read1}\t${small_read2}" >> ${reads_split_test}
