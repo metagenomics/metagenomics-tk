@@ -66,11 +66,7 @@ process pSmetanaDetailed {
 
     publishDir "${params.output}/${sample}/smetana/detailed/"
 
-    when params.steps.metabolomics.smetana_detailed
-
-    when params.steps.containsKey("metabolomics") && 
-         params.steps.metabolomics.containsKey("smetana") && 
-         params.steps.metabolomics.smetana.contains("detailed")
+    when params?.steps?.metabolomics?.smetana?.contains("detailed")
 
     input:
       tuple val(sample), path(xmls) 
@@ -89,9 +85,7 @@ process pSmetanaGlobal {
     label 'large'
     tag "$sample"
     errorStrategy 'ignore'
-    when params.steps.containsKey("metabolomics") && 
-         params.steps.metabolomics.containsKey("smetana") && 
-         params.steps.metabolomics.smetana.contains("global")
+    when params?.steps?.metabolomics?.smetana?.contains("global")
 
     publishDir "${params.output}/${sample}/smetana/global/"
 
@@ -149,7 +143,7 @@ process pBuildJson {
 process pProdigal {
     tag "$sample $id"
     label 'tiny'
-    when params.steps.containsKey("metabolomics")
+    when params?.steps.containsKey("metabolomics")
     publishDir "${params.output}/${sample}/prodigal"
     input:
       tuple val(sample), val(id), path(mag)
