@@ -33,6 +33,10 @@ clean :
 nextflow:
 	- wget -qO- https://get.nextflow.io | bash
 
+check:
+	- ! grep -q "FAILED" log/trace.tsv
+
+
 test/reads/small:
 	- mkdir -p test/reads/small
 	- wget -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz -P test/reads/small/
