@@ -1,6 +1,5 @@
 tempdir: "tmp"
-environment: "/vol/spool/conda/anaconda3/envs/metabolic"
-output: "/vol/spool/meta/out_pipeline"
+output: "output"
 steps:
   fragmentRecruitment:
     frhit:
