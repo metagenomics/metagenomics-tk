@@ -1,0 +1,9 @@
+output: "/vol/spool/meta/out_dereplication"
+steps:
+  dereplication:
+    pasolli:
+      input: "/vol/spool/meta/test/data/table.tsv"
+      representative_ani_cutoff: 0.95
+      minimum_completeness: 0
+      maximum_contamination: 5000
+      pyani_parameters: '-m ANIb'
