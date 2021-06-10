@@ -25,6 +25,7 @@ steps:
     minimumCompleteness: 0
     maximumContamination: 5000
     pyaniParameters: '-m ANIb'
+    buffer: 20
   readMapping:
     #  metabolomics:
     #    smetana:
