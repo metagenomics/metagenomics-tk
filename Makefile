@@ -2,11 +2,15 @@ CURRENT_DIR = $(shell pwd)
 
 
 small_reads_folder = ${CURRENT_DIR}/test/reads/small
+bins_folder = ${CURRENT_DIR}/test/bins/small
 reads_split_test = ${small_reads_folder}/reads_split.tsv
 reads_interleaved_test = ${small_reads_folder}/reads.tsv
+bins_attributes_test = ${bins_folder}/attributes.tsv
 small_read1 = ${small_reads_folder}/read1_1.fq.gz 
 small_read2 = ${small_reads_folder}/read2_1.fq.gz 
 small_read_interleaved = ${small_reads_folder}/interleaved.fq.gz
+bin1 = ${bins_folder}/bin.1.fa
+bin2 = ${bins_folder}/bin.2.fa
 
 ifndef PROFILE
 	override PROFILE = "local,conda"
@@ -63,7 +67,9 @@ test/bins/small/:
 	- mkdir -p test/bins/small
 	- wget -O test/bins/small/bin.1.fa -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.1.fa
 	- wget -O test/bins/small/bin.2.fa -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.2.fa
-
+	- echo "DATASET\tBIN_ID\tPATH\tCOMPLETENESS\tCONTAMINATION\tCOVERAGE\tN50\tHETEROGENEITY" >> ${bins_attributes_test}
+	- echo "test1\tbin.1\t${bin1}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
+	- echo "test1\tbin.2\t${bin2}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
 
 run_small_full_test: test/reads/small nextflow test/bins/small/ test/reads/small/interleaved.fq.gz
 	- ./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR}_${ENTRY} -profile ${PROFILE} -resume -entry ${ENTRY} -params-file ${PARAMS_FILE} 

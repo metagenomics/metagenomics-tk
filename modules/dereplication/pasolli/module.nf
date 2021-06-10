@@ -1,12 +1,12 @@
 nextflow.enable.dsl=2
 
-params?.steps?.dereplication?.minimumCompleteness = 50
-params?.steps?.dereplication?.maximumContamination = 5
-params?.steps?.dereplication?.cutoff = 0.05
-params?.steps?.dereplication?.pyaniParameters = "-m ANIb"
-params?.steps?.dereplication?.representativeAniCutoff = 0.95
-params?.steps?.dereplication?.method = "ANI"
-params?.steps?.dereplication?.buffer = 10
+params?.steps?.dereplication?.pasolli?.minimumCompleteness = 50
+params?.steps?.dereplication?.pasolli?.maximumContamination = 5
+params?.steps?.dereplication?.pasolli?.cutoff = 0.05
+params?.steps?.dereplication?.pasolli?.pyaniParameters = "-m ANIb"
+params?.steps?.dereplication?.pasolli?.representativeAniCutoff = 0.95
+params?.steps?.dereplication?.pasolli?.method = "ANI"
+params?.steps?.dereplication?.pasolli?.buffer = 10
 
 process pMash {
 
@@ -112,7 +112,7 @@ process pClusterDistances {
     shell:
     '''
     mkdir out
-    cluster.py -i distances.tsv -c !{params.steps.dereplication.cutoff} -o out
+    cluster.py -i distances.tsv -c !{params.steps.dereplication.pasolli.cutoff} -o out
     '''
 }
 
@@ -152,7 +152,7 @@ process pANIb {
     container "leightonpritchard/average_nucleotide_identity:${params.ani_tag}"
 
     when:
-    params.steps.dereplication.method.contains("ANI")
+    params.steps.dereplication.pasolli.method.contains("ANI")
 
     output:
     file("*.out/out.tsv") 
@@ -178,7 +178,7 @@ process pTETRA {
     file("*.out/out.tsv") 
 
     when:
-    params.steps.dereplication.method.contains("TETRA")
+    params.steps.dereplication.pasolli.method.contains("TETRA")
 
     shell:
     template 'tetra.sh'
@@ -207,7 +207,7 @@ process pGetCluster {
     '''
     mkdir out
     cat <(echo "GENOME_A\tGENOME_B\tANI")  <(sed 's/ /\t/g' !{ani_values}) > ani_values.tsv
-    get_final_cluster.py -i !{genomeAttributes} -c !{cluster} -r ani_values.tsv -o out  -a !{params.steps.dereplication.representativeAniCutoff}
+    get_final_cluster.py -i !{genomeAttributes} -c !{cluster} -r ani_values.tsv -o out  -a !{params.steps.dereplication.pasolli.representativeAniCutoff}
     cp out/representatives.tsv final_clusters.tsv
     '''
 }
@@ -256,8 +256,8 @@ workflow _wDereplicate {
      genomes_table_file
    main:
      genomes_table_file | splitCsv(sep: '\t', header: true)  \
-       | filter({ it.COMPLETENESS.toFloat() >= params.steps.dereplication.minimumCompleteness }) \
-       | filter({ it.CONTAMINATION.toFloat() <= params.steps.dereplication.maximumContamination }) \
+       | filter({ it.COMPLETENESS.toFloat() >= params.steps.dereplication.pasolli.minimumCompleteness }) \
+       | filter({ it.CONTAMINATION.toFloat() <= params.steps.dereplication.pasolli.maximumContamination }) \
        | map { it -> it.PATH } | collect | set {mags} 
 
      MASH_BUFFER = 5000
@@ -277,8 +277,8 @@ workflow _wDereplicate {
         mag2: mags[1]
      } |  set { result }
 
-     result.mag1 | map(it -> file(it)) | buffer(size: params.steps.dereplication.buffer, remainder: true) | set { mag1 }
-     result.mag2 | map(it -> file(it)) | buffer(size: params.steps.dereplication.buffer, remainder: true) | set { mag2 }
+     result.mag1 | map(it -> file(it)) | buffer(size: params.steps.dereplication.pasolli.buffer, remainder: true) | set { mag1 }
+     result.mag2 | map(it -> file(it)) | buffer(size: params.steps.dereplication.pasolli.buffer, remainder: true) | set { mag2 }
 
      pANIb(mag1, mag2)
      pTETRA(mag1, mag2)

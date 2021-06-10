@@ -18,14 +18,8 @@ def mapJoin(channel_a, channel_b, key){
         | map { it[0][1] + it[1][1] }
 }
 
-
-workflow {
-//   analyse_metabolites(params.input)
-}
-
-
-workflow run_dereplication {
-//   dereplicate_file(Channel.from(file(params.input)))
+workflow wDereplication {
+   wDereplicateFile(Channel.from(file(params?.steps?.dereplication?.pasolli?.input)))
 }
 
 
