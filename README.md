@@ -6,14 +6,14 @@
 ## Run Full Pipeline
 
 ```
-./nextflow run main.nf -work-dir /shared/directory/test -profile PROFILE  -resume -entry run_ppeline -params-file example_params/full_pipeline_params.yml
+./nextflow run main.nf -work-dir /shared/directory/test -profile PROFILE  -resume -entry wPipeline -params-file example_params/full_pipeline_params.yml
 ```
 
 where
  *  /shared/directory/test is a directory that is shared between multiple machines.
  * PROFILE can be either `local` or `slurm` depending on which environment the pipeline should be executed.
 
-**Note!** Metabolomics part is currently excluded from full pipeline rn
+**Note!** Metabolomics part is currently excluded from full pipeline run.
 
 # Developer Guidelines
 
@@ -33,6 +33,6 @@ where
 
 ## Other
 
-1. Magic numbers hould not be used.
+1. Magic numbers should not be used.
 
 2. Variable, method, workflow, folder and process names should be written in camelcase.

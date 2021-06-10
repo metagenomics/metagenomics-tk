@@ -28,7 +28,7 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Test Full Pipeline Run
         run: |
-          make run_small_full_test PROFILE="local" OPTIONS=" --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202/ "
+          make run_small_full_test PROFILE="local" OPTIONS=" --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "
           make check
 
       - name: Test Fragment Recruitment

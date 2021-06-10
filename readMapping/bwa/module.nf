@@ -9,7 +9,6 @@ params.all_representatives = "/raid/CAMI/CAMI_MOUSEGUT/readmapping/workflow_all_
 params.shuffle = 400
 
 process pBwaIndex {
-    conda 'bioconda::bwa=0.7.17'
     container "quay.io/biocontainers/bwa:${params.bwa_tag}"
     label 'large'
     when params.steps.containsKey("readMapping")
@@ -25,7 +24,6 @@ process pBwaIndex {
 
 process pMapBwa {
     label 'large'
-    conda 'bioconda::bwa=0.7.17'
     container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
     when params.steps.containsKey("readMapping")
     publishDir "${params.output}/${bin_shuffle_id}/bwa"
@@ -39,7 +37,6 @@ process pMapBwa {
 
 process pMapBwaCami {
     label 'large'
-    conda 'bioconda::bwa=0.7.17'
     container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
     publishDir "${params.output}/${sample}/bwa"
     input:
