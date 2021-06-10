@@ -40,7 +40,7 @@ nextflow:
 	- wget -qO- https://get.nextflow.io | bash
 
 check:
-	- false
+	exit 1
 #	- ! grep -q "FAILED" log/trace.tsv || false
 
 
