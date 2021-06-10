@@ -1,5 +1,4 @@
 tempdir: "tmp"
-#environment: "/vol/spool/conda/anaconda3/envs/metabolic"
 input: "test/reads/small/reads_split.tsv"
 output: "output"
 steps:
@@ -26,8 +25,8 @@ steps:
     minimumCompleteness: 0
     maximumContamination: 5000
     pyaniParameters: '-m ANIb'
+  readMapping:
     #  metabolomics:
     #    smetana:
     #      - detailed
     #      - global
-  readMapping:
