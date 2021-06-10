@@ -17,6 +17,14 @@ where
 
 **Note!** Metabolomics part is currently excluded from full pipeline run.
 
+### Run Fragment Recruitment
+
+The configuration is the same as above with the sole difference that entry and param-file parameters are different:
+
+```
+-entry wFragmentRecruitment -params-file example_params/fragmentRecruitment.yml
+```
+
 ## S3 Configuration
 
 All modules of the pipeline can be used in conjunction with S3.
