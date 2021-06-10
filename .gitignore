@@ -14,3 +14,5 @@ bin/__pycache__
 work_*
 test/reads
 .nextflow.pid
+aws*
+output
