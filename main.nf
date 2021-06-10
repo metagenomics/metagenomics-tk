@@ -1,14 +1,14 @@
 nextflow.enable.dsl=2
 
 
-include { wAssemblyFile } from './assembly/module'
-include { wBinning } from './binning/module.nf'
-include { wMagAttributes } from './magAttributes/module.nf'
-include { wDereplicateFile; wDereplicateList } from './dereplication/pasolli/module'
-include { wReadMappingBwa } from './readMapping/bwa/module'
-include { wAnalyseMetabolites } from './metabolomics/module'
-include { wUnmappedReadsList; wUnmappedReadsFile } from './sampleAnalysis/module'
-include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './fragmentRecruitment/frhit/module'
+include { wAssemblyFile } from './modules/assembly/module'
+include { wBinning } from './modules/binning/module.nf'
+include { wMagAttributes } from './modules/magAttributes/module.nf'
+include { wDereplicateFile; wDereplicateList } from './modules/dereplication/pasolli/module'
+include { wReadMappingBwa } from './modules/readMapping/bwa/module'
+include { wAnalyseMetabolites } from './modules/metabolomics/module'
+include { wUnmappedReadsList; wUnmappedReadsFile } from './modules/sampleAnalysis/module'
+include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './modules/fragmentRecruitment/frhit/module'
 
 
 def mapJoin(channel_a, channel_b, key){
