@@ -44,7 +44,7 @@ nextflow:
 	- wget -qO- https://get.nextflow.io | bash
 
 check:
-	- ! grep -q "FAILED" log/trace.tsv
+	! grep -q "FAILED" log/trace.tsv
 
 
 test/reads/small:
