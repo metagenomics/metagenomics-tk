@@ -21,11 +21,12 @@ steps:
       genomes: "/vol/spool/meta/test/data/bin.*.fa"
       sort: true
   dereplication:
-    representativeAniCutoff: 0.95
-    minimumCompleteness: 0
-    maximumContamination: 5000
-    pyaniParameters: '-m ANIb'
-    buffer: 20
+    pasolli:
+      representativeAniCutoff: 0.95
+      minimumCompleteness: 0
+      maximumContamination: 5000
+      pyaniParameters: '-m ANIb'
+      buffer: 20
   readMapping:
     #  metabolomics:
     #    smetana:
