@@ -32,7 +32,7 @@ ifndef PARAMS_FILE
 	override PARAMS_FILE = ${CURRENT_DIR}/example_params/full_pipeline_params.yml
 endif
 
-.PHONY: list clean test_clean run_small_full_test
+.PHONY: list clean test_clean run_small_full_test check
 clean :
 	- rm .nextflow.log*
 	- rm report.html*
@@ -44,7 +44,8 @@ nextflow:
 	- wget -qO- https://get.nextflow.io | bash
 
 check:
-	! grep -q "FAILED" log/trace.tsv
+	! grep -q "FAILED" log/trace.tsv || (echo "$?"; exit 1)
+
 
 
 test/reads/small:
