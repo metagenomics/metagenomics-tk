@@ -5,6 +5,8 @@
 
 ## Modules
 
+All module configurations are the same as the full pipeline run with the sole difference that entry and param-file parameters are different.
+
 ### Run Full Pipeline
 
 ```
@@ -17,12 +19,18 @@ where
 
 **Note!** Metabolomics part is currently excluded from full pipeline run.
 
+
 ### Run Fragment Recruitment
 
-The configuration is the same as above with the sole difference that entry and param-file parameters are different:
 
 ```
 -entry wFragmentRecruitment -params-file example_params/fragmentRecruitment.yml
+```
+
+### Dereplication
+
+```
+-entry wDereplication -params-file example_params/dereplication_params.yml
 ```
 
 ## S3 Configuration
