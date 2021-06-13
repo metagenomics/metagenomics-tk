@@ -26,17 +26,14 @@ jobs:
       - uses: actions/checkout@v2
 
       # Runs a set of commands using the runners shell
-      - name: Test Full Pipeline Run
-        run: |
-          make run_small_full_test WORK_DIR="/mnt/work/work"  PROFILE="local" OPTIONS=" --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "
-          make check
+      #   - name: Test Full Pipeline Run
+      #  run: |
+      #    bash ./scripts/test_fullPipeline.sh || exit 1
 
       - name: Test Fragment Recruitment
         run: |
-          make run_small_full_test WORK_DIR="/mnt/work/work" OPTIONS=" --steps.fragmentRecruitment.frhit.genomes=test/bins/small/bin.*.fa --steps.fragmentRecruitment.frhit.samples=test/reads/small/reads.tsv " PROFILE="local"  ENTRY="wFragmentRecruitment" PARAMS_FILE=example_params/fragmentRecruitment.yml
-          make check
+          bash ./scripts/test_fragmentRecruitment.sh || exit 1
 
       - name: Test Dereplication
         run: |
-          make run_small_full_test WORK_DIR="/mnt/work/work" OPTIONS=" --steps.dereplication.pasolli.input=test/bins/small/attributes.tsv " PROFILE="local"  ENTRY="wDereplication" PARAMS_FILE=example_params/dereplication_params.yml || exit 1
-          make check
+          bash ./scripts/test_dereplication.sh || exit 1

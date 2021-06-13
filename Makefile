@@ -70,8 +70,6 @@ test/bins/small/:
 	- echo "DATASET\tBIN_ID\tPATH\tCOMPLETENESS\tCONTAMINATION\tCOVERAGE\tN50\tHETEROGENEITY" >> ${bins_attributes_test}
 	- echo "test1\tbin.1\t${bin1}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
 	- echo "test1\tbin.2\t${bin2}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
-	- echo "test2\tbin.1\t${bin1}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
-	- echo "test2\tbin.2\t${bin2}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
 
 run_small_full_test: test/reads/small nextflow test/bins/small/ test/reads/small/interleaved.fq.gz
 	- ./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR}_${ENTRY} -profile ${PROFILE} -resume -entry ${ENTRY} -params-file ${PARAMS_FILE} 
