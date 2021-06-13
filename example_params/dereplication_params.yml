@@ -1,4 +1,4 @@
-output: "/vol/spool/meta/out_dereplication"
+output: "output"
 steps:
   dereplication:
     pasolli:
