@@ -25,15 +25,14 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      # Runs a set of commands using the runners shell
-      #   - name: Test Full Pipeline Run
-      #  run: |
-      #    bash ./scripts/test_fullPipeline.sh || exit 1
+      - name: Test Full Pipeline Run
+        run: |
+          bash ./scripts/test_ci_fullPipeline.sh || exit 1
 
       - name: Test Fragment Recruitment
         run: |
-          bash ./scripts/test_fragmentRecruitment.sh || exit 1
+          bash ./scripts/test_ci_fragmentRecruitment.sh || exit 1
 
       - name: Test Dereplication
         run: |
-          bash ./scripts/test_dereplication.sh || exit 1
+          bash ./scripts/test_ci_dereplication.sh || exit 1

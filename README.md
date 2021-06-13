@@ -59,6 +59,10 @@ If you want to upload tool results to s3, just update the output parameter in th
 
 # Developer Guidelines
 
+## Testing
+
+Tests for local use are specified in `scripts` folder. Bash scripts that start with `test_ci_` are used by github actions for continious integration tests.
+
 ## Workflows
 
 1. Worfklow names that can not be used directly and are just meant for internal use should start with an underscore.
