@@ -1,6 +1,11 @@
 nextflow.enable.dsl=2
 include { wUnmappedReadsFile } from '../../sampleAnalysis/module'
 
+MODULE="fragmentRecruitment"
+VERSION="0.1.0"
+def getOutput(SAMPLE, RUNID, TOOL, filename){
+    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+}
 
 process pFrHit {
 
@@ -12,7 +17,7 @@ process pFrHit {
 
     stageInMode 'copy'
 
-    publishDir "${params.output}/${sample}/fragmentRecruitment"
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "frhit",  filename) }
 
     container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
 

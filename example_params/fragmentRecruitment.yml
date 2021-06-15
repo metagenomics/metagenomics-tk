@@ -1,5 +1,6 @@
 tempdir: "tmp"
 output: "output"
+runid: 1
 steps:
   fragmentRecruitment:
     frhit:

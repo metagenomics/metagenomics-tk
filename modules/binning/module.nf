@@ -3,13 +3,20 @@ params.maxbin = false
 params.pBowtieMode = "mapping_reads"
 
 
+MODULE="binning"
+VERSION="0.1.0"
+def getOutput(SAMPLE, RUNID, TOOL, filename){
+    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+}
+
+
 process pGetMappingQuality {
 
     container 'quay.io/biocontainers/samtools:1.12--h9aed4be_1'
 
     tag "$sample"
 
-    publishDir "${params.output}/${sample}/contigMapping/bowtie/"
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "contigMappingBowtie", filename) }
 
     errorStrategy 'retry'
 
@@ -36,7 +43,7 @@ process pBowtie {
 
     tag "$sample"
 
-    publishDir "${params.output}/${sample}/contigMapping/bowtie/${params.bowtie_tag}" 
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "contigMappingBowtie", filename) }
 
     errorStrategy 'retry'
 
@@ -68,7 +75,7 @@ process pMetabat {
 
     label 'large'
 
-    publishDir "${params.output}/${sample}/binning/metabat/${params.metabat_tag}" 
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "metabat", filename) }
 
     when params.steps.binning.containsKey("metabat")
 

@@ -1,12 +1,17 @@
 nextflow.enable.dsl=2
 
 params.samples = "/raid/CAMI/CAMI_MOUSEGUT/readmapping/workflow_all_reads/samples.tsv"
-params.output = "out"
 params.mapping = "/vol/spool/CAMI/CAMI_MOUSEGUT/mapping/workflow/representatives_sample1.tsv_mapping"
 params.representatives = "/vol/spool/CAMI/CAMI_MOUSEGUT/mapping/workflow/representatives_sample1_test.fa"  
 params.number_samples = 20
 params.all_representatives = "/raid/CAMI/CAMI_MOUSEGUT/readmapping/workflow_all_reads/representatives.tsv" 
 params.shuffle = 400
+
+MODULE="readMapping"
+VERSION="0.1.0"
+def getOutput(SAMPLE, RUNID, TOOL, filename){
+    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+}
 
 process pBwaIndex {
     container "quay.io/biocontainers/bwa:${params.bwa_tag}"
@@ -26,7 +31,7 @@ process pMapBwa {
     label 'large'
     container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
     when params.steps.containsKey("readMapping")
-    publishDir "${params.output}/${bin_shuffle_id}/bwa"
+    publishDir params.output, saveAs: { filename -> getOutput("${bin_shuffle_id}",params.runid ,"bwa", filename) }
     input:
       tuple path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
     output:
@@ -38,7 +43,7 @@ process pMapBwa {
 process pMapBwaCami {
     label 'large'
     container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
-    publishDir "${params.output}/${sample}/bwa"
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid ,"bwa" , filename) }
     input:
       tuple path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
     output:
@@ -49,7 +54,7 @@ process pMapBwaCami {
 
 process pBwaCount {
     label 'tiny'
-    publishDir "${params.output}/${sample}/coverm"
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
     input:
       tuple val(ID), path(sample), path(mapping)
     output:
@@ -61,7 +66,7 @@ process pBwaCount {
 process pCovermCount {
     when params.steps.containsKey("readMapping")
     label 'small'
-    publishDir "${params.output}/${sample}/count"
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
     input:
       tuple val(ID), val(sample), path(mapping), path(index), path(list_of_representatives)
     output:

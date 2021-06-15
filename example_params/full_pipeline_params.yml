@@ -1,6 +1,7 @@
 tempdir: "tmp"
 input: "test/reads/small/reads_split.tsv"
 output: "output"
+runid: 1
 steps:
   assembly:
     interleaved: false

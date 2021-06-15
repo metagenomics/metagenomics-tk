@@ -2,13 +2,19 @@ nextflow.enable.dsl=2
 
 params.ending = ".fa"
 
+MODULE="magAttributes"
+VERSION="0.1.0"
+def getOutput(SAMPLE, RUNID, TOOL, filename){
+    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+}
+
 process pCheckM {
 
     container "pbelmann/checkm:${params.checkm_tag}"
 
     errorStrategy 'ignore'
 
-    publishDir "${params.output}/${sample}/checkm/${params.checkm_tag}" 
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }
 
     when params.steps.magAttributes.containsKey("checkm")
 
@@ -60,7 +66,7 @@ process pGtdbtk {
 
     label 'large'
 
-    publishDir "${params.output}/${sample}/gtdb/${params.gtdbtk_tag}" 
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }
 
     when params.steps.magAttributes.containsKey("gtdb")
 

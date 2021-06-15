@@ -1,5 +1,11 @@
 nextflow.enable.dsl=2
 
+MODULE="metabolomics"
+VERSION="0.1.0"
+def getOutput(SAMPLE, RUNID, TOOL, filename){
+    return SAMPLE + 'RUNID' + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+}
+
 process pCarveMe {
 
     label 'tiny'
@@ -8,7 +14,8 @@ process pCarveMe {
     when params.steps.containsKey("metabolomics")
 
     errorStrategy 'ignore'
-    publishDir "${params.output}/${sample}/carveme"
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "carveme", filename) }
+
     input:
       tuple val(sample), val(id), path(mag_faa)
     output:
@@ -26,7 +33,7 @@ process pMemote {
 
     tag "$sample $id"
 
-    publishDir "${params.output}/${sample}/memote"
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "memote", filename) }
 
     input:
       tuple val(sample), val(id), path(model)
@@ -64,7 +71,7 @@ process pSmetanaDetailed {
 
     errorStrategy 'ignore'
 
-    publishDir "${params.output}/${sample}/smetana/detailed/"
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid , "smetana/detailed/", filename) }
 
     when params?.steps?.metabolomics?.smetana?.contains("detailed")
 
@@ -87,7 +94,7 @@ process pSmetanaGlobal {
     errorStrategy 'ignore'
     when params?.steps?.metabolomics?.smetana?.contains("global")
 
-    publishDir "${params.output}/${sample}/smetana/global/"
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "smetana/global/", filename) }
 
     input:
       tuple val(sample), path(xmls) 
@@ -106,7 +113,7 @@ process pAnalyse {
     label 'tiny'
     tag "$sample $id"
 
-    publishDir "${params.output}/${sample}/gsmmTsv/"
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmTsv", filename) }
 
     input:
       tuple val(sample), val(id), path(mag_json)  
@@ -126,7 +133,7 @@ process pAnalyse {
 process pBuildJson {
     tag "$sample $id"
     label 'tiny'
-    publishDir "${params.output}/${sample}/gsmmJson"
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmJson", filename) }
     errorStrategy 'retry'
     input:
       tuple val(sample), val(id), path(mag_xml)
@@ -145,6 +152,7 @@ process pProdigal {
     label 'tiny'
     when params?.steps.containsKey("metabolomics")
     publishDir "${params.output}/${sample}/prodigal"
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "prodigal", filename) }
     input:
       tuple val(sample), val(id), path(mag)
     output:

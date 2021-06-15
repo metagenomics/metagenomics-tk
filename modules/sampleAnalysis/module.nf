@@ -9,6 +9,12 @@ def flattenBins(binning){
 }
 
 
+MODULE="sampleAnalysis"
+VERSION="0.1.0"
+def getOutput(SAMPLE, RUNID, TOOL, filename){
+    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+}
+
 process pBowtie {
 
     container "pbelmann/bowtie2:${params.bowtie_tag}"
@@ -17,7 +23,7 @@ process pBowtie {
 
     tag "$sample"
 
-    publishDir "${params.output}/${sample}/readBinMapping/bowtie/${params.bowtie_tag}"
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid , "bowtie", filename) }
 
     errorStrategy 'retry'
 

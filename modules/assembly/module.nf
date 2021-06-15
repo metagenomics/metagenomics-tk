@@ -1,5 +1,11 @@
 nextflow.enable.dsl=2
 
+MODULE="assembly"
+VERSION="0.1.0"
+def getOutput(SAMPLE, RUNID, TOOL, filename){
+    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+}
+
 process pMetaSpades {
 
     label 'large'
@@ -179,7 +185,7 @@ process pMegahitSplit {
 
     tag "$sample"
 
-    publishDir "${params.output}/${sample}/assembly/megahit/${params.megahit_tag}" 
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "megahit", filename) }
 
     errorStrategy 'ignore'
 
