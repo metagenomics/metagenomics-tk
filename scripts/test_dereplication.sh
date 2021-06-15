@@ -1,2 +1,3 @@
-make run_small_full_test WORK_DIR="work" OPTIONS=" --steps.dereplication.pasolli.input=test/bins/small/attributes.tsv " PROFILE="local"  ENTRY="wDereplication" PARAMS_FILE=example_params/dereplication_params.yml || exit 1
+OPTIONS=$@
+make run_small_full_test WORK_DIR="work" OPTIONS=" $OPTIONS " PROFILE="local"  ENTRY="wDereplication" PARAMS_FILE=example_params/dereplication_params.yml
 make check
