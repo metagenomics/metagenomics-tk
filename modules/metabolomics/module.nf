@@ -3,7 +3,7 @@ nextflow.enable.dsl=2
 MODULE="metabolomics"
 VERSION="0.1.0"
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + 'RUNID' + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+    return SAMPLE + '/' + 'RUNID' + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
 }
 
 process pCarveMe {
@@ -151,7 +151,6 @@ process pProdigal {
     tag "$sample $id"
     label 'tiny'
     when params?.steps.containsKey("metabolomics")
-    publishDir "${params.output}/${sample}/prodigal"
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "prodigal", filename) }
     input:
       tuple val(sample), val(id), path(mag)

@@ -1,11 +1,11 @@
-NEW_TYPE="!{TYPE}_metabat"
 runMetaBat.sh !{contigs} !{bam}
-mkdir !{TYPE}
-for bin in $(basename !{contigs})*/bin* ; do mv $bin !{TYPE}/!{sample}_$(basename ${bin}) ; done
-for bin in !{TYPE}/*; do  BIN=$(basename $bin); grep ">" $bin | sed 's/>//g' | sed "s/^/${BIN}\t/g" >> bin_contig_mapping.tsv; done
+TYPE=out
+mkdir ${TYPE}
+for bin in $(basename !{contigs})*/bin* ; do mv $bin ${TYPE}/!{sample}_$(basename ${bin}) ; done
+for bin in ${TYPE}/*; do  BIN=$(basename $bin); grep ">" $bin | sed 's/>//g' | sed "s/^/${BIN}\t/g" >> bin_contig_mapping.tsv; done
 head -n 1 *.depth.txt  | sed "s/$/\tBIN_ID\tSAMPLE/g" > !{sample}_bins_depth.tsv
 join -t$'\t' -1 1 -2 2  <(tail -n +2  *.depth.txt | sort -k 1,1 ) <(sort -k 2,2 bin_contig_mapping.tsv) | sed "s/$/\t!{sample}/g" >> !{sample}_bins_depth.tsv
-cd !{TYPE}
+cd ${TYPE}
 seqkit stat -Ta *.fa | sed '1s/^/SAMPLE\t/' | sed "1 ! s/^/!{sample}\t/" > ../!{sample}_bins_stats_tmp.tsv
 cd ..
 

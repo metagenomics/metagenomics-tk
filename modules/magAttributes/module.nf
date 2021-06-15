@@ -23,13 +23,14 @@ process pCheckM {
     label 'medium'
 
     input:
-    tuple val(sample), val(TYPE), path(bins) 
+    tuple val(sample), path(bins) 
 
     output:
-    tuple path("chunk_*_${sample}_${TYPE}_checkm.txt", type: "file"), val("${sample}"),  val("${TYPE}")
+    tuple path("chunk_*_${sample}_checkm.txt", type: "file"), val("${sample}")
 
     shell:
     '''
+    TYPE=checkm_out
     count=`ls -1 *.fasta 2>/dev/null | wc -l`
     if [ $count != 0 ]
     then 
@@ -44,7 +45,7 @@ process pCheckM {
     checkm tree_qa out &> tree_qa.log
     checkm lineage_set out out/marker &> lineage.log
     checkm analyze -x $FILE_ENDING -t !{task.cpus} out/marker . out &> analyze.log
-    FILE=$(mktemp chunk_XXXXXXXXXX_!{sample}_!{TYPE}_checkm.txt)
+    FILE=$(mktemp chunk_XXXXXXXXXX_!{sample}_checkm.txt)
     checkm qa --tab_table -t !{task.cpus} -f checkm.txt out/marker out  &> qa.log
 
     echo "SAMPLE\tBIN_ID\tMarker lineage\t# genomes\t# markers\t# marker sets\t0\t1\t2\t3\t4\t5+\tCOMPLETENESS\tCONTAMINATION\tHETEROGENEITY" > checkm_tmp.tsv
@@ -73,11 +74,11 @@ process pGtdbtk {
     containerOptions " --user 1000:1000  --volume ${params.steps.magAttributes.gtdb.database}:/refdata"
    
     input:
-    tuple val(sample), val(TYPE), path(bins) 
+    tuple val(sample), path(bins) 
 
     output:
-    tuple path("chunk_*_${sample}_${TYPE}_gtdbtk.bac120.summary.tsv"), val("${TYPE}"), optional: true, emit: bacteria
-    tuple path("chunk_*_${sample}_${TYPE}_gtdbtk.ar122.summary.tsv"), val("${TYPE}"), optional: true, emit: archea
+    tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
+    tuple path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), val("${sample}"), optional: true, emit: archea
 
     shell:
     '''
@@ -95,8 +96,8 @@ process pGtdbtk {
     gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus}  --extension ${FILE_ENDING}
     touch output/gtdbtk.bac120.summary.tsv
     touch output/gtdbtk.ar122.summary.tsv
-    FILE_BAC=$(mktemp chunk_XXXXXXXXXX_!{sample}_!{TYPE}_gtdbtk.bac120.summary.tsv)
-    FILE_ARC=$(mktemp chunk_XXXXXXXXXX_!{sample}_!{TYPE}_gtdbtk.ar122.summary.tsv)
+    FILE_BAC=$(mktemp chunk_XXXXXXXXXX_!{sample}_gtdbtk.bac120.summary.tsv)
+    FILE_ARC=$(mktemp chunk_XXXXXXXXXX_!{sample}_gtdbtk.ar122.summary.tsv)
 
     sed "s/^/SAMPLE\t/g" <(head -n 1 output/gtdbtk.bac120.summary.tsv) > $FILE_BAC 
     sed "s/^/!{sample}\t/g"  <(tail -n +2 output/gtdbtk.bac120.summary.tsv) >> $FILE_BAC 
@@ -179,8 +180,8 @@ def bufferMetabatSamtools(metabat){
 
 def flattenBins(binning){
   def chunkList = [];
-  binning[2].each {
-     chunkList.add([binning[0],binning[1], it]);
+  binning[1].each {
+     chunkList.add([binning[0], it]);
   }
   return chunkList;
 }
@@ -192,17 +193,17 @@ workflow wMagAttributes {
      bam
    main:
      bins | flatMap({n -> flattenBins(n)}) | set {binList}
-     binList | groupTuple(by: [0,1], size: params.steps.magAttributes.checkm.buffer, remainder: true) \
+     binList  | groupTuple(by: [0], size: params?.steps?.magAttributes?.checkm?.buffer ?: 30, remainder: true) \
         | pCheckM  | set{ checkm }
 
-     binList |  groupTuple(by: [0,1], size: params.steps.magAttributes.gtdb.buffer, remainder: true) \
+     binList |  groupTuple(by: [0], size: params?.steps?.magAttributes?.gtdb?.buffer ?: 30, remainder: true) \
         | pGtdbtk | set{ gtdb }
 
      checkm | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "checkm.tsv", item[0].text  ]
      }
 
-     checkm | groupTuple(by: 2, remainder: true) | map { it -> it[0] }  | flatten | map { it -> file(it) } \
+     checkm | groupTuple(by: 1, remainder: true) | map { it -> it[0] }  | flatten | map { it -> file(it) } \
        | collectFile(keepHeader: true, newLine: false ){ item -> [ "bin_attributes.tsv", item.text ] } \
        | splitCsv(sep: '\t', header: true) | set{ bins_info } 
 

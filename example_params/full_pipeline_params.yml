@@ -29,7 +29,7 @@ steps:
       pyaniParameters: '-m ANIb'
       buffer: 20
   readMapping:
-    #  metabolomics:
-    #    smetana:
-    #      - detailed
-    #      - global
+          #  metabolomics:
+          #    smetana:
+          #      - detailed
+          #      - global

@@ -1,4 +1,4 @@
-base=!{sample}_!{TYPE}_flagstat
+base=!{sample}_flagstat
 out=${base}.tsv
 echo -e "!{sample}\t!{sample}\tSAMPLE" > $out
 samtools flagstat -@ !{task.cpus} -O tsv !{bam} >> $out
