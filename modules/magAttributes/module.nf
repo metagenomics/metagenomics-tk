@@ -3,7 +3,7 @@ nextflow.enable.dsl=2
 params.ending = ".fa"
 
 MODULE="magAttributes"
-VERSION="0.1.0"
+VERSION="0.2.0"
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
 }
@@ -26,7 +26,7 @@ process pCheckM {
     tuple val(sample), path(bins) 
 
     output:
-    tuple path("chunk_*_${sample}_checkm.txt", type: "file"), val("${sample}")
+    tuple val("${sample}"), path("chunk_*_${sample}_checkm.txt", type: "file") 
 
     shell:
     '''
@@ -77,8 +77,8 @@ process pGtdbtk {
     tuple val(sample), path(bins) 
 
     output:
-    tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
-    tuple path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), val("${sample}"), optional: true, emit: archea
+    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), optional: true, emit: bacteria
+    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), optional: true, emit: archea
 
     shell:
     '''
@@ -110,73 +110,39 @@ process pGtdbtk {
 
 process pProkka {
 
-    container "staphb/prokka:${prokka_tag}"
+    container "staphb/prokka:${params.prokka_tag}"
 
-//    publishDir "${params.output}/${sample}/prokka/${prokka_tag}" 
-
-//    errorStrategy 'retry'
+    errorStrategy 'ignore'
 
     label 'large'
 
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }
+
+    when params.steps.magAttributes.containsKey("prokka")
+
     input:
-    tuple file(bam), file(bai), file(binFile), sampleName 
+    tuple val(sample), file(bin)
 
     output:
-    tuple file("out/*.gff"), file("${binFile}"), file("${bam}"), file("${bai}"), val("${sampleName}") 
+    tuple file("*.gff"), val("${sample}"), emit: gff 
+    tuple file("*.err"), val("${sample}"), emit: err 
+    tuple file("*.faa"), val("${sample}"), emit: faa 
+    tuple file("*.fna"), val("${sample}"), emit: fna 
+    tuple file("*.ffn"), val("${sample}"), emit: ffn 
+    tuple file("*.fsa"), val("${sample}"), emit: fsa 
+    tuple file("*.gbk"), val("${sample}"), emit: gbk
+    tuple file("*.log"), val("${sample}"), emit: log
+    tuple file("*.tbl"), val("${sample}"), emit: tbl
+    tuple file("*.sqn"), val("${sample}"), emit: sqn
+    tuple file("*.txt"), val("${sample}"), emit: txt
+    tuple file("*.tsv"), val("${sample}"), emit: tsv
 
     shell:
     '''
-    prokka --cpus 0 !{binFile} --outdir out
+    prokka --cpus !{task.cpus} !{bin} --outdir out
+    for f in out/* ; do suffix=$(echo "${f#*.}"); mv $f !{sample}_$(basename !{bin}).${suffix}; done
     '''
 }
-
-
-process pGetReads {
-
-    //container 'biocontainers/samtools:v1.7.0_cv4'
-
-   // publishDir "${params.output}/${sample}/reads/bins/" 
-
-    tag "$sample"
-
-    errorStrategy 'retry'
-
-    when params.getreads
-
-    label 'tiny'
-
-    input:
-    tuple val(sample), val(TYPE), path(bam), path(bin) 
-
-    output:
-    file("${sample}_${TYPE}_${bin}.fq.gz")
-    file("${sample}_${TYPE}_${bin}.fq.depth")
-    file("${sample}_${TYPE}_${bin}.fq.depth.coverage")
-
-    shell:
-    '''
-    CONTIGS=$(grep ">" !{bin} | tr -d '>' | tr '\n' ' ')
-    DEPTH_FILE=!{sample}_!{TYPE}_!{bin}.fq.depth
-    samtools view -b !{bam} | samtools sort -o !{bam}.sorted
-    samtools index -@ 1 !{bam}.sorted
-    samtools view -h -f 3 -b !{bam}.sorted $CONTIGS | samtools sort -n | samtools bam2fq -N -  | gzip --best > !{sample}_!{TYPE}_!{bin}.fq.gz
-    samtools view    -f 3 -b !{bam}.sorted $CONTIGS | samtools depth -a - > !{sample}_!{TYPE}_!{bin}.fq.depth
-    ALL_POS=$(cut -f 3 $DEPTH_FILE  | wc -l)
-    DEPTH=$(cut -f 3 $DEPTH_FILE | paste -sd+ | head | bc)
-    COVERAGE_DEPTH=$(bc <<< "scale = 5; $DEPTH / $ALL_POS")
-    echo $COVERAGE_DEPTH > !{sample}_!{TYPE}_!{bin}.fq.depth.coverage
-    '''
-}
-
-
-def bufferMetabatSamtools(metabat){
-  def chunkList = [];
-  metabat[2].each {
-     chunkList.add([metabat[0],metabat[1], metabat[3], it]);
-  }
-  return chunkList;
-}
-
 
 def flattenBins(binning){
   def chunkList = [];
@@ -187,37 +153,134 @@ def flattenBins(binning){
 }
 
 
-workflow wMagAttributes {
+/**
+* This workflow provides the same functionality as wMagAttributesList.
+* Input:
+* It accepts as input all a tsv table of the following format:
+* 
+* DATASET	PATH
+* SAMPLe_NAME	/path/to/bin.fa
+*
+*/
+workflow wMagAttributesFile {
+   take:
+     mags
+   main:
+     DATASET_IDX = 0
+     mags | splitCsv(sep: '\t', header: true) \
+       | map { sample -> [sample.DATASET, file(sample.PATH)] } \
+       | groupTuple(by: DATASET_IDX) | _wMagAttributes
+   emit:
+     checkm = _wMagAttributes.out.checkm
+     prokka_err = _wMagAttributes.out.prokka_err
+     prokka_faa = _wMagAttributes.out.prokka_faa
+     prokka_ffn = _wMagAttributes.out.prokka_ffn
+     prokka_fna = _wMagAttributes.out.prokka_fna
+     prokka_fsa = _wMagAttributes.out.prokka_fsa
+     prokka_gbk = _wMagAttributes.out.prokka_gbk
+     prokka_gff = _wMagAttributes.out.prokka_gff
+     prokka_log = _wMagAttributes.out.prokka_log
+     prokka_sqn = _wMagAttributes.out.prokka_sqn
+     prokka_tbl = _wMagAttributes.out.prokka_tbl
+     prokka_tsv = _wMagAttributes.out.prokka_tsv
+     prokka_txt = _wMagAttributes.out.prokka_txt
+
+
+}
+
+
+/**
+*
+* This module infers any general bin specific properties such as contamination, completeness, lineage.
+*
+* Input:
+* It accepts a list where each entry has the following format: [SAMPLE_NAME, ["/path/to/bin.fa", "/path/to/bin.fa"]] 
+*
+* Output:
+*  * Map of checkm values 
+*    Example: 
+*    [PATH:/vol/spool/meta/test/bins/small/bin.1.fa, SAMPLE:test1,
+*     BIN_ID:bin.1, Marker lineage:k__Bacteria (UID203), # genomes:5449, # markers:103, # marker sets:57,
+*     0:97, 1:6, 2:0, 3:0, 4:0, 5+:0, COMPLETENESS:7.72, CONTAMINATION:0.00, HETEROGENEITY:0.00] 
+*
+*  * Prokka channels for every possible output file err,faa,ffn,fna,fsa,gbk,gff,log,sqn,tbl,tsv,txt,
+*    Every prokka channel has the following output format [SAMPLE_NAME, FILE]
+*
+*/
+workflow wMagAttributesList {
+   take: 
+     mags
+   main:
+     mags | _wMagAttributes
+   emit:
+     checkm = _wMagAttributes.out.checkm
+     prokka_err = _wMagAttributes.out.prokka_err
+     prokka_faa = _wMagAttributes.out.prokka_faa
+     prokka_ffn = _wMagAttributes.out.prokka_ffn
+     prokka_fna = _wMagAttributes.out.prokka_fna
+     prokka_fsa = _wMagAttributes.out.prokka_fsa
+     prokka_gbk = _wMagAttributes.out.prokka_gbk
+     prokka_gff = _wMagAttributes.out.prokka_gff
+     prokka_log = _wMagAttributes.out.prokka_log
+     prokka_sqn = _wMagAttributes.out.prokka_sqn
+     prokka_tbl = _wMagAttributes.out.prokka_tbl
+     prokka_tsv = _wMagAttributes.out.prokka_tsv
+     prokka_txt = _wMagAttributes.out.prokka_txt
+
+
+}
+
+workflow _wMagAttributes {
    take: 
      bins
-     bam
    main:
-     bins | flatMap({n -> flattenBins(n)}) | set {binList}
-     binList  | groupTuple(by: [0], size: params?.steps?.magAttributes?.checkm?.buffer ?: 30, remainder: true) \
+     GTDB_DEFAULT_BUFFER = 500
+     CHECKM_DEFAULT_BUFFER = 30
+     DATASET_IDX = 0
+     BIN_FILES_IDX = 1
+
+     bins  | flatMap({n -> flattenBins(n)}) | set {binFlattenedList}
+     binFlattenedList \
+        | groupTuple(by: [DATASET_IDX], size: params?.steps?.magAttributes?.checkm?.buffer ?: CHECKM_DEFAULT_BUFFER, remainder: true) \
         | pCheckM  | set{ checkm }
 
-     binList |  groupTuple(by: [0], size: params?.steps?.magAttributes?.gtdb?.buffer ?: 30, remainder: true) \
+     binFlattenedList \
+        |  groupTuple(by: [DATASET_IDX], size: params?.steps?.magAttributes?.gtdb?.buffer ?: GTDB_DEFAULT_BUFFER, remainder: true) \
         | pGtdbtk | set{ gtdb }
 
-     checkm | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-       [ "checkm.tsv", item[0].text  ]
-     }
+     binFlattenedList | pProkka 
 
-     checkm | groupTuple(by: 1, remainder: true) | map { it -> it[0] }  | flatten | map { it -> file(it) } \
+     checkm | groupTuple(by: DATASET_IDX, remainder: true) | map { it -> it[BIN_FILES_IDX] }  | flatten | map { bin -> file(bin) } \
        | collectFile(keepHeader: true, newLine: false ){ item -> [ "bin_attributes.tsv", item.text ] } \
-       | splitCsv(sep: '\t', header: true) | set{ bins_info } 
+       | splitCsv(sep: '\t', header: true) \
+       | set{ checkm_list } 
+
+     checkm \
+        | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
+       [ "checkm.tsv", item[BIN_FILES_IDX].text  ]
+     }
 
      gtdb.bacteria | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-       [ "${item[1]}_bacteria_gtdbtk.tsv", item[0].text  ]
-     } 
-
-     gtdb.archea | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-       [ "${item[1]}_archea_gtdbtk.tsv", item[0].text  ]
+       [ "${item[DATASET_IDX]}_bacteria_gtdbtk.tsv", item[BIN_FILES_IDX].text  ]
      }
 
-    // bins | join(bam, by: [0,1]) |  flatMap({n -> bufferMetabatSamtools(n)})  | pGetReads
-
+     gtdb.archea | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
+       [ "${item[DATASET_IDX]}_archea_gtdbtk.tsv", item[BIN_FILES_IDX].text  ]
+     }
+     checkm_list | view()
    emit:
-     bins_info
+     checkm = checkm_list
+     prokka_err = pProkka.out.err
+     prokka_faa = pProkka.out.faa
+     prokka_ffn = pProkka.out.ffn
+     prokka_fna = pProkka.out.fna
+     prokka_fsa = pProkka.out.fsa
+     prokka_gbk = pProkka.out.gbk
+     prokka_gff = pProkka.out.gff
+     prokka_log = pProkka.out.log
+     prokka_sqn = pProkka.out.sqn
+     prokka_tbl = pProkka.out.tbl
+     prokka_tsv = pProkka.out.tsv
+     prokka_txt = pProkka.out.txt
 
 }

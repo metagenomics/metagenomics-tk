@@ -5,12 +5,12 @@ runid: 1
 steps:
   assembly:
     interleaved: false
-    skip: true
     megahit:
   binning:
     metabat:
   sampleAnalysis:
   magAttributes:
+    gtdb:
     gtdb:
       buffer: 1000
       database: "/vol/spool/gtdb/release95"
