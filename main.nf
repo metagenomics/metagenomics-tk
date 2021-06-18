@@ -74,7 +74,7 @@ workflow wPipeline {
     wFragmentRecruitmentList(wUnmappedReadsList.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
 
     wMagAttributesList(wBinning.out.bins)
-    mapJoin(wMagAttributes.out.checkm, wBinning.out.bins_stats, "BIN_ID") | set { binsStats  }
+    mapJoin(wMagAttributesList.out.checkm, wBinning.out.bins_stats, "BIN_ID") | set { binsStats  }
 
     wDereplicateList(binsStats)
     representativesList = wDereplicateList.out
