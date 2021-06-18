@@ -3,7 +3,7 @@ nextflow.enable.dsl=2
 
 include { wAssemblyFile } from './modules/assembly/module'
 include { wBinning } from './modules/binning/module.nf'
-include { wMagAttributesFile; wMagAttributesList } from './modules/magAttributes/module.nf'
+include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
 include { wDereplicateFile; wDereplicateList } from './modules/dereplication/pasolli/module'
 include { wReadMappingBwa } from './modules/readMapping/bwa/module'
 include { wAnalyseMetabolites } from './modules/metabolomics/module'
@@ -20,6 +20,11 @@ def mapJoin(channel_a, channel_b, key){
 
 workflow wDereplication {
    wDereplicateFile(Channel.from(file(params?.steps?.dereplication?.pasolli?.input)))
+}
+
+
+workflow wCMSeqWorfklowFile {
+   wCMSeqWorkflowFile(Channel.from(params?.steps?.matAttributes?.input?.genomes), Channel.from(params?.steps?.matAttributes?.input?.alignments))
 }
 
 

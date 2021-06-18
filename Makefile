@@ -29,7 +29,7 @@ ifndef OPTIONS
 endif
 
 ifndef PARAMS_FILE
-	override PARAMS_FILE = ${CURRENT_DIR}/example_params/full_pipeline_params.yml
+	override PARAMS_FILE = ${CURRENT_DIR}/example_params/full_pipeline.yml
 endif
 
 .PHONY: list clean test_clean run_small_full_test check

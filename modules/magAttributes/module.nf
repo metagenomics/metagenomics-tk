@@ -8,6 +8,30 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
 }
 
+
+process pCmseq {
+
+    container "pbelmann/cmseq:${params.cmseq_tag}"
+
+    label 'tiny'
+
+    errorStrategy 'retry'
+
+    when params.steps.magAttributes.containsKey("prokka")
+
+    input:
+    tuple val(sample), file(gff), file(bam), file(bai)
+
+    output:
+    file("${sample}_${bin}.txt")
+
+    shell:
+    '''
+    polymut.py --mincov 10 --gff_file !{gff} !{bam} > !{sample}_!{gff}.txt
+    '''
+}
+
+
 process pCheckM {
 
     container "pbelmann/checkm:${params.checkm_tag}"
@@ -114,7 +138,7 @@ process pProkka {
 
     errorStrategy 'ignore'
 
-    label 'large'
+    label 'small'
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }
 
@@ -124,23 +148,26 @@ process pProkka {
     tuple val(sample), file(bin)
 
     output:
-    tuple file("*.gff"), val("${sample}"), emit: gff 
-    tuple file("*.err"), val("${sample}"), emit: err 
-    tuple file("*.faa"), val("${sample}"), emit: faa 
-    tuple file("*.fna"), val("${sample}"), emit: fna 
-    tuple file("*.ffn"), val("${sample}"), emit: ffn 
-    tuple file("*.fsa"), val("${sample}"), emit: fsa 
-    tuple file("*.gbk"), val("${sample}"), emit: gbk
-    tuple file("*.log"), val("${sample}"), emit: log
-    tuple file("*.tbl"), val("${sample}"), emit: tbl
-    tuple file("*.sqn"), val("${sample}"), emit: sqn
-    tuple file("*.txt"), val("${sample}"), emit: txt
-    tuple file("*.tsv"), val("${sample}"), emit: tsv
+    tuple file("*.gff"), env(BIN_ID), val("${sample}"), emit: gff 
+    tuple file("*.err"), env(BIN_ID), val("${sample}"), emit: err 
+    tuple file("*.faa"), env(BIN_ID), val("${sample}"), emit: faa 
+    tuple file("*.fna"), env(BIN_ID), val("${sample}"), emit: fna 
+    tuple file("*.ffn"), env(BIN_ID), val("${sample}"), emit: ffn 
+    tuple file("*.fsa"), env(BIN_ID), val("${sample}"), emit: fsa 
+    tuple file("*.gbk"), env(BIN_ID), val("${sample}"), emit: gbk
+    tuple file("*.log"), env(BIN_ID), val("${sample}"), emit: log
+    tuple file("*.tbl"), env(BIN_ID), val("${sample}"), emit: tbl
+    tuple file("*.sqn"), env(BIN_ID), val("${sample}"), emit: sqn
+    tuple file("*.txt"), env(BIN_ID), val("${sample}"), emit: txt
+    tuple file("*.tsv"), env(BIN_ID), val("${sample}"), emit: tsv
 
     shell:
     '''
     prokka --cpus !{task.cpus} !{bin} --outdir out
-    for f in out/* ; do suffix=$(echo "${f#*.}"); mv $f !{sample}_$(basename !{bin}).${suffix}; done
+    BIN=!{bin}
+    BIN_PRAEFIX=$(echo "${BIN%%.*}")
+    BIN_ID="${BIN_PRAEFIX}"
+    for f in out/* ; do suffix=$(echo "${f#*.}"); mv $f ${BIN_PRAEFIX}.${suffix}; done
     '''
 }
 
@@ -150,6 +177,41 @@ def flattenBins(binning){
      chunkList.add([binning[0], it]);
   }
   return chunkList;
+}
+
+
+/*
+* The CMSeq workflow should estimate the heterogenety of a MAG in a given sample.
+* Input:
+*     * genomes  - A table with the columns PATH and  DATASET
+*         Example:
+*          PATH    DATASET
+*          /vol/spool/cmseq_20210607/GCF_000145295.fa      SAMPLE
+* 
+*     * alignments - A table with read alignment against genomes. 
+*           Example:
+*           PATH    DATASET
+*           /vol/spool/fragmentRecruitment_20210607/work/3d/9a45b85c15b22a6bb8ed4635391a40/ERR2019981.bam   ERR2019981.bam
+*
+*/
+workflow wCMSeqWorkflowFile {
+   take:
+      genomes
+      alignments
+   main:
+      wMagAttributesFile(genomes)
+      Channel.fromPath(alignments) | splitCsv(sep: '\t', header: true) \
+       | map { sample -> [sample.BAM, file(sample.PATH), sample.BAI] } | set {alignments}
+
+      SAMPLE_BINID_IDX = [1,2] 
+      SAMPLE_ID_IDX = 1
+      GFF_IDX = 2
+      ALIGNMENT_IDX = 5
+      ALIGNMENT_INDEX_IDX = 5
+      wMagAttributesFile.out.prokka_gff \
+         | join(wMagAttributesFile.out.prokka_fna, by: SAMPLE_BINID_IDX, remainder: true) \
+         | combine(alignments) | map { it -> [it[SAMPLE_ID_IDX],it[GFF_IDX],it[ALIGNMENT_IDX], it[ALIGNMENT_INDEX_IDX] ] } |  pCmseq
+
 }
 
 
@@ -226,8 +288,6 @@ workflow wMagAttributesList {
      prokka_tbl = _wMagAttributes.out.prokka_tbl
      prokka_tsv = _wMagAttributes.out.prokka_tsv
      prokka_txt = _wMagAttributes.out.prokka_txt
-
-
 }
 
 workflow _wMagAttributes {
