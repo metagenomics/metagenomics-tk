@@ -1,2 +1,2 @@
-make run_small_full_test CACHE="NXF_HOME=/mnt/nextflow_cache/" WORK_DIR="/mnt/work/work" OPTIONS=" -process.cache='lenient' --steps.magAttributes.input=test/bins/small/attributes.tsv " PROFILE="local"  ENTRY="wMagAttributes" PARAMS_FILE=example_params/magAttributes.yml  || exit 1
+make run_small_full_test CACHE="NXF_HOME=/mnt/nextflow_cache/" WORK_DIR="/mnt/work/work" OPTIONS=" -process.cache='lenient' --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202  --steps.magAttributes.input=test/bins/small/attributes.tsv " PROFILE="local"  ENTRY="wMagAttributes" PARAMS_FILE=example_params/magAttributes.yml  || exit 1
 make check
