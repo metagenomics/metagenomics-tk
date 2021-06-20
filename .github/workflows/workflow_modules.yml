@@ -28,8 +28,8 @@ jobs:
       - name: Cache nextflow cache
         uses: actions/cache@v2
         with:
-           path: $GITHUB_WORKSPACE/.nextlfow
-           key: ${{github.ref}}-nextflow-cache
+           path: ${{github.workspace}}/.nextflow
+           key: ${{github.head_ref}}-nextflow-cache
       - name: clean up existing inputs directory
         run: |
           rm -rf /mnt/nextflow_cache/* 
