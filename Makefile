@@ -1,19 +1,12 @@
 CURRENT_DIR = $(shell pwd)
 
 
-small_reads_folder = ${CURRENT_DIR}/test/reads/small
-bins_folder = ${CURRENT_DIR}/test/bins/small
-reads_split_test = ${small_reads_folder}/reads_split.tsv
-reads_interleaved_test = ${small_reads_folder}/reads.tsv
-bins_attributes_test = ${bins_folder}/attributes.tsv
-small_read1 = ${small_reads_folder}/read1_1.fq.gz 
-small_read2 = ${small_reads_folder}/read2_1.fq.gz 
-small_read_interleaved = ${small_reads_folder}/interleaved.fq.gz
-bin1 = ${bins_folder}/bin.1.fa
-bin2 = ${bins_folder}/bin.2.fa
-
 ifndef PROFILE
 	override PROFILE = "local,conda"
+endif
+
+ifndef DEST
+	override DEST = $(shell pwd)
 endif
 
 ifndef WORK_DIR
@@ -28,13 +21,21 @@ ifndef OPTIONS
 	override OPTIONS = ""
 endif
 
-ifndef CACHE
-	override CACHE = ""
+ifndef PARAMS_FILE
+	override PARAMS_FILE = ${CURRENT_DIR}/example_params/full_pipeline_params.yml
 endif
 
-ifndef PARAMS_FILE
-	override PARAMS_FILE = ${CURRENT_DIR}/example_params/full_pipeline.yml
-endif
+small_reads_folder = ${DEST}/test/reads/small
+bins_folder = ${DEST}/test/bins/small
+reads_split_test = ${small_reads_folder}/reads_split.tsv
+reads_interleaved_test = ${small_reads_folder}/reads.tsv
+bins_attributes_test = ${bins_folder}/attributes.tsv
+small_read1 = ${small_reads_folder}/read1_1.fq.gz 
+small_read2 = ${small_reads_folder}/read2_1.fq.gz 
+small_read_interleaved = ${small_reads_folder}/interleaved.fq.gz
+bin1 = ${bins_folder}/bin.1.fa
+bin2 = ${bins_folder}/bin.2.fa
+
 
 .PHONY: list clean test_clean run_small_full_test check
 clean :
@@ -50,33 +51,30 @@ nextflow:
 check:
 	! grep -q "FAILED" log/trace.tsv || (echo "$?"; exit 1)
 
-
-
-test/reads/small:
-	- mkdir -p test/reads/small
-	- wget -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz -P test/reads/small/
-	- wget -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1.fq.gz -P test/reads/small/
+${DEST}/test/reads/small:
+	- mkdir -p  ${DEST}/test/reads/small
+	- wget -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz -P ${DEST}/test/reads/small/
+	- wget -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1.fq.gz -P ${DEST}/test/reads/small/
 	- echo "SAMPLE\tREADS1\tREADS2" > ${reads_split_test}
 	- echo "test1\t${small_read1}\t${small_read2}" >> ${reads_split_test}
 	- echo "test2\t${small_read1}\t${small_read2}" >> ${reads_split_test}
 
-test/reads/small/interleaved.fq.gz:
-	- mkdir -p test/reads/small
-	- wget -O test/reads/small/interleaved.fq.gz  -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/RL_S001__insert_270_new3.fq.gz
+${DEST}/test/reads/small/interleaved.fq.gz:
+	- mkdir -p ${DEST}/test/reads/small
+	- wget -O ${DEST}/test/reads/small/interleaved.fq.gz  -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/RL_S001__insert_270_new3.fq.gz
 	- echo "SAMPLE\tREADS" > ${reads_interleaved_test}
 	- echo "test1\t${small_read_interleaved}" >> ${reads_interleaved_test}
 	- echo "test2\t${small_read_interleaved}" >> ${reads_interleaved_test}
 
-test/bins/small/:
-	- mkdir -p test/bins/small
-	- wget -O test/bins/small/bin.1.fa -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.1.fa
-	- wget -O test/bins/small/bin.2.fa -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.2.fa
+${DEST}/test/bins/small/:
+	- mkdir -p ${DEST}/test/bins/small
+	- wget -O ${DEST}/test/bins/small/bin.1.fa -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.1.fa
+	- wget -O ${DEST}/test/bins/small/bin.2.fa -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.2.fa
 	- echo "DATASET\tBIN_ID\tPATH\tCOMPLETENESS\tCONTAMINATION\tCOVERAGE\tN50\tHETEROGENEITY" >> ${bins_attributes_test}
 	- echo "test1\tbin.1\t${bin1}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
 	- echo "test1\tbin.2\t${bin2}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
 
-run_small_full_test: test/reads/small nextflow test/bins/small/ test/reads/small/interleaved.fq.gz
-	[ -z "${CACHE}" ] || ${CACHE}
+run_small_full_test: ${DEST}/test/reads/small nextflow ${DEST}/test/bins/small/ ${DEST}/test/reads/small/interleaved.fq.gz
 	./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR}_${ENTRY} -profile ${PROFILE} -resume -entry ${ENTRY} -params-file ${PARAMS_FILE} 
 
 
