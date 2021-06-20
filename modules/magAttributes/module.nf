@@ -327,7 +327,6 @@ workflow _wMagAttributes {
      gtdb.archea | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "${item[DATASET_IDX]}_archea_gtdbtk.tsv", item[BIN_FILES_IDX].text  ]
      }
-     checkm_list | view()
    emit:
      checkm = checkm_list
      prokka_err = pProkka.out.err
