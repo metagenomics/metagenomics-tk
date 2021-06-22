@@ -83,6 +83,18 @@ Every module follows the output definition specified in the `output` section.
 
 3. Workflow names must start with `w`. 
 
+## Versioning
+
+All modules are versioned according to [semantic versioning](https://semver.org/). The version number is incorporated in the output directory (see `Output` section) 
+for easier parsing of the output directory. In the following we give examples when to increment which part of of the version identifier:
+
+Given a version number MAJOR.MINOR.PATCH, increment the:
+
+  * MAJOR version when you make incompatible changes, as for example modifying the output structure. A script that was build to parse the output structure must be adapted then.
+  * MINOR version when you add functionality in a backwards compatible manner. One example is adding an additional tool to the module. 
+  * PATCH version when you make backwards compatible bug fixes. This is necessary when you for example increment the docker container version number that fixes a bug or increases the
+    speed of the tool.
+
 ## Process
 
 1. Process names should start `p`
@@ -112,7 +124,7 @@ versions and modes must be differentiated.
 Outputs are produced by using `publish dir` directive.
 
 ```
-DATASET_ID/RUN_ID/MODULE/VERSION/MODE/
+DATASET_ID/RUN_ID/MODULE/VERSION/TOOL/
 ```
 where
    * `DATASET_ID` specifies the ID of a dataset such as the SRA dataset.
