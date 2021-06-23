@@ -26,7 +26,7 @@ process pCheckM {
     tuple val(sample), path(bins) 
 
     output:
-    tuple path("chunk_*_${sample}_checkm.txt", type: "file"), val("${sample}")
+    tuple path("${sample}_checkm_*.tsv", type: "file"), val("${sample}")
 
     shell:
     '''
@@ -45,7 +45,7 @@ process pCheckM {
     checkm tree_qa out &> tree_qa.log
     checkm lineage_set out out/marker &> lineage.log
     checkm analyze -x $FILE_ENDING -t !{task.cpus} out/marker . out &> analyze.log
-    FILE=$(mktemp chunk_XXXXXXXXXX_!{sample}_checkm.txt)
+    FILE=$(mktemp !{sample}_checkm_XXXXXXXX.tsv)
     checkm qa --tab_table -t !{task.cpus} -f checkm.txt out/marker out  &> qa.log
 
     echo "SAMPLE\tBIN_ID\tMarker lineage\t# genomes\t# markers\t# marker sets\t0\t1\t2\t3\t4\t5+\tCOMPLETENESS\tCONTAMINATION\tHETEROGENEITY" > checkm_tmp.tsv
@@ -79,6 +79,7 @@ process pGtdbtk {
     output:
     tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
     tuple path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), val("${sample}"), optional: true, emit: archea
+    tuple path("${sample}_gtdbtk_*.tsv"), val("${sample}"), optional: true, emit: combined
 
     shell:
     '''
@@ -98,12 +99,16 @@ process pGtdbtk {
     touch output/gtdbtk.ar122.summary.tsv
     FILE_BAC=$(mktemp chunk_XXXXXXXXXX_!{sample}_gtdbtk.bac120.summary.tsv)
     FILE_ARC=$(mktemp chunk_XXXXXXXXXX_!{sample}_gtdbtk.ar122.summary.tsv)
+    FILE_COMB=$(mktemp !{sample}_gtdbtk_XXXXXXX.tsv)
 
     sed "s/^/SAMPLE\t/g" <(head -n 1 output/gtdbtk.bac120.summary.tsv) > $FILE_BAC 
     sed "s/^/!{sample}\t/g"  <(tail -n +2 output/gtdbtk.bac120.summary.tsv) >> $FILE_BAC 
 
     sed "s/^/SAMPLE\t/g" <(head -n 1 output/gtdbtk.ar122.summary.tsv) > $FILE_ARC 
     sed "s/^/!{sample}\t/g" <(tail -n +2 output/gtdbtk.ar122.summary.tsv) >> $FILE_ARC 
+
+    cat <(head -n 1 ${FILE_BAC}) <(head -n 1 ${FILE_ARC}) | sort | uniq | sed 's/^/DOMAIN\t/g' > $FILE_COMB
+    cat <(tail -n +2  ${FILE_ARC} | sed 's/^/ARCHAEA\t/g') <(tail -n +2  ${FILE_BAC} | sed 's/^/BACTERIA\t/g')  >> $FILE_COMB
     '''
 }
 

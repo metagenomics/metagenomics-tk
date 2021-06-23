@@ -3,9 +3,10 @@ input: "test/reads/small/reads_split.tsv"
 output: "output"
 runid: 1
 steps:
-  assembly:
+  qc:
     interleaved: false
-    skip: true
+    fastp:
+  assembly:
     megahit:
   binning:
     metabat:
@@ -13,7 +14,7 @@ steps:
   magAttributes:
     gtdb:
       buffer: 1000
-      database: "/vol/spool/gtdb/release95"
+      database: "/vol/spool/gtdb/release202"
     checkm:
       database: "/vol/spool/checkm/"
       buffer: 200

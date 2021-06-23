@@ -1,7 +1,7 @@
 nextflow.enable.dsl=2
 
-
-include { wAssemblyFile } from './modules/assembly/module'
+include { wQualityControlFile } from './modules/qualityControl/module'
+include { wAssemblyFile; wAssemblyList } from './modules/assembly/module'
 include { wBinning } from './modules/binning/module.nf'
 include { wMagAttributes } from './modules/magAttributes/module.nf'
 include { wDereplicateFile; wDereplicateList } from './modules/dereplication/pasolli/module'
@@ -25,11 +25,6 @@ workflow wDereplication {
 
 workflow run_bwa {
 //    bwa(Channel.from('1'), Channel.from(params.input), Channel.fromPath(params.mapping_samples),Channel.fromPath(params.list_of_representatives))
-}
-
-
-workflow mags_generation {
-//    mags_generation_file(Channel.fromPath(params.input))
 }
 
 workflow wUnmappedReads {
@@ -56,16 +51,17 @@ workflow wPipeline {
     representativeGenomesTempDir = params.tempdir + "/representativeGenomes"
     file(representativeGenomesTempDir).mkdirs()
 
-    wAssemblyFile(Channel.fromPath(params.input))
+    wQualityControlFile(Channel.fromPath(params.input))
+    wAssemblyList(wQualityControlFile.out.processed_reads)
 
-    wAssemblyFile.out.processed_reads \
+    wQualityControlFile.out.processed_reads \
         | map { it -> "${it[0]}\t${it[1]}" } \
         | collectFile(seed: "SAMPLE\tREADS", name: 'test.txt', newLine: true) \
         | set { samples }
 
-    wBinning(wAssemblyFile.out.contigs, wAssemblyFile.out.processed_reads)
+    wBinning(wAssemblyList.out.contigs, wQualityControlFile.out.processed_reads)
 
-    wUnmappedReadsList(wAssemblyFile.out.processed_reads, wBinning.out.bins)
+    wUnmappedReadsList(wQualityControlFile.out.processed_reads, wBinning.out.bins)
     wFragmentRecruitmentList(wUnmappedReadsList.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
 
     wMagAttributes(wBinning.out.bins, wBinning.out.mapping)
