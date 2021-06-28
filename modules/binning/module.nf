@@ -83,7 +83,7 @@ process pMetabat {
     tuple val(sample), path(contigs), path(bam)
 
     output:
-    tuple val("${sample}"), file("out/*bin*"), optional: true, emit: bins
+    tuple val("${sample}"), file("${sample}_bin.*.fa"), optional: true, emit: bins
     tuple val("${sample}"), file("*.depth.txt"), optional: true, emit: metabat_depth
     tuple val("${sample}"), file("${sample}_bins_depth.tsv"), optional: true, emit: bins_depth
     tuple val("${sample}"), file("${sample}_bins_stats.tsv"), optional: true, emit: bins_stats
@@ -168,7 +168,6 @@ workflow wBinning {
      metabat.bins_stats | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "metabat_bins_depth.tsv", item[1].text  ]
      }
-
     // metabat.bins | mix(maxbin.bins) | set {bins}
    emit:
      bins_stats = bins_stats
