@@ -47,39 +47,14 @@ process pCheckM {
     label 'medium'
 
     input:
-    tuple val(sample), path(bins) 
+    tuple val(sample), val(ending), path(bins) 
 
     output:
     tuple val("${sample}"), path("chunk_*_${sample}_checkm.txt", type: "file") 
 
     shell:
-    '''
-    TYPE=checkm_out
-    count=`ls -1 *.fasta 2>/dev/null | wc -l`
-    if [ $count != 0 ]
-    then 
-       FILE_ENDING=".fasta"
-    else
-       FILE_ENDING=".fa"
-    fi 
-
-    echo '{"dataRoot": "/.checkm", "remoteManifestURL": "https://data.ace.uq.edu.au/public/CheckM_databases/", "manifestType": "CheckM", "remoteManifestName": ".dmanifest", "localManifestName": ".dmanifest"}' > /tmp/DATA_CONFIG
-    mkdir out
-    checkm tree -x $FILE_ENDING --reduced_tree --pplacer_threads !{task.cpus}  -t !{task.cpus} -x !{params.ending} . out &> tree.log
-    checkm tree_qa out &> tree_qa.log
-    checkm lineage_set out out/marker &> lineage.log
-    checkm analyze -x $FILE_ENDING -t !{task.cpus} out/marker . out &> analyze.log
-    FILE=$(mktemp chunk_XXXXXXXXXX_!{sample}_checkm.txt)
-    checkm qa --tab_table -t !{task.cpus} -f checkm.txt out/marker out  &> qa.log
-
-    echo "SAMPLE\tBIN_ID\tMarker lineage\t# genomes\t# markers\t# marker sets\t0\t1\t2\t3\t4\t5+\tCOMPLETENESS\tCONTAMINATION\tHETEROGENEITY" > checkm_tmp.tsv
-    tail -n +2 checkm.txt | sed "s/^/!{sample}\t/g"  >> checkm_tmp.tsv
-
-    echo "PATH" > path.tsv
-    tail -n +2 checkm.txt | cut -f 1 | sed "s/$/${FILE_ENDING}/g" | xargs -I {} readlink -f {} >> path.tsv
-
-    paste -d$'\t' path.tsv checkm_tmp.tsv > $FILE 
-    '''
+    template 'checkm.sh'
+    
 }
 
 
@@ -98,37 +73,14 @@ process pGtdbtk {
     containerOptions " --user 1000:1000  --volume ${params.steps.magAttributes.gtdb.database}:/refdata"
    
     input:
-    tuple val(sample), path(bins) 
+    tuple val(sample), val(ending), path(bins) 
 
     output:
     tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), optional: true, emit: bacteria
     tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), optional: true, emit: archea
 
     shell:
-    '''
-    count=`ls -1 *.fasta 2>/dev/null | wc -l`
-    if [ $count != 0 ]
-    then 
-       FILE_ENDING=".fasta"
-    else
-       FILE_ENDING=".fa"
-    fi
-
-    mkdir output
-    readlink -f !{bins} > bin.path
-    paste -d$'\t' bin.path <(for p in $(cat bin.path); do basename $p; done) > input.tsv
-    gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus}  --extension ${FILE_ENDING}
-    touch output/gtdbtk.bac120.summary.tsv
-    touch output/gtdbtk.ar122.summary.tsv
-    FILE_BAC=$(mktemp chunk_XXXXXXXXXX_!{sample}_gtdbtk.bac120.summary.tsv)
-    FILE_ARC=$(mktemp chunk_XXXXXXXXXX_!{sample}_gtdbtk.ar122.summary.tsv)
-
-    sed "s/^/SAMPLE\t/g" <(head -n 1 output/gtdbtk.bac120.summary.tsv) > $FILE_BAC 
-    sed "s/^/!{sample}\t/g"  <(tail -n +2 output/gtdbtk.bac120.summary.tsv) >> $FILE_BAC 
-
-    sed "s/^/SAMPLE\t/g" <(head -n 1 output/gtdbtk.ar122.summary.tsv) > $FILE_ARC 
-    sed "s/^/!{sample}\t/g" <(tail -n +2 output/gtdbtk.ar122.summary.tsv) >> $FILE_ARC 
-    '''
+    template 'gtdb.sh'
 }
 
 
@@ -296,36 +248,43 @@ workflow _wMagAttributes {
    main:
      GTDB_DEFAULT_BUFFER = 500
      CHECKM_DEFAULT_BUFFER = 30
+     BIN_FILES_INPUT_IDX = 1
+
      DATASET_IDX = 0
-     BIN_FILES_IDX = 1
+     FILE_ENDING_IDX = 1
+     BIN_FILES_IDX = 2
+     BIN_FILES_OUTPUT_IDX = 1
 
      bins  | flatMap({n -> flattenBins(n)}) | set {binFlattenedList}
-     binFlattenedList \
-        | groupTuple(by: [DATASET_IDX], size: params?.steps?.magAttributes?.checkm?.buffer ?: CHECKM_DEFAULT_BUFFER, remainder: true) \
+
+     # get file ending of bin files (.fa, .fasta, ...) and group by file ending and dataset
+     binFlattenedList | map { it -> def path=file(it[BIN_FILES_INPUT_IDX]); [it[DATASET_IDX], path.name.substring(path.name.lastIndexOf(".")), path]} \
+        | set { flattenedListEnding }
+
+     flattenedListEnding  | groupTuple(by: [DATASET_IDX, FILE_ENDING_IDX], size: params?.steps?.magAttributes?.checkm?.buffer ?: CHECKM_DEFAULT_BUFFER, remainder: true) \
         | pCheckM  | set{ checkm }
 
-     binFlattenedList \
-        |  groupTuple(by: [DATASET_IDX], size: params?.steps?.magAttributes?.gtdb?.buffer ?: GTDB_DEFAULT_BUFFER, remainder: true) \
+     flattenedListEnding |  groupTuple(by: [DATASET_IDX, FILE_ENDING_IDX], size: params?.steps?.magAttributes?.gtdb?.buffer ?: GTDB_DEFAULT_BUFFER, remainder: true) \
         | pGtdbtk | set{ gtdb }
 
      binFlattenedList | pProkka 
 
-     checkm | groupTuple(by: DATASET_IDX, remainder: true) | map { it -> it[BIN_FILES_IDX] }  | flatten | map { bin -> file(bin) } \
+     checkm | groupTuple(by: DATASET_IDX, remainder: true) | map { it -> it[BIN_FILES_OUTPUT_IDX] }  | flatten | map { bin -> file(bin) } \
        | collectFile(keepHeader: true, newLine: false ){ item -> [ "bin_attributes.tsv", item.text ] } \
        | splitCsv(sep: '\t', header: true) \
        | set{ checkm_list } 
 
      checkm \
         | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-       [ "checkm.tsv", item[BIN_FILES_IDX].text  ]
+       [ "checkm.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
      }
 
      gtdb.bacteria | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-       [ "${item[DATASET_IDX]}_bacteria_gtdbtk.tsv", item[BIN_FILES_IDX].text  ]
+       [ "${item[DATASET_IDX]}_bacteria_gtdbtk.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
      }
 
      gtdb.archea | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-       [ "${item[DATASET_IDX]}_archea_gtdbtk.tsv", item[BIN_FILES_IDX].text  ]
+       [ "${item[DATASET_IDX]}_archea_gtdbtk.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
      }
    emit:
      checkm = checkm_list
@@ -341,5 +300,4 @@ workflow _wMagAttributes {
      prokka_tbl = pProkka.out.tbl
      prokka_tsv = pProkka.out.tsv
      prokka_txt = pProkka.out.txt
-
 }
