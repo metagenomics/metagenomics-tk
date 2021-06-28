@@ -32,10 +32,6 @@ workflow wMagAttributes {
    wMagAttributesFile(Channel.fromPath(params?.steps?.magAttributes?.input))
 }
 
-workflow run_bwa {
-//    bwa(Channel.from('1'), Channel.from(params.input), Channel.fromPath(params.mapping_samples),Channel.fromPath(params.list_of_representatives))
-}
-
 
 workflow wUnmappedReads {
      wUnmappedReadsFile(Channel.fromPath(params?.steps?.sampleAnalysis?.reads), Channel.fromPath(params?.steps?.sampleAnalysis?.bins))
