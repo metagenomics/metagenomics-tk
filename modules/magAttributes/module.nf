@@ -257,7 +257,7 @@ workflow _wMagAttributes {
 
      bins  | flatMap({n -> flattenBins(n)}) | set {binFlattenedList}
 
-     # get file ending of bin files (.fa, .fasta, ...) and group by file ending and dataset
+     // get file ending of bin files (.fa, .fasta, ...) and group by file ending and dataset
      binFlattenedList | map { it -> def path=file(it[BIN_FILES_INPUT_IDX]); [it[DATASET_IDX], path.name.substring(path.name.lastIndexOf(".")), path]} \
         | set { flattenedListEnding }
 
