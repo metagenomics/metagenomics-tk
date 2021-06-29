@@ -142,7 +142,13 @@ the output of an older version of run (B), then a new RUN_ID folder must be crea
 If a partial pipeline run (B) uses outputs of a previous run (A) (e.g. a binning tool uses the output of an assembler) and the previous run (A) **does not** contain
 the output of an older version of run (B), then the existing RUN_ID folder must be **reused**.
 
-### Example 1:
+#### Run Versioning
+
+Every dataset must contain a `TOOL` folder called `config`. The `config` folder contains descriptions of the parameters and the version used for the specific pipeline run.
+
+### Examples
+
+## Example 1:
 
 We assume that the following folder already exists:
 
@@ -158,7 +164,7 @@ If the MODULE output does not contain a BINNING output then the existing RUN fol
 /SRA1/1/BINNING/0.3/METABAT
 ```
 
-### Example 2:
+## Example 2:
 
 We assume that the following folders already exists:
 

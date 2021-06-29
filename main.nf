@@ -1,5 +1,6 @@
 nextflow.enable.dsl=2
 
+include { wSaveSettingsFile } from './modules/config/module'
 include { wQualityControlFile } from './modules/qualityControl/module'
 include { wAssemblyFile; wAssemblyList } from './modules/assembly/module'
 include { wBinning } from './modules/binning/module.nf'
@@ -9,6 +10,8 @@ include { wReadMappingBwa } from './modules/readMapping/bwa/module'
 include { wAnalyseMetabolites } from './modules/metabolomics/module'
 include { wUnmappedReadsList; wUnmappedReadsFile } from './modules/sampleAnalysis/module'
 include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './modules/fragmentRecruitment/frhit/module'
+
+
 
 
 def mapJoin(channel_a, channel_b, key){
@@ -48,6 +51,9 @@ workflow wFragmentRecruitment {
 * Left and right read could be https, s3 links or file path. 
 */
 workflow wPipeline {
+   
+    wSaveSettingsFile(Channel.fromPath(params.input))
+
     representativeGenomesTempDir = params.tempdir + "/representativeGenomes"
     file(representativeGenomesTempDir).mkdirs()
 
