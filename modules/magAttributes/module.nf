@@ -3,10 +3,34 @@ nextflow.enable.dsl=2
 params.ending = ".fa"
 
 MODULE="magAttributes"
-VERSION="0.1.0"
+VERSION="0.2.0"
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
 }
+
+
+process pCmseq {
+
+    container "pbelmann/cmseq:${params.cmseq_tag}"
+
+    label 'tiny'
+
+    errorStrategy 'retry'
+
+    when params.steps.magAttributes.containsKey("prokka")
+
+    input:
+    tuple val(sample), file(gff), file(bam), file(bai)
+
+    output:
+    file("${sample}_${bin}.txt")
+
+    shell:
+    '''
+    polymut.py --mincov 10 --gff_file !{gff} !{bam} > !{sample}_!{gff}.txt
+    '''
+}
+
 
 process pCheckM {
 
@@ -23,39 +47,14 @@ process pCheckM {
     label 'medium'
 
     input:
-    tuple val(sample), path(bins) 
+    tuple val(sample), val(ending), path(bins) 
 
     output:
     tuple path("${sample}_checkm_*.tsv", type: "file"), val("${sample}")
 
     shell:
-    '''
-    TYPE=checkm_out
-    count=`ls -1 *.fasta 2>/dev/null | wc -l`
-    if [ $count != 0 ]
-    then 
-       FILE_ENDING=".fasta"
-    else
-       FILE_ENDING=".fa"
-    fi 
-
-    echo '{"dataRoot": "/.checkm", "remoteManifestURL": "https://data.ace.uq.edu.au/public/CheckM_databases/", "manifestType": "CheckM", "remoteManifestName": ".dmanifest", "localManifestName": ".dmanifest"}' > /tmp/DATA_CONFIG
-    mkdir out
-    checkm tree -x $FILE_ENDING --reduced_tree --pplacer_threads !{task.cpus}  -t !{task.cpus} -x !{params.ending} . out &> tree.log
-    checkm tree_qa out &> tree_qa.log
-    checkm lineage_set out out/marker &> lineage.log
-    checkm analyze -x $FILE_ENDING -t !{task.cpus} out/marker . out &> analyze.log
-    FILE=$(mktemp !{sample}_checkm_XXXXXXXX.tsv)
-    checkm qa --tab_table -t !{task.cpus} -f checkm.txt out/marker out  &> qa.log
-
-    echo "SAMPLE\tBIN_ID\tMarker lineage\t# genomes\t# markers\t# marker sets\t0\t1\t2\t3\t4\t5+\tCOMPLETENESS\tCONTAMINATION\tHETEROGENEITY" > checkm_tmp.tsv
-    tail -n +2 checkm.txt | sed "s/^/!{sample}\t/g"  >> checkm_tmp.tsv
-
-    echo "PATH" > path.tsv
-    tail -n +2 checkm.txt | cut -f 1 | sed "s/$/${FILE_ENDING}/g" | xargs -I {} readlink -f {} >> path.tsv
-
-    paste -d$'\t' path.tsv checkm_tmp.tsv > $FILE 
-    '''
+    template 'checkm.sh'
+    
 }
 
 
@@ -74,7 +73,7 @@ process pGtdbtk {
     containerOptions " --user 1000:1000  --volume ${params.steps.magAttributes.gtdb.database}:/refdata"
    
     input:
-    tuple val(sample), path(bins) 
+    tuple val(sample), val(ending), path(bins) 
 
     output:
     tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
@@ -82,106 +81,48 @@ process pGtdbtk {
     tuple path("${sample}_gtdbtk_*.tsv"), val("${sample}"), optional: true, emit: combined
 
     shell:
-    '''
-    count=`ls -1 *.fasta 2>/dev/null | wc -l`
-    if [ $count != 0 ]
-    then 
-       FILE_ENDING=".fasta"
-    else
-       FILE_ENDING=".fa"
-    fi
-
-    mkdir output
-    readlink -f !{bins} > bin.path
-    paste -d$'\t' bin.path <(for p in $(cat bin.path); do basename $p; done) > input.tsv
-    gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus}  --extension ${FILE_ENDING}
-    touch output/gtdbtk.bac120.summary.tsv
-    touch output/gtdbtk.ar122.summary.tsv
-    FILE_BAC=$(mktemp chunk_XXXXXXXXXX_!{sample}_gtdbtk.bac120.summary.tsv)
-    FILE_ARC=$(mktemp chunk_XXXXXXXXXX_!{sample}_gtdbtk.ar122.summary.tsv)
-    FILE_COMB=$(mktemp !{sample}_gtdbtk_XXXXXXX.tsv)
-
-    sed "s/^/SAMPLE\t/g" <(head -n 1 output/gtdbtk.bac120.summary.tsv) > $FILE_BAC 
-    sed "s/^/!{sample}\t/g"  <(tail -n +2 output/gtdbtk.bac120.summary.tsv) >> $FILE_BAC 
-
-    sed "s/^/SAMPLE\t/g" <(head -n 1 output/gtdbtk.ar122.summary.tsv) > $FILE_ARC 
-    sed "s/^/!{sample}\t/g" <(tail -n +2 output/gtdbtk.ar122.summary.tsv) >> $FILE_ARC 
-
-    cat <(head -n 1 ${FILE_BAC}) <(head -n 1 ${FILE_ARC}) | sort | uniq | sed 's/^/DOMAIN\t/g' > $FILE_COMB
-    cat <(tail -n +2  ${FILE_ARC} | sed 's/^/ARCHAEA\t/g') <(tail -n +2  ${FILE_BAC} | sed 's/^/BACTERIA\t/g')  >> $FILE_COMB
-    '''
+    template 'gtdb.sh'
 }
 
 
 process pProkka {
 
-    container "staphb/prokka:${prokka_tag}"
+    container "staphb/prokka:${params.prokka_tag}"
 
-//    publishDir "${params.output}/${sample}/prokka/${prokka_tag}" 
+    errorStrategy 'ignore'
 
-//    errorStrategy 'retry'
+    label 'small'
 
-    label 'large'
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }
+
+    when params.steps.magAttributes.containsKey("prokka")
 
     input:
-    tuple file(bam), file(bai), file(binFile), sampleName 
+    tuple val(sample), file(bin)
 
     output:
-    tuple file("out/*.gff"), file("${binFile}"), file("${bam}"), file("${bai}"), val("${sampleName}") 
+    tuple file("*.gff"), env(BIN_ID), val("${sample}"), emit: gff 
+    tuple file("*.err"), env(BIN_ID), val("${sample}"), emit: err 
+    tuple file("*.faa"), env(BIN_ID), val("${sample}"), emit: faa 
+    tuple file("*.fna"), env(BIN_ID), val("${sample}"), emit: fna 
+    tuple file("*.ffn"), env(BIN_ID), val("${sample}"), emit: ffn 
+    tuple file("*.fsa"), env(BIN_ID), val("${sample}"), emit: fsa 
+    tuple file("*.gbk"), env(BIN_ID), val("${sample}"), emit: gbk
+    tuple file("*.log"), env(BIN_ID), val("${sample}"), emit: log
+    tuple file("*.tbl"), env(BIN_ID), val("${sample}"), emit: tbl
+    tuple file("*.sqn"), env(BIN_ID), val("${sample}"), emit: sqn
+    tuple file("*.txt"), env(BIN_ID), val("${sample}"), emit: txt
+    tuple file("*.tsv"), env(BIN_ID), val("${sample}"), emit: tsv
 
     shell:
     '''
-    prokka --cpus 0 !{binFile} --outdir out
+    prokka --cpus !{task.cpus} !{bin} --outdir out
+    BIN=!{bin}
+    BIN_PRAEFIX=$(echo "${BIN%.*}")
+    BIN_ID="${BIN_PRAEFIX}"
+    for f in out/* ; do suffix=$(echo "${f##*.}"); mv $f ${BIN_PRAEFIX}.${suffix}; done
     '''
 }
-
-
-process pGetReads {
-
-    //container 'biocontainers/samtools:v1.7.0_cv4'
-
-   // publishDir "${params.output}/${sample}/reads/bins/" 
-
-    tag "$sample"
-
-    errorStrategy 'retry'
-
-    when params.getreads
-
-    label 'tiny'
-
-    input:
-    tuple val(sample), val(TYPE), path(bam), path(bin) 
-
-    output:
-    file("${sample}_${TYPE}_${bin}.fq.gz")
-    file("${sample}_${TYPE}_${bin}.fq.depth")
-    file("${sample}_${TYPE}_${bin}.fq.depth.coverage")
-
-    shell:
-    '''
-    CONTIGS=$(grep ">" !{bin} | tr -d '>' | tr '\n' ' ')
-    DEPTH_FILE=!{sample}_!{TYPE}_!{bin}.fq.depth
-    samtools view -b !{bam} | samtools sort -o !{bam}.sorted
-    samtools index -@ 1 !{bam}.sorted
-    samtools view -h -f 3 -b !{bam}.sorted $CONTIGS | samtools sort -n | samtools bam2fq -N -  | gzip --best > !{sample}_!{TYPE}_!{bin}.fq.gz
-    samtools view    -f 3 -b !{bam}.sorted $CONTIGS | samtools depth -a - > !{sample}_!{TYPE}_!{bin}.fq.depth
-    ALL_POS=$(cut -f 3 $DEPTH_FILE  | wc -l)
-    DEPTH=$(cut -f 3 $DEPTH_FILE | paste -sd+ | head | bc)
-    COVERAGE_DEPTH=$(bc <<< "scale = 5; $DEPTH / $ALL_POS")
-    echo $COVERAGE_DEPTH > !{sample}_!{TYPE}_!{bin}.fq.depth.coverage
-    '''
-}
-
-
-def bufferMetabatSamtools(metabat){
-  def chunkList = [];
-  metabat[2].each {
-     chunkList.add([metabat[0],metabat[1], metabat[3], it]);
-  }
-  return chunkList;
-}
-
 
 def flattenBins(binning){
   def chunkList = [];
@@ -192,37 +133,175 @@ def flattenBins(binning){
 }
 
 
-workflow wMagAttributes {
+/*
+* The CMSeq workflow should estimate the heterogenety of a MAG in a given sample.
+* Input:
+*     * genomes  - A table with the columns PATH and  DATASET
+*         Example:
+*          PATH    DATASET
+*          /vol/spool/cmseq_20210607/GCF_000145295.fa      SAMPLE
+* 
+*     * alignments - A table with read alignment against genomes. 
+*           Example:
+*           PATH    DATASET
+*           /vol/spool/fragmentRecruitment_20210607/work/3d/9a45b85c15b22a6bb8ed4635391a40/ERR2019981.bam   ERR2019981.bam
+*
+*/
+workflow wCMSeqWorkflowFile {
+   take:
+      genomes
+      alignments
+   main:
+      wMagAttributesFile(genomes)
+      Channel.fromPath(alignments) | splitCsv(sep: '\t', header: true) \
+       | map { sample -> [sample.BAM, file(sample.PATH), sample.BAI] } | set {alignments}
+
+      SAMPLE_BINID_IDX = [1,2] 
+      SAMPLE_ID_IDX = 1
+      GFF_IDX = 2
+      ALIGNMENT_IDX = 5
+      ALIGNMENT_INDEX_IDX = 5
+      wMagAttributesFile.out.prokka_gff \
+         | join(wMagAttributesFile.out.prokka_fna, by: SAMPLE_BINID_IDX, remainder: true) \
+         | combine(alignments) | map { it -> [it[SAMPLE_ID_IDX],it[GFF_IDX],it[ALIGNMENT_IDX], it[ALIGNMENT_INDEX_IDX] ] } |  pCmseq
+
+}
+
+
+/**
+* This workflow provides the same functionality as wMagAttributesList.
+* Input:
+* It accepts as input all a tsv table of the following format:
+* 
+* DATASET	PATH
+* SAMPLe_NAME	/path/to/bin.fa
+*
+*/
+workflow wMagAttributesFile {
+   take:
+     mags
+   main:
+     DATASET_IDX = 0
+     mags | splitCsv(sep: '\t', header: true) \
+       | map { sample -> [sample.DATASET, file(sample.PATH)] } \
+       | groupTuple(by: DATASET_IDX) | _wMagAttributes
+   emit:
+     checkm = _wMagAttributes.out.checkm
+     prokka_err = _wMagAttributes.out.prokka_err
+     prokka_faa = _wMagAttributes.out.prokka_faa
+     prokka_ffn = _wMagAttributes.out.prokka_ffn
+     prokka_fna = _wMagAttributes.out.prokka_fna
+     prokka_fsa = _wMagAttributes.out.prokka_fsa
+     prokka_gbk = _wMagAttributes.out.prokka_gbk
+     prokka_gff = _wMagAttributes.out.prokka_gff
+     prokka_log = _wMagAttributes.out.prokka_log
+     prokka_sqn = _wMagAttributes.out.prokka_sqn
+     prokka_tbl = _wMagAttributes.out.prokka_tbl
+     prokka_tsv = _wMagAttributes.out.prokka_tsv
+     prokka_txt = _wMagAttributes.out.prokka_txt
+
+
+}
+
+
+/**
+*
+* This module infers any general bin specific properties such as contamination, completeness, lineage.
+*
+* Input:
+* It accepts a list where each entry has the following format: [SAMPLE_NAME, ["/path/to/bin.fa", "/path/to/bin.fa"]] 
+*
+* Output:
+*  * Map of checkm values 
+*    Example: 
+*    [PATH:/vol/spool/meta/test/bins/small/bin.1.fa, SAMPLE:test1,
+*     BIN_ID:bin.1, Marker lineage:k__Bacteria (UID203), # genomes:5449, # markers:103, # marker sets:57,
+*     0:97, 1:6, 2:0, 3:0, 4:0, 5+:0, COMPLETENESS:7.72, CONTAMINATION:0.00, HETEROGENEITY:0.00] 
+*
+*  * Prokka channels for every possible output file err,faa,ffn,fna,fsa,gbk,gff,log,sqn,tbl,tsv,txt,
+*    Every prokka channel has the following output format [SAMPLE_NAME, FILE]
+*
+*/
+workflow wMagAttributesList {
+   take: 
+     mags
+   main:
+     mags | _wMagAttributes
+   emit:
+     checkm = _wMagAttributes.out.checkm
+     prokka_err = _wMagAttributes.out.prokka_err
+     prokka_faa = _wMagAttributes.out.prokka_faa
+     prokka_ffn = _wMagAttributes.out.prokka_ffn
+     prokka_fna = _wMagAttributes.out.prokka_fna
+     prokka_fsa = _wMagAttributes.out.prokka_fsa
+     prokka_gbk = _wMagAttributes.out.prokka_gbk
+     prokka_gff = _wMagAttributes.out.prokka_gff
+     prokka_log = _wMagAttributes.out.prokka_log
+     prokka_sqn = _wMagAttributes.out.prokka_sqn
+     prokka_tbl = _wMagAttributes.out.prokka_tbl
+     prokka_tsv = _wMagAttributes.out.prokka_tsv
+     prokka_txt = _wMagAttributes.out.prokka_txt
+}
+
+workflow _wMagAttributes {
    take: 
      bins
-     bam
    main:
-     bins | flatMap({n -> flattenBins(n)}) | set {binList}
-     binList  | groupTuple(by: [0], size: params?.steps?.magAttributes?.checkm?.buffer ?: 30, remainder: true) \
+     GTDB_DEFAULT_BUFFER = 500
+     CHECKM_DEFAULT_BUFFER = 30
+     BIN_FILES_INPUT_IDX = 1
+
+     DATASET_IDX = 0
+     FILE_ENDING_IDX = 1
+     BIN_FILES_IDX = 2
+     BIN_FILES_OUTPUT_GROUP_IDX = 0
+     BIN_FILES_OUTPUT_IDX = 0
+     DATASET_OUTPUT_IDX = 1
+
+
+     bins  | flatMap({n -> flattenBins(n)}) | set {binFlattenedList}
+
+     // get file ending of bin files (.fa, .fasta, ...) and group by file ending and dataset
+     binFlattenedList | map { it -> def path=file(it[BIN_FILES_INPUT_IDX]); [it[DATASET_IDX], path.name.substring(path.name.lastIndexOf(".")), path]} \
+        | set { flattenedListEnding }
+
+     flattenedListEnding  | groupTuple(by: [DATASET_IDX, FILE_ENDING_IDX], size: params?.steps?.magAttributes?.checkm?.buffer ?: CHECKM_DEFAULT_BUFFER, remainder: true) \
         | pCheckM  | set{ checkm }
 
-     binList |  groupTuple(by: [0], size: params?.steps?.magAttributes?.gtdb?.buffer ?: 30, remainder: true) \
+     flattenedListEnding |  groupTuple(by: [DATASET_IDX, FILE_ENDING_IDX], size: params?.steps?.magAttributes?.gtdb?.buffer ?: GTDB_DEFAULT_BUFFER, remainder: true) \
         | pGtdbtk | set{ gtdb }
 
-     checkm | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-       [ "checkm.tsv", item[0].text  ]
-     }
+     binFlattenedList | pProkka 
 
-     checkm | groupTuple(by: 1, remainder: true) | map { it -> it[0] }  | flatten | map { it -> file(it) } \
+     checkm | groupTuple(by: DATASET_OUTPUT_IDX, remainder: true) | map { it -> it[BIN_FILES_OUTPUT_GROUP_IDX] }  | flatten | map { bin -> file(bin) } \
        | collectFile(keepHeader: true, newLine: false ){ item -> [ "bin_attributes.tsv", item.text ] } \
-       | splitCsv(sep: '\t', header: true) | set{ bins_info } 
+       | splitCsv(sep: '\t', header: true) \
+       | set{ checkm_list } 
+
+     checkm \
+        | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
+       [ "checkm.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
+     }
 
      gtdb.bacteria | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-       [ "${item[1]}_bacteria_gtdbtk.tsv", item[0].text  ]
-     } 
-
-     gtdb.archea | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-       [ "${item[1]}_archea_gtdbtk.tsv", item[0].text  ]
+       [ "${item[DATASET_IDX]}_bacteria_gtdbtk.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
      }
 
-    // bins | join(bam, by: [0,1]) |  flatMap({n -> bufferMetabatSamtools(n)})  | pGetReads
-
+     gtdb.archea | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
+       [ "${item[DATASET_IDX]}_archea_gtdbtk.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
+     }
    emit:
-     bins_info
-
+     checkm = checkm_list
+     prokka_err = pProkka.out.err
+     prokka_faa = pProkka.out.faa
+     prokka_ffn = pProkka.out.ffn
+     prokka_fna = pProkka.out.fna
+     prokka_fsa = pProkka.out.fsa
+     prokka_gbk = pProkka.out.gbk
+     prokka_gff = pProkka.out.gff
+     prokka_log = pProkka.out.log
+     prokka_sqn = pProkka.out.sqn
+     prokka_tbl = pProkka.out.tbl
+     prokka_tsv = pProkka.out.tsv
+     prokka_txt = pProkka.out.txt
 }

@@ -1,0 +1,10 @@
+tempdir: "tmp"
+output: "output"
+runid: 1
+steps:
+  magAttributes:
+    input: 
+      alignments: "/vol/spool/meta/test/data/table.tsv"
+      genomes: "/vol/spool/cmseq_20210607/genomes.tsv"
+    prokka
+    cmseq
