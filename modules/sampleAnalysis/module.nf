@@ -2,8 +2,8 @@ nextflow.enable.dsl=2
 
 def flattenBins(binning){
   def chunkList = [];
-  binning[2].each {
-     chunkList.add([binning[0],binning[1], it]);
+  binning[1].each {
+     chunkList.add([binning[0], it]);
   }
   return chunkList;
 }
@@ -67,7 +67,6 @@ workflow wUnmappedReadsList {
      sampleReads
      sampleBins 
    main:
-     BIN_FILE_IDX = 2
      sampleBins | map { sample -> flattenBins(sample) } | flatMap { bin -> bin } | set { flattenedSampleBins }
      _wUnmappedReads(sampleReads, flattenedSampleBins)
    emit:
@@ -81,7 +80,7 @@ workflow _wUnmappedReads {
      sampleReads
      sampleBins 
    main:
-     BIN_FILE_IDX = 2
+     BIN_FILE_IDX = 1
      COMBINED_BINS_TMP = params.tempdir + "/combinedBins"
      file(COMBINED_BINS_TMP).mkdirs()
      sampleBins | collectFile(tempDir: COMBINED_BINS_TMP){ sample -> [ "${sample[0]}", file(sample[BIN_FILE_IDX]).text] } \

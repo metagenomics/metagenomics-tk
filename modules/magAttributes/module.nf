@@ -50,7 +50,7 @@ process pCheckM {
     tuple val(sample), val(ending), path(bins) 
 
     output:
-    tuple val("${sample}"), path("chunk_*_${sample}_checkm.txt", type: "file") 
+    tuple path("${sample}_checkm_*.tsv", type: "file"), val("${sample}")
 
     shell:
     template 'checkm.sh'
@@ -76,8 +76,9 @@ process pGtdbtk {
     tuple val(sample), val(ending), path(bins) 
 
     output:
-    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), optional: true, emit: bacteria
-    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), optional: true, emit: archea
+    tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
+    tuple path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), val("${sample}"), optional: true, emit: archea
+    tuple path("${sample}_gtdbtk_*.tsv"), val("${sample}"), optional: true, emit: combined
 
     shell:
     template 'gtdb.sh'

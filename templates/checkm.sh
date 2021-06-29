@@ -2,7 +2,7 @@
 # Prepare checkm patch, output directory and output file name
 echo '{"dataRoot": "/.checkm", "remoteManifestURL": "https://data.ace.uq.edu.au/public/CheckM_databases/", "manifestType": "CheckM", "remoteManifestName": ".dmanifest", "localManifestName": ".dmanifest"}' > /tmp/DATA_CONFIG
 mkdir out
-FILE=$(mktemp chunk_XXXXXXXXXX_!{sample}_checkm.txt)
+FILE=$(mktemp !{sample}_checkm_XXXXXXXX.tsv)
 
 # run suggested checkm commands
 checkm tree --reduced_tree --pplacer_threads !{task.cpus}  -t !{task.cpus} -x !{ending} . out &> tree.log
