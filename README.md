@@ -10,7 +10,7 @@ All module configurations are the same as the full pipeline run with the sole di
 ### Run Full Pipeline
 
 ```
-./nextflow run main.nf -work-dir /shared/directory/test -profile PROFILE  -resume -entry wPipeline -params-file example_params/full_pipeline_params.yml
+./nextflow run main.nf -work-dir /shared/directory/test -profile PROFILE  -resume -entry wPipeline -params-file example_params/full_pipeline.yml
 ```
 
 where
@@ -30,7 +30,7 @@ where
 ### Dereplication
 
 ```
--entry wDereplication -params-file example_params/dereplication_params.yml
+-entry wDereplication -params-file example_params/dereplication.yml
 ```
 
 ## S3 Configuration
@@ -64,10 +64,12 @@ If you want to upload tool results to s3, just update the output parameter in th
 Tests for local use are specified in `scripts` folder. Bash scripts that start with `test_ci_` are used by github actions for continious integration tests.
 Scripts for local use accept arguments for specifying local dependencies:
 
+Examples:
 ```
 bash scripts/test_fullPipeline.sh   --steps.magAttributes.checkm.database=/vol/spool/checkm --steps.magAttributes.gtdb.database=/vol/spool/gtdb/release202
 bash scripts/test_fragmentRecruitment.sh  --steps.fragmentRecruitment.frhit.genomes=test/bins/small/bin.*.fa --steps.fragmentRecruitment.frhit.samples=test/reads/small/reads.tsv 
 bash scripts/test_dereplication.sh  --steps.dereplication.pasolli.input=test/bins/small/attributes.tsv
+bash scripts/test_magAttributes.sh  --steps.magAttributes.input=test/bins/small/attributes.tsv
 ```
 
 ## Modules

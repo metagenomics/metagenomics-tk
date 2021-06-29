@@ -25,6 +25,15 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
+      - name: Cache nextflow cache
+        uses: actions/cache@v2
+        with:
+           path: ${{github.workspace}}/.nextflow
+           key: ${{github.head_ref}}-nextflow-cache
+      - name: clean up existing inputs directory
+        run: |
+          rm -rf /mnt/nextflow_cache/* 
+
       - name: Test Full Pipeline Run
         run: |
           bash ./scripts/test_ci_fullPipeline.sh || exit 1
@@ -36,3 +45,7 @@ jobs:
       - name: Test Dereplication
         run: |
           bash ./scripts/test_ci_dereplication.sh || exit 1
+
+      - name: Test MAG Attributes
+        run: |
+          bash ./scripts/test_ci_magAttributes.sh || exit 1

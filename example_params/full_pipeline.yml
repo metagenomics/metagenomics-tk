@@ -18,6 +18,7 @@ steps:
     checkm:
       database: "/vol/spool/checkm/"
       buffer: 200
+    prokka:
   fragmentRecruitment:
     frhit:
       genomes: "/vol/spool/meta/test/data/bin.*.fa"

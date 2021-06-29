@@ -1,0 +1,13 @@
+tempdir: "tmp"
+output: "output"
+runid: 1
+steps:
+  magAttributes:
+    input: "/vol/spool/meta/test/data/table.tsv"
+    prokka:
+    gtdb:
+      buffer: 1000
+      database: "/vol/spool/gtdb/release202"
+    checkm:
+      database: "/vol/spool/checkm/"
+      buffer: 200

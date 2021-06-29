@@ -4,7 +4,7 @@ include { wSaveSettingsFile } from './modules/config/module'
 include { wQualityControlFile } from './modules/qualityControl/module'
 include { wAssemblyFile; wAssemblyList } from './modules/assembly/module'
 include { wBinning } from './modules/binning/module.nf'
-include { wMagAttributes } from './modules/magAttributes/module.nf'
+include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
 include { wDereplicateFile; wDereplicateList } from './modules/dereplication/pasolli/module'
 include { wReadMappingBwa } from './modules/readMapping/bwa/module'
 include { wAnalyseMetabolites } from './modules/metabolomics/module'
@@ -26,9 +26,15 @@ workflow wDereplication {
 }
 
 
-workflow run_bwa {
-//    bwa(Channel.from('1'), Channel.from(params.input), Channel.fromPath(params.mapping_samples),Channel.fromPath(params.list_of_representatives))
+workflow wCMSeqWorfklowFile {
+   wCMSeqWorkflowFile(Channel.from(params?.steps?.matAttributes?.input?.genomes), Channel.from(params?.steps?.matAttributes?.input?.alignments))
 }
+
+
+workflow wMagAttributes {
+   wMagAttributesFile(Channel.fromPath(params?.steps?.magAttributes?.input))
+}
+
 
 workflow wUnmappedReads {
      wUnmappedReadsFile(Channel.fromPath(params?.steps?.sampleAnalysis?.reads), Channel.fromPath(params?.steps?.sampleAnalysis?.bins))
@@ -70,8 +76,8 @@ workflow wPipeline {
     wUnmappedReadsList(wQualityControlFile.out.processed_reads, wBinning.out.bins)
     wFragmentRecruitmentList(wUnmappedReadsList.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
 
-    wMagAttributes(wBinning.out.bins, wBinning.out.mapping)
-    mapJoin(wMagAttributes.out.bins_info, wBinning.out.bins_stats, "BIN_ID") | set { binsStats  }
+    wMagAttributesList(wBinning.out.bins)
+    mapJoin(wMagAttributesList.out.checkm, wBinning.out.bins_stats, "BIN_ID") | set { binsStats  }
 
     wDereplicateList(binsStats)
     representativesList = wDereplicateList.out
