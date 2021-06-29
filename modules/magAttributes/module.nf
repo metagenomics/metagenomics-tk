@@ -118,9 +118,9 @@ process pProkka {
     '''
     prokka --cpus !{task.cpus} !{bin} --outdir out
     BIN=!{bin}
-    BIN_PRAEFIX=$(echo "${BIN%%.*}")
+    BIN_PRAEFIX=$(echo "${BIN%.*}")
     BIN_ID="${BIN_PRAEFIX}"
-    for f in out/* ; do suffix=$(echo "${f#*.}"); mv $f ${BIN_PRAEFIX}.${suffix}; done
+    for f in out/* ; do suffix=$(echo "${f##*.}"); mv $f ${BIN_PRAEFIX}.${suffix}; done
     '''
 }
 
@@ -254,8 +254,10 @@ workflow _wMagAttributes {
      DATASET_IDX = 0
      FILE_ENDING_IDX = 1
      BIN_FILES_IDX = 2
-     BIN_FILES_OUTPUT_GROUP_IDX = 1
+     BIN_FILES_OUTPUT_GROUP_IDX = 0
      BIN_FILES_OUTPUT_IDX = 0
+     DATASET_OUTPUT_IDX = 1
+
 
      bins  | flatMap({n -> flattenBins(n)}) | set {binFlattenedList}
 
@@ -271,7 +273,7 @@ workflow _wMagAttributes {
 
      binFlattenedList | pProkka 
 
-     checkm | groupTuple(by: DATASET_IDX, remainder: true) | map { it -> it[BIN_FILES_OUTPUT_GROUP_IDX] }  | flatten | map { bin -> file(bin) } \
+     checkm | groupTuple(by: DATASET_OUTPUT_IDX, remainder: true) | map { it -> it[BIN_FILES_OUTPUT_GROUP_IDX] }  | flatten | map { bin -> file(bin) } \
        | collectFile(keepHeader: true, newLine: false ){ item -> [ "bin_attributes.tsv", item.text ] } \
        | splitCsv(sep: '\t', header: true) \
        | set{ checkm_list } 
