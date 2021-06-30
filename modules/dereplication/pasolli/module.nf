@@ -255,9 +255,11 @@ workflow _wDereplicate {
    take:
      genomes_table_file
    main:
+     buffer = params?.steps?.dereplication?.pasolli?.buffer ?: 20
+
      genomes_table_file | splitCsv(sep: '\t', header: true)  \
-       | filter({ it.COMPLETENESS.toFloat() >= params.steps.dereplication.pasolli.minimumCompleteness }) \
-       | filter({ it.CONTAMINATION.toFloat() <= params.steps.dereplication.pasolli.maximumContamination }) \
+       | filter({ it.COMPLETENESS.toFloat() >= params?.steps?.dereplication?.pasolli?.minimumCompleteness }) \
+       | filter({ it.CONTAMINATION.toFloat() <= params?.steps?.dereplication?.pasolli?.maximumContamination }) \
        | map { it -> it.PATH } | collect | set {mags} 
 
      MASH_BUFFER = 5000
@@ -277,8 +279,8 @@ workflow _wDereplicate {
         mag2: mags[1]
      } |  set { result }
 
-     result.mag1 | map(it -> file(it)) | buffer(size: params.steps.dereplication.pasolli.buffer, remainder: true) | set { mag1 }
-     result.mag2 | map(it -> file(it)) | buffer(size: params.steps.dereplication.pasolli.buffer, remainder: true) | set { mag2 }
+     result.mag1 | map(it -> file(it)) | buffer(size: buffer, remainder: true) | set { mag1 }
+     result.mag2 | map(it -> file(it)) | buffer(size: buffer, remainder: true) | set { mag2 }
 
      pANIb(mag1, mag2)
      pTETRA(mag1, mag2)
