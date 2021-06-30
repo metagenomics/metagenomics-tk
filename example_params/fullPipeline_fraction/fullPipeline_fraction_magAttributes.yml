@@ -1,0 +1,21 @@
+tempdir: "tmp"
+input: "test/reads/small/reads_split.tsv"
+output: "output"
+runid: 1
+steps:
+  qc:
+    interleaved: false
+    fastp:
+  assembly:
+    megahit:
+  binning:
+    metabat:
+  sampleAnalysis:
+  magAttributes:
+    gtdb:
+      buffer: 1000
+      database: "/vol/spool/gtdb/release202"
+    checkm:
+      database: "/vol/spool/checkm/"
+      buffer: 200
+    prokka:

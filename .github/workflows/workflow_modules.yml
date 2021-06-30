@@ -38,6 +38,10 @@ jobs:
         run: |
           bash ./scripts/test_ci_fullPipeline.sh || exit 1
 
+      - name: Test Full Pipeline run that ends by magAttributes
+        run: |
+          bash ./scripts/test_ci_fullPipeline_endMagAttributes.sh || exit 1
+
       - name: Test Fragment Recruitment
         run: |
           bash ./scripts/test_ci_fragmentRecruitment.sh || exit 1
