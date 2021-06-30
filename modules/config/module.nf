@@ -2,7 +2,6 @@ nextflow.enable.dsl=2
 import groovy.json.*
 import org.yaml.snakeyaml.Yaml
 
-Yaml yaml = new Yaml()
 
 MODULE="config"
 VERSION="0.1.0"
@@ -26,6 +25,7 @@ process pConfigUpload {
   tuple val("${sample}"), file("*.yml")
 
   shell:
+  Yaml yaml = new Yaml()
   parameterName = config.steps.keySet().join(".")
   configStr = yaml.dump(config)
   workflowVersion = manifest.version
@@ -48,7 +48,7 @@ workflow wSaveSettingsFile {
        samplesTable
      main:
           
-        // Create 
+        // Parse TSV file to get sample ids 
         samplesTable | splitCsv(sep: '\t', header: true) \
            | map { it -> it.SAMPLE} | set{ samples }  \
 
