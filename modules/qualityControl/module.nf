@@ -8,7 +8,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 
 process pFastpSplit {
 
-    label 'large'
+    label 'medium'
 
     tag "$sample"
 
