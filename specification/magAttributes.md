@@ -22,5 +22,5 @@ BIN_ID	SAMPLE	BIN_ATTRIBUTE1	BIN_ATTRIBUTE2 ...
 ```
 
 where 
-  * `BIN_ID` is of the format `SAMPLE_bin.NUMBER.fa`. NUMBER is unique for the sample.
+  * `BIN_ID` is unique for the samples.
   * `BIN_ATTRIBUTES` All column names that are not `BIN_ID` or `SAMPLE` can be any property of a MAG, like contamination, completeness etc.

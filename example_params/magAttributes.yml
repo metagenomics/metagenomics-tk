@@ -5,9 +5,10 @@ steps:
   magAttributes:
     input: "/vol/spool/meta/test/data/table.tsv"
     prokka:
-    gtdb:
-      buffer: 1000
-      database: "/vol/spool/gtdb/release202"
+      defaultKingdom: 'Bacteria'
+      #   gtdb:
+      #   buffer: 1000
+      #  database: "/vol/spool/gtdb/release202"
     checkm:
       database: "/vol/spool/checkm/"
       buffer: 200

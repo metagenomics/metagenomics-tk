@@ -1,13 +1,10 @@
 nextflow.enable.dsl=2
 
-params.ending = ".fa"
-
 MODULE="magAttributes"
-VERSION="0.2.0"
+VERSION="1.0.0"
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
 }
-
 
 process pCmseq {
 
@@ -87,42 +84,54 @@ process pGtdbtk {
 
 process pProkka {
 
-    container "staphb/prokka:${params.prokka_tag}"
+    container "quay.io/biocontainers/prokka:${params.prokka_tag}"
 
     errorStrategy 'ignore'
 
     label 'small'
+
+    time '3h'
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }
 
     when params.steps.magAttributes.containsKey("prokka")
 
     input:
-    tuple val(sample), file(bin)
+    tuple val(sample), file(bin), val(domain)
 
     output:
-    tuple file("*.gff"), env(BIN_ID), val("${sample}"), emit: gff 
+    tuple file("*.gff.gz"), env(BIN_ID), val("${sample}"), emit: gff 
     tuple file("*.err"), env(BIN_ID), val("${sample}"), emit: err 
-    tuple file("*.faa"), env(BIN_ID), val("${sample}"), emit: faa 
-    tuple file("*.fna"), env(BIN_ID), val("${sample}"), emit: fna 
-    tuple file("*.ffn"), env(BIN_ID), val("${sample}"), emit: ffn 
-    tuple file("*.fsa"), env(BIN_ID), val("${sample}"), emit: fsa 
-    tuple file("*.gbk"), env(BIN_ID), val("${sample}"), emit: gbk
+    tuple file("*.faa.gz"), env(BIN_ID), val("${sample}"), emit: faa 
+    tuple file("*.fna.gz"), env(BIN_ID), val("${sample}"), emit: fna 
+    tuple file("*.ffn.gz"), env(BIN_ID), val("${sample}"), emit: ffn 
+    tuple file("*.fsa.gz"), env(BIN_ID), val("${sample}"), emit: fsa 
+    tuple file("*.gbk.gz"), env(BIN_ID), val("${sample}"), emit: gbk
     tuple file("*.log"), env(BIN_ID), val("${sample}"), emit: log
-    tuple file("*.tbl"), env(BIN_ID), val("${sample}"), emit: tbl
-    tuple file("*.sqn"), env(BIN_ID), val("${sample}"), emit: sqn
+    tuple file("*.tbl.gz"), env(BIN_ID), val("${sample}"), emit: tbl
+    tuple file("*.sqn.gz"), env(BIN_ID), val("${sample}"), emit: sqn
     tuple file("*.txt"), env(BIN_ID), val("${sample}"), emit: txt
     tuple file("*.tsv"), env(BIN_ID), val("${sample}"), emit: tsv
 
     shell:
     '''
-    prokka --cpus !{task.cpus} !{bin} --outdir out
+    # Prepare Input Variables
     BIN=!{bin}
-    BIN_PRAEFIX=$(echo "${BIN%.*}")
-    BIN_ID="${BIN_PRAEFIX}"
-    for f in out/* ; do suffix=$(echo "${f##*.}"); mv $f ${BIN_PRAEFIX}.${suffix}; done
+    BIN_PREFIX=$(echo "${BIN%.*}")
+    BIN_ID="$(basename !{bin})"
+
+    # Run Prokka
+    prokka  --cpus !{task.cpus} !{bin}   --outdir out --kingdom !{domain}
+
+    # Prepare output according to magAttributes specification
+    for f in out/* ; do suffix=$(echo "${f##*.}"); mv $f ${BIN_PREFIX}.${suffix}; done
+    sed -i  -e "2,$ s/^/!{sample}\t${BIN_ID}\t/"  -e "1,1 s/^/SAMPLE\tBIN_ID\t/g" *.tsv
+    mv *.tsv !{sample}_prokka_${BIN_ID}.tsv
+    gzip --best *gff *.faa *.fna *.ffn *.fsa *.gbk *.sqn *tbl
     '''
+
 }
+
 
 def flattenBins(binning){
   def chunkList = [];
@@ -258,7 +267,6 @@ workflow _wMagAttributes {
      BIN_FILES_OUTPUT_IDX = 0
      DATASET_OUTPUT_IDX = 1
 
-
      bins  | flatMap({n -> flattenBins(n)}) | set {binFlattenedList}
 
      // get file ending of bin files (.fa, .fasta, ...) and group by file ending and dataset
@@ -270,19 +278,50 @@ workflow _wMagAttributes {
 
      flattenedListEnding |  groupTuple(by: [DATASET_IDX, FILE_ENDING_IDX], size: params?.steps?.magAttributes?.gtdb?.buffer ?: GTDB_DEFAULT_BUFFER, remainder: true) \
         | pGtdbtk | set{ gtdb }
+      
 
-     binFlattenedList | pProkka 
+     GTDB_FILE_IDX = 0
+     CLASSIFICATION_IDX = 0
+     DOMAIN_IDX = 0
+     GTDB_OUTPUT_DATASET_IDX = 1
+     BIN_FILE_IDX = 1
+     BIN_FILE_PROKKA_INPUT_IDX = 2
+     DOMAIN_PROKKA_INPUT_IDX = 3
 
+     // if GTDB is enabled get domain classification for prokka, otherwise just use the user provided default
+     if(params?.steps?.magAttributes?.gtdb){
+
+       gtdb.combined | filter(it -> file(it[GTDB_FILE_IDX]).text?.trim()) \
+         | splitCsv(sep: '\t', header: true) \
+         | map { it ->  def command = it[GTDB_FILE_IDX].classification.split(';')[DOMAIN_IDX].minus('d__'); [it[GTDB_FILE_IDX].SAMPLE, it[GTDB_FILE_IDX].BIN_ID, command] } \
+         | set { gtdbDomain }
+
+       binFlattenedList  |  map {it -> [it[DATASET_IDX], file(it[BIN_FILE_IDX]).name, it[BIN_FILE_IDX]]} \
+           | join(gtdbDomain, by:[DATASET_IDX, BIN_FILE_IDX], remainder: true) \
+           | map { it -> [it[DATASET_IDX], it[BIN_FILE_PROKKA_INPUT_IDX], it[DOMAIN_PROKKA_INPUT_IDX]?:params?.steps?.magAttributes?.prokka?.defaultKingdom  ]} \
+           | set { prokkaInput }
+
+     } else {
+       binFlattenedList | map { bin  -> [ bin[DATASET_IDX], bin[BIN_FILE_IDX], params?.steps?.magAttributes?.prokka?.defaultKingdom ] } \
+           | set { prokkaInput }
+     }
+
+     prokkaInput  | pProkka
+
+     // Prepare checkm output file
      checkm | groupTuple(by: DATASET_OUTPUT_IDX, remainder: true) | map { it -> it[BIN_FILES_OUTPUT_GROUP_IDX] }  | flatten | map { bin -> file(bin) } \
        | collectFile(keepHeader: true, newLine: false ){ item -> [ "bin_attributes.tsv", item.text ] } \
        | splitCsv(sep: '\t', header: true) \
        | set{ checkm_list } 
 
+     // collect checkm files for checkm results across multiple datasets
      checkm \
         | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "checkm.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
      }
 
+
+     // collect gtdb files for results across multiple datasets
      gtdb.bacteria | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "${item[DATASET_IDX]}_bacteria_gtdbtk.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
      }

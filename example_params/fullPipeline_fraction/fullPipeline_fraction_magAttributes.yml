@@ -19,3 +19,4 @@ steps:
       database: "/vol/spool/checkm/"
       buffer: 200
     prokka:
+      defaultKingdom: 'Bacteria'

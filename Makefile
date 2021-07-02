@@ -37,6 +37,7 @@ bin1 = ${bins_folder}/bin.1.fa
 bin2 = ${bins_folder}/bin.2.fa
 bin3 = ${bins_folder}/bin.8.fasta
 bin4 = ${bins_folder}/bin.9.fasta
+bin5 = ${bins_folder}/bin.32.fa
 
 
 
@@ -73,6 +74,7 @@ ${DEST}/test/bins/small/: ## Downloads bins and creates a tsv file with bin prop
 	- mkdir -p ${DEST}/test/bins/small
 	- wget -O ${DEST}/test/bins/small/bin.1.fa -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.1.fa
 	- wget -O ${DEST}/test/bins/small/bin.2.fa -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.2.fa
+	- wget -O ${DEST}/test/bins/small/bin.32.fa -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.32.fa
 	- wget -O ${DEST}/test/bins/small/bin.8.fasta -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.8.fasta
 	- wget -O ${DEST}/test/bins/small/bin.9.fasta -q https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.9.fasta
 	- echo "DATASET\tBIN_ID\tPATH\tCOMPLETENESS\tCONTAMINATION\tCOVERAGE\tN50\tHETEROGENEITY" >> ${bins_attributes_test}
@@ -80,6 +82,7 @@ ${DEST}/test/bins/small/: ## Downloads bins and creates a tsv file with bin prop
 	- echo "test1\tbin.2\t${bin2}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
 	- echo "test2\tbin.8\t${bin3}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
 	- echo "test2\tbin.9\t${bin4}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
+	- echo "test2\tbin.9\t${bin5}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
 
 
 run_small_full_test: ${DEST}/test/reads/small nextflow ${DEST}/test/bins/small/ ${DEST}/test/reads/small/interleaved.fq.gz ## Prepares input files like downloading bins and reads and executes Nextflow. The default configuration it runs the full pipeline locally.
