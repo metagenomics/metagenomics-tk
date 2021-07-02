@@ -133,15 +133,6 @@ process pProkka {
 }
 
 
-def flattenBins(binning){
-  def chunkList = [];
-  binning[1].each {
-     chunkList.add([binning[0], it]);
-  }
-  return chunkList;
-}
-
-
 /*
 * The CMSeq workflow should estimate the heterogenety of a MAG in a given sample.
 * Input:
@@ -252,6 +243,42 @@ workflow wMagAttributesList {
      prokka_txt = _wMagAttributes.out.prokka_txt
 }
 
+
+/*
+*
+* Method takes a list of the form [SAMPLE, [BIN1 path, BIN2 path]] as input
+* and produces a flattend list of the form [SAMPLE, BIN 1 path, BIN 2 path]
+*
+*/
+def flattenBins(binning){
+  def chunkList = [];
+  binning[1].each {
+     chunkList.add([binning[0], it]);
+  }
+  return chunkList;
+}
+
+
+/*
+*
+* Method takes a list of the form [SAMPLE, [BIN1 path, BIN2 path]] as input
+* and produces a flattend list which is grouped by dataset and sample.
+* The output has the form [SAMPLE, file ending (e.g. .fa), [BIN 1 path, BIN 2 path]]
+*
+*/
+def groupBins(binning, buffer){
+  def chunkList = [];
+  binning[1].collate(buffer).each {  
+       it.groupBy{ 
+            bin -> file(bin).name.substring(file(bin).name.lastIndexOf(".")) 
+       }.each {
+            ending, group -> chunkList.add([binning[0],  ending, group]);
+       }
+  }
+  return chunkList;
+}
+
+
 workflow _wMagAttributes {
    take: 
      bins
@@ -267,18 +294,12 @@ workflow _wMagAttributes {
      BIN_FILES_OUTPUT_IDX = 0
      DATASET_OUTPUT_IDX = 1
 
-     bins  | flatMap({n -> flattenBins(n)}) | set {binFlattenedList}
-
      // get file ending of bin files (.fa, .fasta, ...) and group by file ending and dataset
-     binFlattenedList | map { it -> def path=file(it[BIN_FILES_INPUT_IDX]); [it[DATASET_IDX], path.name.substring(path.name.lastIndexOf(".")), path]} \
-        | set { flattenedListEnding }
-
-     flattenedListEnding  | groupTuple(by: [DATASET_IDX, FILE_ENDING_IDX], size: params?.steps?.magAttributes?.checkm?.buffer ?: CHECKM_DEFAULT_BUFFER, remainder: true) \
-        | pCheckM  | set{ checkm }
-
-     flattenedListEnding |  groupTuple(by: [DATASET_IDX, FILE_ENDING_IDX], size: params?.steps?.magAttributes?.gtdb?.buffer ?: GTDB_DEFAULT_BUFFER, remainder: true) \
-        | pGtdbtk | set{ gtdb }
-      
+     bins | flatMap({n -> flattenBins(n)}) | set {binFlattenedList}
+     bins | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.checkm?.buffer ?: CHECKM_DEFAULT_BUFFER)}) \
+       | pCheckM | set {checkm}
+     bins | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.gtdb?.buffer ?: GTDB_DEFAULT_BUFFER )}) \
+       | pGtdbtk | set {gtdb}
 
      GTDB_FILE_IDX = 0
      CLASSIFICATION_IDX = 0
@@ -288,7 +309,7 @@ workflow _wMagAttributes {
      BIN_FILE_PROKKA_INPUT_IDX = 2
      DOMAIN_PROKKA_INPUT_IDX = 3
 
-     // if GTDB is enabled get domain classification for prokka, otherwise just use the user provided default
+     // if GTDB is enabled then get domain classification for prokka, otherwise just use the user provided default
      if(params?.steps?.magAttributes?.gtdb){
 
        gtdb.combined | filter(it -> file(it[GTDB_FILE_IDX]).text?.trim()) \
@@ -319,7 +340,6 @@ workflow _wMagAttributes {
         | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "checkm.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
      }
-
 
      // collect gtdb files for results across multiple datasets
      gtdb.bacteria | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->

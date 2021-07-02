@@ -80,9 +80,9 @@ ${DEST}/test/bins/small/: ## Downloads bins and creates a tsv file with bin prop
 	- echo "DATASET\tBIN_ID\tPATH\tCOMPLETENESS\tCONTAMINATION\tCOVERAGE\tN50\tHETEROGENEITY" >> ${bins_attributes_test}
 	- echo "test1\tbin.1\t${bin1}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
 	- echo "test1\tbin.2\t${bin2}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
-	- echo "test2\tbin.8\t${bin3}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
+	- echo "test1\tbin.8\t${bin3}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
 	- echo "test2\tbin.9\t${bin4}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
-	- echo "test2\tbin.9\t${bin5}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
+	- echo "test2\tbin.32\t${bin5}\t100\t0\t10\t5000\t10" >> ${bins_attributes_test}
 
 
 run_small_full_test: ${DEST}/test/reads/small nextflow ${DEST}/test/bins/small/ ${DEST}/test/reads/small/interleaved.fq.gz ## Prepares input files like downloading bins and reads and executes Nextflow. The default configuration it runs the full pipeline locally.
