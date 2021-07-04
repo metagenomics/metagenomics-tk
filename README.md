@@ -22,7 +22,6 @@ where
 
 ### Run Fragment Recruitment
 
-
 ```
 -entry wFragmentRecruitment -params-file example_params/fragmentRecruitment.yml
 ```
@@ -32,6 +31,35 @@ where
 ```
 -entry wDereplication -params-file example_params/dereplication.yml
 ```
+
+### MagAttributes
+
+```
+ -entry wMagAttributes -params-file example_params/magAttributes.yml 
+```
+
+#### Input
+
+* [params-file](example_params/magAttributes.yml)
+
+* [Tsv Table](test_data/magAttributes/input.tsv): Must include at least `DATASET` identifier and mag specific `PATH` column.
+
+#### Output
+
+##### Prokka
+
+Prokka computes `*.err`, `*.faa`, `*.ffn`, `*.fna`, `*.fsa`, `*.gbk`, `*.gff`, `*.sqn`, `*.tbl`, `*.tbl` for every bin.
+Details of all files can be read on the Prokka page.
+In addition it also computes a summary tsv file which adheres to the magAttributes specification.
+
+##### GTDBTk
+
+All GTDB files include the GTDB specific columns in addition to a `SAMPLE` column (`SAMPLE_gtdbtk.bac120.summary.tsv`, `SAMPLE_gtdbtk.ar122.summary.tsv`).
+In addition this modules produces a file `SAMPLE_gtdbtk_CHUNK.tsv` that combines both files and adds a `BIN_ID` column that adheres to the magAttributes specification
+
+##### Checkm
+
+The Checkm output adheres to the magAttributes specification and adds to the output file a `BIN_ID` and `SAMPLE` column. 
 
 ## S3 Configuration
 
@@ -57,129 +85,8 @@ aws {
 
 If you want to upload tool results to s3, just update the output parameter in the configuration file from `/path/to/output` to `s3://bucket/path/to/output`
 
-# Developer Guidelines
+## Other 
 
-## Testing
+* [Developer Guidelines](docs/developer_guidelines.md)
 
-Tests for local use are specified in `scripts` folder. Bash scripts that start with `test_ci_` are used by github actions for continious integration tests.
-Scripts for local use accept arguments for specifying local dependencies:
-
-Examples:
-```
-bash scripts/test_fullPipeline.sh   --steps.magAttributes.checkm.database=/vol/spool/checkm --steps.magAttributes.gtdb.database=/vol/spool/gtdb/release202
-bash scripts/test_fragmentRecruitment.sh  --steps.fragmentRecruitment.frhit.genomes=test/bins/small/bin.*.fa --steps.fragmentRecruitment.frhit.samples=test/reads/small/reads.tsv 
-bash scripts/test_dereplication.sh  --steps.dereplication.pasolli.input=test/bins/small/attributes.tsv
-bash scripts/test_magAttributes.sh  --steps.magAttributes.input=test/bins/small/attributes.tsv
-```
-
-## Modules
-
-Functionality is structured in modules (assembly, binning, dereplication, .etc). Each module can have multiple workflows.
-Every module follows the output definition specified in the `output` section.
-
-### Workflows
-
-1. Worfklow names that can not be used directly and are just meant for internal use should start with an underscore.
-
-2. At least every workflow that can be used by other external workflows should contain a short description of the functionality. 
-
-3. Workflow names must start with `w`. 
-
-## Versioning
-
-All modules are versioned according to [semantic versioning](https://semver.org/). The version number is incorporated in the output directory (see `Output` section) 
-for easier parsing of the output directory. In the following we give examples when to increment which part of of the version identifier:
-
-Given a version number MAJOR.MINOR.PATCH, increment the:
-
-  * MAJOR version when you make incompatible changes, as for example modifying the output structure. A script that was build to parse the output structure must be adapted then.
-  * MINOR version when you add functionality in a backwards compatible manner. One example is adding an additional tool to the module. 
-  * PATCH version when you make backwards compatible bug fixes. This is necessary when you for example increment the docker container version number that fixes a bug or increases the
-    speed of the tool.
-
-## Process
-
-1. Process names should start `p`
-
-2. Processes should contain as input and output the sample id and/or the bin, contig id.
-
-
-## Other
-
-1. Magic numbers should not be used.
-
-2. Variable, method, workflow, folder and process names should be written in camelcase.
-
-
-## Output and best practice
-
-### Motivation
-
-* The output section is a collection of `best practices` for storing results of the `meta-omics-toolkit` output.
-The definitions are motivated by the fact that the pipeline will be continuously updated and results of different pipeline
-versions and modes must be differentiated.
-
-* The idea is to run the pipeline on results of previous runs.
-
-### Rules for dataset output
-
-Outputs are produced by using `publish dir` directive.
-
-```
-DATASET_ID/RUN_ID/MODULE/VERSION/TOOL/
-```
-where
-   * `DATASET_ID` specifies the ID of a dataset such as the SRA dataset.
-   * `RUN_ID` specifies one possible run of the full or partial pipeline. 
-   * `MODULE` specifies the name of the pipeline module (e.g. binning).
-   * `VERSION` specifies the module version number which follows semantic versioning (1.2.0).
-   * `TOOL` specifies the name of the tool that is executed as part of the module (e.g `megahit` of the assembly module).
-
-It is suggested that a RUN_ID output should never contain multiple versions of the same module. E.g.: 
-`DATASET_ID/1/Binning/1.2.0/metabat` and `DATASET_ID/1/Binning/1.3.0/metabat`.
-
-If a partial pipeline run (B) uses outputs of a previous run (A) (e.g. a binning tool uses the output of an assembler) and the previous run (A) alreads contains
-the output of an older version of run (B), then a new RUN_ID folder must be created.
-
-If a partial pipeline run (B) uses outputs of a previous run (A) (e.g. a binning tool uses the output of an assembler) and the previous run (A) **does not** contain
-the output of an older version of run (B), then the existing RUN_ID folder must be **reused**.
-
-#### Run Versioning
-
-Every dataset must contain a `TOOL` folder called `config`. The `config` folder contains descriptions of the parameters and the version used for the specific pipeline run.
-
-### Examples
-
-## Example 1:
-
-We assume that the following folder already exists:
-
-```
-/SRA1/1/ASSEMBLY/1.2/MEGAHIT
-```
-
-
-If the MODULE output does not contain a BINNING output then the existing RUN folder must be reused:
-
-```
-/SRA1/1/ASSEMBLY/1.2/MEGAHIT
-/SRA1/1/BINNING/0.3/METABAT
-```
-
-## Example 2:
-
-We assume that the following folders already exists:
-
-```
-/SRA1/1/ASSEMBLY/1.2/MEGAHIT
-/SRA1/1/BINNING/0.3/METABAT
-```
-
-If the MODULE output does contain a BINNING output then a new RUN folder must be created:
-
-```
-/SRA1/1/ASSEMBLY/1.2/MEGAHIT
-/SRA1/1/BINNING/0.3/METABAT
-/SRA1/2/BINNING/0.4/METABAT
-```
-
+* [Module Specification](docs/specification.md)
