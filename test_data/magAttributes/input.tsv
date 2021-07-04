@@ -1,0 +1,6 @@
+DATASET	BIN_ID	PATH	COMPLETENESS	CONTAMINATION	COVERAGE	N50	HETEROGENEITY
+test1	bin.1	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.1.fa	100	0	10	5000	10
+test1	bin.2	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.2.fa	100	0	10	5000	10
+test1	bin.8	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.8.fasta	100	0	10	5000	10
+test2	bin.9	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.9.fasta	100	0	10	5000	10
+test2	bin.32	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.32.fa	100	0	10	5000	10
