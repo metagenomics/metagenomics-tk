@@ -252,8 +252,10 @@ workflow wMagAttributesList {
 */
 def flattenBins(binning){
   def chunkList = [];
-  binning[1].each {
-     chunkList.add([binning[0], it]);
+  def SAMPLE_IDX = 0;
+  def BIN_PATHS_IDX = 1;
+  binning[BIN_PATHS_IDX].each {
+     chunkList.add([binning[SAMPLE_IDX], it]);
   }
   return chunkList;
 }
@@ -268,11 +270,13 @@ def flattenBins(binning){
 */
 def groupBins(binning, buffer){
   def chunkList = [];
-  binning[1].collate(buffer).each {  
+  def SAMPLE_IDX = 0;
+  def BIN_PATHS_IDX = 1;
+  binning[BIN_PATHS_IDX].collate(buffer).each {  
        it.groupBy{ 
             bin -> file(bin).name.substring(file(bin).name.lastIndexOf(".")) 
        }.each {
-            ending, group -> chunkList.add([binning[0],  ending, group]);
+            ending, group -> chunkList.add([binning[SAMPLE_IDX],  ending, group]);
        }
   }
   return chunkList;

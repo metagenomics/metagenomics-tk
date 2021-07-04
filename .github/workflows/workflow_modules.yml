@@ -1,28 +1,39 @@
-# This is a basic workflow to help you get started with Actions
 
 name: CI
 
-# Controls when the action will run. 
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
 
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  full_pipeline:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache nextflow cache
+        uses: actions/cache@v2
+        with:
+           path: ${{github.workspace}}/.nextflow
+           key: full-pipeline
+      - name: clean up existing inputs directory
+        run: |
+          rm -rf /mnt/nextflow_cache/* 
+
+      - name: Test Full Pipeline Run
+        run: |
+          bash ./scripts/test_ci_fullPipeline.sh || exit 1
+
+  Other:
+
+    needs: [full_pipeline]
+
     runs-on: self-hosted
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
       - name: Cache nextflow cache
@@ -33,10 +44,6 @@ jobs:
       - name: clean up existing inputs directory
         run: |
           rm -rf /mnt/nextflow_cache/* 
-
-      - name: Test Full Pipeline Run
-        run: |
-          bash ./scripts/test_ci_fullPipeline.sh || exit 1
 
       - name: Test Full Pipeline run that ends by magAttributes
         run: |
@@ -52,4 +59,8 @@ jobs:
 
       - name: Test MAG Attributes
         run: |
-          bash ./scripts/test_ci_magAttributes.sh || exit 1
+          bash ./scripts/test_magAttributes.sh "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "  || exit 1
+
+      - name: Test MAG Attributes Fraction
+        run: |
+          bash ./scripts/test_magAttributes.sh "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "  example_params/magAttributes_fraction/magAttributes.yml  || exit 1
