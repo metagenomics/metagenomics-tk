@@ -25,9 +25,9 @@ process pBowtie {
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid , "bowtie", filename) }
 
-    errorStrategy 'retry'
+    when params?.steps?.sampleAnalysis?.bowtie != null
 
-    cpus 28
+    errorStrategy 'retry'
 
     input:
     tuple val(sample), val(TYPE), path(contigs), path(fastqs, stageAs: 'fastq.fq.gz')
@@ -38,6 +38,7 @@ process pBowtie {
 
     shell:
     '''
+    echo "test"
     INDEX=!{sample}.index
     bowtie2-build --threads 28 --quiet !{contigs} $INDEX
     bowtie2 -p !{task.cpus} --very-sensitive -x $INDEX --un-conc !{sample}_discordand.fq --interleaved fastq.fq.gz 2> !{sample}_bowtie_stats.txt > out.sam
@@ -91,7 +92,7 @@ workflow _wUnmappedReads {
      sampleBins | map { sample -> [sample[SAMPLE_NAME_IDX], sample[METHOD_NAME_IDX]] } \
        | unique() | set { sampleMethod }
   
-     sampleMethod | join(concatSampleBins, by:SAMPLE_NAME_IDX) | join(sampleReads, by: 0) | pBowtie 
+     sampleMethod | join(concatSampleBins, by:SAMPLE_NAME_IDX) | join(sampleReads, by: 0) | pBowtie
    emit:
      unmappedReads = pBowtie.out.unmappedReads
      concatSampleBins = concatSampleBins
