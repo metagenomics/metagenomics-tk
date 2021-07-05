@@ -11,6 +11,7 @@ steps:
   binning:
     metabat:
   sampleAnalysis:
+    bowtie:
   magAttributes:
     gtdb:
       buffer: 1000
