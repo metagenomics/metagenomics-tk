@@ -2,7 +2,7 @@
 
 ## Testing
 
-Tests for local use are specified in `scripts` folder. Bash scripts that start with `test_ci_` are used by github actions for continious integration tests.
+Tests for local use are specified in the `scripts` folder. Bash scripts that start with `test_ci_` are used by github actions for continious integration tests.
 Scripts for local use accept arguments for specifying local dependencies:
 
 Examples:
@@ -42,8 +42,7 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 1. Process names should start `p`
 
-2. Processes should contain as input and output the sample id and/or the bin, contig id.
-
+2. The input and output of processes should contain a sample and/or bin and contig id.
 
 ## Other
 
