@@ -55,11 +55,11 @@ In addition it also computes a summary tsv file which adheres to the magAttribut
 ##### GTDBTk
 
 All GTDB files include the GTDB specific columns in addition to a `SAMPLE` column (`SAMPLE_gtdbtk.bac120.summary.tsv`, `SAMPLE_gtdbtk.ar122.summary.tsv`).
-In addition this modules produces a file `SAMPLE_gtdbtk_CHUNK.tsv` that combines both files and adds a `BIN_ID` column that adheres to the magAttributes specification
+In addition, this module produces a file `SAMPLE_gtdbtk_CHUNK.tsv` that combines both files and adds a `BIN_ID` column that adheres to the magAttributes specification
 
 ##### Checkm
 
-The Checkm output adheres to the magAttributes specification and adds to the output file a `BIN_ID` and `SAMPLE` column. 
+The Checkm output adheres to the magAttributes specification and adds a `BIN_ID` and `SAMPLE` column to the output file. 
 
 ## S3 Configuration
 

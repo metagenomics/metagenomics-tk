@@ -4,7 +4,7 @@
 
 Description goes here...
 
-## PR Review guidelines
+## PR review guidelines
 
 Thank you for submitting this PR.
 
@@ -18,7 +18,7 @@ Before merge:
 
 * The new code is readable, well commented and should adhere to our developer [guidelines](https://github.com/pbelmann/meta-omics-toolkit#developer-guidelines).
 
-* Before a merge it must be checked if a squash of commits is required.
+* Before merging it must be checked if a squash of commits is required.
 
 
 
