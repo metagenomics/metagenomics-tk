@@ -55,7 +55,7 @@ jobs:
 
       - name: Test Dereplication
         run: |
-          bash ./scripts/test_ci_dereplication.sh || exit 1
+          bash ./scripts/test_dereplication.sh || exit 1
 
       - name: Test MAG Attributes
         run: |
