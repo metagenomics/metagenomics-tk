@@ -48,9 +48,10 @@ def remove_duplicates(tuples):
 def get_closest_representative_comparisons(representatives, distances):
     genomes = [x[1] for x in representatives]
     filtered_distances = distances.filter(items=genomes,axis=1).filter(items=genomes, axis=0)
-    if(filtered_distances.ndim!=2):
-        np.fill_diagonal(filtered_distances.values, np.nan )
-    return remove_duplicates(list(filtered_distances.idxmin().to_dict().items()))
+    np.fill_diagonal(filtered_distances.values, np.nan )
+    idx = filtered_distances.idxmin()
+    ls = list(idx.to_dict().items())
+    return remove_duplicates(ls)
 
 
 def get_multiple_representative_comparisons(representatives, distances):
@@ -78,14 +79,7 @@ def main(argv):
     representatives_df["REPRESENTATIVE"] = 1
     representatives_df = pd.merge(clusters, representatives_df, how="left")
     representatives_df.REPRESENTATIVE.fillna(0, inplace=True)
-    print(representatives_df.REPRESENTATIVE)
-    print("representatives")
-    print(representatives)
-   # with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
-   #         print(representatives)
-    print("distances")
-   # with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
-   #         print(distances)
+
     representatives_to_compare = get_closest_representative_comparisons(representatives, distances)
     representatives_df.to_csv(args.out_dir + "/representatives.tsv", index=False, sep="\t")
     write_representative(representatives_to_compare, args.out_dir + "/representatives_to_compare.tsv")

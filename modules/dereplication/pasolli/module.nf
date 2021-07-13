@@ -41,7 +41,8 @@ process pMashSketch {
     label 'small'
 
     input:
-    path bins, stageAs: 'input*.txt'
+    val(num)
+    path("input_${num}_*.txt")
 
     output:
     path('reference.msh'), emit: sketch
@@ -65,7 +66,7 @@ process pMashDist {
     label 'large'
 
     input:
-    path sketches
+    path sketches, stageAs: 'sketch*.msh'
 
     output:
     file('distances.tsv')
@@ -262,8 +263,11 @@ workflow _wDereplicate {
        | filter({ it.CONTAMINATION.toFloat() <= params?.steps?.dereplication?.pasolli?.maximumContamination }) \
        | map { it -> it.PATH } | collect | set {mags} 
 
-     MASH_BUFFER = 5000
-     mags | flatten | buffer(size: 5000, remainder: true) | pMashSketch 
+     MASH_BUFFER = 2000
+     mags | flatten | buffer(size: 500, remainder: true) | set {buff}
+     buff | count() | view() | map{ it -> [1..it]} | flatten() | set {buff_count}
+
+     pMashSketch(buff_count, buff)
      pMashSketch.out.mapping | collectFile(name: 'mapping.txt', newLine: true, skip:0) | set { mappings }
      pMashSketch.out.sketch | collect | pMashDist | set { distances } 
      
