@@ -25,7 +25,7 @@ process pBowtie {
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid , "bowtie", filename) }
 
-    when params?.steps?.sampleAnalysis?.bowtie != null
+    when params?.steps?.sampleAnalysis !== null 
 
     errorStrategy 'retry'
 

@@ -27,9 +27,30 @@ jobs:
         run: |
           bash ./scripts/test_ci_fullPipeline.sh || exit 1
 
+  mag_attributes:
+    needs: [full_pipeline]
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache nextflow cache
+        uses: actions/cache@v2
+        with:
+           path: ${{github.workspace}}/.nextflow
+           key: mag_attributes
+      - name: clean up existing inputs directory
+        run: |
+          rm -rf /mnt/nextflow_cache/* 
+      - name: Test MAG Attributes
+        run: |
+          bash ./scripts/test_magAttributes.sh "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "  || exit 1
+
+      - name: Test MAG Attributes Fraction
+        run: |
+          bash ./scripts/test_magAttributes.sh "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "  example_params/magAttributes_fraction/magAttributes.yml  || exit 1
+
   Other:
 
-    needs: [full_pipeline]
+    needs: [mag_attributes]
 
     runs-on: self-hosted
 
@@ -57,10 +78,4 @@ jobs:
         run: |
           bash ./scripts/test_dereplication.sh || exit 1
 
-      - name: Test MAG Attributes
-        run: |
-          bash ./scripts/test_magAttributes.sh "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "  || exit 1
 
-      - name: Test MAG Attributes Fraction
-        run: |
-          bash ./scripts/test_magAttributes.sh "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "  example_params/magAttributes_fraction/magAttributes.yml  || exit 1

@@ -150,7 +150,7 @@ process pBuildJson {
 process pProdigal {
     tag "$sample $id"
     label 'tiny'
-    when params?.steps.containsKey("metabolomics")
+    when params?.steps?.metabolomics !== null
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "prodigal", filename) }
     input:
       tuple val(sample), val(id), path(mag)

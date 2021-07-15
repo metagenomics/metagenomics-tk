@@ -14,7 +14,4 @@ checkm qa --tab_table -t !{task.cpus} -f checkm.txt out/marker out  &> qa.log
 # reformat output files according to magAttributes standard
 echo -e "SAMPLE\tBIN_ID\tMarker lineage\t# genomes\t# markers\t# marker sets\t0\t1\t2\t3\t4\t5+\tCOMPLETENESS\tCONTAMINATION\tHETEROGENEITY" > checkm_tmp.tsv
 sed -i " 2,$ s/\t/.fa\t/"  checkm.txt
-tail -n +2 checkm.txt | sed "s/^/!{sample}\t/g"  >> checkm_tmp.tsv
-echo "PATH" > path.tsv
-tail -n +2 checkm.txt | cut -f 1 | sed "s/$/!{ending}/g" | xargs -I {} readlink -f {} >> path.tsv
-paste -d$'\t' path.tsv checkm_tmp.tsv > $FILE
+tail -n +2 checkm.txt | sed "s/^/!{sample}\t/g"  >> $FILE

@@ -1,13 +1,5 @@
 nextflow.enable.dsl=2
 
-params?.steps?.dereplication?.pasolli?.minimumCompleteness = 50
-params?.steps?.dereplication?.pasolli?.maximumContamination = 5
-params?.steps?.dereplication?.pasolli?.cutoff = 0.05
-params?.steps?.dereplication?.pasolli?.pyaniParameters = "-m ANIb"
-params?.steps?.dereplication?.pasolli?.representativeAniCutoff = 0.95
-params?.steps?.dereplication?.pasolli?.method = "ANI"
-params?.steps?.dereplication?.pasolli?.buffer = 10
-
 process pMash {
 
     container "quay.io/biocontainers/mash:${params.mash_tag}"
@@ -82,6 +74,8 @@ process pRenameMashDistances {
 
     errorStrategy 'retry'
 
+    label 'tiny'
+
     input:
     file('distances.tsv')
     file('mapping.tsv') 
@@ -91,8 +85,9 @@ process pRenameMashDistances {
 
     shell:
     '''
-    join -t$'\t'  -2 1 -1 1  <(sort -k 1,1 mapping.tsv)  <(sort -k 1,1 distances.tsv)  | cut -f 2- > distances.col1.mapped.tsv
-    join -t$'\t'  -1 1 -2 2   <(sort -k 1,1 mapping.tsv)  <(sort -k 2,2 distances.col1.mapped.tsv) | cut -f 2- > distances.mapped.tsv
+    mkdir sortTemp
+    join -t$'\t'  -2 1 -1 1  <(sort -T sortTemp -k 1,1 mapping.tsv)  <(sort -T sortTemp -k 1,1 distances.tsv)  | cut -f 2- > distances.col1.mapped.tsv
+    join -t$'\t'  -1 1 -2 2   <(sort -T sortTemp -k 1,1 mapping.tsv)  <(sort -T sortTemp -k 2,2 distances.col1.mapped.tsv) | cut -f 2- > distances.mapped.tsv
     '''
 }
 
@@ -232,14 +227,81 @@ process pFinalize {
     '''
 }
 
-workflow wDereplicateFile {
-   take:
-     genomes_table_file    
-   main:
-     genomes_table_file | _wDereplicate
+
+def mapJoin(channel_a, channel_b, key_a, key_b){
+    channel_a \
+        | map{ it -> [it[key_a], it] } \
+        | cross(channel_b | map{it -> [it[key_b], it]}) \
+        | map { it[0][1] + it[1][1] }
 }
 
 
+/*
+* List all files and converts them to tuples.
+*/
+def collectFiles(dir, sra){
+   def fileList = [];
+   dir.eachFileRecurse { item ->
+        fileList.add([sra, item]);
+  }
+  return fileList;
+}
+
+/**
+*
+* This entry point is highly experimental and should be used for retrieving input data for the dereplication module.
+*
+**/
+workflow wDereplicatePath {
+    def baseDir = params.baseDir
+    def runID = params.runid
+
+    Channel.from(file(baseDir).list()) | filter({ path -> !(path ==~ /.*summary$/)})  | set { sraDatasets } 
+    sraDatasets | map { sra ->  [sra, baseDir + "/" + sra + "/" + runID + "/" ]} \
+       | set {sraIDs}
+
+    sraIDs | flatMap { sraID -> collectFiles(file(sraID[1]), sraID[0])} | set {sraFiles}
+    sraFiles | filter({ it -> (it[1] ==~ /.*\/binning\/0.1.0\/metabat\/.*.fa$/)}) \
+        | map{ sra,f -> [SAMPLE:sra, PATH: baseDir.startsWith("s3://")? "s3:/" + f: f, BIN_ID:file(f).name] } | set{bins}
+
+     sraFiles | filter({ sra, path -> (path ==~ /.*\/magAttributes\/0.2.0\/checkm\/.*.tsv$/)}) \
+       | splitCsv(header: ["PATH", "SAMPLE", "BIN_ID", "Marker lineage", "# genomes", "# markers", "# marker sets", "0", "1", "2", "3", "4", "5+", "COMPLETENESS", "CONTAMINATION", "HETEROGENEITY"], sep: '\t') \
+       | map { sra, bins -> bins}  \
+       | set { checkm }
+
+     sraFiles | filter({ sra, path -> (path ==~ /.*\/binning\/0.1.0\/metabat\/.*_bins_stats.tsv$/)}) \
+        | splitCsv(header: true, sep: '\t') | map { sra, bins -> bins} | set{binStats}
+
+     mapJoin(binStats, checkm, "BIN_ID", "BIN_ID") | set {checkmBinStats} 
+     mapJoin(checkmBinStats, bins, "file", "BIN_ID") | map( it -> "${it['BIN_ID']}\t${it['COMPLETENESS']}\t${it['COVERAGE']}\t${it['CONTAMINATION']}\t${it['HETEROGENEITY']}\t${it['PATH']}\t${it['N50']}" ) \
+         | collectFile(seed: "BIN_ID\tCOMPLETENESS\tCOVERAGE\tCONTAMINATION\tHETEROGENEITY\tPATH\tN50", newLine: true, keepHeader: false) | view() | wDereplicateFile 
+}
+
+
+
+/**
+*
+* Dereplicate genomes that are listed in a tsv file containing the columns
+* "BIN_ID", "COMPLETENESS", "COVERAGE", "CONTAMINATION", "HETEROGENEITY", "PATH", "N50".
+* 
+* BIN_ID is a unique identifier for the bin.
+* PATH represents either a URL, S3 or local path to a file.
+*
+**/
+workflow wDereplicateFile {
+   take:
+     genomesTableFile    
+   main:
+     genomesTableFile | _wDereplicate
+}
+
+
+/**
+*
+* This entry point takes the same information as the wDereplicateFile entrypoint,
+* with the exception that a channel instead of a tsv file is provided.
+*
+**/
 workflow wDereplicateList {
    take:
      genomes_list 
@@ -254,56 +316,60 @@ workflow wDereplicateList {
 
 workflow _wDereplicate {
    take:
-     genomes_table_file
+     genomesTableFile
    main:
-     buffer = params?.steps?.dereplication?.pasolli?.buffer ?: 20
-
-     genomes_table_file | splitCsv(sep: '\t', header: true)  \
+     // filter table based on provided parameters
+     genomesTableFile | splitCsv(sep: '\t', header: true)  \
        | filter({ it.COMPLETENESS.toFloat() >= params?.steps?.dereplication?.pasolli?.minimumCompleteness }) \
        | filter({ it.CONTAMINATION.toFloat() <= params?.steps?.dereplication?.pasolli?.maximumContamination }) \
        | map { it -> it.PATH } | collect | set {mags} 
 
-     MASH_BUFFER = 2000
-     mags | flatten | buffer(size: 500, remainder: true) | set {buff}
-     buff | count() | view() | map{ it -> [1..it]} | flatten() | set {buff_count}
+     //Create Mash buffers 
+     defaultMashBuffer = params?.steps?.dereplication?.pasolli?.mashBuffer ?: 500
+     mags | flatten | buffer(size: defaultMashBuffer, remainder: true) | set {sketchBuffer}
+     sketchBuffer | count() | map{ maxBatchNumber -> [1..maxBatchNumber]} | flatten() | set { sketchBufferCount}
 
-     pMashSketch(buff_count, buff)
+     // Compute mash distance 
+     pMashSketch(sketchBufferCount, sketchBuffer)
      pMashSketch.out.mapping | collectFile(name: 'mapping.txt', newLine: true, skip:0) | set { mappings }
      pMashSketch.out.sketch | collect | pMashDist | set { distances } 
-     
      pRenameMashDistances(distances, mappings) | pClusterDistances | set { clusters }
 
-     pSelectRepresentative(genomes_table_file, clusters) | set { representatives }
+     // Select representatives for every cluster
+     pSelectRepresentative(genomesTableFile, clusters) | set { representatives }
 
+     // Check if there are representatives to compare 
      representatives.representatives | splitCsv(sep: '\t') | ifEmpty('DONE') | branch { finalize: it=='DONE' 
          other: it!='DONE' } | set { representativesToCompareC }
-
      representativesToCompareC.other | multiMap { mags ->
         mag1: mags[0]
         mag2: mags[1]
      } |  set { result }
 
-     result.mag1 | map(it -> file(it)) | buffer(size: buffer, remainder: true) | set { mag1 }
-     result.mag2 | map(it -> file(it)) | buffer(size: buffer, remainder: true) | set { mag2 }
-
+     // Buffer Mags for ANI comparison and run ANI tool 
+     defaultANIBuffer = params?.steps?.dereplication?.pasolli?.ANIBuffer ?: 20
+     result.mag1 | map(it -> file(it)) | buffer(size: defaultANIBuffer, remainder: true) | set { mag1 }
+     result.mag2 | map(it -> file(it)) | buffer(size: defaultANIBuffer, remainder: true) | set { mag2 }
      pANIb(mag1, mag2)
      pTETRA(mag1, mag2)
 
+     // Prepare output and collect representatives as channel
      pANIb.out | mix(pTETRA.out) \
-       | collectFile(newLine: true) | set { all_ani }
+       | collectFile(newLine: true) | set { allAni }
 
-     pGetCluster(representatives.clusters, all_ani, genomes_table_file)
+     pGetCluster(representatives.clusters, allAni, genomesTableFile)
      pFinalize(representativesToCompareC.finalize, representatives.clusters)
    
+     IS_REPRESENTATIVE = 1
      pGetCluster.out.final_clusters | splitCsv(sep: '\t', header: true) \
-       | filter({ it.REPRESENTATIVE.toFloat() == 1 }) | map { it -> it['GENOME'] } | collectFile(newLine: true) | set { representatives_cluster }
+       | filter({ it.REPRESENTATIVE.toFloat() == IS_REPRESENTATIVE }) | map { it -> it['GENOME'] } \
+       | collectFile(newLine: true) | set { representativesCluster }
 
      pFinalize.out | splitCsv(sep: '\t', header: true) \
-       | filter({ it.REPRESENTATIVE.toFloat() == 1 }) | map { it -> it['GENOME'] } | collectFile(newLine: true) | set { representatives_finalize }
+       | filter({ it.REPRESENTATIVE.toFloat() == IS_REPRESENTATIVE }) | map { it -> it['GENOME'] } \
+       | collectFile(newLine: true) | set { representativesFinalize }
 
-     representatives_cluster | mix(representatives_finalize) | set{representatives}
-
-
+     representativesCluster | mix(representativesFinalize) | set{representatives}
   emit:
      representatives
 }

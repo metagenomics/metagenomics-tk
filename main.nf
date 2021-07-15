@@ -5,19 +5,17 @@ include { wQualityControlFile } from './modules/qualityControl/module'
 include { wAssemblyFile; wAssemblyList } from './modules/assembly/module'
 include { wBinning } from './modules/binning/module.nf'
 include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
-include { wDereplicateFile; wDereplicateList } from './modules/dereplication/pasolli/module'
+include { wDereplicateFile; wDereplicateList; wDereplicatePath } from './modules/dereplication/pasolli/module'
 include { wReadMappingBwa } from './modules/readMapping/bwa/module'
 include { wAnalyseMetabolites } from './modules/metabolomics/module'
 include { wUnmappedReadsList; wUnmappedReadsFile } from './modules/sampleAnalysis/module'
 include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './modules/fragmentRecruitment/frhit/module'
 
 
-
-
-def mapJoin(channel_a, channel_b, key){
+def mapJoin(channel_a, channel_b, key_a, key_b){
     channel_a \
-        | map{ it -> [it[key], it] } \
-        | cross(channel_b | map{it -> [it[key], it]}) \
+        | map{ it -> [it[key_a], it] } \
+        | cross(channel_b | map{it -> [it[key_b], it]}) \
         | map { it[0][1] + it[1][1] }
 }
 
@@ -25,6 +23,9 @@ workflow wDereplication {
    wDereplicateFile(Channel.from(file(params?.steps?.dereplication?.pasolli?.input)))
 }
 
+workflow wDereplicationPath {
+   wDereplicatePath()
+}
 
 workflow wCMSeqWorfklowFile {
    wCMSeqWorkflowFile(Channel.from(params?.steps?.matAttributes?.input?.genomes), Channel.from(params?.steps?.matAttributes?.input?.alignments))
@@ -79,7 +80,7 @@ workflow wPipeline {
        wFragmentRecruitmentList(wUnmappedReadsList.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
     }
     wMagAttributesList(wBinning.out.bins)
-    mapJoin(wMagAttributesList.out.checkm, wBinning.out.bins_stats, "BIN_ID") | set { binsStats  }
+    mapJoin(wMagAttributesList.out.checkm, wBinning.out.bins_stats, "BIN_ID", "file") | set { binsStats  }
 
     wDereplicateList(binsStats)
     representativesList = wDereplicateList.out

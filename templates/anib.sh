@@ -8,7 +8,7 @@ while IFS= read -r genomes_to_compare; do
     cd $dir
     ln -s ../$GENOME1 ${GENOME1}.fa
     ln -s ../$GENOME2 ${GENOME2}.fa
-    average_nucleotide_identity.py !{params.steps.dereplication.pasolli.pyani_parameters} --force -i . -o out &> error.log
+    average_nucleotide_identity.py !{params.steps.dereplication.pasolli.pyaniParameters} --force -i . -o out &> error.log
     ANI1=$(cat out/*_percentage_identity.tab | cut -f 2 | tail -n 1) 
     ANI2=$(cat out/*_percentage_identity.tab | cut -f 3 | head -n 2 | tail -n 1)
     ANI=$(echo | awk -v ani1="$ANI1" -v ani2="$ANI2" '{  print (ani1 + ani2) / 2 }')

@@ -31,9 +31,12 @@ steps:
       minimumCompleteness: 0
       maximumContamination: 5000
       pyaniParameters: '-m ANIb'
-      buffer: 20
+      ANIBuffer: 20
+      mashBuffer: 2000
+      cutoff: 0.05
+      method: 'ANI'
   readMapping:
           #  metabolomics:
           #    smetana:
-          #      - detailed
+          #     - detailed
           #      - global
