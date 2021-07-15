@@ -173,8 +173,8 @@ workflow wCMSeqWorkflowFile {
 * Input:
 * It accepts as input all a tsv table of the following format:
 * 
-* DATASET	PATH
-* SAMPLe_NAME	/path/to/bin.fa
+* DATASET	PATH	BIN_ID
+* SAMPLE_NAME	/path/to/bin.fa	sample_name_bin
 *
 */
 workflow wMagAttributesFile {

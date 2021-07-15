@@ -32,6 +32,19 @@ where
 -entry wDereplication -params-file example_params/dereplication.yml
 ```
 
+#### Input
+
+* [params-file](example_params/dereplication.yml)
+
+* [Tsv Table](test_data/dereplication/input.tsv): Must include the columns `DATASET`, `BIN_ID`, `PATH`, `COMPLETENESS`, `CONTAMINATION`, `COVERAGE`, `N50` and `HETEROGENEITY`. 
+Completeness and contamination can be used for filtering (see `params-file`). `N50`, `COVERAGE` and `HETEROGENEITY` are used for selecting the representative of every cluster.
+You can set values of these columns to zero if data is not available or if you don'tt want the representative selection to be influenced by theses columns.
+
+#### Output
+
+The output tsv file (`final_clusters.tsv`) contains the columns `CLUSTER`, `GENOME` and `REPRESENTATIVE` where `CLUSTER` identifies a group of genomes, `GENOME` represents the path or
+link of a genome and `REPRESENTATIVE` is either 0 or 1 (selected as representative). 
+
 ### MagAttributes
 
 ```
@@ -42,9 +55,10 @@ where
 
 * [params-file](example_params/magAttributes.yml)
 
-* [Tsv Table](test_data/magAttributes/input.tsv): Must include at least `DATASET` identifier and mag specific `PATH` column.
+* [Tsv Table](test_data/magAttributes/input.tsv): Must include at least `DATASET` identifier and mag specific `PATH` and `BIN_ID` column.
 
 #### Output
+
 
 ##### Prokka
 

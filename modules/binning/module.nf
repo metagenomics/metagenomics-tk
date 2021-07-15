@@ -139,6 +139,40 @@ def aslist(element){
   }
 }
 
+/*
+*
+* Method takes a list of the form [SAMPLE, [BIN1 path, BIN2 path]] as input
+* and produces a flattend list of the form [SAMPLE, BIN 1 path, BIN 2 path]
+*
+*/
+def flattenBins(binning){
+  def chunkList = [];
+  def SAMPLE_IDX = 0;
+  def BIN_PATHS_IDX = 1;
+  binning[BIN_PATHS_IDX].each {
+     chunkList.add([binning[SAMPLE_IDX], it]);
+  }
+  return chunkList;
+}
+
+
+def mapJoin(channel_a, channel_b, key_a, key_b){
+    channel_a \
+        | map{ it -> [it[key_a], it] } \
+        | cross(channel_b | map{it -> [it[key_b], it]}) \
+        | map { it[0][1] + it[1][1] }
+}
+
+def setID(binning){
+  def chunkList = [];
+  binning.each {
+     def bin = file(it[1]) 
+     def sample = it[0]
+     def binMap = [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
+     chunkList.add(binMap)
+  };
+  return chunkList;
+}
 
 workflow wBinning {
    take: 
@@ -157,10 +191,15 @@ workflow wBinning {
      }
 
      contigs | join(pBowtie.out.mappedReads, by: [0]) | pMetabat | set { metabat }
-//     contigs | join(input_reads | mix(input_reads), by: 0) | pMaxBin | set { maxbin }
 
      metabat.bins  | map({ it -> it[1] = aslist(it[1]); it  }) | set{ bins_list }
+
+     metabat.bins | map { it -> flattenBins(it) } | flatMap {it -> setID(it)} | set {binMap}
+
      metabat.bins_stats | map { it -> file(it[1]) } | splitCsv(sep: '\t', header: true) | set { bins_stats }
+
+     mapJoin(bins_stats, binMap, "file", "BIN_ID") | set {binMap}
+
      metabat.bins_depth | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "metabat_bins_depth.tsv", item[1].text  ]
      }
@@ -168,9 +207,8 @@ workflow wBinning {
      metabat.bins_stats | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
        [ "metabat_bins_depth.tsv", item[1].text  ]
      }
-    // metabat.bins | mix(maxbin.bins) | set {bins}
    emit:
-     bins_stats = bins_stats
+     bins_stats = binMap
      bins = bins_list
      mapping = pBowtie.out.mappedReads
 }
