@@ -12,6 +12,6 @@ checkm analyze -x !{ending} -t !{task.cpus} out/marker . out &> analyze.log
 checkm qa --tab_table -t !{task.cpus} -f checkm.txt out/marker out  &> qa.log
 
 # reformat output files according to magAttributes standard
-echo -e "SAMPLE\tBIN_ID\tMarker lineage\t# genomes\t# markers\t# marker sets\t0\t1\t2\t3\t4\t5+\tCOMPLETENESS\tCONTAMINATION\tHETEROGENEITY" > checkm_tmp.tsv
+echo -e "SAMPLE\tBIN_ID\tMarker lineage\t# genomes\t# markers\t# marker sets\t0\t1\t2\t3\t4\t5+\tCOMPLETENESS\tCONTAMINATION\tHETEROGENEITY" > $FILE
 sed -i " 2,$ s/\t/.fa\t/"  checkm.txt
 tail -n +2 checkm.txt | sed "s/^/!{sample}\t/g"  >> $FILE
