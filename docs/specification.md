@@ -69,3 +69,14 @@ If the MODULE output does contain a BINNING output then a new RUN folder must be
 /SRA1/1/BINNING/0.3/METABAT
 /SRA1/2/BINNING/0.4/METABAT
 ```
+
+### Rules for aggregated output
+
+Aggregated outputs same as dataset outputs are produced by using the `publish dir` directive with the only difference that no
+sample identifier is used.
+
+Example:
+
+```
+RUN_ID/MODULE/VERSION/TOOL/
+```
