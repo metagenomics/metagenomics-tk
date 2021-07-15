@@ -1,5 +1,11 @@
 nextflow.enable.dsl=2
 
+MODULE="dereplication"
+VERSION="0.1.0"
+def getOutput(RUNID, TOOL, filename){
+    return "AGGREGATED" + '/' +  RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+}
+
 process pMash {
 
     container "quay.io/biocontainers/mash:${params.mash_tag}"
@@ -122,7 +128,7 @@ process pSelectRepresentative {
 
     container "pbelmann/python-env:${params.python_env_tag}"
 
-    publishDir "${params.output}/dereplication"
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "selectedRepresentatives", filename) }
 
     label 'medium'
 
@@ -160,8 +166,6 @@ process pANIb {
 
 process pTETRA {
 
-    errorStrategy 'retry'
-
     label 'small'
 
     input:
@@ -182,11 +186,9 @@ process pTETRA {
 
 process pGetCluster {
 
-    errorStrategy 'retry'
-
     label 'tiny'
 
-    publishDir "${params.output}/dereplication"
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "clusters", filename) }
 
     container "pbelmann/python-env:${params.python_env_tag}"
 
@@ -210,13 +212,11 @@ process pGetCluster {
 
 process pFinalize {
 
-    errorStrategy 'retry'
-
     input:
     val finalized
     file cluster 
 
-    publishDir "${params.output}/dereplication"
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "clusters", filename) }
 
     output:
     file 'final_clusters.tsv' 
