@@ -1,5 +1,26 @@
 # Developer Guidelines
 
+## Commit and Release Guidelines
+
+We are using [git-chglog](https://github.com/git-chglog/git-chglog) to automatically generate a changelog that is based on our commit messages.
+Commit messages should follow the following format:
+
+```
+feat(scope): feature added in the scope
+```
+
+Example:
+
+```
+feat(assembly): megahit added
+```
+
+`feat` can be replaced by one of the formats specified in the options sections of the [config](.chglog/config.yml) file.
+Scope can for example represent a module, a configuration or a specific document.
+
+CHANGELOG.md can be automatically updated by running `make changelog`.
+The changelog file *must* be updated after every release on the master branch.
+
 ## Testing
 
 Tests for local use are specified in the `scripts` folder. Bash scripts that start with `test_ci_` are used by github actions for continious integration tests.

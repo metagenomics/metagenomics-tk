@@ -41,13 +41,16 @@ bin5 = ${bins_folder}/bin.32.fa
 
 
 
-.PHONY: list clean test_clean run_small_full_test check
+.PHONY: list clean test_clean run_small_full_test check changelog
 clean : ## Removes all files that are produced during runs are not necessary
 	- rm .nextflow.log*
 	- rm report.html*
 	- rm timeline.html*
 	- rm trace.txt*
 	- rm dag.dot*
+
+changelog: ## Creates a new CHANGELOG.md file
+	- docker run -v "$PWD":/workdir quay.io/git-chglog/git-chglog:latest  > CHANGELOG.md
 
 nextflow: ## Downloads Nextflow binary
 	- wget -qO- https://get.nextflow.io | bash
