@@ -48,7 +48,7 @@ def remove_duplicates(tuples):
 def get_closest_representative_comparisons(representatives, distances):
     genomes = [x[1] for x in representatives]
     filtered_distances = distances.filter(items=genomes,axis=1).filter(items=genomes, axis=0)
-    np.fill_diagonal(filtered_distances.values, np.nan )
+    np.fill_diagonal(filtered_distances.values.astype(float), np.nan )
     idx = filtered_distances.idxmin()
     ls = list(idx.to_dict().items())
     return remove_duplicates(ls)
