@@ -36,8 +36,8 @@ def update_cluster(clusters, attributes, genome_a, genome_b):
     cluster_b = clusters[clusters["CLUSTER"] == cluster_rep_b]
 
     clusters.loc[clusters.CLUSTER == cluster_b.CLUSTER.iloc[0],"CLUSTER"] = cluster_a.CLUSTER.iloc[0]
-    rep_a_attr = attributes.loc[attributes.PATH == genome_rep_a,:]
-    rep_b_attr = attributes.loc[attributes.PATH == genome_rep_b,:]
+    rep_a_attr = attributes.loc[attributes.BIN_ID == genome_rep_a,:]
+    rep_b_attr = attributes.loc[attributes.BIN_ID == genome_rep_b,:]
 
     rep_genome = get_representative(pd.concat([rep_a_attr, rep_b_attr]))
 
