@@ -73,10 +73,10 @@ If the MODULE output does contain a BINNING output then a new RUN folder must be
 ### Rules for aggregated output
 
 Aggregated outputs same as dataset outputs are produced by using the `publish dir` directive with the only difference that no
-sample identifier is used.
+sample identifier is used and the path start with `AGGREGATED`.
 
 Example:
 
 ```
-RUN_ID/MODULE/VERSION/TOOL/
+AGGREGATED/RUN_ID/MODULE/VERSION/TOOL/
 ```

@@ -107,7 +107,7 @@ process pSelectRepresentative {
 
     container "pbelmann/python-env:${params.python_env_tag}"
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "selectedRepresentatives", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/selectedRepresentatives", filename) }
 
     label 'medium'
 
@@ -167,7 +167,7 @@ process pGetCluster {
 
     label 'tiny'
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "clusters", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/clusters", filename) }
 
     container "pbelmann/python-env:${params.python_env_tag}"
 
@@ -195,7 +195,7 @@ process pFinalize {
     val finalized
     file cluster 
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "clusters", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/clusters", filename) }
 
     output:
     file 'final_clusters.tsv' 
