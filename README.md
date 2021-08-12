@@ -38,7 +38,7 @@ where
 
 * [Tsv Table](test_data/dereplication/input.tsv): Must include the columns `DATASET`, `BIN_ID`, `PATH`, `COMPLETENESS`, `CONTAMINATION`, `COVERAGE`, `N50` and `HETEROGENEITY`. 
 Completeness and contamination can be used for filtering (see `params-file`). `N50`, `COVERAGE` and `HETEROGENEITY` are used for selecting the representative of every cluster.
-You can set values of these columns to zero if data is not available or if you don'tt want the representative selection to be influenced by theses columns.
+You can set values of these columns to zero if data is not available or if you don't want the representative selection to be influenced by theses columns. Make sure that `BIN_ID` is a unique identifier.
 
 #### Output
 
