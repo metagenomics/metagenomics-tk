@@ -16,6 +16,8 @@ process pMashSketchGenome {
 
     label 'tiny'
 
+    when params?.steps?.dereplication?.pasolli != null
+
     input:
     tuple path("g.fa"), val(binid)
 
