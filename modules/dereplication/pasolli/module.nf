@@ -309,7 +309,7 @@ workflow _wDereplicate {
        | filter({ it.CONTAMINATION.toFloat() <= params?.steps?.dereplication?.pasolli?.maximumContamination }) \
        | map { line -> [file(line.PATH), line.BIN_ID] } | pMashSketchGenome
 
-     // concatenate (paste) multiple sketches in perallel and compute distance
+     // concatenate (paste) multiple sketches in parallel and compute distance
      pMashSketchGenome.out.sketch | buffer(size: defaultMashBuffer, remainder: true) \
          | pMashPaste | toList() | pMashDist | pClusterDistances | set { clusters }
 
