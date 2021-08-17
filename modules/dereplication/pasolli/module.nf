@@ -16,7 +16,7 @@ process pMashSketchGenome {
 
     label 'tiny'
 
-    when params?.steps?.dereplication?.pasolli != null
+    when params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli")
 
     input:
     tuple path("g.fa"), val(binid)
@@ -62,6 +62,8 @@ process pMashDist {
     errorStrategy 'retry'
 
     label 'large'
+
+    when params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli")
 
     input:
     path sketches, stageAs: 'sketch*.msh'
