@@ -6,7 +6,35 @@ def getOutput(RUNID, TOOL, filename){
     return "AGGREGATED" + '/' +  RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
 }
 
-process pMash {
+
+
+process pMashSketchGenome {
+
+    container "quay.io/biocontainers/mash:${params.mash_tag}"
+
+    errorStrategy 'retry'
+
+    label 'tiny'
+
+    when params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli")
+
+    input:
+    tuple path("g.fa"), val(binid)
+
+    output:
+    path("${binid}.msh"), emit: sketch
+    tuple env(GENOME_PATH), val("${binid}"), emit: stagedGenome
+
+    shell:
+    '''
+    ln -s g.fa !{binid}
+    mash sketch !{binid}  -o !{binid}.msh
+    GENOME_PATH=$(readlink -f g.fa)
+    '''
+}
+
+
+process pMashPaste {
 
     container "quay.io/biocontainers/mash:${params.mash_tag}"
 
@@ -15,42 +43,14 @@ process pMash {
     label 'large'
 
     input:
-    path bins, stageAs: 'input*.txt'
+    path sketches, stageAs: 'sketch*.msh'
 
     output:
-    tuple file('distance.tsv'), file('mapping.tsv')
+    file('final_sketch.msh')
 
     shell:
     '''
-    ls -1 input*.txt > list.txt
-    mash sketch -o reference -l list.txt
-    mash dist -p !{task.cpus} reference.msh  reference.msh | cut -f 1,2,3 > distance.tsv
-    for i in $(ls input*.txt); do echo "$i\t$(readlink -f $i)";  done > mapping.tsv
-    '''
-}
-
-
-process pMashSketch {
-
-    container "quay.io/biocontainers/mash:${params.mash_tag}"
-
-    errorStrategy 'retry'
-
-    label 'small'
-
-    input:
-    val(num)
-    path("input_${num}_*.txt")
-
-    output:
-    path('reference.msh'), emit: sketch
-    path('mapping.tsv'), emit: mapping
-
-    shell:
-    '''
-    ls -1 input*.txt > list.txt
-    mash sketch -o reference -l list.txt
-    for i in $(ls input*.txt); do echo "$i\t$(readlink -f $i)";  done > mapping.tsv
+    mash paste final_sketch !{sketches}
     '''
 }
 
@@ -62,6 +62,8 @@ process pMashDist {
     errorStrategy 'retry'
 
     label 'large'
+
+    when params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli")
 
     input:
     path sketches, stageAs: 'sketch*.msh'
@@ -76,26 +78,6 @@ process pMashDist {
     '''
 }
 
-process pRenameMashDistances {
-
-    errorStrategy 'retry'
-
-    label 'tiny'
-
-    input:
-    file('distances.tsv')
-    file('mapping.tsv') 
-
-    output:
-    file 'distances.mapped.tsv' 
-
-    shell:
-    '''
-    mkdir sortTemp
-    join -t$'\t'  -2 1 -1 1  <(sort -T sortTemp -k 1,1 mapping.tsv)  <(sort -T sortTemp -k 1,1 distances.tsv)  | cut -f 2- > distances.col1.mapped.tsv
-    join -t$'\t'  -1 1 -2 2   <(sort -T sortTemp -k 1,1 mapping.tsv)  <(sort -T sortTemp -k 2,2 distances.col1.mapped.tsv) | cut -f 2- > distances.mapped.tsv
-    '''
-}
 
 process pClusterDistances {
 
@@ -118,6 +100,7 @@ process pClusterDistances {
     '''
 }
 
+
 process pSelectRepresentative {
 
     errorStrategy 'retry'
@@ -128,7 +111,7 @@ process pSelectRepresentative {
 
     container "pbelmann/python-env:${params.python_env_tag}"
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "selectedRepresentatives", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/selectedRepresentatives", filename) }
 
     label 'medium'
 
@@ -188,14 +171,14 @@ process pGetCluster {
 
     label 'tiny'
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "clusters", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/clusters", filename) }
 
     container "pbelmann/python-env:${params.python_env_tag}"
 
     input:
-    path cluster
-    path ani_values
-    path genomeAttributes
+    path cluster, stageAs: 'cluster'
+    path ani_values, stageAs: 'ani_values'
+    path genomeAttributes, stageAs: 'genomeAttributes'
 
     output:
     path 'final_clusters.tsv', emit: final_clusters
@@ -216,7 +199,7 @@ process pFinalize {
     val finalized
     file cluster 
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "clusters", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/clusters", filename) }
 
     output:
     file 'final_clusters.tsv' 
@@ -314,28 +297,27 @@ workflow wDereplicateList {
 }
 
 
+
 workflow _wDereplicate {
    take:
      genomesTableFile
    main:
-     // filter table based on provided parameters
-     genomesTableFile | splitCsv(sep: '\t', header: true)  \
-       | filter({ it.COMPLETENESS.toFloat() >= params?.steps?.dereplication?.pasolli?.minimumCompleteness }) \
-       | filter({ it.CONTAMINATION.toFloat() <= params?.steps?.dereplication?.pasolli?.maximumContamination }) \
-       | map { it -> it.PATH } | collect | set {mags} 
-
-     //Create Mash buffers 
      defaultMashBuffer = params?.steps?.dereplication?.pasolli?.mashBuffer ?: 500
-     mags | flatten | buffer(size: defaultMashBuffer, remainder: true) | set {sketchBuffer}
-     sketchBuffer | count() | map{ maxBatchNumber -> [1..maxBatchNumber]} | flatten() | set { sketchBufferCount}
 
-     // Compute mash distance 
-     pMashSketch(sketchBufferCount, sketchBuffer)
-     pMashSketch.out.mapping | collectFile(name: 'mapping.txt', newLine: true, skip:0) | set { mappings }
-     pMashSketch.out.sketch | collect | pMashDist | set { distances } 
-     pRenameMashDistances(distances, mappings) | pClusterDistances | set { clusters }
+     genomesTableFile | splitCsv(sep: '\t', header: true) | set { genomesTable }
 
-     // Select representatives for every cluster
+     // filter genomes by contamination and completeness
+     genomesTable | filter({ it.COMPLETENESS.toFloat() >= params?.steps?.dereplication?.pasolli?.minimumCompleteness }) \
+       | filter({ it.CONTAMINATION.toFloat() <= params?.steps?.dereplication?.pasolli?.maximumContamination }) \
+       | map { line -> [file(line.PATH), line.BIN_ID] } | pMashSketchGenome
+
+     // concatenate (paste) multiple sketches in parallel and compute distance
+     pMashSketchGenome.out.sketch | buffer(size: defaultMashBuffer, remainder: true) \
+         | pMashPaste | toList() | pMashDist | pClusterDistances | set { clusters }
+
+     pMashSketchGenome.out.stagedGenome | set { stagedGenomeBinIDMapping }
+
+     // select representatives
      pSelectRepresentative(genomesTableFile, clusters) | set { representatives }
 
      // Check if there are representatives to compare 
@@ -354,22 +336,37 @@ workflow _wDereplicate {
      pTETRA(mag1, mag2)
 
      // Prepare output and collect representatives as channel
-     pANIb.out | mix(pTETRA.out) \
-       | collectFile(newLine: true) | set { allAni }
+     pANIb.out | mix(pTETRA.out)  \
+       | collectFile(newLine: true)  | splitCsv(sep: '\t', header:false, skip: 0) | set {aniComparisons}
 
-     pGetCluster(representatives.clusters, allAni, genomesTableFile)
+     // Extract BIN_ID for final clustering
+     GENOME_A_IDX = 0
+     GENOME_B_COMPARISON_IDX = 1
+     GENOME_A_ID_IDX = 1
+     ANI_RESULT = 2
+     stagedGenomeBinIDMapping | cross(aniComparisons) \
+        | map { comparison -> [comparison[GENOME_B_COMPARISON_IDX][GENOME_A_ID_IDX], comparison[GENOME_A_IDX][GENOME_A_ID_IDX], comparison[GENOME_B_COMPARISON_IDX][ANI_RESULT]] } \
+        | set {aniComparisonsIntermediate}
+
+     GENOME_B_IDX = 0
+     GENOME_A_COMPARISON_IDX = 1
+     GENOME_B_ID_IDX = 1
+     GENOME_A_COMPARISON_PATH = 1
+     ANI_RESULT = 2
+     stagedGenomeBinIDMapping | cross(aniComparisonsIntermediate) \
+        | map { comparison -> [comparison[GENOME_A_COMPARISON_IDX][GENOME_A_COMPARISON_PATH], comparison[GENOME_B_IDX][GENOME_B_ID_IDX], comparison[GENOME_A_COMPARISON_IDX][ANI_RESULT]] } \
+        | collectFile(newLine: true){ line -> line.join('\t') } |  set {aniComparisonsFinal}
+
+     pGetCluster(representatives.clusters, aniComparisonsFinal, genomesTableFile)
      pFinalize(representativesToCompareC.finalize, representatives.clusters)
    
      IS_REPRESENTATIVE = 1
-     pGetCluster.out.final_clusters | splitCsv(sep: '\t', header: true) \
+     PATH_IDX = 1
+     pGetCluster.out.final_clusters | mix(pFinalize.out) | splitCsv(sep: '\t', header: true) \
        | filter({ it.REPRESENTATIVE.toFloat() == IS_REPRESENTATIVE }) | map { it -> it['GENOME'] } \
-       | collectFile(newLine: true) | set { representativesCluster }
+       | join(genomesTable | map{ bin -> [bin.BIN_ID, bin.PATH] }) | map { bin -> bin[PATH_IDX] } \
+       | collectFile(newLine: true) | set{representatives}
 
-     pFinalize.out | splitCsv(sep: '\t', header: true) \
-       | filter({ it.REPRESENTATIVE.toFloat() == IS_REPRESENTATIVE }) | map { it -> it['GENOME'] } \
-       | collectFile(newLine: true) | set { representativesFinalize }
-
-     representativesCluster | mix(representativesFinalize) | set{representatives}
   emit:
      representatives
 }

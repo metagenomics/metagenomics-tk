@@ -48,6 +48,23 @@ jobs:
         run: |
           bash ./scripts/test_magAttributes.sh "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "  example_params/magAttributes_fraction/magAttributes.yml  || exit 1
 
+  dereplication:
+    needs: [full_pipeline]
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache nextflow cache
+        uses: actions/cache@v2
+        with:
+           path: ${{github.workspace}}/.nextflow
+           key: dereplication
+      - name: clean up existing inputs directory
+        run: |
+          rm -rf /mnt/nextflow_cache/* 
+      - name: Test Dereplication
+        run: |
+          bash ./scripts/test_dereplication.sh || exit 1
+
   Other:
 
     needs: [mag_attributes]
@@ -73,9 +90,5 @@ jobs:
       - name: Test Fragment Recruitment
         run: |
           bash ./scripts/test_ci_fragmentRecruitment.sh || exit 1
-
-      - name: Test Dereplication
-        run: |
-          bash ./scripts/test_dereplication.sh || exit 1
 
 
