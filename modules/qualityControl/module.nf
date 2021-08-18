@@ -72,8 +72,8 @@ workflow _wFastqSplit {
             readsTable | splitCsv(sep: '\t', header: true) \
              | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} \
              | branch {
-              download: (it[2].startsWith("s3://") && params?.steps?.qc.containsKey("download")) || ! params?.steps?.qc.containsKey("download") 
-              noDownload: !it[2].startsWith("s3://") && !params?.steps?.qc.containsKey("download")
+              download: it[2].startsWith("s3://") && params?.steps?.qc.containsKey("download")
+              noDownload: !params?.steps?.qc.containsKey("download")
              } | set { samples }
 
              samples.noDownload | pFastpSplit
@@ -96,7 +96,7 @@ workflow _wFastqSplit {
              }
              pFastpSplit.out.readsProcessed | mix(pFastpSplitDownload.out.readsProcessed) | set {readsProcessed}
       emit:
-        processed_reads = pFastpSplitDownload.out.readsProcessed
+        processed_reads = readsProcessed
 }
 
 

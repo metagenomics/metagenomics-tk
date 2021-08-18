@@ -25,11 +25,11 @@ jobs:
 
       - name: Test Full Pipeline Run
         run: |
-          bash ./scripts/test_fullPipeline.sh " --input=/mnt/nextflow_cache/test/reads/small/reads_split.tsv --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "  || exit 1
+          bash ./scripts/test_fullPipeline.sh "  --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "  || exit 1
 
       - name: Test Full Pipeline run that ends with magAttributes
         run: |
-          bash ./scripts/test_fullPipeline.sh " --input=/mnt/nextflow_cache/test/reads/small/reads_split.tsv --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " example_params/fullPipeline_fraction/fullPipeline_fraction_magAttributes.yml  || exit 1
+          bash ./scripts/test_fullPipeline.sh "  --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " example_params/fullPipeline_fraction/fullPipeline_fraction_magAttributes.yml  || exit 1
 
   mag_attributes:
     needs: [full_pipeline]
