@@ -1,5 +1,5 @@
 tempdir: "tmp"
-input: "test/reads/small/reads_split.tsv"
+input: "test_data/fullPipeline/reads_split.tsv"
 output: "output"
 runid: 1
 steps:

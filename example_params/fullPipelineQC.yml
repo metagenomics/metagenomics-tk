@@ -1,0 +1,10 @@
+tempdir: "tmp"
+input: "test_data/fullPipeline/reads_split_s3.tsv"
+output: "output"
+runid: 1
+steps:
+  qc:
+    download:
+      s5cmdParams: " --no-sign-request --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "
+    interleaved: false
+    fastp:

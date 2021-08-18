@@ -16,3 +16,4 @@ test/reads
 .nextflow.pid
 aws*
 output
+.chglog/

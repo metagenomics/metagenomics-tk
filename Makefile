@@ -22,7 +22,7 @@ ifndef OPTIONS
 endif
 
 ifndef PARAMS_FILE
-	override PARAMS_FILE = ${CURRENT_DIR}/example_params/full_pipeline.yml
+	override PARAMS_FILE = ${CURRENT_DIR}/example_params/fullPipeline.yml
 endif
 
 small_reads_folder = ${DEST}/test/reads/small

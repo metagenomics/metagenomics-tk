@@ -37,7 +37,7 @@ process pCheckM {
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }
 
-    when params.steps.magAttributes.containsKey("checkm")
+    when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm")
 
     containerOptions " --user 1000:1000  --volume ${params.steps.magAttributes.checkm.database}:/.checkm "
 
@@ -65,7 +65,7 @@ process pGtdbtk {
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }
 
-    when params.steps.magAttributes.containsKey("gtdb")
+    when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("gtdb")
 
     containerOptions " --user 1000:1000  --volume ${params.steps.magAttributes.gtdb.database}:/refdata"
    
@@ -94,7 +94,7 @@ process pProkka {
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }
 
-    when params.steps.magAttributes.containsKey("prokka")
+    when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("prokka")
 
     input:
     tuple val(sample), file(bin), val(domain)

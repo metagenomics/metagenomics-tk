@@ -17,7 +17,7 @@ process pMegahit {
 
     errorStrategy 'ignore'
 
-    when params?.steps?.assembly.containsKey("megahit")
+    when params?.steps.containsKey("assembly") && params?.steps?.assembly.containsKey("megahit")
 
     container "vout/megahit:${params.megahit_tag}"
 
