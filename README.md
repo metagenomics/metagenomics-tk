@@ -10,7 +10,7 @@ All module configurations are the same as the full pipeline run with the sole di
 ### Run Full Pipeline
 
 ```
-./nextflow run main.nf -work-dir /shared/directory/test -profile PROFILE  -resume -entry wPipeline -params-file example_params/full_pipeline.yml
+./nextflow run main.nf -work-dir /shared/directory/test -profile PROFILE  -resume -entry wPipeline -params-file example_params/fullPipeline.yml
 ```
 
 where
@@ -19,6 +19,29 @@ where
 
 **Note!** Metabolomics part is currently excluded from full pipeline run.
 
+#### Input
+
+* [params-file](example_params/fullPipeline.yml)
+
+* [Tsv Table](test_data/fullPipeline/reads_split.tsv): Must include the columns `SAMPLE`, `READS1` and `READS2`. `SAMPLE` must contain unique dataset identifiers
+without whitespaces or special characters. `READS1` and `READS2` are paired reads and can be HTTPS URLs, S3 links or files.
+
+#### Output (Overview)
+
+In addition to the pipeline module outputs defined in the next sections (Dereplication, MagAttributes, etc), the following outputs are produced. 
+
+ * quality control (fastq) 
+
+ * assembly (contigs)
+
+ * binning (genomes)
+ 
+ * read mapping (bam files)
+
+#### Additional Configuration
+
+Nextflow usually stores downloaded files in the work directory. If enough scratch space is available on the worker nodes then this can be prevented by specifying
+s3 links ([example](test_data/fullPipeline/reads_split_s3.tsv)) in the input tsv file and `download` parameter in the input yaml ([example](example_params/fullPipelineQC.yml)).
 
 ### Run Fragment Recruitment
 
