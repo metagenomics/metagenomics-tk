@@ -77,7 +77,7 @@ process pMetabat {
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "metabat", filename) }
 
-    when params.steps.binning.containsKey("metabat")
+    when params.steps.containsKey("binning") && params.steps.binning.containsKey("metabat")
 
     input:
     tuple val(sample), path(contigs), path(bam)
