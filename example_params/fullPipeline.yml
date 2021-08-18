@@ -1,4 +1,5 @@
 tempdir: "tmp"
+summary: false
 input: "test_data/fullPipeline/reads_split.tsv"
 output: "output"
 runid: 1

@@ -1,4 +1,5 @@
 tempdir: "tmp"
+summary: false
 output: "/vol/spool/meta/out_pipeline"
 runid: 1
 steps:

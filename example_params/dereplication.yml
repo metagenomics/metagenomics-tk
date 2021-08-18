@@ -1,4 +1,5 @@
 output: "output"
+summary: false
 runid: 1
 steps:
   dereplication:

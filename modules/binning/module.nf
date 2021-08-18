@@ -182,14 +182,6 @@ workflow wBinning {
      contigs | join(input_reads | mix(input_reads), by: 0) | pBowtie
      pBowtie.out.mappedReads | pGetMappingQuality 
      
-     pGetMappingQuality.out.flagstat_passed | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-       [ "flagstat_passed.tsv", item[1].text  ]
-     }
-
-     pGetMappingQuality.out.flagstat_failed | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-       [ "flagstat_failed.tsv", item[1].text  ]
-     }
-
      contigs | join(pBowtie.out.mappedReads, by: [0]) | pMetabat | set { metabat }
 
      metabat.bins  | map({ it -> it[1] = aslist(it[1]); it  }) | set{ bins_list }
@@ -200,13 +192,24 @@ workflow wBinning {
 
      mapJoin(bins_stats, binMap, "file", "BIN_ID") | set {binMap}
 
-     metabat.bins_depth | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-       [ "metabat_bins_depth.tsv", item[1].text  ]
+     if(params.summary){
+       metabat.bins_depth | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
+         [ "metabat_bins_depth.tsv", item[1].text  ]
+       }
+
+       metabat.bins_stats | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
+         [ "metabat_bins_depth.tsv", item[1].text  ]
+       }
+
+       pGetMappingQuality.out.flagstat_passed | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
+         [ "flagstat_passed.tsv", item[1].text  ]
+       }
+
+       pGetMappingQuality.out.flagstat_failed | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
+         [ "flagstat_failed.tsv", item[1].text  ]
+       }
      }
 
-     metabat.bins_stats | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-       [ "metabat_bins_depth.tsv", item[1].text  ]
-     }
    emit:
      bins_stats = binMap
      bins = bins_list

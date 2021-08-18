@@ -80,19 +80,21 @@ workflow _wFastqSplit {
              samples.download | pFastpSplitDownload
 
              // Create summary files
-             pFastpSplit.out.fastpSummary | mix(pFastpSplitDownload.out.fastpSummary) \
-              | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
-              [ "fastp_summary.tsv", item[FASTP_FILE_IDX].text ]
-             }
+             if(params.summary){
+               pFastpSplit.out.fastpSummary | mix(pFastpSplitDownload.out.fastpSummary) \
+                | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
+                [ "fastp_summary.tsv", item[FASTP_FILE_IDX].text ]
+               }
 
-             pFastpSplit.out.fastpSummaryAfter | mix(pFastpSplitDownload.out.fastpSummaryAfter) \
-              | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
-              [ "fastp_summary_after.tsv", item[FASTP_FILE_IDX].text ]
-             }
+               pFastpSplit.out.fastpSummaryAfter | mix(pFastpSplitDownload.out.fastpSummaryAfter) \
+                | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
+                [ "fastp_summary_after.tsv", item[FASTP_FILE_IDX].text ]
+               }
 
-             pFastpSplit.out.fastpSummaryBefore | mix(pFastpSplitDownload.out.fastpSummaryBefore) \
-              | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
-              [ "fastp_summary_before.tsv", item[FASTP_FILE_IDX].text ]
+               pFastpSplit.out.fastpSummaryBefore | mix(pFastpSplitDownload.out.fastpSummaryBefore) \
+                | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
+                [ "fastp_summary_before.tsv", item[FASTP_FILE_IDX].text ]
+               }
              }
              pFastpSplit.out.readsProcessed | mix(pFastpSplitDownload.out.readsProcessed) | set {readsProcessed}
       emit:

@@ -1,4 +1,5 @@
 tempdir: "tmp"
+summary: true
 output: "output"
 runid: 1
 steps:
