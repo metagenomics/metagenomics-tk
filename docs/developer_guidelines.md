@@ -2,7 +2,7 @@
 
 ## Commit and Release Guidelines
 
-We are using [git-chglog](https://github.com/git-chglog/git-chglog) to automatically generate a changelog that is based on our commit messages.
+We are using [git-chglog](https://github.com/git-chglog/git-chglog) to automatically generate a changelog for the latest released based on our commit messages.
 Commit messages should follow the following format:
 
 ```
@@ -18,8 +18,10 @@ feat(assembly): megahit added
 `feat` can be replaced by one of the formats specified in the options sections of the [config](.chglog/config.yml) file.
 Scope can for example represent a module, a configuration or a specific document.
 
-CHANGELOG.md can be automatically updated by running `make changelog`.
-The changelog file *must* be updated after every release on the master branch.
+A new release should be made the following way: 
+1. Create a release on Github.
+2. Run `git fetch` on the master branch to get the latest tag.
+2. Run `make changelog` and paste the output on the Github release section.
 
 ## Testing
 

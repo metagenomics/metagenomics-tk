@@ -50,7 +50,8 @@ clean : ## Removes all files that are produced during runs are not necessary
 	- rm dag.dot*
 
 changelog: ## Creates a new CHANGELOG.md file
-	- docker run -v "$PWD":/workdir quay.io/git-chglog/git-chglog:latest  > CHANGELOG.md
+	LATEST="$$(git describe --tags $$(git rev-list --tags --max-count=1))"; \
+	docker run -v "$${PWD}":/workdir quay.io/git-chglog/git-chglog:latest "$${LATEST}"
 
 nextflow: ## Downloads Nextflow binary
 	- wget -qO- https://get.nextflow.io | bash
