@@ -81,8 +81,10 @@ workflow _wAssembly {
        readsList
      main:
        readsList | pMegahit
-       pMegahit.out.contigs_stats | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
-         [ "contigs_stats.tsv", item[1].text ]
+       if(params.summary){
+         pMegahit.out.contigs_stats | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
+           [ "contigs_stats.tsv", item[1].text ]
+         }
        }
 
     emit:
