@@ -19,9 +19,10 @@ feat(assembly): megahit added
 Scope can for example represent a module, a configuration or a specific document.
 
 A new release should be made the following way: 
-1. Create a release on Github.
-2. Run `git fetch` on the master branch to get the latest tag.
-2. Run `make changelog` and paste the output on the Github release section.
+1. Update pipeline version in the nextflow manifest `nextflow.config`.
+2. Create a release on Github.
+3. Run `git fetch` on the master branch to get the latest tag.
+4. Run `make changelog` and paste the output on the Github release section.
 
 ## Testing
 
