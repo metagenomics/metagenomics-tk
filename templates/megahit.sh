@@ -8,4 +8,4 @@ cat megahit_out/final.contigs.fa \
        	| pigz --best --processes !{task.cpus}  > !{sample}_contigs.fa.gz
 
 # get basic contig stats 
-paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") <(seqkit stat -Ta  !{sample}_final.contigs.fa.gz) > !{sample}_contigs_stats.tsv
+paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") <(seqkit stat -Ta  !{sample}_contigs.fa.gz) > !{sample}_contigs_stats.tsv
