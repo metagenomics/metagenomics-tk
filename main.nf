@@ -1,5 +1,7 @@
 nextflow.enable.dsl=2
 
+//import Helper
+
 include { wSaveSettingsFile } from './modules/config/module'
 include { wQualityControlFile } from './modules/qualityControl/module'
 include { wAssemblyFile; wAssemblyList } from './modules/assembly/module'
@@ -10,6 +12,7 @@ include { wReadMappingBwa } from './modules/readMapping/bwa/module'
 include { wAnalyseMetabolites } from './modules/metabolomics/module'
 include { wUnmappedReadsList; wUnmappedReadsFile } from './modules/sampleAnalysis/module'
 include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './modules/fragmentRecruitment/frhit/module'
+//include { wMashScreenFile } from './modules/fragmentRecruitment/mashScreen/module'
 
 
 def mapJoin(channel_a, channel_b, key_a, key_b){
@@ -46,6 +49,79 @@ workflow wFragmentRecruitment {
      wFragmentRecruitmentFile(Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.samples), Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
 }
 
+//workflow wMashScreen {
+//     wMashScreenFile(Channel.fromPath(params?.steps?.fragmentRecruitment?.mashScreen?.samples))
+//}
+
+def collectFiles(dir, sra){
+   def fileList = [];
+   dir.eachFileRecurse { item ->
+        fileList.add([sra, item]);
+  }
+  return fileList;
+}
+
+workflow wAggregatePipeline {
+    def baseDir = params.baseDir
+    def runID = params.runid
+
+    Channel.from(file(baseDir).list()) | filter({ path -> !(path ==~ /.*summary$/)}) \
+     | filter({ path -> !(path ==~ /.*AGGREGATED$/)}) | set { sraDatasets }
+    sraDatasets | map { sra ->  [sra, baseDir + "/" + sra + "/" + runID + "/" ]} \
+     | set {sraIDs}
+
+    sraIDs | flatMap { sraID -> collectFiles(file(sraID[1]), sraID[0])} | set {sraFiles}
+
+    ///meta_out/0/2/0/test1/1/qc/0.1.0/fastp/test1_interleaved.qc.fq.gz
+    sraFiles | filter({ it -> (it[1] ==~ /.*\/qc\/.*\/fastp\/.*interleaved.qc.fq.gz$/)}) \
+     | map{ sra,f -> [sra, baseDir.startsWith("s3://")? "s3:/" + f: f] } | set{samples}
+
+    samples | map { it -> "${it[0]}\t${it[1]}" } \
+      | collectFile(seed: "SAMPLE\tREADS", name: 'processed_reads.txt', newLine: true) | set { samplesFile }
+
+    sraFiles | filter({ it -> (it[1] ==~ /.*\/binning\/.*\/metabat\/.*.fa$/)}) \
+     | map{ sra,f -> [SAMPLE:sra, PATH: baseDir.startsWith("s3://")? "s3:/" + f: f, BIN_ID:file(f).name] } | set{bins}
+
+    // TODO: versionining must be defined
+    sraFiles | filter({ sra, path -> (path ==~ /.*\/magAttributes\/.*\/checkm\/.*.tsv$/)}) \
+     | splitCsv(header: ["PATH", "SAMPLE", "BIN_ID", "Marker lineage", "# genomes", "# markers", "# marker sets", "0", "1", "2", "3", "4", "5+", "COMPLETENESS", "CONTAMINATION", "HETEROGENEITY"], sep: '\t') \
+  //   | splitCsv(header: ["SAMPLE", "BIN_ID", "Marker lineage", "# genomes", "# markers", "# marker sets", "0", "1", "2", "3", "4", "5+", "COMPLETENESS", "CONTAMINATION", "HETEROGENEITY"], sep: '\t') \
+     | map { sra, bins -> bins} \
+     | set { checkm }
+
+    sraFiles | filter({ sra, path -> (path ==~ /.*\/binning\/0.1.0\/metabat\/.*_bins_stats.tsv$/)}) \
+     | splitCsv(header: true, sep: '\t') | map { sra, bins -> bins } | set{binStats}
+
+    // TODO: file vs. BIN_ID
+    mapJoin(binStats, checkm, "BIN_ID", "BIN_ID") | set {checkmBinStats}
+    mapJoin(checkmBinStats, bins, "file", "BIN_ID") | set {binsStatsComplete}
+
+    _wAggregate(samplesFile, binsStatsComplete)
+}
+
+workflow _wAggregate {
+   take:
+     samples
+     binsStats
+   main:
+     representativeGenomesTempDir = params.tempdir + "/representativeGenomes"
+     file(representativeGenomesTempDir).mkdirs()
+
+     wDereplicateList(binsStats)
+     representativesList = wDereplicateList.out
+
+     REPRESENTATIVES_PATH_IDX = 0
+     representativesList \
+       | splitCsv(sep: '\t') 
+       | map { it -> file(it[REPRESENTATIVES_PATH_IDX]) } \
+       | collectFile(tempDir: representativeGenomesTempDir){ item -> [ "representatives.fasta", item.text ] } \
+       | set { representativesFasta }  
+
+    // representativesList | first() | view()
+     wReadMappingBwa(Channel.from('1'), representativesFasta, samples, representativesList)
+
+     binsStats | wAnalyseMetabolites
+}
 
 /*
 * 
@@ -61,15 +137,12 @@ workflow wPipeline {
    
     wSaveSettingsFile(Channel.fromPath(params.input))
 
-    representativeGenomesTempDir = params.tempdir + "/representativeGenomes"
-    file(representativeGenomesTempDir).mkdirs()
-
     wQualityControlFile(Channel.fromPath(params.input))
     wAssemblyList(wQualityControlFile.out.processed_reads)
 
     wQualityControlFile.out.processed_reads \
         | map { it -> "${it[0]}\t${it[1]}" } \
-        | collectFile(seed: "SAMPLE\tREADS", name: 'test.txt', newLine: true) \
+        | collectFile(seed: "SAMPLE\tREADS", name: 'processed_reads.txt', newLine: true) \
         | set { samples }
 
     wBinning(wAssemblyList.out.contigs, wQualityControlFile.out.processed_reads)
@@ -82,16 +155,5 @@ workflow wPipeline {
     wMagAttributesList(wBinning.out.bins)
     mapJoin(wMagAttributesList.out.checkm, wBinning.out.bins_stats, "BIN_ID", "file") | set { binsStats  }
 
-    wDereplicateList(binsStats)
-    representativesList = wDereplicateList.out
-
-    REPRESENTATIVES_PATH_IDX = 0
-    representativesList | splitCsv(sep: '\t') \
-       |  map { it -> file(it[REPRESENTATIVES_PATH_IDX]) } \
-       | collectFile(tempDir: representativeGenomesTempDir){ item -> [ "representatives.fasta", item.text ] } \
-       | set { representativesFasta }  
-
-    wReadMappingBwa(Channel.from('1'), representativesFasta, samples, representativesList)
-
-    binsStats | wAnalyseMetabolites
+    _wAggregate(samples, binsStats)
 }

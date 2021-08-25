@@ -56,7 +56,7 @@ process pBwaCount {
     label 'tiny'
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
     input:
-      tuple val(ID), path(sample), path(mapping)
+      tuple val(ID), file(sample), file(mapping)
     output:
       path "${sample}.count"
     shell:
@@ -68,7 +68,7 @@ process pCovermCount {
     label 'small'
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
     input:
-      tuple val(ID), val(sample), path(mapping), path(index), path(list_of_representatives)
+      tuple val(ID), val(sample), file(mapping), file(index), file(list_of_representatives)
     output:
       path("${ID}_${sample}_out", type: "dir")
     shell:
@@ -132,19 +132,18 @@ workflow wBwaMultiple {
 }
 
 workflow wReadMappingBwa {
-   take: 
+   take:
      id
      representatives
      samples
-     list_of_representatives
+     representativesList
    main:
      samples | splitCsv(sep: '\t', header: true) | set {samples_split}
      id | combine(representatives) | pBwaIndex | combine(samples_split) \
       | combine(representatives) \
       | map{ it -> [it[2].READS, it[2].SAMPLE, it[0], it[3], it[1]] } \
       | set {index}
-     pMapBwa(index) | combine(list_of_representatives) | pCovermCount
-
+     pMapBwa(index) | combine(representativesList | map {it -> file(it)} | toList() | map { it -> [it]}) | view() | pCovermCount
 }
 
 workflow {

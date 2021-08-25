@@ -236,28 +236,31 @@ def collectFiles(dir, sra){
 *
 **/
 workflow wDereplicatePath {
-    def baseDir = params.baseDir
-    def runID = params.runid
+    main:
+      def baseDir = params.baseDir
+      def runID = params.runid
 
-    Channel.from(file(baseDir).list()) | filter({ path -> !(path ==~ /.*summary$/)})  | set { sraDatasets } 
-    sraDatasets | map { sra ->  [sra, baseDir + "/" + sra + "/" + runID + "/" ]} \
+      Channel.from(file(baseDir).list()) | filter({ path -> !(path ==~ /.*summary$/)})  | set { sraDatasets } 
+      sraDatasets | map { sra ->  [sra, baseDir + "/" + sra + "/" + runID + "/" ]} \
        | set {sraIDs}
 
-    sraIDs | flatMap { sraID -> collectFiles(file(sraID[1]), sraID[0])} | set {sraFiles}
-    sraFiles | filter({ it -> (it[1] ==~ /.*\/binning\/0.1.0\/metabat\/.*.fa$/)}) \
-        | map{ sra,f -> [SAMPLE:sra, PATH: baseDir.startsWith("s3://")? "s3:/" + f: f, BIN_ID:file(f).name] } | set{bins}
+      sraIDs | flatMap { sraID -> collectFiles(file(sraID[1]), sraID[0])} | set {sraFiles}
+      sraFiles | filter({ it -> (it[1] ==~ /.*\/binning\/0.1.0\/metabat\/.*.fa$/)}) \
+       | map{ sra,f -> [SAMPLE:sra, PATH: baseDir.startsWith("s3://")? "s3:/" + f: f, BIN_ID:file(f).name] } | set{bins}
 
-     sraFiles | filter({ sra, path -> (path ==~ /.*\/magAttributes\/0.2.0\/checkm\/.*.tsv$/)}) \
+      sraFiles | filter({ sra, path -> (path ==~ /.*\/magAttributes\/0.2.0\/checkm\/.*.tsv$/)}) \
        | splitCsv(header: ["PATH", "SAMPLE", "BIN_ID", "Marker lineage", "# genomes", "# markers", "# marker sets", "0", "1", "2", "3", "4", "5+", "COMPLETENESS", "CONTAMINATION", "HETEROGENEITY"], sep: '\t') \
        | map { sra, bins -> bins}  \
        | set { checkm }
 
-     sraFiles | filter({ sra, path -> (path ==~ /.*\/binning\/0.1.0\/metabat\/.*_bins_stats.tsv$/)}) \
-        | splitCsv(header: true, sep: '\t') | map { sra, bins -> bins} | set{binStats}
+      sraFiles | filter({ sra, path -> (path ==~ /.*\/binning\/0.1.0\/metabat\/.*_bins_stats.tsv$/)}) \
+       | splitCsv(header: true, sep: '\t') | map { sra, bins -> bins} | set{binStats}
 
-     mapJoin(binStats, checkm, "BIN_ID", "BIN_ID") | set {checkmBinStats} 
-     mapJoin(checkmBinStats, bins, "file", "BIN_ID") | map( it -> "${it['BIN_ID']}\t${it['COMPLETENESS']}\t${it['COVERAGE']}\t${it['CONTAMINATION']}\t${it['HETEROGENEITY']}\t${it['PATH']}\t${it['N50']}" ) \
-         | collectFile(seed: "BIN_ID\tCOMPLETENESS\tCOVERAGE\tCONTAMINATION\tHETEROGENEITY\tPATH\tN50", newLine: true, keepHeader: false) | view() | wDereplicateFile 
+      mapJoin(binStats, checkm, "BIN_ID", "BIN_ID") | set {checkmBinStats} 
+      mapJoin(checkmBinStats, bins, "file", "BIN_ID") | map( it -> "${it['BIN_ID']}\t${it['COMPLETENESS']}\t${it['COVERAGE']}\t${it['CONTAMINATION']}\t${it['HETEROGENEITY']}\t${it['PATH']}\t${it['N50']}" ) \
+       | collectFile(seed: "BIN_ID\tCOMPLETENESS\tCOVERAGE\tCONTAMINATION\tHETEROGENEITY\tPATH\tN50", newLine: true, keepHeader: false) | wDereplicateFile 
+    emit:
+      _wDereplicateFile.out
 }
 
 
@@ -276,6 +279,8 @@ workflow wDereplicateFile {
      genomesTableFile    
    main:
      genomesTableFile | _wDereplicate
+   emit:
+     _wDereplicate.out
 }
 
 
@@ -365,8 +370,8 @@ workflow _wDereplicate {
      pGetCluster.out.final_clusters | mix(pFinalize.out) | splitCsv(sep: '\t', header: true) \
        | filter({ it.REPRESENTATIVE.toFloat() == IS_REPRESENTATIVE }) | map { it -> it['GENOME'] } \
        | join(genomesTable | map{ bin -> [bin.BIN_ID, bin.PATH] }) | map { bin -> bin[PATH_IDX] } \
-       | collectFile(newLine: true) | set{representatives}
-
+       | set{representatives}
+//| collectFile(newLine: true) | view() 
   emit:
      representatives
 }
