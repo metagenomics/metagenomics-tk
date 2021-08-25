@@ -186,7 +186,7 @@ workflow wBinning {
 
      metabat.bins  | map({ it -> it[1] = aslist(it[1]); it  }) | set{ bins_list }
 
-     metabat.bins | map { it -> flattenBins(it) } | flatMap {it -> setID(it)} | set {binMap}
+     bins_list | map { it -> flattenBins(it) } | flatMap {it -> setID(it)} | set {binMap}
 
      metabat.bins_stats | map { it -> file(it[1]) } | splitCsv(sep: '\t', header: true) | set { bins_stats }
 
