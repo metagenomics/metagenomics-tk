@@ -1,0 +1,21 @@
+tempdir: "tmp"
+summary: false
+output: "output"
+baseDir: "s3://meta_out/0/2/0"
+runid: 1
+steps:
+  dereplication:
+    pasolli:
+      representativeAniCutoff: 0.95
+      minimumCompleteness: 0
+      maximumContamination: 5000
+      pyaniParameters: '-m ANIb'
+      ANIBuffer: 20
+      mashBuffer: 2000
+      cutoff: 0.05
+      method: 'ANI'
+  readMapping:
+    #  metabolomics:
+    #    smetana:
+    #     - detailed
+    #      - global

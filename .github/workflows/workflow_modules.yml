@@ -30,6 +30,9 @@ jobs:
       - name: Test Full Pipeline run that ends with magAttributes
         run: |
           bash ./scripts/test_fullPipeline.sh "  --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " example_params/fullPipeline_fraction/fullPipeline_fraction_magAttributes.yml  || exit 1
+      - name: Test Aggregation Pipeline run based on per samples results.
+        run: |
+          bash ./scripts/test_fullPipelineAggregate.sh " -c  test_data/assets/aws.config " || exit 1
 
   mag_attributes:
     needs: [full_pipeline]
