@@ -1,9 +1,11 @@
 nextflow.enable.dsl=2
 
-MODULE="magAttributes"
-VERSION="1.0.0"
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+    return SAMPLE + '/' + RUNID + '/' + params.modules.magAttributes.name + '/' + 
+         params.modules.magAttributes.version.major + "." +  
+         params.modules.magAttributes.version.minor + "." +
+         params.modules.magAttributes.version.patch +
+         '/' + TOOL + '/' + filename
 }
 
 process pCmseq {

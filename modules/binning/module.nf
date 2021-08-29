@@ -1,12 +1,11 @@
 nextflow.enable.dsl=2
-params.maxbin = false
-params.pBowtieMode = "mapping_reads"
 
-
-MODULE="binning"
-VERSION="0.1.0"
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+    return SAMPLE + '/' + RUNID + '/' + params.modules.binning.name + '/' + 
+          params.modules.binning.version.major + "." + 
+          params.modules.binning.version.minor + "." + 
+          params.modules.binning.version.patch +
+          '/' + TOOL + '/' + filename
 }
 
 

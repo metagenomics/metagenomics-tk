@@ -7,10 +7,12 @@ params.number_samples = 20
 params.all_representatives = "/raid/CAMI/CAMI_MOUSEGUT/readmapping/workflow_all_reads/representatives.tsv" 
 params.shuffle = 400
 
-MODULE="readMapping"
-VERSION="0.1.0"
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+    return SAMPLE + '/' + RUNID + '/' + params.modules.readMapping.name + '/' + 
+         params.modules.readMapping.version.major + "." + 
+         params.modules.readMapping.version.minor + "." + 
+         params.modules.readMapping.version.patch +
+         '/' + TOOL + '/' + filename
 }
 
 process pBwaIndex {
@@ -143,7 +145,7 @@ workflow wReadMappingBwa {
       | combine(representatives) \
       | map{ it -> [it[2].READS, it[2].SAMPLE, it[0], it[3], it[1]] } \
       | set {index}
-     pMapBwa(index) | combine(representativesList | map {it -> file(it)} | toList() | map { it -> [it]}) | view() | pCovermCount
+     pMapBwa(index) | combine(representativesList | map {it -> file(it)} | toList() | map { it -> [it]}) | pCovermCount
 }
 
 workflow {

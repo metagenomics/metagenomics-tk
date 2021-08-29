@@ -1,9 +1,12 @@
 nextflow.enable.dsl=2
 
-MODULE="assembly"
-VERSION="1.0.0"
+
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+    return SAMPLE + '/' + RUNID + '/' + params.modules.assembly.name + '/' +
+          params.modules.assembly.version.major + "." +
+          params.modules.assembly.version.minor + "." +
+          params.modules.assembly.version.patch +
+          '/' + TOOL + '/' + filename
 }
 
 

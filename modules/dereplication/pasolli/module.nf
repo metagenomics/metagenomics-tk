@@ -1,11 +1,13 @@
 nextflow.enable.dsl=2
 
-MODULE="dereplication"
-VERSION="0.1.0"
-def getOutput(RUNID, TOOL, filename){
-    return "AGGREGATED" + '/' +  RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
-}
 
+def getOutput(RUNID, TOOL, filename){
+    return "AGGREGATED" + '/' +  RUNID + '/' + params.modules.dereplication.name + '/' + 
+         params.modules.dereplication.version.major + "." +  
+         params.modules.dereplication.version.minor + "." +  
+         params.modules.dereplication.version.patch +  
+         '/' + TOOL + '/' + filename
+}
 
 
 process pMashSketchGenome {
@@ -229,41 +231,6 @@ def collectFiles(dir, sra){
   }
   return fileList;
 }
-
-/**
-*
-* This entry point is highly experimental and should be used for retrieving input data for the dereplication module.
-*
-**/
-workflow wDereplicatePath {
-    main:
-      def baseDir = params.baseDir
-      def runID = params.runid
-
-      Channel.from(file(baseDir).list()) | filter({ path -> !(path ==~ /.*summary$/)})  | set { sraDatasets } 
-      sraDatasets | map { sra ->  [sra, baseDir + "/" + sra + "/" + runID + "/" ]} \
-       | set {sraIDs}
-
-      sraIDs | flatMap { sraID -> collectFiles(file(sraID[1]), sraID[0])} | set {sraFiles}
-      sraFiles | filter({ it -> (it[1] ==~ /.*\/binning\/0.1.0\/metabat\/.*.fa$/)}) \
-       | map{ sra,f -> [SAMPLE:sra, PATH: baseDir.startsWith("s3://")? "s3:/" + f: f, BIN_ID:file(f).name] } | set{bins}
-
-      sraFiles | filter({ sra, path -> (path ==~ /.*\/magAttributes\/0.2.0\/checkm\/.*.tsv$/)}) \
-       | splitCsv(header: ["PATH", "SAMPLE", "BIN_ID", "Marker lineage", "# genomes", "# markers", "# marker sets", "0", "1", "2", "3", "4", "5+", "COMPLETENESS", "CONTAMINATION", "HETEROGENEITY"], sep: '\t') \
-       | map { sra, bins -> bins}  \
-       | set { checkm }
-
-      sraFiles | filter({ sra, path -> (path ==~ /.*\/binning\/0.1.0\/metabat\/.*_bins_stats.tsv$/)}) \
-       | splitCsv(header: true, sep: '\t') | map { sra, bins -> bins} | set{binStats}
-
-      mapJoin(binStats, checkm, "BIN_ID", "BIN_ID") | set {checkmBinStats} 
-      mapJoin(checkmBinStats, bins, "file", "BIN_ID") | map( it -> "${it['BIN_ID']}\t${it['COMPLETENESS']}\t${it['COVERAGE']}\t${it['CONTAMINATION']}\t${it['HETEROGENEITY']}\t${it['PATH']}\t${it['N50']}" ) \
-       | collectFile(seed: "BIN_ID\tCOMPLETENESS\tCOVERAGE\tCONTAMINATION\tHETEROGENEITY\tPATH\tN50", newLine: true, keepHeader: false) | wDereplicateFile 
-    emit:
-      _wDereplicateFile.out
-}
-
-
 
 /**
 *

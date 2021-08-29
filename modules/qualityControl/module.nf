@@ -1,9 +1,11 @@
 nextflow.enable.dsl=2
 
-MODULE="qc"
-VERSION="0.1.0"
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+    return SAMPLE + '/' + RUNID + '/' + params.modules.qc.name + '/' + 
+           params.modules.qc.version.major + "." +
+           params.modules.qc.version.minor + "." +
+           params.modules.qc.version.patch + 
+           '/' + TOOL + '/' + filename
 }
 
 process pFastpSplit {
