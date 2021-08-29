@@ -8,7 +8,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
          params.modules.config.version.major + "." + 
          params.modules.config.version.minor + "." + 
          params.modules.config.version.patch +
-         '/' + VERSION + '/' + TOOL + '/' + filename
+         '/' + TOOL + '/' + filename
 }
 
 
