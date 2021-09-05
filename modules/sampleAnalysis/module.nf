@@ -8,11 +8,12 @@ def flattenBins(binning){
   return chunkList;
 }
 
-
-MODULE="sampleAnalysis"
-VERSION="0.1.0"
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+    return SAMPLE + '/' + RUNID + '/' + params.modules.sampleAnalysis.name + '/' + 
+          params.modules.sampleAnalysis.version.major + "." + 
+          params.modules.sampleAnalysis.version.minor + "." + 
+          params.modules.sampleAnalysis.version.patch + 
+          '/' + TOOL + '/' + filename
 }
 
 process pBowtie {

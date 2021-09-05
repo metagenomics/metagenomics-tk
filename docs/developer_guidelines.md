@@ -40,7 +40,8 @@ bash scripts/test_magAttributes.sh  --steps.magAttributes.input=test/bins/small/
 ## Modules
 
 Functionality is structured in modules (assembly, binning, dereplication, .etc). Each module can have multiple workflows.
-Every module follows the output definition specified in the [output specification](specification.md)  document.
+Every module follows the output definition specified in the [output specification](specification.md)  document. The name and the version of the
+module is specified in the `modules` section of the `nextflow.config` file.
 
 ### Workflows
 

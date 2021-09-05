@@ -1,9 +1,11 @@
 nextflow.enable.dsl=2
 
-MODULE="metabolomics"
-VERSION="0.1.0"
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + 'RUNID' + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+    return SAMPLE + '/' + 'RUNID' + '/' + params.modules.metabolomics.name + '/' +
+          params.modules.metabolomics.version.major + "." + 
+          params.modules.metabolomics.version.minor + "." +
+          params.modules.metabolomics.version.patch + 
+          '/' + TOOL + '/' + filename
 }
 
 process pCarveMe {

@@ -3,10 +3,12 @@ import groovy.json.*
 import org.yaml.snakeyaml.Yaml
 
 
-MODULE="config"
-VERSION="0.1.0"
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+    return SAMPLE + '/' + RUNID + '/' + params.modules.config.name + '/' +
+         params.modules.config.version.major + "." + 
+         params.modules.config.version.minor + "." + 
+         params.modules.config.version.patch +
+         '/' + TOOL + '/' + filename
 }
 
 
