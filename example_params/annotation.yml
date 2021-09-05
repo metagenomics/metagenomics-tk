@@ -1,0 +1,19 @@
+output: "output"
+summary: true
+runid: 1
+tempdir: "tmp"
+accesskey: 'xxx'
+secretkey: 'xxx'
+steps:
+   annotation:
+      input: "test_data/annotation/input.tsv"
+      diamond:
+         diamond_tag: "2.0.11--hdcc8f71_0"
+         sensitivity: '--fast'
+         mode: 'blastx'
+         cores: '--threads 28'
+         outfmt: '--outfmt 100'
+         targetseq: '--max-target-seqs 100'
+         evalue: '--evalue 0.1'
+         database: 's3://bene-test/databases/kegg-2021-01.dmnd'
+         s5cmd: '--retry-count 30 --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'

@@ -10,6 +10,8 @@ include { wReadMappingBwa } from './modules/readMapping/bwa/module'
 include { wAnalyseMetabolites } from './modules/metabolomics/module'
 include { wUnmappedReadsList; wUnmappedReadsFile } from './modules/sampleAnalysis/module'
 include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './modules/fragmentRecruitment/frhit/module'
+include { wAnnotateS3File } from './modules/annotation/module'
+
 
 
 def mapJoin(channel_a, channel_b, key_a, key_b){
@@ -44,6 +46,10 @@ workflow wUnmappedReads {
 
 workflow wFragmentRecruitment {
      wFragmentRecruitmentFile(Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.samples), Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
+}
+
+workflow wAnnotate {
+   wAnnotateS3File(Channel.from(file(params?.steps?.annotation?.input)))
 }
 
 
