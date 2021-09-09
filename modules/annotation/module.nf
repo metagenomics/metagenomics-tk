@@ -8,98 +8,83 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 }
 
 
-/**
-process pBlast {
-
-   container "ncbi/blast:${params.blast_tag}"
-
-   tag "$sample"
-
-   label 'medium'
-
-   publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "blast", filename) }
-
-   input:
-   //Überlegen, wie man sämtliche S3 Inputs herunterläd und danach parallelisiert auf die Blast Prozesse verteilt.
-  // Vieleicht doch zuerst eine Art staging Prozess?
-
-} **/
-
-
 process pDiamond {
-
-   container "quay.io/biocontainers/diamond:${params.diamond_tag}"
-
+   // Difficult part. Without Docker, tail -1 should be used. With Docker the script changes and head -1 in addition to sed musst be used to remove an omnious \ bevore $PATH.
+   //beforeScript "eval \$(grep PATH .command.run | head -1 | sed 's/\\//g');eval \$(grep AWS_ACCESS .command.run | head -1);eval \$(grep AWS_SECRET .command.run | head -1);s5cmd ${params.steps.annotation.diamond.s5cmd} cp -u -s ${params.steps.annotation.diamond.database} ${params.databases}"
+   
+   // For some reason ${params.diamond_tag} does not get the value from the nextflow.config, despite it working with params.databases in the beforeScript.
+   container "${params.diamond_tag}"
+ 
    tag "$sample"
 
    label 'large'
 
    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "diamond", filename) }
 
-   beforeScript 'echo Test' 
-
+   // Input not nice, data should be collected beforehand
    input:
-   tuple val(sample), val(project)
+   tuple val(sample), file(BinFile)
    output:
-   tuple val("${sample}"), path("*.daa"), emit: diamond_results
+   tuple val("${sample}"), path("diamond.${sample}.out"), emit: diamond_results
 
    shell:
    '''
-   #s5cmd !{params.steps.annotation.diamond.s5cmd} cp -u !{params.steps.annotation.diamond.database} databases
-   mkdir input_diamond
-   #s5cmd !{params.steps.annotation.diamond.s5cmd} cp --flatten !{project}/*/binning/*/metabat/*.fa ./input_diamond
-   
-   echo "Ich war hier! !{workflow.projectDir}" > out.daa
-   #diamond !{params.steps.annotation.diamond.mode} !{params.steps.annotation.diamond.cores} !{params.steps.annotation.diamond.sensitivity} !{params.steps.annotation.diamond.outfmt} --out diamond.!{sample}.daa --db databases/kegg-2021-01.dmnd --query input_diamond/*.fa !{params.steps.annotation.diamond.targetseq} !{params.steps.annotation.diamond.evalue
+   s5cmd !{params.steps.annotation.s5cmd} cp -u -s !{params.steps.annotation.diamond.database} !{params.databases}
+   diamond !{params.steps.annotation.diamond.mode} !{params.steps.annotation.diamond.cores} !{params.steps.annotation.diamond.sensitivity} !{params.steps.annotation.diamond.outfmt} --out diamond.!{sample}.out --db !{params.databases}kegg-2021-01.dmnd --query !{BinFile} !{params.steps.annotation.diamond.targetseq} !{params.steps.annotation.diamond.evalue} 
    '''
 }
 
-process pTest {
-   // Difficult part. Without Docker, tail -1 should be used. With Docker the script changes and head -1 in addition to sed musst be used to remove an omnious \ bevore $PATH.
-   beforeScript "eval \$(grep PATH .command.run | head -1 | sed 's/\\//g');eval \$(grep AWS_ACCESS .command.run | head -1);eval \$(grep AWS_SECRET .command.run | head -1);s5cmd ${params.steps.annotation.diamond.s5cmd} cp -u -s ${params.steps.annotation.diamond.database} ${params.databases}"
-   
-   // For some reason ${params.diamond_tag} does not get the value from the nextflow.config, despite it working with params.databases in the beforeScript.
-   container "92bdeebcf94f"
- 
+
+process pKEGGFromDiamond {
+
    tag "$sample"
 
-   label 'large'
+   label 'small'
 
-   publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "blast", filename) }
+   publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromDiamond", filename) }
 
    input:
-   tuple val(sample), val(project)
+   tuple val(sample), file(diamond_result)
+
    output:
-   tuple val("${sample}"), path("*.out"), emit: test_results
+   tuple val("${sample}"), path("!{sample}_kegg.tsv"), emit: kegg_diamond_results
 
    shell:
    '''
-   diamond help > help.out
+   s5cmd !{params.steps.annotation.s5cmd} cp -u -s !{params.steps.annotation.kegg.database} !{params.databases}kegg
+   echo -e "GENE\tKO\tPATHWAY" >> !{sample}_kegg.tsv
+   while read line
+   do 
+    GENE=$(echo -e $line | cut -d' ' -f2)
+    KO=$(grep $GENE !{params.databases}kegg/genes_ko.list | tr '\n' ',' | tr '\t' ',')
+    KPATH=$(grep $GENE !{params.databases}kegg/genes_pathway.list | tr '\n' ',' | tr '\t' ',')
+    echo -e $GENE"\t"$KO"\t"$KPATH >> !{sample}_kegg.tsv 
+   done<!{diamond_result}
    '''
 }
 
 
 /**
 *
-* This entry point uses a file to search all existing s3 projects with different similarity search tools listed therein.
+* This entry point uses a file to grab all .fa files in the referenced directoryis for annotation.
 * The .tsv file has to have: DATASET PATH entries. 
 *
 **/
-workflow wAnnotateS3File {
+workflow wAnnotateLocalFile {
 
    take:
       projectTableFile
    main:
-      projectTableFile | _wAnnotation
+      projectTableFile | splitCsv(sep: '\t', header: true) | map{ it -> [it.DATASET, file(it.PATH)] } | collectFile() | map{ it -> [it.name, it]} | view () | _wAnnotation
 }
 
 
 workflow _wAnnotation {
 
    take:
-      projectTableFile
+      bins
    main:
-      projectTableFile | splitCsv(sep: '\t', header: true) | view() | pTest | set { projectTable }
+      bins | pDiamond | pKEGGFromDiamond |set { projectTable }
    emit:
       projectTable
 

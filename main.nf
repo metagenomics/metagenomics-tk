@@ -10,7 +10,7 @@ include { wReadMappingBwa } from './modules/readMapping/bwa/module'
 include { wAnalyseMetabolites } from './modules/metabolomics/module'
 include { wUnmappedReadsList; wUnmappedReadsFile } from './modules/sampleAnalysis/module'
 include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './modules/fragmentRecruitment/frhit/module'
-include { wAnnotateS3File } from './modules/annotation/module'
+include { wAnnotateLocalFile } from './modules/annotation/module'
 
 
 
@@ -49,7 +49,7 @@ workflow wFragmentRecruitment {
 }
 
 workflow wAnnotate {
-   wAnnotateS3File(Channel.from(file(params?.steps?.annotation?.input)))
+   wAnnotateLocalFile(Channel.from(file(params?.steps?.annotation?.input)))
 }
 
 
