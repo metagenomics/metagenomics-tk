@@ -13,7 +13,7 @@ process pDiamond {
    //beforeScript "eval \$(grep PATH .command.run | head -1 | sed 's/\\//g');eval \$(grep AWS_ACCESS .command.run | head -1);eval \$(grep AWS_SECRET .command.run | head -1);s5cmd ${params.steps.annotation.diamond.s5cmd} cp -u -s ${params.steps.annotation.diamond.database} ${params.databases}"
    
    // For some reason ${params.diamond_tag} does not get the value from the nextflow.config, despite it working with params.databases in the beforeScript.
-   container "${params.diamond_tag}"
+   container "quay.io/biocontainers/diamond:${params.diamond_tag}"
  
    tag "$sample"
 
@@ -41,25 +41,20 @@ process pKEGGFromDiamond {
 
    label 'small'
 
+   container "pbelmann/python-env:${params.python_env_tag}"
+
    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromDiamond", filename) }
 
    input:
    tuple val(sample), file(diamond_result)
 
    output:
-   tuple val("${sample}"), path("!{sample}_kegg.tsv"), emit: kegg_diamond_results
+   tuple val("${sample}"), path("${sample}_kegg.tsv"), emit: kegg_diamond_results
 
    shell:
    '''
    s5cmd !{params.steps.annotation.s5cmd} cp -u -s !{params.steps.annotation.kegg.database} !{params.databases}kegg
-   echo -e "GENE\tKO\tPATHWAY" >> !{sample}_kegg.tsv
-   while read line
-   do 
-    GENE=$(echo -e $line | cut -d' ' -f2)
-    KO=$(grep $GENE !{params.databases}kegg/genes_ko.list | tr '\n' ',' | tr '\t' ',')
-    KPATH=$(grep $GENE !{params.databases}kegg/genes_pathway.list | tr '\n' ',' | tr '\t' ',')
-    echo -e $GENE"\t"$KO"\t"$KPATH >> !{sample}_kegg.tsv 
-   done<!{diamond_result}
+   diamond2kegg.py !{diamond_result} !{params.databases}kegg !{sample}_kegg.tsv 
    '''
 }
 
