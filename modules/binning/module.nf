@@ -46,8 +46,6 @@ process pBowtie {
 
     errorStrategy 'retry'
 
-    cpus 28
-
     input:
     tuple val(sample), path(contigs), path(fastqs, stageAs: 'fastq.fq.gz')
 
@@ -68,11 +66,11 @@ process pMetabat {
 
     container "metabat/metabat:${params.metabat_tag}"
 
-    errorStrategy 'ignore'
-
     tag "$sample"
 
     label 'large'
+
+    scratch false
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "metabat", filename) }
 
@@ -83,9 +81,9 @@ process pMetabat {
 
     output:
     tuple val("${sample}"), file("${sample}_bin.*.fa"), optional: true, emit: bins
-    tuple val("${sample}"), file("*.depth.txt"), optional: true, emit: metabat_depth
-    tuple val("${sample}"), file("${sample}_bins_depth.tsv"), optional: true, emit: bins_depth
-    tuple val("${sample}"), file("${sample}_bins_stats.tsv"), optional: true, emit: bins_stats
+    tuple val("${sample}"), file("${sample}_contig_depth.tsv"), optional: true, emit: metabatDepth
+    tuple val("${sample}"), file("${sample}_bins_depth.tsv"), optional: true, emit: binsDepth
+    tuple val("${sample}"), file("${sample}_bins_stats.tsv"), optional: true, emit: binsStats
 
     shell:
     template 'metabat.sh'
@@ -95,8 +93,6 @@ process pMetabat {
 process pMaxBin {
 
     container "quay.io/biocontainers/maxbin2:${params.maxbin_tag}"
-
-  //  errorStrategy 'ignore'
 
     label 'large'
 
@@ -121,15 +117,11 @@ process pMaxBin {
 }
 
 
-def bufferBins(binning){
-  def chunkList = [];
-  binning[2].each {
-     chunkList.add([binning[0],binning[1], it]);
-  }
-  return chunkList;
-}
-
-
+/*
+*
+* Input element is returns as an entry in a list.
+*
+*/
 def aslist(element){
   if(element instanceof Collection){
     return element;
@@ -155,6 +147,13 @@ def flattenBins(binning){
 }
 
 
+/*
+*
+* Method takes two channels with map entries and two keys as input.
+* Channels are joined by the keys provided.
+* Resulting channel is returned as output.
+*
+*/
 def mapJoin(channel_a, channel_b, key_a, key_b){
     channel_a \
         | map{ it -> [it[key_a], it] } \
@@ -162,11 +161,18 @@ def mapJoin(channel_a, channel_b, key_a, key_b){
         | map { it[0][1] + it[1][1] }
 }
 
-def setID(binning){
+
+/*
+*
+* Method takes a list of lists of the form [[SAMPLE, BIN 1 path]] 
+* and produces a map of the form [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
+*
+*/
+def createMap(binning){
   def chunkList = [];
   binning.each {
-     def bin = file(it[1]) 
      def sample = it[0]
+     def bin = file(it[1]) 
      def binMap = [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
      chunkList.add(binMap)
   };
@@ -176,27 +182,32 @@ def setID(binning){
 workflow wBinning {
    take: 
      contigs
-     input_reads
+     inputReads
    main:
-     contigs | join(input_reads | mix(input_reads), by: 0) | pBowtie
+     // Map reads against assembly and retrieve mapping quality
+     contigs | join(inputReads | mix(inputReads), by: 0) | pBowtie
      pBowtie.out.mappedReads | pGetMappingQuality 
      
+     // Run Metabat
      contigs | join(pBowtie.out.mappedReads, by: [0]) | pMetabat | set { metabat }
 
-     metabat.bins  | map({ it -> it[1] = aslist(it[1]); it  }) | set{ bins_list }
+     // Ensure that in case just one bin is produced that it still is a list
+     metabat.bins  | map({ it -> it[1] = aslist(it[1]); it  }) | set{ binsList }
 
-     bins_list | map { it -> flattenBins(it) } | flatMap {it -> setID(it)} | set {binMap}
+     // Flatten metabat outputs per sample and create a map with the following entries [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
+     binsList | map { it -> flattenBins(it) } | flatMap {it -> createMap(it)} | set {binMap}
 
-     metabat.bins_stats | map { it -> file(it[1]) } | splitCsv(sep: '\t', header: true) | set { bins_stats }
+     // Add bin statistics 
+     metabat.binsStats | map { it -> file(it[1]) } | splitCsv(sep: '\t', header: true) | set { binsStats }
+     mapJoin(binsStats, binMap, "file", "BIN_ID") | set {binMap}
 
-     mapJoin(bins_stats, binMap, "file", "BIN_ID") | set {binMap}
-
+     // Create summary if requested
      if(params.summary){
-       metabat.bins_depth | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
+       metabat.binsDepth | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
          [ "metabat_bins_depth.tsv", item[1].text  ]
        }
 
-       metabat.bins_stats | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
+       metabat.binsStats | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
          [ "metabat_bins_depth.tsv", item[1].text  ]
        }
 
@@ -208,11 +219,8 @@ workflow wBinning {
          [ "flagstat_failed.tsv", item[1].text  ]
        }
      }
-
    emit:
      bins_stats = binMap
-     bins = bins_list
+     bins = binsList
      mapping = pBowtie.out.mappedReads
 }
-
-
