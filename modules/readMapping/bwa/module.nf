@@ -1,5 +1,6 @@
 nextflow.enable.dsl=2
 
+
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.readMapping.name + '/' + 
          params.modules.readMapping.version.major + "." + 
@@ -34,6 +35,7 @@ process pMapBwa {
     shell:
     template('bwa.sh')
 }
+
 
 process pCovermCount {
     when params.steps.containsKey("readMapping")

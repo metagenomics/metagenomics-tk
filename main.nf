@@ -117,6 +117,7 @@ workflow wAggregatePipeline {
     _wAggregate(samplesFile, binsStatsComplete, gtdb)
 }
 
+
 workflow _wAggregate {
    take:
      samples
@@ -143,6 +144,7 @@ workflow _wAggregate {
 
      wCooccurrenceList(wListReadMappingBwa.out.trimmedMean, gtdb)
 }
+
 
 /*
 * 

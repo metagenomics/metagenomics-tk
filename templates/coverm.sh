@@ -9,3 +9,4 @@ coverm genome -t !{task.cpus}  --min-covered-fraction 0 -b !{mapping} --genome-f
 coverm genome -t !{task.cpus} --min-covered-fraction 0 -b !{mapping} --genome-fasta-list  list.txt  --methods rpkm  --output-file $OUT/rpkm.tsv  && sed -i '1 s| RPKM$||' $OUT/rpkm.tsv || true
 coverm genome -t !{task.cpus} --min-covered-fraction 0 -b !{mapping} --genome-fasta-list list.txt --methods tpm --output-file $OUT/tpm.tsv && sed -i '1 s| TPM$||' $OUT/tpm.tsv || true
 coverm genome -t !{task.cpus} --min-covered-fraction 10 -b !{mapping} --genome-fasta-list list.txt --methods mean --output-file $OUT/mean_mincov10.tsv && sed -i '1 s| Mean$||' $OUT/mean_mincov10.tsv || true
+

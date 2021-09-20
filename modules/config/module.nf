@@ -4,7 +4,7 @@ import org.yaml.snakeyaml.Yaml
 
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + params.modules.config.name +
+    return SAMPLE + '/' + RUNID + '/' + params.modules.config.name + '/' +
          params.modules.config.version.major + "." + 
          params.modules.config.version.minor + "." + 
          params.modules.config.version.patch +
