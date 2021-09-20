@@ -49,6 +49,40 @@ s3 links ([example](test_data/fullPipeline/reads_split_s3.tsv)) in the input tsv
 -entry wFragmentRecruitment -params-file example_params/fragmentRecruitment.yml
 ```
 
+### Assembly
+
+```
+-entry wAssembly -params-file example_params/assembly.yml
+```
+
+#### Input
+
+* [params-file](example_params/assembly.yml)
+
+* [Sample TSV Table](test_data/assembly/samples.tsv)
+
+#### Output
+
+The output is are gziped contig files.
+
+### Cooccurrence
+
+```
+-entry wCooccurrence -params-file example_params/coocurrence.yml
+```
+
+#### Input
+
+* [params-file](example_params/coocurrence.yml)
+
+* [abundance TSV table](test_data/assembly/samples.tsv): Contains abundance values of mags per sample.
+
+* [gtdb TSV table](test_data/assembly/samples.tsv): GTDB assignmend of all samples that were produced by magAttributes module.
+
+#### Output
+
+ * Graphml file for further processing 
+
 ### Dereplication
 
 ```
@@ -67,6 +101,25 @@ You can set values of these columns to zero if data is not available or if you d
 
 The output tsv file (`final_clusters.tsv`) contains the columns `CLUSTER`, `GENOME` and `REPRESENTATIVE` where `CLUSTER` identifies a group of genomes, `GENOME` represents the path or
 link of a genome and `REPRESENTATIVE` is either 0 or 1 (selected as representative). 
+
+### Read Mapping
+
+```
+-entry wReadMapping -params-file example_params/readMapping.yml
+```
+
+#### Input
+
+* [params-file](example_params/readMapping.yml)
+
+* [MAGs TSV Table](test_data/readMapping/mags.tsv): 
+
+* [SAMPLES TSV Table](test_data/readMapping/samples.tsv): 
+
+#### Output
+
+The produced output files are the following: count.tsv, mean.tsv, mean_mincov10.tsv, rpkm.tsv, tpm.tsv, trimmed_mean.tsv.
+The content of the files are produced by coverm. All metrics are explained on the coverm github page: https://github.com/wwood/CoverM .
 
 ### MagAttributes
 
