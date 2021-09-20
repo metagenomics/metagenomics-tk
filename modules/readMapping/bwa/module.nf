@@ -66,12 +66,12 @@ workflow wFileReadMappingBwa {
      GENOMES_PATH_IDX = 0
      Channel.from(file(params?.steps?.readMapping?.mags)) \
        | splitCsv(sep: '\t', header: false, skip: 1) \
-       | map { it -> file(it[GENOMES_PATH_IDX]) }\
+       | map { it -> file(it[GENOMES_PATH_IDX]) } \
        | set {genomesList}
 
      Channel.from(file(params?.steps?.readMapping?.samples)) \
        | splitCsv(sep: '\t', header: true)\
-       | set {samples} 
+       | set {samples}
 
      _wReadMappingBwa(samples, genomesList)
    emit:
@@ -105,16 +105,15 @@ workflow _wReadMappingBwa {
      samples
      genomes
    main:
-
-     # Create temporary directory for merged fasta files
+     // Create temporary directory for merged fasta files
      genomesTempDir = params.tempdir + "/genomesToBeMerged"
      file(genomesTempDir).mkdirs()
 
-     # Concatenate genomes 
+     // Concatenate genomes 
      genomes | collectFile(tempDir: genomesTempDir){ item -> [ "mergedGenomes.fasta", item.text ] } \
       | set { genomesMerged }
 
-     # Create BWA index of all genomes
+     // Create BWA index of all genomes
      SAMPLE_IDX=1
      BWA_INDEX_IDX=0
      GENOMES_IDX=2
@@ -123,7 +122,7 @@ workflow _wReadMappingBwa {
       | map{ it -> [it[SAMPLE_IDX].READS, it[SAMPLE_IDX].SAMPLE, it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
       | set {index}
 
-     # Map all samples against all genomes using bwa 
+     // Map all samples against all genomes using bwa 
      pMapBwa(index) | combine(genomes | map {it -> file(it)} \
       | toList() | map { it -> [it]}) | pCovermCount
    emit:
