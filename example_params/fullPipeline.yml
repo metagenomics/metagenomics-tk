@@ -7,7 +7,7 @@ steps:
   qc:
     interleaved: false
     fastp:
-    # Example params: " --detect_adapter_for_pe  "
+    # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
        params: "  "
   assembly:
     megahit:
