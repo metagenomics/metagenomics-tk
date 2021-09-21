@@ -22,6 +22,7 @@ process pCarveMe {
       tuple val(sample), val(id), path(mag_faa)
     output:
       tuple val("${sample}"), val("${id}"), path("${id}.xml.gz"), emit: model
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
     shell:
     '''
     carve !{mag_faa} -o !{id}.xml.gz
@@ -44,6 +45,7 @@ process pMemote {
       tuple val("${sample}"), val("${id}"), path("${sample}_${id}_report.json.gz"), emit: report_json
       tuple val("${sample}"), val("${id}"), path("${sample}_${id}_report.html"), emit: report_html
       tuple val("${sample}"), val("${id}"), path("${sample}_${id}_metrics.tsv"), emit: report_tsv
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
@@ -82,6 +84,7 @@ process pSmetanaDetailed {
 
     output:
       path("${sample}_detailed.tsv")
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
@@ -103,6 +106,7 @@ process pSmetanaGlobal {
 
     output:
       path("${sample}_global.tsv")
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
@@ -122,6 +126,7 @@ process pAnalyse {
 
     output:
       tuple val("${sample}"), val("${id}"), path("*.tsv"), emit: model
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit:log
 
     shell:
     '''
@@ -141,6 +146,8 @@ process pBuildJson {
       tuple val(sample), val(id), path(mag_xml)
     output:
       tuple val("${sample}"), val("${id}"), path("${id}.json.gz"), emit: model
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
+
     shell:
     '''
     sbml_to_json.py !{mag_xml} !{id}.json
@@ -158,6 +165,7 @@ process pProdigal {
       tuple val(sample), val(id), path(mag)
     output:
       tuple val("${sample}"), val("${id}"), path("*.faa.gz"), emit: protein
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
     shell:
     '''
     cat !{mag} | prodigal -a !{mag}.faa
@@ -183,9 +191,12 @@ workflow wAnalyseMetabolites {
        bins | map { it -> [it.SAMPLE, it.BIN_ID, it.PATH]}
        | set{binsChannel}
 
-     binsChannel | pProdigal | pCarveMe | pBuildJson | pAnalyse 
-     pCarveMe.out | pMemote  
-     pCarveMe.out | groupTuple(by:0) | map{ it -> it[0,2]} | set { model_group } 
+     binsChannel | pProdigal
+     pCarveMe(pProdigal.out.protein) 
+     pCarveMe.out.model | pBuildJson
+     pBuildJson.out.model  | pAnalyse 
+     pCarveMe.out.model | pMemote  
+     pCarveMe.out.model | groupTuple(by:0) | map{ it -> it[0,2]} | set { model_group } 
      model_group | pSmetanaDetailed 
      model_group | pSmetanaGlobal
 

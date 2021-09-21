@@ -12,7 +12,7 @@ def getOutput(RUNID, TOOL, filename){
 
 process pMashSketchGenome {
 
-    container "quay.io/biocontainers/mash:${params.mash_tag}"
+    container "${params.mash_image}"
 
     errorStrategy 'retry'
 
@@ -38,7 +38,7 @@ process pMashSketchGenome {
 
 process pMashPaste {
 
-    container "quay.io/biocontainers/mash:${params.mash_tag}"
+    container "${params.mash_image}"
 
     errorStrategy 'retry'
 
@@ -59,7 +59,7 @@ process pMashPaste {
 
 process pMashDist {
 
-    container "quay.io/biocontainers/mash:${params.mash_tag}"
+    container "${params.mash_image}"
 
     errorStrategy 'retry'
 
@@ -88,7 +88,7 @@ process pClusterDistances {
     input:
     file('distances.tsv')
 
-    container "pbelmann/python-env:${params.python_env_tag}"
+    container "${params.python_env_image}"
 
     label 'medium'
 
@@ -111,7 +111,7 @@ process pSelectRepresentative {
     path genome_table
     tuple file("distance"), file("cluster")
 
-    container "pbelmann/python-env:${params.python_env_tag}"
+    container "${params.python_env_image}"
 
     publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/selectedRepresentatives", filename) }
 
@@ -120,6 +120,7 @@ process pSelectRepresentative {
     output:
     path("intermediate_clusters.tsv"), emit: clusters
     path("refinement/representatives_to_compare.tsv"), emit: representatives
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     template 'selectRepresentative.sh'
@@ -136,7 +137,7 @@ process pANIb {
     file("genome1*") 
     file("genome2*") 
 
-    container "leightonpritchard/average_nucleotide_identity:${params.ani_tag}"
+    container "${params.ani_image}"
 
     when:
     params.steps.dereplication.pasolli.method.contains("ANI")
@@ -157,7 +158,7 @@ process pTETRA {
     file("genome1*") 
     file("genome2*") 
 
-    container "leightonpritchard/average_nucleotide_identity:${params.ani_tag}"
+    container "${params.ani_image}"
 
     output:
     file("*.out/out.tsv") 
@@ -175,7 +176,7 @@ process pGetCluster {
 
     publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/clusters", filename) }
 
-    container "pbelmann/python-env:${params.python_env_tag}"
+    container "${params.python_env_image}"
 
     input:
     path cluster, stageAs: 'cluster'
@@ -185,6 +186,7 @@ process pGetCluster {
     output:
     path 'final_clusters.tsv', emit: final_clusters
     path 'ani_values.tsv', emit: ani_values
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
@@ -205,6 +207,7 @@ process pFinalize {
 
     output:
     file 'final_clusters.tsv' 
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
