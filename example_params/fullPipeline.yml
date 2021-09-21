@@ -45,3 +45,4 @@ steps:
           #     - detailed
           #      - global
   cooccurrence:
+    params: " -t 0.1 -z 80 -o 'correlation' "
