@@ -69,6 +69,8 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 2. The input and output of processes should contain a sample and/or bin and contig id.
 
+3. Pocesses should publish `.command.sh`, `.command.out`, `.command.log` and `.command.err` files but never `.command.run`.
+
 ## Other
 
 1. Magic numbers should not be used.

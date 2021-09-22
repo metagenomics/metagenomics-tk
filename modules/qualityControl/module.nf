@@ -18,7 +18,7 @@ process pFastpSplit {
 
     when params?.steps?.qc.containsKey("fastp")
 
-    container "quay.io/biocontainers/fastp:${params.fastp_tag}"
+    container "${params.fastp_image}"
 
     input:
     tuple val(sample), path(read1, stageAs: "read1.fq.gz"), path(read2, stageAs: "read2.fq.gz")
@@ -29,6 +29,7 @@ process pFastpSplit {
     tuple val("${sample}"), path("fastp_summary_after.tsv"), emit: fastpSummaryAfter
     tuple val("${sample}"), path("fastp.json"), emit: fastpSummary
     tuple val("${sample}"), path("*_report.html"), emit: fastpSummaryHtml
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     template 'fastpSplit.sh'
@@ -48,7 +49,7 @@ process pFastpSplitDownload {
     when:
     params?.steps?.qc.containsKey("fastp")
 
-    container "quay.io/biocontainers/fastp:${params.fastp_tag}"
+    container "${params.fastp_image}"
 
     input:
     tuple val(sample), env(read1Url), env(read2Url)
@@ -59,6 +60,7 @@ process pFastpSplitDownload {
     tuple val("${sample}"), path("fastp_summary_after.tsv"), emit: fastpSummaryAfter
     tuple val("${sample}"), path("fastp.json"), emit: fastpSummary
     tuple val("${sample}"), path("*_report.html"), emit: fastpSummaryHtml
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     template 'fastpSplitDownload.sh'

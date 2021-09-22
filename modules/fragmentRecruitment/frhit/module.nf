@@ -21,7 +21,7 @@ process pFrHit {
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "frhit",  filename) }
 
-    container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
+    container "${params.samtools_bwa_image}"
 
     when params.steps.containsKey("fragmentRecruitment")
 
@@ -31,6 +31,7 @@ process pFrHit {
     output:
     tuple val("${sample}"), file("${sample}.bam"), optional: true, emit: alignment
     tuple val("${sample}"), file("coverage"), optional: true, emit: coverageStats
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
@@ -85,7 +86,7 @@ process pCombinedAlignmentAnalysis {
 
     publishDir "${params.output}/fragmentRecruitment"
 
-    container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
+    container "${params.samtools_bwa_image}"
 
     input:
     file(alignments)
@@ -93,6 +94,7 @@ process pCombinedAlignmentAnalysis {
 
     output:
     path("coverage"), emit: coverageStats
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''

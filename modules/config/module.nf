@@ -25,6 +25,7 @@ process pConfigUpload {
 
   output:
   tuple val("${sample}"), file("*.yml")
+  tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
   shell:
   Yaml yaml = new Yaml()
