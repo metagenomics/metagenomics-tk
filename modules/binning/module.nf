@@ -59,7 +59,9 @@ process pBowtie {
     '''
     INDEX=!{sample}.index
     bowtie2-build --threads 28 --quiet !{contigs} $INDEX 
-    bowtie2 -p !{task.cpus}  --quiet --very-sensitive -x $INDEX --interleaved fastq.fq.gz 2> !{sample}_bowtie_stats.txt | samtools view -F 3584 --threads 28 -bS - | samtools sort -l 9 --threads 28 - > !{sample}.bam
+    bowtie2 -p !{task.cpus}  --quiet --very-sensitive -x $INDEX --interleaved fastq.fq.gz 2> !{sample}_bowtie_stats.txt \
+          | samtools view -F 3584 --threads !{task.cpus} -bS - \
+          | samtools sort -l 9 --threads !{task.cpus} - > !{sample}.bam
     '''
 }
 
@@ -90,6 +92,34 @@ process pMetabat {
     shell:
     template 'metabat.sh'
 }
+
+process pMetabinner {
+
+    container "${params.metabinner_image}"
+
+    tag "$sample"
+
+    label 'large'
+
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "metabinner", filename) }
+
+    when params.steps.containsKey("binning") && params.steps.binning.containsKey("metabinner")
+
+    containerOptions ' --user 0:0 '
+
+    input:
+    tuple val(sample), path(contigs), path(bam)
+
+    output:
+    tuple val("${sample}"), file("${sample}_bin.*.fa"), optional: true, emit: bins
+    tuple val("${sample}"), file("*.depth.txt"), optional: true, emit: metabat_depth
+    tuple val("${sample}"), file("${sample}_bins_depth.tsv"), optional: true, emit: bins_depth
+    tuple val("${sample}"), file("${sample}_bins_stats.tsv"), optional: true, emit: bins_stats
+
+    shell:
+    template 'metabinner.sh'
+}
+
 
 
 process pMaxBin {
@@ -178,25 +208,26 @@ workflow wBinning {
      contigs
      input_reads
    main:
-     contigs | join(input_reads | mix(input_reads), by: 0) | pBowtie
+     contigs | join(input_reads, by: 0) | pBowtie
      pBowtie.out.mappedReads | pGetMappingQuality 
      
-     contigs | join(pBowtie.out.mappedReads, by: [0]) | pMetabat | set { metabat }
+     contigs | join(pBowtie.out.mappedReads, by: [0]) | (pMetabinner & pMetabat )
+     pMetabinner.out.bins | mix(pMetabat.out.bins) | set { bins }
 
-     metabat.bins  | map({ it -> it[1] = aslist(it[1]); it  }) | set{ bins_list }
+     bins | map({ it -> it[1] = aslist(it[1]); it  }) | set{ bins_list }
 
      bins_list | map { it -> flattenBins(it) } | flatMap {it -> setID(it)} | set {binMap}
 
-     metabat.bins_stats | map { it -> file(it[1]) } | splitCsv(sep: '\t', header: true) | set { bins_stats }
+     pMetabinner.out.bins_stats | mix(pMetabat.out.bins_stats) | map { it -> file(it[1]) } | splitCsv(sep: '\t', header: true) | set { bins_stats }
 
      mapJoin(bins_stats, binMap, "file", "BIN_ID") | set {binMap}
 
      if(params.summary){
-       metabat.bins_depth | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
+       pMetabinner.out.bins_depth | mix(pMetabat.out.bins_depth) | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
          [ "metabat_bins_depth.tsv", item[1].text  ]
        }
 
-       metabat.bins_stats | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
+       pMetabinner.out.bins_stats | mix(pMetabat.out.bins_stats) | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
          [ "metabat_bins_depth.tsv", item[1].text  ]
        }
 

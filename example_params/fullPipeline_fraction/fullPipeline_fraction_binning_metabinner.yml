@@ -1,0 +1,15 @@
+tempdir: "tmp"
+summary: false
+input: "test_data/fullPipeline/reads_split.tsv"
+output: "output"
+runid: 1
+steps:
+  qc:
+    interleaved: false
+    fastp:
+  assembly:
+    megahit:
+  binning:
+    metabat:
+      minContigLength: 500
+      kmerSize: 4
