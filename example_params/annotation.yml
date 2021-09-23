@@ -2,16 +2,13 @@ output: "output"
 summary: true
 runid: 1
 tempdir: "tmp"
-accesskey: 'dee1a13e7e6e422690fd969efc72f7e4'
-secretkey: '7946f151e66b4015b78a2659da811b1f'
 steps:
    annotation:
       input: "test_data/annotation/input_small.tsv"
       s5cmd: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
       diamond:
-         diamond_tag: "2.0.11--hdcc8f71_0"
          sensitivity: '--fast'
-         mode: 'blastx'
+         mode: 'blastp'
          cores: '--threads 28'
          outfmt: '--outfmt 6'
          targetseq: '--max-target-seqs 100'
@@ -19,3 +16,5 @@ steps:
          database: 's3://bene-test/databases/kegg-2021-01.dmnd'
       kegg:
          database: 's3://bene-test/databases/kegg_2021-01/*'
+      prodigal:
+          mode: 'meta'

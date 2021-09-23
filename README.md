@@ -104,6 +104,14 @@ All modules of the pipeline can be used in conjunction with S3.
 You will have to create a configuration file that can be provided to nextflow with " -c " Parameter.
 
 ```
+// You only need to fill out the env scope if you want to use the annotation module.
+// The aws scope below is not accessible by processes, 
+// so this hack has to be used for processes to get credentials.
+env {
+   AWS_ACCESS_KEY_ID='xxx'
+   AWS_SECRET_ACCESS_KEY='xxx'
+}
+
 aws {
   accessKey = xxx
   secretKey = xxx

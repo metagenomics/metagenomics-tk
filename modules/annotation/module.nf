@@ -7,61 +7,141 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
 }
 
-
+/**
+*
+* Diamond is used to search for big input queries in large databases.
+* Though not as precise as blast it is way faster if you handle large amounts of data.
+* You need to call (and fill out) the aws credential file with -c to use this module! 
+*
+**/
 process pDiamond {
-   // Difficult part. Without Docker, tail -1 should be used. With Docker the script changes and head -1 in addition to sed musst be used to remove an omnious \ bevore $PATH.
-   //beforeScript "eval \$(grep PATH .command.run | head -1 | sed 's/\\//g');eval \$(grep AWS_ACCESS .command.run | head -1);eval \$(grep AWS_SECRET .command.run | head -1);s5cmd ${params.steps.annotation.diamond.s5cmd} cp -u -s ${params.steps.annotation.diamond.database} ${params.databases}"
    
-   // For some reason ${params.diamond_tag} does not get the value from the nextflow.config, despite it working with params.databases in the beforeScript.
-   container "quay.io/biocontainers/diamond:${params.diamond_tag}"
+      container "${params.diamond_image}"
+      
+      // Databases will be downloaded to a fixed place so that they can be used by future processes.
+      // These fixed place has to be outside of the working-directory to be easy to find for every process.
+      // Therefore this place has to be mounted to the docker container to be accessible during run time.
+      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases}"
  
-   tag "$sample"
+      tag "$sample"
 
-   label 'large'
+      label 'large'
 
-   publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "diamond", filename) }
+      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "diamond", filename) }
 
-   // Input not nice, data should be collected beforehand
    input:
-   tuple val(sample), file(BinFile)
+      tuple val(sample), file(fasta)
+   
    output:
-   tuple val("${sample}"), path("diamond.${sample}.out"), emit: diamond_results
+      tuple val("${sample}"), path("diamond.${sample}.out"), emit: results
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
 
    shell:
-   '''
-   s5cmd !{params.steps.annotation.s5cmd} cp -u -s !{params.steps.annotation.diamond.database} !{params.databases}
-   diamond !{params.steps.annotation.diamond.mode} !{params.steps.annotation.diamond.cores} !{params.steps.annotation.diamond.sensitivity} !{params.steps.annotation.diamond.outfmt} --out diamond.!{sample}.out --db !{params.databases}kegg-2021-01.dmnd --query !{BinFile} !{params.steps.annotation.diamond.targetseq} !{params.steps.annotation.diamond.evalue} 
-   '''
+      '''
+      # Download the database if there is a more recent one online, or if the size differs.
+      # The destination folder should be outside of the working directory to share the database with future processes.
+      s5cmd !{params.steps.annotation.s5cmd} cp -u -s !{params.steps.annotation.diamond.database} !{params.databases}
+      diamond \
+      !{params.steps.annotation.diamond.mode} \
+      !{params.steps.annotation.diamond.cores} \
+      !{params.steps.annotation.diamond.sensitivity} \
+      !{params.steps.annotation.diamond.outfmt} \
+      --out diamond.!{sample}.out \
+      --db !{params.databases}kegg-2021-01.dmnd \
+      --query !{fasta} \
+      !{params.steps.annotation.diamond.targetseq} \
+      !{params.steps.annotation.diamond.evalue} 
+      '''
 }
 
+/**
+*
+* Prodigal is used to predict genes in fasta files.
+*
+**/
+process pProdigal {
 
-process pKEGGFromDiamond {
+      tag "$sample"
 
-   tag "$sample"
+      label 'small'
 
-   label 'small'
+      container "${params.prodigal_image}"
 
-   container "pbelmann/python-env:${params.python_env_tag}"
-
-   publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromDiamond", filename) }
+      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "prodigal", filename) }
 
    input:
-   tuple val(sample), file(diamond_result)
+      tuple val(sample), file(fasta)
 
    output:
-   tuple val("${sample}"), path("${sample}_kegg.tsv"), emit: kegg_diamond_results
+      tuple val("${sample}"), path("${sample}_prodigal.faa"), emit: amino
+      tuple val("${sample}"), path("${sample}_prodigal.fna"), emit: nucleotide
+      tuple val("${sample}"), path("${sample}_prodigal.gff"), emit: gff
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
 
    shell:
-   '''
-   s5cmd !{params.steps.annotation.s5cmd} cp -u -s !{params.steps.annotation.kegg.database} !{params.databases}kegg
-   diamond2kegg.py !{diamond_result} !{params.databases}kegg !{sample}_kegg.tsv 
-   '''
+      '''
+      prodigal -i !{fasta} -p !{params.steps.annotation.prodigal.mode} -f gff \
+      -o !{sample}_prodigal.gff -a !{sample}_prodigal.faa -d !{sample}_prodigal.fna
+      '''
 }
 
 
 /**
 *
-* This entry point uses a file to grab all .fa files in the referenced directoryis for annotation.
+* pKEGGFromDiamond is build to handle results of a diamond/blast search in the outfmt 6 standard.
+* These search results will be compared to kegg link-files to produce a file where all available kegg information
+* for these search results is collected in a centralized way/file.
+* You need to call (and fill out) the aws credential file with -c to use this module!
+*
+**/
+process pKEGGFromDiamond {
+
+      tag "$sample"
+
+      label 'small'
+
+      container "${params.python_env_image}"
+
+      // Databases will be downloaded to a fixed place so that they can be used by future processes.
+      // These fixed place has to be outside of the working-directory to be easy to find for every process.
+      // Therefore this place has to be mounted to the docker container to be accessible during runtime.
+      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases}"
+
+      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromDiamond", filename) }
+
+   input:
+      tuple val(sample), file(diamond_result)
+
+   output:
+      tuple val("${sample}"), path("${sample}_kegg.tsv"), emit: kegg_diamond
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
+
+   shell:
+      '''
+      # Download the database if there is a more recent one online, or if the size differs.
+      # The destination folder should be outside of the working directory to share the database with future processes.
+      s5cmd !{params.steps.annotation.s5cmd} cp -u -s !{params.steps.annotation.kegg.database} !{params.databases}kegg
+      diamond2kegg.py !{diamond_result} !{params.databases}kegg !{sample}_kegg.tsv 
+      '''
+}
+
+process pTest {
+
+   output:
+      file ("test.file")
+
+   shell:
+      '''
+      echo "!{aws.accessKey}" > test.file
+      '''
+}
+
+
+/**
+*
+* This entry point uses a file to grab all fasta files in the referenced directories for annotation.
+* These fastas will be combined to one file to start the main annotation workflow.
+* You need to call (and fill out) the aws credential file with -c to use this module!
 * The .tsv file has to have: DATASET PATH entries. 
 *
 **/
@@ -70,18 +150,29 @@ workflow wAnnotateLocalFile {
    take:
       projectTableFile
    main:
-      projectTableFile | splitCsv(sep: '\t', header: true) | map{ it -> [it.DATASET, file(it.PATH)] } | collectFile() | map{ it -> [it.name, it]} | view () | _wAnnotation
+      projectTableFile | splitCsv(sep: '\t', header: true) | map{ it -> [it.DATASET, file(it.PATH)] } | collectFile() | map{ it -> [it.name, it]} | _wAnnotation
 }
 
 
+/**
+*
+* The main annotation workflow. 
+* It is build to handle one big input fasta file.
+* On this file genes will be predicted, these will be diamond-blasted against kegg. 
+* At the end kegg-infos of the results will be collected and presented.
+*
+**/ 
 workflow _wAnnotation {
 
    take:
-      bins
+      fasta
    main:
-      bins | pDiamond | pKEGGFromDiamond |set { projectTable }
+      fasta | pProdigal
+      pDiamond(pProdigal.out.amino)
+      pKEGGFromDiamond(pDiamond.out.results)
+      pKEGGFromDiamond.out.kegg_diamond | set { keggAnnotation }
    emit:
-      projectTable
+      keggAnnotation
 
    
 }
