@@ -10,6 +10,6 @@ steps:
   assembly:
     megahit:
   binning:
-    metabat:
+    metabinner:
       minContigLength: 500
       kmerSize: 4
