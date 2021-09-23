@@ -102,15 +102,15 @@ You can set values of these columns to zero if data is not available or if you d
 The output tsv file (`final_clusters.tsv`) contains the columns `CLUSTER`, `GENOME` and `REPRESENTATIVE` where `CLUSTER` identifies a group of genomes, `GENOME` represents the path or
 link of a genome and `REPRESENTATIVE` is either 0 or 1 (selected as representative). 
 
-### Read Mapping
+### Read Mapping Interleaved
 
 ```
--entry wReadMapping -params-file example_params/readMapping.yml
+-entry wReadMappingInterleaved -params-file example_params/readMappingInterleaved.yml
 ```
 
 #### Input
 
-* [params-file](example_params/readMapping.yml)
+* [params-file](example_params/readMappingInterleaved.yml)
 
 * [MAGs TSV Table](test_data/readMapping/mags.tsv): 
 
@@ -120,6 +120,27 @@ link of a genome and `REPRESENTATIVE` is either 0 or 1 (selected as representati
 
 The produced output files are the following: count.tsv, mean.tsv, mean_mincov10.tsv, rpkm.tsv, tpm.tsv, trimmed_mean.tsv.
 The content of the files are produced by coverm. All metrics are explained on the coverm github page: https://github.com/wwood/CoverM .
+
+### Read Mapping Split
+
+```
+-entry wReadMappingSplit -params-file example_params/readMappingSplit.yml
+```
+
+#### Input
+
+* [params-file](example_params/readMappingSplit.yml)
+
+* [MAGs TSV Table](test_data/readMapping/mags.tsv): 
+
+* [SAMPLES TSV Table](test_data/readMapping/samples_split.tsv): 
+
+#### Output
+
+The produced output files are the following: count.tsv, mean.tsv, mean_mincov10.tsv, rpkm.tsv, tpm.tsv, trimmed_mean.tsv.
+The content of the files are produced by coverm. All metrics are explained on the coverm github page: https://github.com/wwood/CoverM .
+
+
 
 ### MagAttributes
 

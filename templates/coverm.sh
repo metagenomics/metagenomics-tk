@@ -1,7 +1,7 @@
 OUT=!{sample}_out
 mkdir $OUT
 
-readlink -f !{list_of_representatives} > list.txt 
+readlink -f genomes* > list.txt 
 
 coverm genome -t !{task.cpus} --min-covered-fraction 0 -b !{mapping} --genome-fasta-list list.txt --methods mean --output-file $OUT/mean.tsv && sed -i '1 s| Mean$||' $OUT/mean.tsv  || true
 coverm genome -t !{task.cpus} --min-covered-fraction 0 -b !{mapping} --genome-fasta-list list.txt --methods trimmed_mean --output-file $OUT/trimmed_mean.tsv && sed -i '1 s| Trimmed Mean$||' $OUT/trimmed_mean.tsv || true

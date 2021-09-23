@@ -85,9 +85,15 @@ jobs:
       - name: clean up existing inputs directory
         run: |
           rm -rf /mnt/nextflow_cache/* 
-      - name: Test Read Mapping
+      - name: Test Read Mapping Interleaved
         run: |
-          bash ./scripts/test_readMapping.sh || exit 1
+          bash ./scripts/test_readMappingInterleaved.sh || exit 1
+
+      - name: Test Read Mapping Split
+        run: |
+          bash ./scripts/test_readMappingSplit.sh || exit 1
+
+
 
   assembly:
     needs: [readmapping]

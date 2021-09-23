@@ -1,0 +1,8 @@
+tempdir: "tmp"
+summary: false
+output: "output"
+runid: 1
+steps:
+  readMapping:
+    samples: test_data/readMapping/samples_split.tsv
+    mags: test_data/readMapping/mags.tsv
