@@ -119,6 +119,7 @@ process pMetabinner {
     tuple val("${sample}"), file("*.depth.txt"), optional: true, emit: metabat_depth
     tuple val("${sample}"), file("${sample}_bins_depth.tsv"), optional: true, emit: bins_depth
     tuple val("${sample}"), file("${sample}_bins_stats.tsv"), optional: true, emit: bins_stats
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     template 'metabinner.sh'
