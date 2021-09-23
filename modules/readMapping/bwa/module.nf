@@ -16,7 +16,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 }
 
 process pBwaIndex {
-    container "quay.io/biocontainers/bwa:${params.bwa_tag}"
+    container "${params.bwa_image}"
     label 'large'
     when params.steps.containsKey("readMapping")
     input:
@@ -31,25 +31,27 @@ process pBwaIndex {
 
 process pMapBwa {
     label 'large'
-    container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
+    container "${params.samtools_bwa_image}"
     when params.steps.containsKey("readMapping")
     publishDir params.output, saveAs: { filename -> getOutput("${bin_shuffle_id}",params.runid ,"bwa", filename) }
     input:
       tuple path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
     output:
-      tuple val("${ID}"), val(bin_shuffle_id), path("*bam"), path("*bam.bai")
+      tuple val("${ID}"), val(bin_shuffle_id), path("*bam"), path("*bam.bai"), emit: alignment
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     shell:
     template('bwa.sh')
 }
 
 process pMapBwaCami {
     label 'large'
-    container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
+    container "${params.samtools_bwa_image}"
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid ,"bwa" , filename) }
     input:
       tuple path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
     output:
       tuple val("${ID}"), val(bin_shuffle_id), path("*.sam.gz")
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     shell:
     template('bwa.sh')
 }
@@ -61,6 +63,7 @@ process pBwaCount {
       tuple val(ID), file(sample), file(mapping)
     output:
       path "${sample}.count"
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     shell:
     template('count.sh')
 }
@@ -73,6 +76,7 @@ process pCovermCount {
       tuple val(ID), val(sample), file(mapping), file(index), file(list_of_representatives)
     output:
       path("${ID}_${sample}_out", type: "dir")
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     shell:
     template('coverm.sh')
 }
@@ -145,7 +149,8 @@ workflow wReadMappingBwa {
       | combine(representatives) \
       | map{ it -> [it[2].READS, it[2].SAMPLE, it[0], it[3], it[1]] } \
       | set {index}
-     pMapBwa(index) | combine(representativesList | map {it -> file(it)} | toList() | map { it -> [it]}) | pCovermCount
+     pMapBwa(index)
+     pMapBwa.out.alignment | combine(representativesList | map {it -> file(it)} | toList() | map { it -> [it]}) | pCovermCount
 }
 
 workflow {

@@ -18,7 +18,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 
 process pBowtie {
 
-    container "pbelmann/bowtie2:${params.bowtie_tag}"
+    container "${params.bowtie_image}"
 
     label 'large'
 
@@ -36,6 +36,7 @@ process pBowtie {
     output:
     tuple val("${sample}"), val("${TYPE}"), file("interleaved.discordand.fq.gz"), optional: true, emit: unmappedReads
     tuple val("${sample}"), val("${TYPE}"), file("${sample}_bowtie_stats.txt"), optional: true, emit: readBinsStats
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
