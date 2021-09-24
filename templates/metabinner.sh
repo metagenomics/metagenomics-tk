@@ -45,7 +45,7 @@ for binId in $(cut -f 2 $METABINNER_RESULT | sort | uniq); do
 	grep -e "$(printf '\t')${binId}$" $METABINNER_RESULT | cut -f 1 >> ${binId}.tsv 
 	seqkit grep -f ${binId}.tsv $CONTIGS \
 		| seqkit replace -p "\s.+" > ${OLD_BIN_NAME}
-	seqkit replace  -p '(.*)' -r "\${1}_${binId}" ${OLD_BIN_NAME} > ${BIN_NAME}
+	seqkit replace  -p '(.*)' -r "\${1} MAG=${binId}" ${OLD_BIN_NAME} > ${BIN_NAME}
 
 	# Create old to new header table
 	OLD_HEADERS=${TEMP_DIR}/old_headers.tsv
@@ -60,8 +60,6 @@ for binId in $(cut -f 2 $METABINNER_RESULT | sort | uniq); do
 done
 
 # Add sample and bin information to every contig in depth file
-#BIN_DEPTH=${TEMP_DIR}/bin_depth.tsv
-
 BIN_DEPTH=!{sample}_bins_depth.tsv
 head -n 1 *.depth.txt  | sed "s/$/\tBIN_ID\tSAMPLE/g" > ${BIN_DEPTH}
 csvtk join -t -H -f "1;2" <(tail -n +2 *.depth.txt) <(tail -n +2 ${BIN_CONTIG_MAPPING}) \
