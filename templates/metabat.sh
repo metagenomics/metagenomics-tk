@@ -12,7 +12,7 @@ for bin in $(basename !{contigs})*/bin* ; do
 	ID=$(echo ${BIN_NAME} | rev | cut -d '.' -f 2 | rev)
 
 	# Append bin id to every header
-	seqkit replace  -p '(.*)' -r "\${1}_${ID}" $bin > ${BIN_NAME}
+	seqkit replace  -p '(.*)' -r "\${1} MAG=${ID}" $bin > ${BIN_NAME}
 
 	# Create old to new header table
 	OLD_HEADERS=${TEMP_DIR}/old_headers.tsv

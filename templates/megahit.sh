@@ -19,7 +19,7 @@ function setFastaHeader(){
 	SEQUENCE_HASHES=${TEMP_DIR}/sequence_hashes.tsv
 	while read -r seq; do 
 		printf %s "$seq" | md5sum | cut -f1 -d' '; 
-	done < <(seqkit fx2tab $ASSEMBLY | cut -f 2) | cut -c -5 > ${SEQUENCE_HASHES}
+	done < <(seqkit fx2tab $ASSEMBLY | cut -f 2) | cut -c -6 > ${SEQUENCE_HASHES}
 
 	NEW_FASTA_HEADERS=${TEMP_DIR}/new_headers.tsv
 	cat ${SEQUENCE_HASHES} \
