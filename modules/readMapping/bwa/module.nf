@@ -31,7 +31,7 @@ process pMapBwa {
     input:
       tuple path(sample), val(bin_shuffle_id), path(representatives_fasta), path(x, stageAs: "*") 
     output:
-      tuple val("${ID}"), val(bin_shuffle_id), path("*bam"), path("*bam.bai"), emit: alignment
+      tuple val("${bin_shuffle_id}"), path("*bam"), path("*bam.bai"), emit: alignment
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     shell:
     template('bwa.sh')
