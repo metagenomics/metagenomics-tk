@@ -11,11 +11,11 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 
 process pGetMappingQuality {
 
-    container 'quay.io/biocontainers/samtools:1.12--h9aed4be_1'
+    container "${params.samtools_image}"
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "contigMappingBowtie", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "contigMappingQuality", filename) }
 
     errorStrategy 'retry'
 
@@ -28,6 +28,7 @@ process pGetMappingQuality {
     tuple val("${sample}"), file("${sample}_flagstat.tsv"), emit: flagstat_raw
     tuple val("${sample}"), file("${sample}_flagstat_passed.tsv"), emit: flagstat_passed
     tuple val("${sample}"), file("${sample}_flagstat_failed.tsv"), emit: flagstat_failed
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     template 'mapping_quality.sh'
@@ -36,13 +37,13 @@ process pGetMappingQuality {
 
 process pBowtie {
 
-    container "pbelmann/bowtie2:${params.bowtie_tag}"
+    container "${params.bowtie_image}"
 
     label 'large'
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "contigMappingBowtie", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "contigMapping", filename) }
 
     errorStrategy 'retry'
 
@@ -52,6 +53,7 @@ process pBowtie {
     output:
     tuple val("${sample}"), file("${sample}.bam"), optional: true, emit: mappedReads
     tuple val("${sample}"), file("${sample}_bowtie_stats.txt"), optional: true, emit: stats
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
@@ -64,13 +66,11 @@ process pBowtie {
 
 process pMetabat {
 
-    container "metabat/metabat:${params.metabat_tag}"
+    container "${params.metabat_image}"
 
     tag "$sample"
 
     label 'large'
-
-    scratch false
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "metabat", filename) }
 
@@ -84,6 +84,8 @@ process pMetabat {
     tuple val("${sample}"), file("${sample}_contig_depth.tsv"), optional: true, emit: metabatDepth
     tuple val("${sample}"), file("${sample}_bins_depth.tsv"), optional: true, emit: binsDepth
     tuple val("${sample}"), file("${sample}_bins_stats.tsv"), optional: true, emit: binsStats
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
 
     shell:
     template 'metabat.sh'
@@ -92,7 +94,7 @@ process pMetabat {
 
 process pMaxBin {
 
-    container "quay.io/biocontainers/maxbin2:${params.maxbin_tag}"
+    container "${params.maxbin_image}"
 
     label 'large'
 
@@ -107,6 +109,7 @@ process pMaxBin {
 
     output:
     tuple val("${sample}"), env(NEW_TYPE), file("${TYPE}_${sample}/out.*.fasta"), optional: true, emit: bins
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''

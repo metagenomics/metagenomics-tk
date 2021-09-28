@@ -40,9 +40,5 @@ steps:
       cutoff: 0.05
       method: 'ANI'
   readMapping:
-          #  metabolomics:
-          #    smetana:
-          #     - detailed
-          #      - global
   cooccurrence:
     params: " -t 0.1 -z 80 -o 'correlation' "

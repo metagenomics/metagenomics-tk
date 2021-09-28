@@ -22,7 +22,7 @@ process pMegahit {
 
     when params?.steps.containsKey("assembly") && params?.steps?.assembly.containsKey("megahit")
 
-    container "vout/megahit:${params.megahit_tag}"
+    container "${params.megahit_image}"
 
     input:
     tuple val(sample), path(fastqs, stageAs: 'reads.fq.gz')
@@ -30,6 +30,7 @@ process pMegahit {
     output:
     tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs
     tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigsStats
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     template 'megahit.sh'

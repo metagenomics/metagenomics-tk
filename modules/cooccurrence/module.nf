@@ -1,5 +1,6 @@
 nextflow.enable.dsl=2
 
+
 def getOutput(RUNID, TOOL, filename){
     return "AGGREGATED" + '/' +  RUNID + '/' + params.modules.cooccurrence.name + '/' + 
          params.modules.cooccurrence.version.major + "." +  
@@ -34,7 +35,7 @@ process pBuildNetwork {
 
     label 'large'
    
-    container "pbelmann/cooccurrence:${params.cooccurrence_tag}"
+    container "${params.cooccurrence_image}"
 
     publishDir params.output, saveAs: { filename -> getOutput(params.runid, "matrix", filename) }
 
@@ -47,6 +48,7 @@ process pBuildNetwork {
     output:
     path("community.tsv"), emit: community
     path("output.graphml"), emit: graphml
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     template("coocurrence.sh")

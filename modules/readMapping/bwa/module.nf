@@ -10,7 +10,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 }
 
 process pBwaIndex {
-    container "quay.io/biocontainers/bwa:${params.bwa_tag}"
+    container "${params.bwa_image}"
     label 'large'
     when params.steps.containsKey("readMapping")
     input:
@@ -25,13 +25,14 @@ process pBwaIndex {
 
 process pMapBwa {
     label 'large'
-    container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
+    container "${params.samtools_bwa_image}"
     when params.steps.containsKey("readMapping")
     publishDir params.output, saveAs: { filename -> getOutput("${bin_shuffle_id}",params.runid ,"bwa", filename) }
     input:
       tuple path(sample), val(bin_shuffle_id), path(representatives_fasta), path(x, stageAs: "*") 
     output:
-      tuple val(bin_shuffle_id), path("*bam"), path("*bam.bai")
+      tuple val("${ID}"), val(bin_shuffle_id), path("*bam"), path("*bam.bai"), emit: alignment
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     shell:
     template('bwa.sh')
 }
@@ -50,6 +51,7 @@ process pCovermCount {
       tuple val("${sample}"), path("${sample}_out/rpkm.tsv"), emit: rpkm
       tuple val("${sample}"), path("${sample}_out/tpm.tsv"), emit: tpm
       tuple val("${sample}"), path("${sample}_out/mean_mincov10.tsv"), emit: meanMincov10
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     shell:
     template('coverm.sh')
 }
@@ -123,6 +125,10 @@ workflow _wReadMappingBwa {
       | combine(genomesMerged) \
       | map{ it -> [it[SAMPLE_IDX].READS, it[SAMPLE_IDX].SAMPLE, it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
       | set {index}
+
+     pMapBwa(index)
+     pMapBwa.out.alignment | combine(representativesList | map {it -> file(it)} | toList() | map { it -> [it]}) | pCovermCount
+}
 
      // Map all samples against all genomes using bwa 
      pMapBwa(index) | combine(genomes | map {it -> file(it)} \

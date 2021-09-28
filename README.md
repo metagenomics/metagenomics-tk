@@ -7,6 +7,9 @@
 
 All module configurations are the same as the full pipeline run with the sole difference that entry and param-file parameters are different.
 
+
+*Note!* Please do never place sensitive information in any params file since the content is upload as part of the pipeline run.
+
 ### Run Full Pipeline
 
 ```
@@ -63,7 +66,7 @@ s3 links ([example](test_data/fullPipeline/reads_split_s3.tsv)) in the input tsv
 
 #### Output
 
-The output is are gziped contig files.
+The output is a gzipped fasta file containing contigs.
 
 ### Cooccurrence
 
