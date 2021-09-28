@@ -1,4 +1,4 @@
-OUT=!{ID}_!{sample}_out
+OUT=!{sample}_out
 mkdir $OUT
 
 readlink -f !{list_of_representatives} > list.txt 

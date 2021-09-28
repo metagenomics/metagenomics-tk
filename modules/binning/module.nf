@@ -47,21 +47,31 @@ process pBowtie {
 
     errorStrategy 'retry'
 
-    cpus 28
-
     input:
-    tuple val(sample), path(contigs), path(fastqs, stageAs: 'fastq.fq.gz')
+    tuple val(sample), path(contigs), path(pairedReads, stageAs: 'paired.fq.gz'), path(unpairedReads, stageAs: 'unpaired.fq.gz')
 
     output:
     tuple val("${sample}"), file("${sample}.bam"), optional: true, emit: mappedReads
+    tuple val("${sample}"), file("${sample}_unmapped.fq.gz"), optional: true, emit: unmappedReads
     tuple val("${sample}"), file("${sample}_bowtie_stats.txt"), optional: true, emit: stats
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
+    getUnmapped = params.steps.containsKey("fragmentRecruitment") ? "samtools bam2fq -f 4 !{sample}.bam | pigz --best --processes !{task.cpus} > !{sample}_unmapped.fq.gz " : ""
     '''
     INDEX=!{sample}.index
-    bowtie2-build --threads 28 --quiet !{contigs} $INDEX 
-    bowtie2 -p !{task.cpus}  --quiet --very-sensitive -x $INDEX --interleaved fastq.fq.gz 2> !{sample}_bowtie_stats.txt | samtools view -F 3584 --threads 28 -bS - | samtools sort -l 9 --threads 28 - > !{sample}.bam
+
+    // Build Bowtie Index
+    bowtie2-build --threads !{task.cpus} --quiet !{contigs} $INDEX 
+
+    // Run Bowtie
+    bowtie2 -p !{task.cpus}  --very-sensitive -x $INDEX \
+              --interleaved paired.fq.gz -U unpaired.fq.gz 2> !{sample}_bowtie_stats.txt \
+             | samtools view -F 3584 --threads !{task.cpus} -bS - \
+             | samtools sort -l 9 --threads !{task.cpus} - > !{sample}.bam
+
+    // If Fragment Recruitment is selected then reads that could not be mapped should be returned
+    !{getUnmapped}
     '''
 }
 
@@ -218,6 +228,5 @@ workflow wBinning {
      bins_stats = binMap
      bins = bins_list
      mapping = pBowtie.out.mappedReads
+     unmappedReads = pBowtie.out.unmappedReads
 }
-
-

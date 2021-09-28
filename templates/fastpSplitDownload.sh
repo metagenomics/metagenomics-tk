@@ -1,7 +1,8 @@
 # run fastp
 fastp --stdin -i <(s5cmd !{params.steps.qc.download.s5cmdParams} cat ${read1Url} | zcat) \
       -I <(s5cmd !{params.steps.qc.download.s5cmdParams} cat ${read2Url} | zcat) \
-      -o read1.fastp.fq.gz -O read2.fastp.fq.gz -w !{task.cpus} -h !{sample}_report.html
+      -o read1.fastp.fq.gz -O read2.fastp.fq.gz -w !{task.cpus} -h !{sample}_report.html \
+      --unpaired1 !{sample}_unpaired.fastp.fq.gz --unpaired2 !{sample}_unpaired.qc.fq.gz
 
 # create interleaved fastq file for further analysis
 paste <(zcat read1.fastp.fq.gz)  <(zcat read2.fastp.fq.gz) \

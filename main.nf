@@ -155,7 +155,8 @@ workflow wAggregatePipelineOld {
 
 workflow _wAggregate {
    take:
-     samples
+     samplesPaired
+     samplesSingle
      binsStats
    main:
      representativeGenomesTempDir = params.tempdir + "/representativeGenomes"
@@ -169,9 +170,9 @@ workflow _wAggregate {
        | splitCsv(sep: '\t') 
        | map { it -> file(it[REPRESENTATIVES_PATH_IDX]) } \
        | collectFile(tempDir: representativeGenomesTempDir){ item -> [ "representatives.fasta", item.text ] } \
-       | set { representativesFasta }  
+       | set { representativesFasta }
 
-     wReadMappingBwa(Channel.from('1'), representativesFasta, samples, representativesList)
+     wReadMappingBwa(Channel.from('1'), representativesFasta, samplesPaired, samplesSingle, representativesList)
 
      binsStats | wAnalyseMetabolites
 }
@@ -191,22 +192,30 @@ workflow wPipeline {
     wSaveSettingsFile(Channel.fromPath(params.input))
 
     wQualityControlFile(Channel.fromPath(params.input))
-    wAssemblyList(wQualityControlFile.out.processed_reads)
 
-    wQualityControlFile.out.processed_reads \
+    wQualityControlFile.out.readsPair | join(wQualityControlFile.out.readsSingle) | set { qcReads }
+
+    wAssemblyList(qcReads)
+
+    wQualityControlFile.out.readsPair \
         | map { it -> "${it[0]}\t${it[1]}" } \
-        | collectFile(seed: "SAMPLE\tREADS", name: 'processed_reads.txt', newLine: true) \
-        | set { samples }
+        | collectFile(seed: "SAMPLE\tREADS", name: 'readsPaired.tsv', newLine: true) \
+        | set { samplesPaired }
 
-    wBinning(wAssemblyList.out.contigs, wQualityControlFile.out.processed_reads)
+    wQualityControlFile.out.readsSingle \
+        | map { it -> "${it[0]}\t${it[1]}" } \
+        | collectFile(seed: "SAMPLE\tREADS", name: 'readsSingle.tsv', newLine: true) \
+        | set { samplesSingle }
 
-    wUnmappedReadsList(wQualityControlFile.out.processed_reads, wBinning.out.bins)
+    wBinning(wAssemblyList.out.contigs, qcReads)
 
     if(params?.steps?.fragmentRecruitment?.frhit){
-       wFragmentRecruitmentList(wUnmappedReadsList.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
+       wFragmentRecruitmentList(wBinning.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
     }
-    wMagAttributesList(wBinning.out.bins)
-    mapJoin(wMagAttributesList.out.checkm, wBinning.out.bins_stats, "BIN_ID", "file") | set { binsStats  }
 
-    _wAggregate(samples, binsStats)
+    wMagAttributesList(wBinning.out.bins)
+    mapJoin(wMagAttributesList.out.checkm, wBinning.out.bins_stats, "BIN_ID", "file") \
+	| set { binsStats  }
+
+    _wAggregate(samplesPaired, samplesSingle, binsStats)
 }

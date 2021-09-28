@@ -1,5 +1,5 @@
 # run megahit
-megahit -t !{task.cpus} --12  reads.fq.gz
+megahit -t !{task.cpus} --12  interleaved.fq.gz -r unpaired.fq.gz
 
 # make contig identifiers unique
 CONTIG_NAME=!{sample}_$(echo $RANDOM)_$(echo $RANDOM)

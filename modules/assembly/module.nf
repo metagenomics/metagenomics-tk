@@ -25,7 +25,7 @@ process pMegahit {
     container "${params.megahit_image}"
 
     input:
-    tuple val(sample), path(fastqs, stageAs: 'reads.fq.gz')
+    tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz'), path(unpairedReads, stageAs: 'unpaired.fq.gz')
 
     output:
     tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs

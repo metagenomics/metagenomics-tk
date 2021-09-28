@@ -35,11 +35,13 @@ process pMapBwa {
     when params.steps.containsKey("readMapping")
     publishDir params.output, saveAs: { filename -> getOutput("${bin_shuffle_id}",params.runid ,"bwa", filename) }
     input:
-      tuple path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
+      tuple val(mode), path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
     output:
-      tuple val("${ID}"), val(bin_shuffle_id), path("*bam"), path("*bam.bai"), emit: alignment
+      tuple val("${ID}"), val(bin_shuffle_id), path("*bam"), emit: alignmentIndex
+      tuple val("${ID}"), val(bin_shuffle_id), path("*bam"), emit: alignment
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     shell:
+    MODE = mode == "paired" ? " -p " : "" 
     template('bwa.sh')
 }
 
@@ -48,7 +50,7 @@ process pMapBwaCami {
     container "${params.samtools_bwa_image}"
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid ,"bwa" , filename) }
     input:
-      tuple path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
+      tuple val(mode), path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
     output:
       tuple val("${ID}"), val(bin_shuffle_id), path("*.sam.gz")
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
@@ -73,12 +75,30 @@ process pCovermCount {
     label 'small'
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
     input:
-      tuple val(ID), val(sample), file(mapping), file(index), file(list_of_representatives)
+      tuple val(sample), file(mapping), file(index), file(list_of_representatives)
     output:
-      path("${ID}_${sample}_out", type: "dir")
+      path("${sample}_out", type: "dir")
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     shell:
     template('coverm.sh')
+}
+
+
+process pMergeAlignment {
+    when params.steps.containsKey("readMapping")
+    label 'tiny'
+    container 'quay.io/biocontainers/samtools:1.12--h9aed4be_1'
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
+    input:
+      tuple val(ID), val(sample), file("alignment?.bam")
+    output:
+      tuple val("${sample}"), path("${sample}.bam"), path("*bam.bai"), emit: alignmentIndex
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+    shell:
+    """
+    samtools merge !{sample}.bam alignment*.bam
+    samtools index !{sample}.bam
+    """
 }
 
 process pShuff {
@@ -141,16 +161,35 @@ workflow wReadMappingBwa {
    take:
      id
      representatives
-     samples
+     samplesPaired
+     samplesSingle
      representativesList
    main:
-     samples | splitCsv(sep: '\t', header: true) | set {samples_split}
-     id | combine(representatives) | pBwaIndex | combine(samples_split) \
+     samplesPaired | splitCsv(sep: '\t', header: true) | set {samplesPairedSplit}
+
+     samplesSingle | splitCsv(sep: '\t', header: true) | set {samplesSingleSplit}
+
+     id | combine(representatives) | pBwaIndex | set {index} 
+
+     index | combine(samplesPairedSplit) \
       | combine(representatives) \
-      | map{ it -> [it[2].READS, it[2].SAMPLE, it[0], it[3], it[1]] } \
-      | set {index}
-     pMapBwa(index)
-     pMapBwa.out.alignment | combine(representativesList | map {it -> file(it)} | toList() | map { it -> [it]}) | pCovermCount
+      | map{ it -> ["paired", it[2].READS, it[2].SAMPLE, it[0], it[3], it[1]] } \
+      | set {paired}
+
+    index | combine(samplesSingleSplit) \
+      | combine(representatives) \
+      | map{ it -> ["single", it[2].READS, it[2].SAMPLE, it[0], it[3], it[1]] } \
+      | set {single}
+
+     // Paired and single reads should be mapped back
+     pMapBwa(paired | mix(single))
+     
+     // The resulting alignments (bam files) should merged
+     pMapBwa.out.alignment | groupTuple(by: 1) | pMergeAlignment
+         
+     // The alignment is then analysed per dataset
+     pMergeAlignment.out.alignmentIndex | combine(representativesList \
+      | map {it -> file(it)} | toList() | map { it -> [it]}) | pCovermCount
 }
 
 workflow {
