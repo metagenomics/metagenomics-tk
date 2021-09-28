@@ -127,11 +127,8 @@ workflow _wReadMappingBwa {
       | set {index}
 
      pMapBwa(index)
-     pMapBwa.out.alignment | combine(representativesList | map {it -> file(it)} | toList() | map { it -> [it]}) | pCovermCount
-}
-
      // Map all samples against all genomes using bwa 
-     pMapBwa(index) | combine(genomes | map {it -> file(it)} \
+     pMapBwa.out.alignment | combine(genomes | map {it -> file(it)} \
       | toList() | map { it -> [it]}) | pCovermCount
    emit:
      trimmedMean = pCovermCount.out.trimmedMean
