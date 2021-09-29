@@ -61,16 +61,16 @@ process pBowtie {
     '''
     INDEX=!{sample}.index
 
-    // Build Bowtie Index
+    # Build Bowtie Index
     bowtie2-build --threads !{task.cpus} --quiet !{contigs} $INDEX 
 
-    // Run Bowtie
+    # Run Bowtie
     bowtie2 -p !{task.cpus}  --very-sensitive -x $INDEX \
               --interleaved paired.fq.gz -U unpaired.fq.gz 2> !{sample}_bowtie_stats.txt \
              | samtools view -F 3584 --threads !{task.cpus} -bS - \
              | samtools sort -l 9 --threads !{task.cpus} - > !{sample}.bam
 
-    // If Fragment Recruitment is selected then reads that could not be mapped should be returned
+    # If Fragment Recruitment is selected then reads that could not be mapped should be returned
     !{getUnmapped}
     '''
 }
