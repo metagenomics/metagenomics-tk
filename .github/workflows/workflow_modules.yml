@@ -10,6 +10,7 @@ on:
   workflow_dispatch:
 jobs:
   full_pipeline:
+    timeout-minutes: 700
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
@@ -35,6 +36,7 @@ jobs:
           bash ./scripts/test_fullPipelineAggregate.sh " -c  test_data/assets/aws.config " || exit 1
 
   mag_attributes:
+    timeout-minutes: 700
     needs: [full_pipeline]
     runs-on: self-hosted
     steps:
@@ -56,6 +58,7 @@ jobs:
           bash ./scripts/test_magAttributes.sh "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "  example_params/magAttributes_fraction/magAttributes.yml  || exit 1
 
   dereplication:
+    timeout-minutes: 700
     needs: [full_pipeline]
     runs-on: self-hosted
     steps:
@@ -73,6 +76,7 @@ jobs:
           bash ./scripts/test_dereplication.sh || exit 1
 
   readmapping:
+    timeout-minutes: 700
     needs: [dereplication]
     runs-on: self-hosted
     steps:
@@ -90,6 +94,7 @@ jobs:
           bash ./scripts/test_readMapping.sh || exit 1
 
   assembly:
+    timeout-minutes: 700
     needs: [readmapping]
     runs-on: self-hosted
     steps:
@@ -107,6 +112,7 @@ jobs:
           bash ./scripts/test_assembly.sh || exit 1
 
   cooccurrence:
+    timeout-minutes: 700
     needs: [assembly]
     runs-on: self-hosted
     steps:
@@ -124,6 +130,7 @@ jobs:
           bash ./scripts/test_cooccurrence.sh || exit 1
 
   fragment_recruitment:
+    timeout-minutes: 700
     needs: [cooccurrence]
     runs-on: self-hosted
     steps:
