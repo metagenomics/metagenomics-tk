@@ -1,0 +1,9 @@
+tempdir: "tmp"
+summary: false
+output: "output"
+runid: 1
+steps:
+  assembly:
+    input: test_data/assembly/samples.tsv 
+    megahit:
+      params: " --min-contig-len 200 "

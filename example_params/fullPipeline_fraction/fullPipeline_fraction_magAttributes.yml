@@ -7,8 +7,10 @@ steps:
   qc:
     interleaved: false
     fastp:
+      params: " "
   assembly:
     megahit:
+      params: " "
   binning:
     metabat:
   sampleAnalysis:
