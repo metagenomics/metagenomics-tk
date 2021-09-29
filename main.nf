@@ -23,6 +23,10 @@ workflow wDereplication {
    wDereplicateFile(Channel.from(file(params?.steps?.dereplication?.pasolli?.input)))
 }
 
+workflow wAssembly {
+   wAssemblyFile()
+}
+
 workflow wDereplicationPath {
    wDereplicatePath()
 }

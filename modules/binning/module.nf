@@ -57,7 +57,7 @@ process pBowtie {
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
-    getUnmapped = params.steps.containsKey("fragmentRecruitment") ? "samtools bam2fq -f 4 !{sample}.bam | pigz --best --processes !{task.cpus} > !{sample}_unmapped.fq.gz " : ""
+    getUnmapped = params.steps.containsKey("fragmentRecruitment") ? "TRUE" : ""
     '''
     INDEX=!{sample}.index
 
@@ -71,7 +71,10 @@ process pBowtie {
              | samtools sort -l 9 --threads !{task.cpus} - > !{sample}.bam
 
     # If Fragment Recruitment is selected then reads that could not be mapped should be returned
-    !{getUnmapped}
+    if [ "!{getUnmapped}" == "TRUE" ]; then
+	samtools bam2fq -f 4 !{sample}.bam | pigz --best --processes !{task.cpus} > !{sample}_unmapped.fq.gz 
+    fi
+
     '''
 }
 
@@ -188,6 +191,11 @@ def setID(binning){
   return chunkList;
 }
 
+/*
+*
+* This workflow takes an input_reads channel as input with the following format [SAMPLE, READS PAIRED, READS UNPAIRED]
+*
+*/
 workflow wBinning {
    take: 
      contigs

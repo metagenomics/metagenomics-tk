@@ -25,7 +25,8 @@ process pMegahit {
     container "${params.megahit_image}"
 
     input:
-    tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz'), path(unpairedReads, stageAs: 'unpaired.fq.gz')
+    tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz'), path(unpairedReads)
+//path(unpairedReads, stageAs: 'unpaired.fq.gz')
 
     output:
     tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs
@@ -33,13 +34,14 @@ process pMegahit {
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
+    includeUnpairedReads = unpairedReads.name != "NOT_SET" ? " -r ${unpairedReads} " : ''
     template 'megahit.sh'
 }
 
 
 
 /*
- * Takes a list as input with the format [SAMPLE, READS]
+ * Takes a list as input with the format [SAMPLE, READS_PAIRED, READS_UNPAIRED]
  * Output is of the format [SAMPLE, CONTIGS]
  * 
  */
@@ -63,16 +65,14 @@ workflow wAssemblyList {
  * 
  */
 workflow wAssemblyFile {
-     take:
-       readsTable
      main:
-       readsTable | splitCsv(sep: '\t', header: true) \
-             | map { it -> [ it.SAMPLE, it.READS]} \
+       Channel.from(file(params.steps.assembly.input)) | splitCsv(sep: '\t', header: true) \
+             | map { it -> [ it.SAMPLE, it.READS, file("NOT_SET")]} \
              | _wAssembly
-
     emit:
       contigs = _wAssembly.out.contigs
 }
+
 
 
 /*
@@ -90,7 +90,6 @@ workflow _wAssembly {
            [ "contigs_stats.tsv", item[1].text ]
          }
        }
-
     emit:
       contigs = pMegahit.out.contigs
 }
