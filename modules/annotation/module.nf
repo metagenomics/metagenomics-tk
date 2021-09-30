@@ -41,16 +41,7 @@ process pDiamond {
       # Download the database if there is a more recent one online, or if the size differs.
       # The destination folder should be outside of the working directory to share the database with future processes.
       s5cmd !{params.steps.annotation.s5cmd} cp -u -s !{params.steps.annotation.diamond.database} !{params.databases}
-      diamond \
-      !{params.steps.annotation.diamond.mode} \
-      !{params.steps.annotation.diamond.cores} \
-      !{params.steps.annotation.diamond.sensitivity} \
-      !{params.steps.annotation.diamond.outfmt} \
-      --out diamond.!{sample}.out \
-      --db !{params.databases}kegg-2021-01.dmnd \
-      --query !{fasta} \
-      !{params.steps.annotation.diamond.targetseq} \
-      !{params.steps.annotation.diamond.evalue} 
+      diamond !{params.steps.annotation.diamond.params} --out diamond.!{sample}.out --db !{params.databases}kegg-2021-01.dmnd --query !{fasta} 
       '''
 }
 
