@@ -105,8 +105,8 @@ You will have to create a configuration file that can be provided to nextflow wi
 
 ```
 aws {
-  accessKey = xxx
-  secretKey = xxx
+  accessKey = 'xxx'
+  secretKey = 'xxx'
 
     client {
       s_3_path_style_access = true

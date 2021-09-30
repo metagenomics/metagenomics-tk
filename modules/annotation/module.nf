@@ -45,7 +45,6 @@ process pDiamond {
       # The destination folder should be outside of the working directory to share the database with future processes.
       s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.diamond.database} !{params.databases}
       diamond !{params.steps.annotation.diamond.params} --out diamond.!{sample}.out --db !{params.databases}kegg-2021-01.dmnd --query !{fasta}
-      cat /.aws/credentials > kex.file 
       '''
 }
 
@@ -130,12 +129,13 @@ process pKEGGFromDiamond {
 * The .tsv file has to have: DATASET PATH entries. 
 *
 **/
-workflow wAnnotateLocalFile {
+workflow wAnnotateFile {
 
    take:
       projectTableFile
    main:
-      projectTableFile | splitCsv(sep: '\t', header: true) | map{ it -> [it.DATASET, file(it.PATH)] } | collectFile() | map{ it -> [it.name, it]} | _wAnnotation
+      projectTableFile | splitCsv(sep: '\t', header: true) | map{ it -> [it.DATASET, file(it.PATH)] } \
+      | collectFile() | map{ it -> [it.name, it]} | _wAnnotation
 }
 
 
