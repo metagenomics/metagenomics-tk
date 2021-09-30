@@ -1,10 +1,11 @@
 nextflow.enable.dsl=2
 
-MODULE="annotation"
-VERSION="0.1.0"
-
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+    return SAMPLE + '/' + RUNID + '/' + params.modules.annotation.name + '/' + 
+          params.modules.annotation.version.major + "." + 
+          params.modules.annotation.version.minor + "." + 
+          params.modules.annotation.version.patch +
+          '/' + TOOL + '/' + filename
 }
 
 /**
