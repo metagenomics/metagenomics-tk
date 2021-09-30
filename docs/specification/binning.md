@@ -14,7 +14,7 @@ Where `NUMBER` is a unique identifier per SAMPLE.
 
 Contig names must be renamed according to the following pattern:
 
-`SAMPLEID_SEQUENCECOUNTER_SEQUENCEHASH_BINNUMBER`
+`SAMPLEID_SEQUENCECOUNTER_SEQUENCEHASH MAG=BINNUMBER`
 
 where
 
