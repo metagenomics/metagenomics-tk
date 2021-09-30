@@ -234,6 +234,7 @@ workflow wMagAttributesList {
      mags | _wMagAttributes
    emit:
      checkm = _wMagAttributes.out.checkm
+     gtdb = _wMagAttributes.out.gtdb
      prokka_err = _wMagAttributes.out.prokka_err
      prokka_faa = _wMagAttributes.out.prokka_faa
      prokka_ffn = _wMagAttributes.out.prokka_ffn
@@ -362,6 +363,7 @@ workflow _wMagAttributes {
      }
    emit:
      checkm = checkm_list
+     gtdb = gtdb.combined
      prokka_err = pProkka.out.err
      prokka_faa = pProkka.out.faa
      prokka_ffn = pProkka.out.ffn

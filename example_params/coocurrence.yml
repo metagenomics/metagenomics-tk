@@ -1,0 +1,9 @@
+tempdir: "tmp"
+summary: false
+output: "output"
+runid: 1
+steps:
+  cooccurrence:
+     gtdb: test_data/cooccurrence/gtdb.tsv
+     count: test_data/cooccurrence/counts.tsv 
+     params: " -t 0.1 -z 80 -o 'correlation' "

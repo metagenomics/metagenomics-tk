@@ -1,0 +1,3 @@
+SAMPLE	COUNTS
+sample1	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/trimmed_mean_sample1.tsv
+sample2	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/trimmed_mean_sample2.tsv
