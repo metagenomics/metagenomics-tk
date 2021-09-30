@@ -6,3 +6,8 @@ steps:
   readMapping:
     samples: test_data/readMapping/samples.tsv
     mags: test_data/readMapping/mags.tsv
+    bwa:
+      additionalParams:
+        bwa_index: ""
+        bwa_mem: ""
+        coverm: " --min-covered-fraction 0 "
