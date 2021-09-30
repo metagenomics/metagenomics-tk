@@ -125,18 +125,6 @@ process pKEGGFromDiamond {
       '''
 }
 
-process pTest {
-
-   output:
-      file ("test.file")
-
-   shell:
-      '''
-      echo "!{aws.accessKey}" > test.file
-      '''
-}
-
-
 /**
 *
 * This entry point uses a file to grab all fasta files in the referenced directories for annotation.
