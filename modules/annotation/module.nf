@@ -21,7 +21,9 @@ process pDiamond {
       // Databases will be downloaded to a fixed place so that they can be used by future processes.
       // These fixed place has to be outside of the working-directory to be easy to find for every process.
       // Therefore this place has to be mounted to the docker container to be accessible during run time.
-      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases}"
+      // Another mount flag is used to get a key file (aws format) into the docker-container. 
+      // This file is then used by s5cmd. 
+      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} --volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
  
       tag "$sample"
 
@@ -40,8 +42,9 @@ process pDiamond {
       '''
       # Download the database if there is a more recent one online, or if the size differs.
       # The destination folder should be outside of the working directory to share the database with future processes.
-      s5cmd !{params.steps.annotation.s5cmd} cp -u -s !{params.steps.annotation.diamond.database} !{params.databases}
-      diamond !{params.steps.annotation.diamond.params} --out diamond.!{sample}.out --db !{params.databases}kegg-2021-01.dmnd --query !{fasta} 
+      s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.diamond.database} !{params.databases}
+      diamond !{params.steps.annotation.diamond.params} --out diamond.!{sample}.out --db !{params.databases}kegg-2021-01.dmnd --query !{fasta}
+      cat /.aws/credentials > kex.file 
       '''
 }
 
@@ -96,7 +99,9 @@ process pKEGGFromDiamond {
       // Databases will be downloaded to a fixed place so that they can be used by future processes.
       // These fixed place has to be outside of the working-directory to be easy to find for every process.
       // Therefore this place has to be mounted to the docker container to be accessible during runtime.
-      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases}"
+      // Another mount flag is used to get a key file (aws format) into the docker-container. 
+      // This file is then used by s5cmd. 
+      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} --volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
 
       publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromDiamond", filename) }
 
@@ -111,7 +116,7 @@ process pKEGGFromDiamond {
       '''
       # Download the database if there is a more recent one online, or if the size differs.
       # The destination folder should be outside of the working directory to share the database with future processes.
-      s5cmd !{params.steps.annotation.s5cmd} cp -u -s !{params.steps.annotation.kegg.database} !{params.databases}kegg
+      s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.kegg.database} !{params.databases}kegg
       diamond2kegg.py !{diamond_result} !{params.databases}kegg !{sample}_kegg.tsv 
       '''
 }

@@ -104,14 +104,6 @@ All modules of the pipeline can be used in conjunction with S3.
 You will have to create a configuration file that can be provided to nextflow with " -c " Parameter.
 
 ```
-// You only need to fill out the env scope if you want to use the annotation module.
-// The aws scope below is not accessible by processes, 
-// so this hack has to be used for processes to get credentials.
-env {
-   AWS_ACCESS_KEY_ID='xxx'
-   AWS_SECRET_ACCESS_KEY='xxx'
-}
-
 aws {
   accessKey = xxx
   secretKey = xxx
@@ -129,6 +121,16 @@ aws {
 ```
 
 If you want to upload tool results to s3, just update the output parameter in the configuration file from `/path/to/output` to `s3://bucket/path/to/output`
+
+If you want to use the annotation module, you also have to provide your credentials in an aws credential style.
+Create a file that looks like this and fill in your credentials:
+
+```
+[default]
+aws_access_key_id=ABCDEKEY
+aws_secret_access_key=ABCDEKEY
+```
+You have to reference this file in the annotation parameter yml's s5cmd keyfiles section.  
 
 ## Other 
 
