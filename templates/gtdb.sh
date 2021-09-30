@@ -4,7 +4,7 @@ mkdir output
 readlink -f !{bins} > bin.path
 paste -d$'\t' bin.path <(for p in $(cat bin.path); do basename $p; done) > input.tsv
 
-gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus}  --extension !{ending}
+gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus} --extension !{ending} !{params.magAttributes.gtdb.additionalParams}
 
 # reformat gtdbtk output files
 touch output/gtdbtk.bac120.summary.tsv

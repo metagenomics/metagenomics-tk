@@ -1,5 +1,5 @@
 # run megahit
-megahit -t !{task.cpus} --12 reads.fq.gz !{params.steps.assembly.megahit.params}
+megahit -t !{task.cpus} --12 reads.fq.gz !{params.steps.assembly.megahit.additionalParams}
 
 ASSEMBLY_OUTPUT=!{sample}_contigs.fa.gz
 
