@@ -84,7 +84,7 @@ process pBowtie {
     '''
     INDEX=!{sample}.index
     bowtie2-build --threads !{task.cpus} --quiet !{contigs} $INDEX 
-    bowtie2 -p !{task.cpus} !{params.steps.bining.bowtie.additionalParams.bowtie} -x $INDEX --interleaved fastq.fq.gz 2> !{sample}_bowtie_stats.txt \
+    bowtie2 -p !{task.cpus} !{params.steps.binning.bowtie.additionalParams.bowtie} -x $INDEX --interleaved fastq.fq.gz 2> !{sample}_bowtie_stats.txt \
           | samtools view !{params.steps.binning.bowtie.additionalParams.samtoolsView} --threads !{task.cpus} -bS - \
           | samtools sort -l 9 --threads !{task.cpus} - > !{sample}.bam
     '''
