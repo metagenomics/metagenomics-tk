@@ -41,7 +41,7 @@ process pFrHit {
     HALF_AVG_LEN=$(bc <<< "${AVG_LEN} / 2")
     gunzip reads.fasta.gz
     echo "Min. Coverage Parameter: ${HALF_AVG_LEN}"
-    fr-hit !{params.steps.fragmentRecruitment.frhit.additionalParams} -f 1 -m ${HALF_AVG_LEN} -T !{task.cpus} -a reads.fasta -d !{genomesCombined} -o coverage/out.psl
+    fr-hit !{params.steps.fragmentRecruitment.frhit.additionalParams.frhit} -f 1 -m ${HALF_AVG_LEN} -T !{task.cpus} -a reads.fasta -d !{genomesCombined} -o coverage/out.psl
     if [ -s "coverage/out.psl" ] 
     then
       psl2sam.pl coverage/out.psl | samtools view -bT !{genomesCombined} - | samtools calmd -E - genomes | samtools view -Sb - | samtools sort -o - out > !{sample}.bam 2> /dev/null
@@ -70,7 +70,7 @@ process pUnzip {
 
   script:
   """
-  < $x zcat > ${x.baseName}
+  < $x zcat --force > ${x.baseName}
   """
 }
 
@@ -121,7 +121,10 @@ workflow wFragmentRecruitmentFile {
      sampleReadsFile | splitCsv(sep: '\t', header: true) \
        | map { sample -> [sample.SAMPLE, file(sample.READS)] } | set {sampleReadsList}
 
-     _wFragmentRecruitment(sampleReadsList, genomes)
+     genomes | splitCsv(sep: '\t', header: true) \
+       | map { genome -> file(genome.BINS) } | set {magsList}
+
+     _wFragmentRecruitment(sampleReadsList, magsList)
 }
 
 
@@ -144,13 +147,13 @@ workflow _wFragmentRecruitment {
      fragmentRecruitmentGenomes = params.tempdir + "/fragmentRecruitmentGenomes"
      file(fragmentRecruitmentGenomes).mkdirs()
 
-     genomes | branch { compressed: file(it).name.endsWith(".gz"); uncompressed: !file(it).name.endsWith(".gz") } | set { fileState }
-     
-     fileState.compressed | pUnzip | set{unzippedGenomes}
-     fileState.uncompressed | mix(unzippedGenomes) | collectFile(newLine: true){genome -> ["genomes_list", file(genome).path]} | set { genomesList } 
+     genomes | pUnzip | set {unzippedGenomes}
 
-     fileState.uncompressed | mix(unzippedGenomes) \
-       | collectFile(tempDir: fragmentRecruitmentGenomes, sort: params?.steps?.fragmentRecruitment?.frhit?.sort){ genome -> ["genomes",genome.text] } \
+     unzippedGenomes | collectFile(newLine: true){genome -> ["genomes_list", file(genome).path]} \
+       | set { genomesList } 
+
+     unzippedGenomes \
+       | collectFile(tempDir: fragmentRecruitmentGenomes, sort: params?.steps?.fragmentRecruitment?.frhit?.sort){ genome -> ["genomes", genome.text] } \
        | combine(genomesList) | set { genomesCombined }
 
      SAMPLE_NAME_IDX = 0
