@@ -8,16 +8,17 @@ def flattenBins(binning){
   return chunkList;
 }
 
-
-MODULE="sampleAnalysis"
-VERSION="0.1.0"
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+    return SAMPLE + '/' + RUNID + '/' + params.modules.sampleAnalysis.name + '/' + 
+          params.modules.sampleAnalysis.version.major + "." + 
+          params.modules.sampleAnalysis.version.minor + "." + 
+          params.modules.sampleAnalysis.version.patch + 
+          '/' + TOOL + '/' + filename
 }
 
 process pBowtie {
 
-    container "pbelmann/bowtie2:${params.bowtie_tag}"
+    container "${params.bowtie_image}"
 
     label 'large'
 
@@ -35,6 +36,7 @@ process pBowtie {
     output:
     tuple val("${sample}"), val("${TYPE}"), file("interleaved.discordand.fq.gz"), optional: true, emit: unmappedReads
     tuple val("${sample}"), val("${TYPE}"), file("${sample}_bowtie_stats.txt"), optional: true, emit: readBinsStats
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''

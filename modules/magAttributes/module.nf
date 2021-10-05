@@ -1,14 +1,16 @@
 nextflow.enable.dsl=2
 
-MODULE="magAttributes"
-VERSION="1.0.0"
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+    return SAMPLE + '/' + RUNID + '/' + params.modules.magAttributes.name + '/' + 
+         params.modules.magAttributes.version.major + "." +  
+         params.modules.magAttributes.version.minor + "." +
+         params.modules.magAttributes.version.patch +
+         '/' + TOOL + '/' + filename
 }
 
 process pCmseq {
 
-    container "pbelmann/cmseq:${params.cmseq_tag}"
+    container "${params.cmseq_image}"
 
     label 'tiny'
 
@@ -31,7 +33,7 @@ process pCmseq {
 
 process pCheckM {
 
-    container "pbelmann/checkm:${params.checkm_tag}"
+    container "${params.checkm_image}"
 
     errorStrategy 'ignore'
 
@@ -47,7 +49,8 @@ process pCheckM {
     tuple val(sample), val(ending), path(bins) 
 
     output:
-    tuple path("${sample}_checkm_*.tsv", type: "file"), val("${sample}")
+    tuple path("${sample}_checkm_*.tsv", type: "file"), val("${sample}"), emit: checkm
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
     template 'checkm.sh'
@@ -57,7 +60,7 @@ process pCheckM {
 
 process pGtdbtk {
 
-    container "ecogenomic/gtdbtk:${params.gtdbtk_tag}"
+    container "${params.gtdbtk_image}"
 
     errorStrategy 'ignore'
 
@@ -76,6 +79,7 @@ process pGtdbtk {
     tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
     tuple path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), val("${sample}"), optional: true, emit: archea
     tuple path("${sample}_gtdbtk_*.tsv"), val("${sample}"), optional: true, emit: combined
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     template 'gtdb.sh'
@@ -84,7 +88,7 @@ process pGtdbtk {
 
 process pProkka {
 
-    container "quay.io/biocontainers/prokka:${params.prokka_tag}"
+    container "${params.prokka_image}"
 
     errorStrategy 'ignore'
 
@@ -112,6 +116,7 @@ process pProkka {
     tuple file("*.sqn.gz"), env(BIN_ID), val("${sample}"), emit: sqn
     tuple file("*.txt"), env(BIN_ID), val("${sample}"), emit: txt
     tuple file("*.tsv"), env(BIN_ID), val("${sample}"), emit: tsv
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
@@ -229,6 +234,7 @@ workflow wMagAttributesList {
      mags | _wMagAttributes
    emit:
      checkm = _wMagAttributes.out.checkm
+     gtdb = _wMagAttributes.out.gtdb
      prokka_err = _wMagAttributes.out.prokka_err
      prokka_faa = _wMagAttributes.out.prokka_faa
      prokka_ffn = _wMagAttributes.out.prokka_ffn
@@ -334,14 +340,14 @@ workflow _wMagAttributes {
      prokkaInput  | pProkka
 
      // Prepare checkm output file
-     checkm | groupTuple(by: DATASET_OUTPUT_IDX, remainder: true) | map { it -> it[BIN_FILES_OUTPUT_GROUP_IDX] }  | flatten | map { bin -> file(bin) } \
+     checkm.checkm | groupTuple(by: DATASET_OUTPUT_IDX, remainder: true) | map { it -> it[BIN_FILES_OUTPUT_GROUP_IDX] }  | flatten | map { bin -> file(bin) } \
        | collectFile(keepHeader: true, newLine: false ){ item -> [ "bin_attributes.tsv", item.text ] } \
        | splitCsv(sep: '\t', header: true) \
        | set{ checkm_list } 
 
      if(params.summary){
        // collect checkm files for checkm results across multiple datasets
-       checkm \
+       checkm.checkm \
           | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
          [ "checkm.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
        }
@@ -357,6 +363,7 @@ workflow _wMagAttributes {
      }
    emit:
      checkm = checkm_list
+     gtdb = gtdb.combined
      prokka_err = pProkka.out.err
      prokka_faa = pProkka.out.faa
      prokka_ffn = pProkka.out.ffn

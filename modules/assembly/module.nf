@@ -1,9 +1,12 @@
 nextflow.enable.dsl=2
 
-MODULE="assembly"
-VERSION="1.0.0"
+
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+    return SAMPLE + '/' + RUNID + '/' + params.modules.assembly.name + '/' +
+          params.modules.assembly.version.major + "." +
+          params.modules.assembly.version.minor + "." +
+          params.modules.assembly.version.patch +
+          '/' + TOOL + '/' + filename
 }
 
 
@@ -19,14 +22,15 @@ process pMegahit {
 
     when params?.steps.containsKey("assembly") && params?.steps?.assembly.containsKey("megahit")
 
-    container "vout/megahit:${params.megahit_tag}"
+    container "${params.megahit_image}"
 
     input:
     tuple val(sample), path(fastqs, stageAs: 'reads.fq.gz')
 
     output:
     tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs
-    tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigs_stats
+    tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigsStats
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     template 'megahit.sh'
@@ -59,13 +63,10 @@ workflow wAssemblyList {
  * 
  */
 workflow wAssemblyFile {
-     take:
-       readsTable
      main:
-       readsTable | splitCsv(sep: '\t', header: true) \
+       Channel.from(file(params.steps.assembly.input)) | splitCsv(sep: '\t', header: true) \
              | map { it -> [ it.SAMPLE, it.READS]} \
              | _wAssembly
-
     emit:
       contigs = _wAssembly.out.contigs
 }
@@ -82,11 +83,10 @@ workflow _wAssembly {
      main:
        readsList | pMegahit
        if(params.summary){
-         pMegahit.out.contigs_stats | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
+         pMegahit.out.contigsStats | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
            [ "contigs_stats.tsv", item[1].text ]
          }
        }
-
     emit:
       contigs = pMegahit.out.contigs
 }

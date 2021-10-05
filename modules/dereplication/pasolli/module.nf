@@ -1,16 +1,18 @@
 nextflow.enable.dsl=2
 
-MODULE="dereplication"
-VERSION="0.1.0"
-def getOutput(RUNID, TOOL, filename){
-    return "AGGREGATED" + '/' +  RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
-}
 
+def getOutput(RUNID, TOOL, filename){
+    return "AGGREGATED" + '/' +  RUNID + '/' + params.modules.dereplication.name + '/' + 
+         params.modules.dereplication.version.major + "." +  
+         params.modules.dereplication.version.minor + "." +  
+         params.modules.dereplication.version.patch +  
+         '/' + TOOL + '/' + filename
+}
 
 
 process pMashSketchGenome {
 
-    container "quay.io/biocontainers/mash:${params.mash_tag}"
+    container "${params.mash_image}"
 
     errorStrategy 'retry'
 
@@ -36,7 +38,7 @@ process pMashSketchGenome {
 
 process pMashPaste {
 
-    container "quay.io/biocontainers/mash:${params.mash_tag}"
+    container "${params.mash_image}"
 
     errorStrategy 'retry'
 
@@ -57,7 +59,7 @@ process pMashPaste {
 
 process pMashDist {
 
-    container "quay.io/biocontainers/mash:${params.mash_tag}"
+    container "${params.mash_image}"
 
     errorStrategy 'retry'
 
@@ -86,7 +88,7 @@ process pClusterDistances {
     input:
     file('distances.tsv')
 
-    container "pbelmann/python-env:${params.python_env_tag}"
+    container "${params.python_env_image}"
 
     label 'medium'
 
@@ -109,7 +111,7 @@ process pSelectRepresentative {
     path genome_table
     tuple file("distance"), file("cluster")
 
-    container "pbelmann/python-env:${params.python_env_tag}"
+    container "${params.python_env_image}"
 
     publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/selectedRepresentatives", filename) }
 
@@ -118,6 +120,7 @@ process pSelectRepresentative {
     output:
     path("intermediate_clusters.tsv"), emit: clusters
     path("refinement/representatives_to_compare.tsv"), emit: representatives
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     template 'selectRepresentative.sh'
@@ -134,7 +137,7 @@ process pANIb {
     file("genome1*") 
     file("genome2*") 
 
-    container "leightonpritchard/average_nucleotide_identity:${params.ani_tag}"
+    container "${params.ani_image}"
 
     when:
     params.steps.dereplication.pasolli.method.contains("ANI")
@@ -155,7 +158,7 @@ process pTETRA {
     file("genome1*") 
     file("genome2*") 
 
-    container "leightonpritchard/average_nucleotide_identity:${params.ani_tag}"
+    container "${params.ani_image}"
 
     output:
     file("*.out/out.tsv") 
@@ -173,7 +176,7 @@ process pGetCluster {
 
     publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/clusters", filename) }
 
-    container "pbelmann/python-env:${params.python_env_tag}"
+    container "${params.python_env_image}"
 
     input:
     path cluster, stageAs: 'cluster'
@@ -183,6 +186,7 @@ process pGetCluster {
     output:
     path 'final_clusters.tsv', emit: final_clusters
     path 'ani_values.tsv', emit: ani_values
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
@@ -203,6 +207,7 @@ process pFinalize {
 
     output:
     file 'final_clusters.tsv' 
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
@@ -232,38 +237,6 @@ def collectFiles(dir, sra){
 
 /**
 *
-* This entry point is highly experimental and should be used for retrieving input data for the dereplication module.
-*
-**/
-workflow wDereplicatePath {
-    def baseDir = params.baseDir
-    def runID = params.runid
-
-    Channel.from(file(baseDir).list()) | filter({ path -> !(path ==~ /.*summary$/)})  | set { sraDatasets } 
-    sraDatasets | map { sra ->  [sra, baseDir + "/" + sra + "/" + runID + "/" ]} \
-       | set {sraIDs}
-
-    sraIDs | flatMap { sraID -> collectFiles(file(sraID[1]), sraID[0])} | set {sraFiles}
-    sraFiles | filter({ it -> (it[1] ==~ /.*\/binning\/0.1.0\/metabat\/.*.fa$/)}) \
-        | map{ sra,f -> [SAMPLE:sra, PATH: baseDir.startsWith("s3://")? "s3:/" + f: f, BIN_ID:file(f).name] } | set{bins}
-
-     sraFiles | filter({ sra, path -> (path ==~ /.*\/magAttributes\/0.2.0\/checkm\/.*.tsv$/)}) \
-       | splitCsv(header: ["PATH", "SAMPLE", "BIN_ID", "Marker lineage", "# genomes", "# markers", "# marker sets", "0", "1", "2", "3", "4", "5+", "COMPLETENESS", "CONTAMINATION", "HETEROGENEITY"], sep: '\t') \
-       | map { sra, bins -> bins}  \
-       | set { checkm }
-
-     sraFiles | filter({ sra, path -> (path ==~ /.*\/binning\/0.1.0\/metabat\/.*_bins_stats.tsv$/)}) \
-        | splitCsv(header: true, sep: '\t') | map { sra, bins -> bins} | set{binStats}
-
-     mapJoin(binStats, checkm, "BIN_ID", "BIN_ID") | set {checkmBinStats} 
-     mapJoin(checkmBinStats, bins, "file", "BIN_ID") | map( it -> "${it['BIN_ID']}\t${it['COMPLETENESS']}\t${it['COVERAGE']}\t${it['CONTAMINATION']}\t${it['HETEROGENEITY']}\t${it['PATH']}\t${it['N50']}" ) \
-         | collectFile(seed: "BIN_ID\tCOMPLETENESS\tCOVERAGE\tCONTAMINATION\tHETEROGENEITY\tPATH\tN50", newLine: true, keepHeader: false) | view() | wDereplicateFile 
-}
-
-
-
-/**
-*
 * Dereplicate genomes that are listed in a tsv file containing the columns
 * "BIN_ID", "COMPLETENESS", "COVERAGE", "CONTAMINATION", "HETEROGENEITY", "PATH", "N50".
 * 
@@ -276,6 +249,8 @@ workflow wDereplicateFile {
      genomesTableFile    
    main:
      genomesTableFile | _wDereplicate
+   emit:
+     _wDereplicate.out
 }
 
 
@@ -365,8 +340,8 @@ workflow _wDereplicate {
      pGetCluster.out.final_clusters | mix(pFinalize.out) | splitCsv(sep: '\t', header: true) \
        | filter({ it.REPRESENTATIVE.toFloat() == IS_REPRESENTATIVE }) | map { it -> it['GENOME'] } \
        | join(genomesTable | map{ bin -> [bin.BIN_ID, bin.PATH] }) | map { bin -> bin[PATH_IDX] } \
-       | collectFile(newLine: true) | set{representatives}
-
+       | set{representatives}
+//| collectFile(newLine: true) | view() 
   emit:
      representatives
 }

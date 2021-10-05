@@ -1,10 +1,12 @@
 nextflow.enable.dsl=2
 include { wUnmappedReadsFile } from '../../sampleAnalysis/module'
 
-MODULE="fragmentRecruitment"
-VERSION="0.1.0"
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + MODULE + '/' + VERSION + '/' + TOOL + '/' + filename
+    return SAMPLE + '/' + RUNID + '/' + params.modules.fragmentRecruitment.name + '/' + 
+         params.modules.fragmentRecruitment.version.major + "."
+         params.modules.fragmentRecruitment.version.minor + "."
+         params.modules.fragmentRecruitment.version.patch
+          + '/' + TOOL + '/' + filename
 }
 
 process pFrHit {
@@ -19,7 +21,7 @@ process pFrHit {
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "frhit",  filename) }
 
-    container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
+    container "${params.samtools_bwa_image}"
 
     when params.steps.containsKey("fragmentRecruitment")
 
@@ -29,6 +31,7 @@ process pFrHit {
     output:
     tuple val("${sample}"), file("${sample}.bam"), optional: true, emit: alignment
     tuple val("${sample}"), file("coverage"), optional: true, emit: coverageStats
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
@@ -83,7 +86,7 @@ process pCombinedAlignmentAnalysis {
 
     publishDir "${params.output}/fragmentRecruitment"
 
-    container "pbelmann/bwa-samtools:${params.samtools_bwa_tag}"
+    container "${params.samtools_bwa_image}"
 
     input:
     file(alignments)
@@ -91,6 +94,7 @@ process pCombinedAlignmentAnalysis {
 
     output:
     path("coverage"), emit: coverageStats
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''

@@ -40,7 +40,8 @@ bash scripts/test_magAttributes.sh  --steps.magAttributes.input=test/bins/small/
 ## Modules
 
 Functionality is structured in modules (assembly, binning, dereplication, .etc). Each module can have multiple workflows.
-Every module follows the output definition specified in the [output specification](specification.md)  document.
+Every module follows the output definition specified in the [output specification](specification.md)  document. The name and the version of the
+module is specified in the `modules` section of the `nextflow.config` file.
 
 ### Workflows
 
@@ -67,6 +68,8 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 1. Process names should start `p`
 
 2. The input and output of processes should contain a sample and/or bin and contig id.
+
+3. Pocesses should publish `.command.sh`, `.command.out`, `.command.log` and `.command.err` files but never `.command.run`.
 
 ## Other
 
