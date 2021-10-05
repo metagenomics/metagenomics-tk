@@ -31,6 +31,11 @@ process pDiamond {
       label 'large'
 
       publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "diamond", filename) }
+      
+      // UID mapping does not work for some reason. Every time a database directory is created while running docker,
+      // the permissions are set to root. This leads to crashes later on.
+      // beforeScript is one way to create a directory outside of Docker to tackle this problem. 
+      beforeScript "mkdir -p ${params.databases}"
 
    input:
       tuple val(sample), file(fasta)
@@ -104,6 +109,11 @@ process pKEGGFromDiamond {
       containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} --volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
 
       publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromDiamond", filename) }
+
+      // UID mapping does not work for some reason. Every time a database directory is created while running docker,
+      // the permissions are set to root. This leads to crashes later on.
+      // beforeScript is one way to create a directory outside of Docker to tackle this problem.
+      beforeScript "mkdir -p ${params.databases}"
 
    input:
       tuple val(sample), file(diamond_result)
