@@ -7,8 +7,11 @@ steps:
   qc:
     interleaved: false
     fastp:
+    # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
+       params: "  "
   assembly:
     megahit:
+      params: " --min-contig-len 200 "
   binning:
     metabat:
   sampleAnalysis:
@@ -18,7 +21,7 @@ steps:
       buffer: 1000
       database: "/vol/spool/gtdb/release202"
     checkm:
-      database: "/vol/spool/checkm/"
+      database: "/vol/spool/checkm"
       buffer: 200
     prokka:
       defaultKingdom: 'Bacteria'
@@ -37,7 +40,5 @@ steps:
       cutoff: 0.05
       method: 'ANI'
   readMapping:
-          #  metabolomics:
-          #    smetana:
-          #     - detailed
-          #      - global
+  cooccurrence:
+    params: " -t 0.1 -z 80 -o 'correlation' "

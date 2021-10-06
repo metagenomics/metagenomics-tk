@@ -29,7 +29,7 @@ process pMegahit {
 
     output:
     tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs
-    tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigs_stats
+    tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigsStats
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
@@ -64,7 +64,7 @@ workflow wAssemblyList {
  * 
  */
 workflow wAssemblyFile {
-     main:
+    main:
        Channel.from(file(params.steps.assembly.input)) | splitCsv(sep: '\t', header: true) \
              | map { it -> [ it.SAMPLE, it.READS, file("NOT_SET")]} \
              | _wAssembly
@@ -85,7 +85,7 @@ workflow _wAssembly {
      main:
        readsList | pMegahit
        if(params.summary){
-         pMegahit.out.contigs_stats | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
+         pMegahit.out.contigsStats | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
            [ "contigs_stats.tsv", item[1].text ]
          }
        }

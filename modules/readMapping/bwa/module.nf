@@ -1,11 +1,5 @@
 nextflow.enable.dsl=2
 
-params.samples = "/raid/CAMI/CAMI_MOUSEGUT/readmapping/workflow_all_reads/samples.tsv"
-params.mapping = "/vol/spool/CAMI/CAMI_MOUSEGUT/mapping/workflow/representatives_sample1.tsv_mapping"
-params.representatives = "/vol/spool/CAMI/CAMI_MOUSEGUT/mapping/workflow/representatives_sample1_test.fa"  
-params.number_samples = 20
-params.all_representatives = "/raid/CAMI/CAMI_MOUSEGUT/readmapping/workflow_all_reads/representatives.tsv" 
-params.shuffle = 400
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.readMapping.name + '/' + 
@@ -20,9 +14,9 @@ process pBwaIndex {
     label 'large'
     when params.steps.containsKey("readMapping")
     input:
-      tuple val(id), path(representatives)
+      path(representatives)
     output:
-      tuple val("${id}") ,path('*.{amb,ann,bwt,pac,sa,fa}')
+      path('*.{amb,ann,bwt,pac,sa,fa}')
     shell:
       """
       bwa index !{representatives}
@@ -30,57 +24,19 @@ process pBwaIndex {
 }
 
 process pMapBwa {
+
     label 'large'
     container "${params.samtools_bwa_image}"
     when params.steps.containsKey("readMapping")
-    publishDir params.output, saveAs: { filename -> getOutput("${bin_shuffle_id}",params.runid ,"bwa", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sampleID}", params.runid ,"bwa", filename) }
     input:
-      tuple val(mode), path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
+      tuple val(sampleID), path(sample), val(mode), path(representatives_fasta), path(x, stageAs: "*") 
     output:
-      tuple val("${ID}"), val(bin_shuffle_id), path("*bam"), emit: alignmentIndex
-      tuple val("${ID}"), val(bin_shuffle_id), path("*bam"), emit: alignment
-      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+      tuple val("${sampleID}"), path("*bam"), emit: alignment
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
     shell:
-    MODE = mode == "paired" ? " -p " : "" 
+    MODE = mode == "paired" ? " -p " : ""
     template('bwa.sh')
-}
-
-process pMapBwaCami {
-    label 'large'
-    container "${params.samtools_bwa_image}"
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid ,"bwa" , filename) }
-    input:
-      tuple val(mode), path(sample), val(bin_shuffle_id), val(ID), path(representatives_fasta), path(x, stageAs: "*") 
-    output:
-      tuple val("${ID}"), val(bin_shuffle_id), path("*.sam.gz")
-      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-    shell:
-    template('bwa.sh')
-}
-
-process pBwaCount {
-    label 'tiny'
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
-    input:
-      tuple val(ID), file(sample), file(mapping)
-    output:
-      path "${sample}.count"
-      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-    shell:
-    template('count.sh')
-}
-
-process pCovermCount {
-    when params.steps.containsKey("readMapping")
-    label 'small'
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
-    input:
-      tuple val(sample), file(mapping), file(index), file(list_of_representatives)
-    output:
-      path("${sample}_out", type: "dir")
-      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-    shell:
-    template('coverm.sh')
 }
 
 
@@ -90,7 +46,7 @@ process pMergeAlignment {
     container 'quay.io/biocontainers/samtools:1.12--h9aed4be_1'
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
     input:
-      tuple val(ID), val(sample), file("alignment?.bam")
+      tuple val(sample), file("alignment?.bam")
     output:
       tuple val("${sample}"), path("${sample}.bam"), path("*bam.bai"), emit: alignmentIndex
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
@@ -101,98 +57,115 @@ process pMergeAlignment {
     """
 }
 
-process pShuff {
-    publishDir params.output + "/sample"
-    label 'tiny'
+
+process pCovermCount {
+    when params.steps.containsKey("readMapping")
+    label 'small'
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
     input:
-      path file_of_bins
-      each samples_number
+      tuple val(sample), file(mapping), file(index), file(list_of_representatives)
     output:
-      path "${file_of_bins}_${samples_number}_shuffled.tsv", emit: tsv
+      tuple val("${sample}"), path("${sample}_out/mean.tsv"), emit: mean
+      tuple val("${sample}"), path("${sample}_out/trimmed_mean.tsv"), emit: trimmedMean
+      tuple val("${sample}"), path("${sample}_out/count.tsv"), emit: count
+      tuple val("${sample}"), path("${sample}_out/rpkm.tsv"), emit: rpkm
+      tuple val("${sample}"), path("${sample}_out/tpm.tsv"), emit: tpm
+      tuple val("${sample}"), path("${sample}_out/mean_mincov10.tsv"), emit: meanMincov10
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     shell:
-    '''
-    shuf -n !{params.shuffle} !{file_of_bins} > !{file_of_bins}_!{samples_number}_shuffled.tsv
-    '''
+    template('coverm.sh')
 }
 
-process pCreateMapping {
-    publishDir params.output + "/mapping"
-    label 'tiny'
-    input:
-      path representatives_sample
-    output:
-      tuple val("${representatives_sample}"), path("${representatives_sample}_mapping"), emit: mapping_out
-      tuple val("${representatives_sample}"), path("${representatives_sample}.fa"), emit: fa
-    shell:
-    '''
-    mkdir -p representatives; cat  !{representatives_sample} | xargs -P 20 -I {}  sh -c 'bin="$1";bin_name=$(basename $bin); grep ">" $bin | tr -d ">" | sed "s/$/\t$bin_name/g" > representatives/$bin_name ' sh {} ; cat representatives/* > !{representatives_sample}_mapping
-    cat !{representatives_sample} | xargs -I {} cat {} > !{representatives_sample}.fa
-    '''
-}
 
-workflow pCreateSamples {
+/*
+*
+* wListReadMappingBwa maps a set of fastq samples against a set of genomes.
+* Input Parameters
+*
+*  * Columns of the mags file must be SAMPLE for sample identifier and READS for the path to the fastq files.
+*
+*/
+workflow wFileReadMappingBwa {
    main:
-     shuff(Channel.value(params.all_representatives), 1..params.number_samples)
-     create_mapping(shuff.out.tsv)
+     GENOMES_PATH_IDX = 0
+     Channel.from(file(params?.steps?.readMapping?.mags)) \
+       | splitCsv(sep: '\t', header: false, skip: 1) \
+       | map { it -> file(it[GENOMES_PATH_IDX]) } \
+       | set {genomesList}
+
+     Channel.from(file(params?.steps?.readMapping?.samples)) \
+       | splitCsv(sep: '\t', header: true)\
+       | map { it -> [it.SAMPLE, it.READS] } | set {samples}
+
+     _wReadMappingBwa(samples, Channel.empty(), genomesList)
    emit:
-     bin_sample_mapping_fa = create_mapping.out.fa
-     bin_sample_mapping_tsv = create_mapping.out.mapping_out
+     trimmedMean = _wReadMappingBwa.out.trimmedMean
 }
 
-
-workflow wBwaMultiple {
-    take:
-      representatives_file
-      samples
-      mapping
-    main:
-      samples \
-       | splitCsv(sep: '\t', header: true) | set {samples_split}
-      representatives_file | pBwaIndex | combine(samples_split) \
-       | combine(representatives_file, by: 0) \
-       | map{ it -> [it[2].READS, it[2].SAMPLE, it[0], it[3], it[1]] } \
-       | set { index }
-      pMapBwaCami(index) | set { sam_gz  }
-      sam_gz | combine(mapping, by: 0) | map { it -> it[(1..3)] } | pBwaCount
-
-}
-
-workflow wReadMappingBwa {
+/*
+*
+* wListReadMappingBwa maps a set of fastq samples against a set of genomes.
+* Input Parameters
+*
+*  * Entries in the samples channel consist of Maps of the format [SAMPLE:test1, READS:/path/to/interleaved/fastq/test1_interleaved.qc.fq.gz]. 
+*
+*  * Entries of the genomes channel are paths to the genomes. 
+*
+*/
+workflow wListReadMappingBwa {
    take:
-     id
-     representatives
      samplesPaired
      samplesSingle
-     representativesList
+     genomes
    main:
-     samplesPaired | splitCsv(sep: '\t', header: true) | set {samplesPairedSplit}
+     _wReadMappingBwa(samplesPaired, samplesSingle, genomes)
+   emit:
+     trimmedMean = _wReadMappingBwa.out.trimmedMean
+}
 
-     samplesSingle | splitCsv(sep: '\t', header: true) | set {samplesSingleSplit}
 
-     id | combine(representatives) | pBwaIndex | set {index} 
+workflow _wReadMappingBwa {
+   take:
+     samplesPaired
+     samplesSingle
+     genomes
+   main:
+     // Create temporary directory for merged fasta files
+     genomesTempDir = params.tempdir + "/genomesToBeMerged"
+     file(genomesTempDir).mkdirs()
 
-     index | combine(samplesPairedSplit) \
-      | combine(representatives) \
-      | map{ it -> ["paired", it[2].READS, it[2].SAMPLE, it[0], it[3], it[1]] } \
-      | set {paired}
+     // Concatenate genomes 
+     genomes | collectFile(tempDir: genomesTempDir){ item -> [ "mergedGenomes.fasta", item.text ] } \
+      | set { genomesMerged }
 
-    index | combine(samplesSingleSplit) \
-      | combine(representatives) \
-      | map{ it -> ["single", it[2].READS, it[2].SAMPLE, it[0], it[3], it[1]] } \
-      | set {single}
+     // Create BWA index of all genomes
+     BWA_INDEX_IDX=0
+     GENOMES_IDX=1
+     genomesMerged | pBwaIndex | set {index} 
+
+     // combine index with every sample
+     index | map{ bwaIndex -> [bwaIndex]} \
+      | combine(genomesMerged) \
+      | map{ it -> ["paired", it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
+      | set {pairedIndex}
+     samplesPaired | combine(pairedIndex) | set {paired}
+
+     index | map{ bwaIndex -> [bwaIndex]} \
+      | combine(genomesMerged) \
+      | map{ it -> ["single", it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
+      | set {singleIndex}
+     samplesSingle | combine(singleIndex) | set {single}
 
      // Paired and single reads should be mapped back
      pMapBwa(paired | mix(single))
-     
+ 
      // The resulting alignments (bam files) should merged
-     pMapBwa.out.alignment | groupTuple(by: 1) | pMergeAlignment
-         
-     // The alignment is then analysed per dataset
-     pMergeAlignment.out.alignmentIndex | combine(representativesList \
-      | map {it -> file(it)} | toList() | map { it -> [it]}) | pCovermCount
-}
-
-workflow {
-   wCreateSamples() 
-   wBwaMultiple(wCreateSamples.out.bin_sample_mapping_fa, channel.fromPath(params.samples), create_samples.out.bin_sample_mapping_tsv)
+     SAMPLE_NAME_IDX=0
+     pMapBwa.out.alignment | groupTuple(by: SAMPLE_NAME_IDX) | pMergeAlignment
+   
+     // Map all samples against all genomes using bwa 
+     pMergeAlignment.out.alignmentIndex | combine(genomes | map {it -> file(it)} \
+      | toList() | map { it -> [it]}) | pCovermCount
+   emit:
+     trimmedMean = pCovermCount.out.trimmedMean
 }
