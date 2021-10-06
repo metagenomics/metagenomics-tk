@@ -24,7 +24,8 @@ process pDiamond {
       // Therefore this place has to be mounted to the docker container to be accessible during run time.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} --volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
+      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} \
+      --volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
  
       tag "$sample"
 
@@ -49,7 +50,8 @@ process pDiamond {
       # Download the database if there is a more recent one online, or if the size differs.
       # The destination folder should be outside of the working directory to share the database with future processes.
       s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.diamond.database} !{params.databases}
-      diamond !{params.steps.annotation.diamond.params} --out diamond.!{sample}.out --db !{params.databases}kegg-2021-01.dmnd --query !{fasta}
+      diamond !{params.steps.annotation.diamond.params} --out diamond.!{sample}.out \
+      --db !{params.databases}$(basename !{params.steps.annotation.diamond.database}) --query !{fasta}
       '''
 }
 
@@ -106,7 +108,8 @@ process pKEGGFromDiamond {
       // Therefore this place has to be mounted to the docker container to be accessible during runtime.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} --volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
+      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} \
+      --volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
 
       publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromDiamond", filename) }
 
