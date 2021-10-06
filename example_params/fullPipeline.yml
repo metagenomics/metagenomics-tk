@@ -3,6 +3,7 @@ summary: false
 input: "test_data/fullPipeline/reads_split.tsv"
 output: "output"
 runid: 1
+logLevel: 1
 steps:
   qc:
     interleaved: false
@@ -19,9 +20,9 @@ steps:
   magAttributes:
     gtdb:
       buffer: 1000
-      database: "/vol/spool/peter/gtdb/release202"
+      database: "/vol/spool/gtdb/release202"
     checkm:
-      database: "/vol/spool/peter/meta-omics-toolkit/checkm"
+      database: "/vol/spool/checkm"
       buffer: 200
     prokka:
       defaultKingdom: 'Bacteria'

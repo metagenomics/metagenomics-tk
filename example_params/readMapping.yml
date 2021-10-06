@@ -2,6 +2,7 @@ tempdir: "tmp"
 summary: false
 output: "output"
 runid: 1
+logLevel: 1
 steps:
   readMapping:
     samples: test_data/readMapping/samples.tsv

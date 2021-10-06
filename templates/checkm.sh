@@ -5,13 +5,15 @@ mkdir out
 FILE=$(mktemp !{sample}_checkm_XXXXXXXX.tsv)
 
 # run suggested checkm commands
-checkm tree --reduced_tree --pplacer_threads !{task.cpus}  -t !{task.cpus} -x !{ending} . out &> tree.log
-checkm tree_qa out &> tree_qa.log
-checkm lineage_set out out/marker &> lineage.log
-checkm analyze -x !{ending} -t !{task.cpus} out/marker . out &> analyze.log
-checkm qa --tab_table -t !{task.cpus} -f checkm.txt out/marker out  &> qa.log
+checkm tree --reduced_tree --pplacer_threads !{task.cpus}  -t !{task.cpus} -x !{ending} . out
+checkm tree_qa out
+checkm lineage_set out out/marker
+checkm analyze -x !{ending} -t !{task.cpus} out/marker . out
+checkm qa --tab_table -t !{task.cpus} -f checkm.txt out/marker out
 
 # reformat output files according to magAttributes standard
 echo -e "SAMPLE\tBIN_ID\tMarker lineage\t# genomes\t# markers\t# marker sets\t0\t1\t2\t3\t4\t5+\tCOMPLETENESS\tCONTAMINATION\tHETEROGENEITY" > $FILE
 sed -i " 2,$ s/\t/.fa\t/"  checkm.txt
 tail -n +2 checkm.txt | sed "s/^/!{sample}\t/g"  >> $FILE
+
+publishLogs.sh $FILE

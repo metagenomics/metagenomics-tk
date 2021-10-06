@@ -3,6 +3,7 @@ input: "test_data/fullPipeline/reads_split.tsv"
 summary: true
 output: "output"
 runid: 1
+logLevel: 1
 steps:
   qc:
     interleaved: false

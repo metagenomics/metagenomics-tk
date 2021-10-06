@@ -3,6 +3,7 @@ summary: true
 input: "test_data/fullPipeline/reads_split_s3.tsv"
 output: "output"
 runid: 1
+logLevel: 1
 steps:
   qc:
     download:
