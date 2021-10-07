@@ -24,17 +24,37 @@ process pBwaIndex {
 }
 
 process pMapBwa {
+
     label 'large'
     container "${params.samtools_bwa_image}"
     when params.steps.containsKey("readMapping")
-    publishDir params.output, saveAs: { filename -> getOutput("${bin_shuffle_id}",params.runid ,"bwa", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sampleID}", params.runid ,"bwa", filename) }
     input:
-      tuple path(sample), val(bin_shuffle_id), path(representatives_fasta), path(x, stageAs: "*") 
+      tuple val(sampleID), path(sample), val(mode), path(representatives_fasta), path(x, stageAs: "*") 
     output:
-      tuple val("${bin_shuffle_id}"), path("*bam"), path("*bam.bai"), emit: alignment
+      tuple val("${sampleID}"), path("*bam"), emit: alignment
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+    shell:
+    MODE = mode == "paired" ? " -p " : ""
+    template('bwa.sh')
+}
+
+
+process pMergeAlignment {
+    when params.steps.containsKey("readMapping")
+    label 'tiny'
+    container 'quay.io/biocontainers/samtools:1.12--h9aed4be_1'
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
+    input:
+      tuple val(sample), file("alignment?.bam")
+    output:
+      tuple val("${sample}"), path("${sample}.bam"), path("*bam.bai"), emit: alignmentIndex
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     shell:
-    template('bwa.sh')
+    """
+    samtools merge !{sample}.bam alignment*.bam
+    samtools index !{sample}.bam
+    """
 }
 
 
@@ -74,12 +94,11 @@ workflow wFileReadMappingBwa {
 
      Channel.from(file(params?.steps?.readMapping?.samples)) \
        | splitCsv(sep: '\t', header: true)\
-       | set {samples}
+       | map { it -> [it.SAMPLE, it.READS] } | set {samples}
 
-     _wReadMappingBwa(samples, genomesList)
+     _wReadMappingBwa(samples, Channel.empty(), genomesList)
    emit:
      trimmedMean = _wReadMappingBwa.out.trimmedMean
-     
 }
 
 /*
@@ -94,10 +113,11 @@ workflow wFileReadMappingBwa {
 */
 workflow wListReadMappingBwa {
    take:
-     samples
+     samplesPaired
+     samplesSingle
      genomes
    main:
-     _wReadMappingBwa(samples, genomes)
+     _wReadMappingBwa(samplesPaired, samplesSingle, genomes)
    emit:
      trimmedMean = _wReadMappingBwa.out.trimmedMean
 }
@@ -105,7 +125,8 @@ workflow wListReadMappingBwa {
 
 workflow _wReadMappingBwa {
    take:
-     samples
+     samplesPaired
+     samplesSingle
      genomes
    main:
      // Create temporary directory for merged fasta files
@@ -117,17 +138,32 @@ workflow _wReadMappingBwa {
       | set { genomesMerged }
 
      // Create BWA index of all genomes
-     SAMPLE_IDX=1
      BWA_INDEX_IDX=0
-     GENOMES_IDX=2
-     genomesMerged | pBwaIndex | map{ bwaIndex -> [bwaIndex]} | combine(samples) \
-      | combine(genomesMerged) \
-      | map{ it -> [it[SAMPLE_IDX].READS, it[SAMPLE_IDX].SAMPLE, it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
-      | set {index}
+     GENOMES_IDX=1
+     genomesMerged | pBwaIndex | set {index} 
 
-     pMapBwa(index)
+     // combine index with every sample
+     index | map{ bwaIndex -> [bwaIndex]} \
+      | combine(genomesMerged) \
+      | map{ it -> ["paired", it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
+      | set {pairedIndex}
+     samplesPaired | combine(pairedIndex) | set {paired}
+
+     index | map{ bwaIndex -> [bwaIndex]} \
+      | combine(genomesMerged) \
+      | map{ it -> ["single", it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
+      | set {singleIndex}
+     samplesSingle | combine(singleIndex) | set {single}
+
+     // Paired and single reads should be mapped back
+     pMapBwa(paired | mix(single))
+ 
+     // The resulting alignments (bam files) should merged
+     SAMPLE_NAME_IDX=0
+     pMapBwa.out.alignment | groupTuple(by: SAMPLE_NAME_IDX) | pMergeAlignment
+   
      // Map all samples against all genomes using bwa 
-     pMapBwa.out.alignment | combine(genomes | map {it -> file(it)} \
+     pMergeAlignment.out.alignmentIndex | combine(genomes | map {it -> file(it)} \
       | toList() | map { it -> [it]}) | pCovermCount
    emit:
      trimmedMean = pCovermCount.out.trimmedMean
