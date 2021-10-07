@@ -54,8 +54,12 @@ workflow wFragmentRecruitment {
    wFragmentRecruitmentFile(Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.samples), Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
 }
 
-workflow wAnnotate {
-   wAnnotateFile(Channel.from(file(params?.steps?.annotation?.input)))
+workflow wAnnotateObjSt {
+   wAnnotateFile(Channel.from(file(params?.steps?.annotation?.input)), 'S3')
+}
+
+workflow wAnnotateLocal {
+   wAnnotateFile(Channel.from(file(params?.steps?.annotation?.input)), 'local')
 }
 
 workflow wCooccurrence {

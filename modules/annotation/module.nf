@@ -1,5 +1,5 @@
 nextflow.enable.dsl=2
-mode = 'S3'
+mode = 'mode_not_set'
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.annotation.name + '/' + 
@@ -7,6 +7,10 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
           params.modules.annotation.version.minor + "." + 
           params.modules.annotation.version.patch +
           '/' + TOOL + '/' + filename
+}
+
+def set_mode(newMode){
+    mode = newMode
 }
 
 /**
@@ -58,7 +62,7 @@ process pDiamond {
       else if( mode == 'local')
          '''
          diamond !{params.steps.annotation.diamond.params} --out diamond.!{sample}.out \
-         --db !{params.steps.databases}$(basename !{params.steps.annotation.diamond.database}) --query !{fasta}
+         --db !{params.steps.annotation.diamond.database} --query !{fasta}
          '''
       else
          error "Invalid annotation database mode: ${mode}"
@@ -135,12 +139,19 @@ process pKEGGFromDiamond {
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
 
    shell:
-      '''
-      # Download the database if there is a more recent one online, or if the size differs.
-      # The destination folder should be outside of the working directory to share the database with future processes.
-      s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.kegg.database} !{params.steps.databases}kegg
-      diamond2kegg.py !{diamond_result} !{params.steps.databases}kegg !{sample}_kegg.tsv 
-      '''
+      if( mode == 'S3')
+         '''
+         # Download the database if there is a more recent one online, or if the size differs.
+         # The destination folder should be outside of the working directory to share the database with future processes.
+         s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.kegg.database}/* !{params.steps.databases}kegg
+         diamond2kegg.py !{diamond_result} !{params.steps.databases}kegg !{sample}_kegg.tsv 
+         '''
+      else if(mode == 'local')
+         '''
+         diamond2kegg.py !{diamond_result} !{params.steps.annotation.kegg.database} !{sample}_kegg.tsv
+         '''
+      else 
+         error "Invalid annotation database mode: ${mode}"
 }
 
 /**
@@ -148,14 +159,19 @@ process pKEGGFromDiamond {
 * This entry point uses a file to grab all fasta files in the referenced directories for annotation.
 * These fastas will be combined to one file to start the main annotation workflow.
 * You need to call (and fill out) the aws credential file with -c to use this module!
-* The .tsv file has to have: DATASET PATH entries. 
+* The .tsv file has to have: DATASET PATH entries.
+* 
+* The "database_mode" is used to choose which database path is expected.
+* Use "S3" for object storage based databases, or "local" for offline stored copys.
 *
 **/
 workflow wAnnotateFile {
 
    take:
       projectTableFile
+      database_mode
    main:
+      set_mode(database_mode)
       projectTableFile | splitCsv(sep: '\t', header: true) | map{ it -> [it.DATASET, file(it.PATH)] } \
       | collectFile() | map{ it -> [it.name, it]} | _wAnnotation
 }
