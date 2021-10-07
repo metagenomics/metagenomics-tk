@@ -31,7 +31,7 @@ jobs:
         run: |
           bash ./scripts/test_fullPipeline.sh \
           " --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " \
-          "" "/mnt/work/work/${GITHUB_REF#refs/heads/}" || exit 1
+          "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
 
       - name: Test Full Pipeline run that ends with magAttributes
         run: |
