@@ -3,6 +3,7 @@ summary: true
 runid: 1
 tempdir: "tmp"
 steps:
+   databases: "/vol/spool/benedikt/meta-omics-toolkit/work/databases/"
    annotation:
       input: "test_data/annotation/input_small.tsv"
       s5cmd: 

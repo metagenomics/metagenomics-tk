@@ -1,4 +1,5 @@
 nextflow.enable.dsl=2
+mode = 'S3'
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.annotation.name + '/' + 
@@ -24,7 +25,7 @@ process pDiamond {
       // Therefore this place has to be mounted to the docker container to be accessible during run time.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} \
+      containerOptions " --user 1000:1000 --volume ${params.steps.databases}:${params.steps.databases} \
       --volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
  
       tag "$sample"
@@ -36,7 +37,7 @@ process pDiamond {
       // UID mapping does not work for some reason. Every time a database directory is created while running docker,
       // the permissions are set to root. This leads to crashes later on.
       // beforeScript is one way to create a directory outside of Docker to tackle this problem. 
-      beforeScript "mkdir -p ${params.databases}"
+      beforeScript "mkdir -p ${params.steps.databases}"
 
    input:
       tuple val(sample), file(fasta)
@@ -46,13 +47,21 @@ process pDiamond {
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
 
    shell:
-      '''
-      # Download the database if there is a more recent one online, or if the size differs.
-      # The destination folder should be outside of the working directory to share the database with future processes.
-      s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.diamond.database} !{params.databases}
-      diamond !{params.steps.annotation.diamond.params} --out diamond.!{sample}.out \
-      --db !{params.databases}$(basename !{params.steps.annotation.diamond.database}) --query !{fasta}
-      '''
+      if( mode == 'S3')
+         '''
+         # Download the database if there is a more recent one online, or if the size differs.
+         # The destination folder should be outside of the working directory to share the database with future processes.
+         s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.diamond.database} !{params.steps.databases}
+         diamond !{params.steps.annotation.diamond.params} --out diamond.!{sample}.out \
+         --db !{params.steps.databases}$(basename !{params.steps.annotation.diamond.database}) --query !{fasta}
+         '''
+      else if( mode == 'local')
+         '''
+         diamond !{params.steps.annotation.diamond.params} --out diamond.!{sample}.out \
+         --db !{params.steps.databases}$(basename !{params.steps.annotation.diamond.database}) --query !{fasta}
+         '''
+      else
+         error "Invalid annotation database mode: ${mode}"
 }
 
 /**
@@ -108,7 +117,7 @@ process pKEGGFromDiamond {
       // Therefore this place has to be mounted to the docker container to be accessible during runtime.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} \
+      containerOptions " --user 1000:1000 --volume ${params.steps.databases}:${params.steps.databases} \
       --volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
 
       publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromDiamond", filename) }
@@ -116,7 +125,7 @@ process pKEGGFromDiamond {
       // UID mapping does not work for some reason. Every time a database directory is created while running docker,
       // the permissions are set to root. This leads to crashes later on.
       // beforeScript is one way to create a directory outside of Docker to tackle this problem.
-      beforeScript "mkdir -p ${params.databases}"
+      beforeScript "mkdir -p ${params.steps.databases}"
 
    input:
       tuple val(sample), file(diamond_result)
@@ -129,8 +138,8 @@ process pKEGGFromDiamond {
       '''
       # Download the database if there is a more recent one online, or if the size differs.
       # The destination folder should be outside of the working directory to share the database with future processes.
-      s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.kegg.database} !{params.databases}kegg
-      diamond2kegg.py !{diamond_result} !{params.databases}kegg !{sample}_kegg.tsv 
+      s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.kegg.database} !{params.steps.databases}kegg
+      diamond2kegg.py !{diamond_result} !{params.steps.databases}kegg !{sample}_kegg.tsv 
       '''
 }
 
