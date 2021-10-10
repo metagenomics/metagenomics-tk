@@ -1,5 +1,7 @@
 tempdir: "tmp"
-input: "test_data/fullPipeline/reads_split.tsv"
+input:
+  paired: 
+    path: "test_data/fullPipeline/reads_split.tsv"
 summary: true
 output: "output"
 runid: 1
