@@ -7,7 +7,6 @@
 
 All module configurations are the same as the full pipeline run with the sole difference that entry and param-file parameters are different.
 
-
 *Note!* Please do never place sensitive information in any params file since the content is upload as part of the pipeline run.
 
 ### Run Full Pipeline
@@ -41,7 +40,11 @@ In addition to the pipeline module outputs defined in the next sections (Derepli
  
  * read mapping (bam files)
 
-#### Additional Configuration
+#### Configuration
+
+Options for global pipeline configuration can be viewed [here](docs/configuration/global.md).
+
+##### Additional Configuration
 
 Nextflow usually stores downloaded files in the work directory. If enough scratch space is available on the worker nodes then this can be prevented by specifying
 s3 links ([example](test_data/fullPipeline/reads_split_s3.tsv)) in the input tsv file and `download` parameter in the input yaml ([example](example_params/fullPipelineQC.yml)).
