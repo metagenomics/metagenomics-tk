@@ -3,6 +3,7 @@ summary: false
 input:
   paired:
     path: "test_data/fullPipeline/reads_split.tsv"
+    watch: false
 output: "output"
 runid: 1
 steps:

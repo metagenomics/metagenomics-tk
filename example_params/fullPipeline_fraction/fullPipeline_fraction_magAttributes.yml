@@ -2,6 +2,7 @@ tempdir: "tmp"
 input:
   paired: 
     path: "test_data/fullPipeline/reads_split.tsv"
+    watch: false
 summary: true
 output: "output"
 runid: 1
