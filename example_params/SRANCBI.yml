@@ -1,0 +1,9 @@
+tempdir: "tmp"
+summary: false
+output: "output"
+runid: 1
+input:
+  SRA:
+    NCBI:
+      path: test_data/SRA/samples.tsv 
+steps:
