@@ -59,7 +59,7 @@ workflow _wSplitReads {
             idsFromPath | set {files}
          } 
 
-         files |  splitCsv(sep: '\t', header: true)  | unique | fastqs 
+         files |  splitCsv(sep: '\t', header: true)  | unique | set { fastqs } 
        emit:
          fastqs
 }
