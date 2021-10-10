@@ -50,7 +50,7 @@ workflow _wSplitReads {
          Channel.fromPath(params.input.paired.path) \
 		| set { idsFromPath }
 
-         if(params.input.paried.watch){
+         if(params.input.paired.watch){
             Channel.watchPath(params.input.paired.path, 'create,modify') \
                 | set {idsFromWatch}
             
