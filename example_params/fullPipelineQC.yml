@@ -9,6 +9,5 @@ steps:
   qc:
     download:
       s5cmdParams: " --retry-count 30 --no-verify-ssl --no-sign-request --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "
-    interleaved: false
     fastp:
       params: " "

@@ -7,7 +7,6 @@ output: "output"
 runid: 1
 steps:
   qc:
-    interleaved: false
     fastp:
   assembly:
     megahit:

@@ -120,9 +120,7 @@ workflow wQualityControlList {
   take:
     reads
   main:
-    if(!params.steps.qc.interleaved){
-      reads | _wFastqSplit | set { results } 
-    }
+    reads | _wFastqSplit | set { results } 
   emit:
     readsPair = results.readsPair
     readsSingle = results.readsSingle
