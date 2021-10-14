@@ -216,6 +216,34 @@ process pFinalize {
 }
 
 
+process pSANS {
+
+    container "${params.sans_image}"
+
+    input:
+    path(ids)
+    path(genomes, stageAs: 'genome_?') 
+    val(clusterID)
+
+    output:
+    tuple val("${clusterID}"), file("${clusterID}_newick.txt"), emit: newick
+    tuple val("${clusterID}"), file("${clusterID}_clusters.tsv"), emit: clusters
+
+    shell:
+    '''
+    mkdir input
+    for g in genome_* ; do 
+	line=$(echo $g | cut -d '_' -f 2)
+	ID=$(sed "${line}q;d" !{ids})
+	ln -s $(readlink -f $g) input/${ID}
+    done 
+    find $PWD/input -type l > input.tsv
+    /sans/SANS-autoN.sh -i input.tsv -k 15  -f strict -N !{clusterID}_newick.txt -w 25  -t 400
+    /sans/scripts/newick2clusters.py !{clusterID}_newick.txt > !{clusterID}_clusters.tsv
+    '''
+}
+
+
 def mapJoin(channel_a, channel_b, key_a, key_b){
     channel_a \
         | map{ it -> [it[key_a], it] } \
@@ -272,6 +300,68 @@ workflow wDereplicateList {
 }
 
 
+/**
+*
+* Input: [BIN_ID, PATH, CLUSTER]
+*
+*/
+workflow _wStrainDereplication {
+   take:
+     speciesClusters
+   main:
+     CLUSTER_IDX=2
+    
+     speciesClusters | groupTuple(by: CLUSTER_IDX) | set { groupedSpecies } 
+
+     groupedSpecies | collectFile(newLine: true){ ids -> [ids[2], ids[0].join('\n') ] } \
+         |  map { cluster -> [cluster.name, cluster] } | set { binIDs }
+
+     groupedSpecies | map { it -> it.reverse(false) } | join(binIDs, by: 0) \
+      | groupTuple(by: CLUSTER_IDX) \
+      | branch { 
+        single: it[2].size() == 1
+        multi: it[2].size() > 1
+      } | set { clusterSize }  
+
+      clusterSize.multi | multiMap { mags ->
+        binIds: mags[3]
+        binPaths: mags[1][0]
+        clusterId: mags[0].flatten()
+     } | set { result }
+
+     pSANS(result.binIds, result.binPaths , result.clusterId)
+
+     STRAIN_IDX=1
+     STRAIN_CLUSTER_IDX=1
+     STRAIN_BIN_PATH_IDX=0
+     SPECIES_CLUSTER_IDX=0
+     pSANS.out.clusters | splitCsv(sep: '\t') \
+	| map { it -> [it[SPECIES_CLUSTER_IDX], file(it[BIN_PATH_IDX][STRAIN_BIN_PATH_IDX]).name,it[BIN_PATH_IDX][STRAIN_CLUSTER_IDX]] } \
+	| set {SANSCluster}
+
+//[1, [/vol/spool/peter/pasolli_next/work_wDereplication/9a/6dd2478611470bd38b22c626a53aa4/input/test2_bin.10, 0]]
+//[1, [/vol/spool/peter/pasolli_next/work_wDereplication/9a/6dd2478611470bd38b22c626a53aa4/input/test2_bin.9, 1]]
+
+     CLUSTER_IDX=0
+     BIN_ID_LABEL_IDX=2
+     SINGLE_CLUSTER_ID=0
+     clusterSize.single | map { it -> [it[CLUSTER_IDX][CLUSTER_IDX], it[BIN_ID_LABEL_IDX].flatten(), SINGLE_CLUSTER_ID] } \
+	| mix(SANSCluster) \
+	| collectFile(newLine:true, seed: "CLUSTER\tBIN_ID\tSTRAIN_CLUSTER"){ it -> ["strainCluster.tsv", it.join('\t')] } \
+	| view()
+     
+}
+
+//[[2], [[https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.8.fasta]], [test1_bin.8], [/vol/spool/peter/pasolli_next/work_wDereplication/tmp/43/af681fd82f4fcb0b2c0e1ad0f47ad1/2]]
+//[[3], [[https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.2.fa]], [test1_bin.2], [/vol/spool/peter/pasolli_next/work_wDereplication/tmp/43/af681fd82f4fcb0b2c0e1ad0f47ad1/3]]
+//[[4], [[https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.32.fa]], [test2_bin.32], [/vol/spool/peter/pasolli_next/work_wDereplication/tmp/43/af681fd82f4fcb0b2c0e1ad0f47ad1/4]]
+//[[5], [[https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.1.fa]], [test3_bin.1], [/vol/spool/peter/pasolli_next/work_wDereplication/tmp/43/af681fd82f4fcb0b2c0e1ad0f47ad1/5]]
+//[4, [on, 0]]
+//[5, [on, 0]]
+//[2, [on, 0]]
+//[1, [/vol/spool/peter/pasolli_next/work_wDereplication/9a/6dd2478611470bd38b22c626a53aa4/input/test2_bin.10, 0]]
+//[1, [/vol/spool/peter/pasolli_next/work_wDereplication/9a/6dd2478611470bd38b22c626a53aa4/input/test2_bin.9, 1]]
+
 
 workflow _wDereplicate {
    take:
@@ -312,7 +402,7 @@ workflow _wDereplicate {
 
      // Prepare output and collect representatives as channel
      pANIb.out | mix(pTETRA.out)  \
-       | collectFile(newLine: true)  | splitCsv(sep: '\t', header:false, skip: 0) | set {aniComparisons}
+       | collectFile(newLine: true) | splitCsv(sep: '\t', header:false, skip: 0) | set {aniComparisons}
 
      // Extract BIN_ID for final clustering
      GENOME_A_IDX = 0
@@ -338,10 +428,16 @@ workflow _wDereplicate {
      IS_REPRESENTATIVE = 1
      PATH_IDX = 1
      pGetCluster.out.final_clusters | mix(pFinalize.out) | splitCsv(sep: '\t', header: true) \
-       | filter({ it.REPRESENTATIVE.toFloat() == IS_REPRESENTATIVE }) | map { it -> it['GENOME'] } \
+	| set { finalClusters  }
+
+     finalClusters | map { bin -> [bin.CLUSTER, bin.GENOME] } | set{ clustersGenome } 
+     genomesTable | map { bin -> [bin.PATH, bin.BIN_ID] } \
+	| join(clustersGenome, by: 1) | _wStrainDereplication
+
+     finalClusters | filter({ it.REPRESENTATIVE.toFloat() == IS_REPRESENTATIVE }) | map { it -> it['GENOME'] } \
        | join(genomesTable | map{ bin -> [bin.BIN_ID, bin.PATH] }) | map { bin -> bin[PATH_IDX] } \
        | set{representatives}
-//| collectFile(newLine: true) | view() 
+
   emit:
      representatives
 }
