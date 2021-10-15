@@ -74,7 +74,7 @@ jobs:
           example_params/magAttributes_fraction/magAttributes.yml  || exit 1
 
   dereplication:
-    concurrency: 
+    concurrency:
       group: ${{ github.head_ref }}
       cancel-in-progress: true
     timeout-minutes: 700
@@ -90,9 +90,13 @@ jobs:
       - name: clean up existing inputs directory
         run: |
           rm -rf /mnt/nextflow_cache/* 
-      - name: Test Dereplication
+      - name: Test Species and Strain Dereplication
         run: |
           bash ./scripts/test_dereplication.sh || exit 1
+      - name: Test Species Dereplication
+        run: |
+          bash ./scripts/test_dereplication.sh "" example_params/dereplication_fraction/dereplication.yml || exit 1
+
 
   readmapping:
     concurrency: 
