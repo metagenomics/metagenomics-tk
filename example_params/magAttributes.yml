@@ -5,11 +5,18 @@ runid: 1
 steps:
   magAttributes:
     input: "test_data/magAttributes/input.tsv"
-    prokka:
-      defaultKingdom: 'Bacteria'
     gtdb:
       buffer: 1000
-      database: "/vol/spool/gtdb/release202"
+      database: "/vol/spool/peter/gtdb/release202"
+      additionalParams: " --min_af 0.65 "
     checkm:
-      database: "/vol/spool/checkm/"
+      database: "/vol/spool/peter/meta-omics-toolkit/checkm"
       buffer: 200
+      additionalParams:
+        tree: " --reduced_tree "
+        lineage_set: " " 
+        qa: "  "
+    prokka:
+      defaultKingdom: 'Bacteria'
+      additionalParams: " --mincontiglen 200 "
+

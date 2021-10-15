@@ -89,7 +89,7 @@ process pBowtie {
     bowtie2-build --threads !{task.cpus} --quiet !{contigs} $INDEX 
 
     # Run Bowtie
-    bowtie2 -p !{task.cpus}  --very-sensitive -x $INDEX \
+    bowtie2 -p !{task.cpus} !{params.steps.binning.bowtie.additionalParams.bowtie} -x $INDEX \
               --interleaved paired.fq.gz -U unpaired.fq.gz 2> !{sample}_bowtie_stats.txt \
              | samtools view -F 3584 --threads !{task.cpus} -bS - \
              | samtools sort -l 9 --threads !{task.cpus} - > !{sample}.bam
