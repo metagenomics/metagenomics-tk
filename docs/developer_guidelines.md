@@ -73,7 +73,7 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 ## Configuration
 
-Every every process should by configurable by providing a parameters string to the tool in the process.
+Every process should by configurable by providing a parameters string to the tool in the process.
 Every module should use the following specification in the configuration file:
 
 ```
@@ -112,7 +112,7 @@ steps:
 ```
 
 `parameter` fields can hold hardcoded parameters that hold a defined value like a number that should not be a string.
-ONe use case of those parameters is that they can be reused for multiple tools.
+One use case of those parameters is that they can be reused for multiple tools.
 
 Example:
 
