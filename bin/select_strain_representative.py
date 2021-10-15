@@ -37,7 +37,7 @@ def main(argv):
     # rename columns to be compliant with the dereplication standard
     representatives_df[["BIN_ID", "STRAIN_CLUSTER", "REPRESENTATIVE"]]\
         .rename(columns={"BIN_ID": "GENOME", "STRAIN_CLUSTER": "CLUSTER"})\
-        .to_csv(args.out_dir + "/strain_representatives.tsv", index=False, sep="\t")
+        .to_csv(args.out_dir + "/clusters.tsv", index=False, sep="\t")
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
