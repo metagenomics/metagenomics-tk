@@ -18,8 +18,6 @@ process pMegahit {
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "megahit", filename) }
 
-    errorStrategy 'ignore'
-
     when params?.steps.containsKey("assembly") && params?.steps?.assembly.containsKey("megahit")
 
     container "${params.megahit_image}"

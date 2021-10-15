@@ -17,8 +17,6 @@ process pGetMappingQuality {
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "contigMappingQuality", filename) }
 
-    errorStrategy 'retry'
-
     label 'tiny'
 
     input:
@@ -42,8 +40,6 @@ process pGetBinStatistics {
     tag "$sample"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "${binner}", filename) }
-
-    errorStrategy 'retry'
 
     label 'tiny'
 
@@ -69,8 +65,6 @@ process pBowtie {
     tag "$sample"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "contigMapping", filename) }
-
-    errorStrategy 'retry'
 
     input:
     tuple val(sample), path(contigs), path(pairedReads, stageAs: 'paired.fq.gz'), path(unpairedReads, stageAs: 'unpaired.fq.gz')
