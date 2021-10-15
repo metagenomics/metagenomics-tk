@@ -17,3 +17,5 @@ test/reads
 aws*
 output
 .chglog/
+.idea
+*.iml
