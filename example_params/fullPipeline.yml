@@ -7,38 +7,60 @@ steps:
   qc:
     interleaved: false
     fastp:
-    # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
-       params: "  "
+       # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
+       additionalParams: "  "
   assembly:
     megahit:
-      params: " --min-contig-len 200 "
+      additionalParams: " --min-contig-len 200 "
   binning:
-    metabat:
-  sampleAnalysis:
     bowtie:
+      additionalParams: 
+        bowtie: " --quiet --very-sensitive "
+        # samtools flags are used to filter resulting bam file
+        samtoolsView: " -F 3584 " 
+    metabat:
+      additionalParams: "   "
   magAttributes:
     gtdb:
       buffer: 1000
       database: "/vol/spool/gtdb/release202"
+      additionalParams: " --min_af 0.65 "
     checkm:
       database: "/vol/spool/checkm"
       buffer: 200
+      additionalParams:
+        tree: " --reduced_tree "
+        lineage_set: " " 
+        qa: "  "
     prokka:
       defaultKingdom: 'Bacteria'
+      additionalParams: " --mincontiglen 200 "
   fragmentRecruitment:
     frhit:
       genomes: "/vol/spool/meta/test/data/bin.*.fa"
       sort: true
+      additionalParams: 
+        frhit: " -c 95 "
+        coverm: " --min-covered-fraction 0 "
   dereplication:
     pasolli:
-      representativeAniCutoff: 0.95
       minimumCompleteness: 0
       maximumContamination: 5000
-      pyaniParameters: '-m ANIb'
       ANIBuffer: 20
       mashBuffer: 2000
-      cutoff: 0.05
       method: 'ANI'
+      additionalParams:
+        mash_sketch: ""
+        mash_dist: ""
+        # cluster cutoff
+        cluster: " -c 0.05 "
+        pyani: " -m ANIb "
+        representativeAniCutoff: 0.95
   readMapping:
+    bwa:
+      additionalParams:
+        bwa_index: ""
+        bwa_mem: ""
+        coverm: " --min-covered-fraction 0 "
   cooccurrence:
-    params: " -t 0.1 -z 80 -o 'correlation' "
+    additionalParams: " -t 0.1 -z 80 -o 'correlation' "

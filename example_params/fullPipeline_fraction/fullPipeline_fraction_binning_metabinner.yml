@@ -7,9 +7,17 @@ steps:
   qc:
     interleaved: false
     fastp:
+       # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
+       additionalParams: "  "
   assembly:
     megahit:
+      additionalParams: " --min-contig-len 200 "
   binning:
+    bowtie:
+      additionalParams: 
+        bowtie: " --quiet --very-sensitive "
+        # samtools flags are used to filter resulting bam file
+        samtoolsView: " -F 3584 " 
     metabinner:
       minContigLength: 500
       kmerSize: 4
