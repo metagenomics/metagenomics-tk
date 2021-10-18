@@ -56,12 +56,12 @@ process pDiamond {
          # Download the database if there is a more recent one online, or if the size differs.
          # The destination folder should be outside of the working directory to share the database with future processes.
          s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.diamond.database} !{params.steps.databases}
-         diamond !{params.steps.annotation.diamond.params} --out diamond.!{sample}.out \
+         diamond !{params.steps.annotation.diamond.params} --threads !{task.cpus}  --out diamond.!{sample}.out \
          --db !{params.steps.databases}$(basename !{params.steps.annotation.diamond.database}) --query !{fasta}
          '''
       else if( mode == 'local')
          '''
-         diamond !{params.steps.annotation.diamond.params} --out diamond.!{sample}.out \
+         diamond !{params.steps.annotation.diamond.params} --threads !{task.cpus} --out diamond.!{sample}.out \
          --db !{params.steps.annotation.diamond.database} --query !{fasta}
          '''
       else
