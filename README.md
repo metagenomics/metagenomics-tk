@@ -152,7 +152,34 @@ In addition, this module produces a file `SAMPLE_gtdbtk_CHUNK.tsv` that combines
 
 ##### Checkm
 
-The Checkm output adheres to the magAttributes specification and adds a `BIN_ID` and `SAMPLE` column to the output file. 
+The Checkm output adheres to the magAttributes specification and adds a `BIN_ID` and `SAMPLE` column to the output file.
+
+### Annotation
+
+```
+-entry wAnnotateLocal -params-file example_params/annotation.yml
+```
+
+#### Input  
+
+* [params-file](example_params/annotation.yml)
+
+* [Tsv Table](test_data/annotation/input_small.tsv)
+
+#### Output
+
+##### Diamond
+
+Calculated significant matches of a nucleotide/protein query which was compared against a database.
+
+##### Prodigal
+
+Predicted genes in the `*.faa` `*.fna` and `*.gff` file format.
+
+##### KEGGFromDiamond
+
+Result `*.tsv` file filled with KEGG informations (linke modules, KO's, ...) which could be linked to the input Diamond hits.
+  
 
 ## S3 Configuration
 
