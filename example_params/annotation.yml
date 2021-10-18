@@ -27,4 +27,4 @@ steps:
          database: 's3://bene-test/databases/kegg_2021-01'
          #database: '/vol/spool/benedikt/meta-omics-toolkit/work/databases/kegg/'
       prodigal:
-          mode: 'anon'
+          mode: 'meta'
