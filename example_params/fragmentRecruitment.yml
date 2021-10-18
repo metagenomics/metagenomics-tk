@@ -5,6 +5,10 @@ runid: 1
 steps:
   fragmentRecruitment:
     frhit:
-      genomes: "/vol/spool/meta/test/data/bin.*.fa.gz"
-      samples: "/vol/spool/meta/test/sampleAnalysis/samples.tsv"
+      genomes: "test_data/fragmentRecruitment/mags.tsv"
+      samples: "test_data/fragmentRecruitment/samples.tsv"
       sort: true
+      additionalParams: 
+        frhit: " -c 95 "
+        coverm: " --min-covered-fraction 0 "
+             

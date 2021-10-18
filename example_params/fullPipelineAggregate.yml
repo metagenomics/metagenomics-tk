@@ -6,16 +6,22 @@ runid: 1
 steps:
   dereplication:
     pasolli:
-      representativeAniCutoff: 0.95
+      input: "test_data/dereplication/input.tsv"
       minimumCompleteness: 0
       maximumContamination: 5000
-      pyaniParameters: '-m ANIb'
       ANIBuffer: 20
       mashBuffer: 2000
-      cutoff: 0.05
       method: 'ANI'
+      additionalParams:
+        mash_sketch: ""
+        mash_dist: ""
+        #  cluster cutoff
+        cluster: " -c 0.05 "
+        pyani: " -m ANIb "
+        representativeAniCutoff: 0.95
   readMapping:
-    #  metabolomics:
-    #    smetana:
-    #     - detailed
-    #      - global
+    bwa:
+      additionalParams:
+        bwa_index: ""
+        bwa_mem: ""
+        coverm: " --min-covered-fraction 0 "

@@ -1,5 +1,5 @@
 # Run metabat
-runMetaBat.sh !{contigs} !{bam}
+runMetaBat.sh !{params.steps.binning.metabat.additionalParams} !{contigs} !{bam}
 
 # Create temporary directory
 TEMP_DIR=$(mktemp -d -p .)

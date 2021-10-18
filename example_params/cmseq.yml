@@ -7,5 +7,7 @@ steps:
     input: 
       alignments: "/vol/spool/meta/test/data/table.tsv"
       genomes: "/vol/spool/cmseq_20210607/genomes.tsv"
-    prokka
-    cmseq
+    prokka:
+      defaultKingdom: 'Bacteria'
+      additionalParams: " --mincontiglen 200 "
+    cmseq:

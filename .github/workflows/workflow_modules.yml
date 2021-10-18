@@ -2,14 +2,15 @@
 name: CI
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
 
   workflow_dispatch:
 jobs:
   full_pipeline:
+    concurrency: 
+      group: ${{ github.head_ref }}
+      cancel-in-progress: true
     timeout-minutes: 700
     runs-on: self-hosted
     steps:
@@ -26,20 +27,28 @@ jobs:
 
       - name: Test Full Pipeline Run
         run: |
-          bash ./scripts/test_fullPipeline.sh "  --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "  || exit 1
+          bash ./scripts/test_fullPipeline.sh \
+          " --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " \
+          "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
 
       - name: Test Full Pipeline run that ends with magAttributes
         run: |
-          bash ./scripts/test_fullPipeline.sh "  --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " example_params/fullPipeline_fraction/fullPipeline_fraction_magAttributes.yml  || exit 1
+          bash ./scripts/test_fullPipeline.sh \
+          "  --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " \
+          example_params/fullPipeline_fraction/fullPipeline_fraction_magAttributes.yml "/mnt/work/work/${{ github.head_ref }}" || exit 1
       - name: Test Full Pipeline run that ends with binning
         run: |
-          bash ./scripts/test_fullPipeline.sh "" example_params/fullPipeline_fraction/fullPipeline_fraction_binning_metabinner.yml || exit 1
+          bash ./scripts/test_fullPipeline.sh "" example_params/fullPipeline_fraction/fullPipeline_fraction_binning_metabinner.yml \
+          "/mnt/work/work" || exit 1
 
       - name: Test Aggregation Pipeline run based on per samples results.
         run: |
-          bash ./scripts/test_fullPipelineAggregate.sh " -c  test_data/assets/aws.config " || exit 1
+          bash ./scripts/test_fullPipelineAggregate.sh " -c  test_data/assets/aws.config " "" "/mnt/work/work/${{ github.head_ref }}"|| exit 1
 
   mag_attributes:
+    concurrency: 
+      group: ${{ github.head_ref }}
+      cancel-in-progress: true
     timeout-minutes: 700
     needs: [full_pipeline]
     runs-on: self-hosted
@@ -55,13 +64,19 @@ jobs:
           rm -rf /mnt/nextflow_cache/* 
       - name: Test MAG Attributes
         run: |
-          bash ./scripts/test_magAttributes.sh "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "  || exit 1
+          bash ./scripts/test_magAttributes.sh \
+          "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " \
+          "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
 
       - name: Test MAG Attributes Fraction
         run: |
-          bash ./scripts/test_magAttributes.sh "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "  example_params/magAttributes_fraction/magAttributes.yml  || exit 1
-
+          bash ./scripts/test_magAttributes.sh \
+          "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " \
+          example_params/magAttributes_fraction/magAttributes.yml "/mnt/work/work/${{ github.head_ref }}" || exit 1
   dereplication:
+    concurrency: 
+      group: ${{ github.head_ref }}
+      cancel-in-progress: true
     timeout-minutes: 700
     needs: [full_pipeline]
     runs-on: self-hosted
@@ -77,9 +92,12 @@ jobs:
           rm -rf /mnt/nextflow_cache/* 
       - name: Test Dereplication
         run: |
-          bash ./scripts/test_dereplication.sh || exit 1
+          bash ./scripts/test_dereplication.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
 
   readmapping:
+    concurrency: 
+      group: ${{ github.head_ref }}
+      cancel-in-progress: true
     timeout-minutes: 700
     needs: [dereplication]
     runs-on: self-hosted
@@ -95,9 +113,12 @@ jobs:
           rm -rf /mnt/nextflow_cache/* 
       - name: Test Read Mapping
         run: |
-          bash ./scripts/test_readMapping.sh || exit 1
+          bash ./scripts/test_readMapping.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
 
   assembly:
+    concurrency: 
+      group: ${{ github.head_ref }}
+      cancel-in-progress: true
     timeout-minutes: 700
     needs: [readmapping]
     runs-on: self-hosted
@@ -113,9 +134,12 @@ jobs:
           rm -rf /mnt/nextflow_cache/* 
       - name: Test Assembly
         run: |
-          bash ./scripts/test_assembly.sh || exit 1
+          bash ./scripts/test_assembly.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
 
   cooccurrence:
+    concurrency: 
+      group: ${{ github.head_ref }}
+      cancel-in-progress: true
     timeout-minutes: 700
     needs: [assembly]
     runs-on: self-hosted
@@ -131,9 +155,12 @@ jobs:
           rm -rf /mnt/nextflow_cache/* 
       - name: Test Cooccurrence
         run: |
-          bash ./scripts/test_cooccurrence.sh || exit 1
+          bash ./scripts/test_cooccurrence.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
 
   fragment_recruitment:
+    concurrency: 
+      group: ${{ github.head_ref }}
+      cancel-in-progress: true
     timeout-minutes: 700
     needs: [cooccurrence]
     runs-on: self-hosted
@@ -149,4 +176,4 @@ jobs:
           rm -rf /mnt/nextflow_cache/* 
       - name: Test Fragment Recruitment
         run: |
-          bash ./scripts/test_ci_fragmentRecruitment.sh || exit 1
+          bash ./scripts/test_fragmentRecruitment.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
