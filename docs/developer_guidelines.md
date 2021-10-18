@@ -71,6 +71,14 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 3. Pocesses should publish `.command.sh`, `.command.out`, `.command.log` and `.command.err` files but never `.command.run`.
 
+## Databases
+
+If the same databases is downloaded during runtime by multiple processes, it takes up an unnecessary ammount of disc space.
+One idea is too always use the same place to store these databases. This place should be described in `params.databses`.
+If other processes try too use this databses they can look at `params.databses` on this current machine. 
+If it is present it can be used, if not it should be downloaded. Through this procedure only one copy of each databses is used,
+which is space-saving.   
+
 ## Other
 
 1. Magic numbers should not be used.

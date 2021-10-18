@@ -2,11 +2,11 @@ output: "output"
 summary: true
 runid: 1
 tempdir: "tmp"
+# Has to end with a /. If not a file named "database" will be created instead of a directory.
+# The path has to be absolute to work with docker.
+# You can skip this parameter if you use the local database mode.
+databases: "/vol/spool/benedikt/meta-omics-toolkit/work/databases/"
 steps:
-   # Has to end with a /. If not a file named "database" will be created instead of a directory.
-   # The path has to be absolute to work with docker.
-   # You can skip this parameter if you use the local database mode.
-   databases: "/vol/spool/benedikt/meta-omics-toolkit/work/databases/"
    annotation:
       input: "test_data/annotation/input_small.tsv"
       s5cmd: 
