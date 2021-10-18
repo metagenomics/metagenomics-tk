@@ -28,3 +28,4 @@ steps:
          #database: '/vol/spool/benedikt/meta-omics-toolkit/work/databases/kegg/'
       prodigal:
           mode: 'meta'
+      keggFromDiamond:
