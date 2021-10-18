@@ -171,9 +171,12 @@ workflow wAnnotateFile {
       projectTableFile
       database_mode
    main:
+
+      annotationTmpDir = params.tempdir + "/annotation"
+      file(annotationTmpDir).mkdirs()
       set_mode(database_mode)
       projectTableFile | splitCsv(sep: '\t', header: true) | map{ it -> [it.DATASET, file(it.PATH)] } \
-      | collectFile() | map{ it -> [it.name, it]} | _wAnnotation
+      | collectFile(tempDir: params.tempdir + "/annotation") | map{ it -> [it.name, it]} | _wAnnotation
 }
 
 
