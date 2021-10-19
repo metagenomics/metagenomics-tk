@@ -71,6 +71,8 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 3. Pocesses should publish `.command.sh`, `.command.out`, `.command.log` and `.command.err` files but never `.command.run`.
 
+4. Custom error strategy that to not follow the strategy defined in nextflow.config should be documented (see Megahit example).
+
 ## Configuration
 
 Every process should by configurable by providing a parameters string to the tool in the process.
