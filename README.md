@@ -41,7 +41,11 @@ In addition to the pipeline module outputs defined in the next sections (Derepli
  
  * read mapping (bam files)
 
-#### Additional Configuration
+#### Configuration
+
+Options for global pipeline configuration can be viewed [here](docs/configuration/global.md).
+
+##### Additional Configuration
 
 Nextflow usually stores downloaded files in the work directory. If enough scratch space is available on the worker nodes then this can be prevented by specifying
 s3 links ([example](test_data/fullPipeline/reads_split_s3.tsv)) in the input tsv file and `download` parameter in the input yaml ([example](example_params/fullPipelineQC.yml)).
@@ -67,6 +71,13 @@ s3 links ([example](test_data/fullPipeline/reads_split_s3.tsv)) in the input tsv
 #### Output
 
 The output is a gzipped fasta file containing contigs.
+
+#### Error Handling
+
+On error with exit codes ([-9, 137]) (e.g. due to memory restrictions), the tool is executed again with higher cpu and memory values.
+The memory and cpu values are computed by the formula 2^(number of attempts) * (cpu/memory value of the assigned flavour).
+The highest possible cpu/memory value is restricted by the highest cpu/memory value of all flavours defined in the resource section 
+(see global [configuration](docs/configuration/global.md) section). 
 
 ### Cooccurrence
 
@@ -153,6 +164,12 @@ In addition, this module produces a file `SAMPLE_gtdbtk_CHUNK.tsv` that combines
 ##### Checkm
 
 The Checkm output adheres to the magAttributes specification and adds a `BIN_ID` and `SAMPLE` column to the output file. 
+
+## Error Strategy
+
+All tools follow the same error strategy. The execution of a tool is retried four times. If the run fails the fourth time, it will be ignored.
+If the execution is ignored, the toolkit will continue to run all tools that do not depend on the output of the failed tool run.
+Exceptions of this handling are specified in the corresponding module section.
 
 ## S3 Configuration
 
