@@ -9,8 +9,20 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
           '/' + TOOL + '/' + filename
 }
 
-def set_mode(newMode){
-    mode = newMode
+/**
+* The "database_mode" is used to choose which database path is expected.
+* If the Diamond-databasepath starts with "https://" or "s3://" the object storage based mode is used.
+* All other paths are seen as "local" mode paths and offline stored copys are expected.
+**/
+def set_mode(pathString){
+
+    if (pathString.startsWith("s3://")){
+        mode = "S3";
+    } else if (pathString.startsWith("https://")) {
+        mode = "S3";
+    } else {
+        mode = "local";
+    }
 }
 
 /**
@@ -168,7 +180,8 @@ process pKEGGFromDiamond {
 * The .tsv file has to have: DATASET PATH entries.
 * 
 * The "database_mode" is used to choose which database path is expected.
-* Use "S3" for object storage based databases, or "local" for offline stored copys.
+* If the Diamond-databasepath starts with "https://" or "s3://" the object storage based mode is used.
+* All other paths are seen as "local" mode paths and offline stored copys are expected.
 *
 **/
 workflow wAnnotateFile {
@@ -180,8 +193,8 @@ workflow wAnnotateFile {
 
       annotationTmpDir = params.tempdir + "/annotation"
       file(annotationTmpDir).mkdirs()
-      set_mode(database_mode)
-      projectTableFile | splitCsv(sep: '\t', header: true) | map{ it -> [it.DATASET, file(it.PATH)] } \
+      projectTableFile | splitCsv(sep: '\t', header: true) \
+      | map{ set_mode(params.steps.annotation.diamond.database); return [it.DATASET, file(it.PATH)] } \
       | collectFile(tempDir: params.tempdir + "/annotation") | map{ it -> [it.name, it]} | _wAnnotation
 }
 
