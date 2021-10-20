@@ -193,10 +193,25 @@ workflow wAnnotateFile {
 
       annotationTmpDir = params.tempdir + "/annotation"
       file(annotationTmpDir).mkdirs()
+      set_mode(params.steps.annotation.diamond.database)
       projectTableFile | splitCsv(sep: '\t', header: true) \
-      | map{ set_mode(params.steps.annotation.diamond.database); return [it.DATASET, file(it.PATH)] } \
-      | collectFile(tempDir: params.tempdir + "/annotation") | map{ it -> [it.name, it]} | _wAnnotation
+      | map{ [it.DATASET, file(it.PATH)] } \
+      | collectFile(tempDir: params.tempdir + "/annotation") | map{ [it.name, it] } | _wAnnotation
 }
+
+
+workflow wAnnotate {
+
+   take:
+      fasta
+   main:
+
+      annotationTmpDir = params.tempdir + "/annotation"
+      file(annotationTmpDir).mkdirs()
+      set_mode(params.steps.annotation.diamond.database)
+      fasta | collectFile(tempDir: params.tempdir + "/annotation") | map{ [it.name, it] } | _wAnnotation
+}
+
 
 
 /**
