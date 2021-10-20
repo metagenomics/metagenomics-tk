@@ -78,7 +78,7 @@ jobs:
       group: ${{ github.head_ref }}
       cancel-in-progress: true
     timeout-minutes: 700
-    needs: [full_pipeline]
+    needs: [mag_attributes]
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
