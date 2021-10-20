@@ -2,8 +2,6 @@
 name: CI
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
 
@@ -30,20 +28,22 @@ jobs:
       - name: Test Full Pipeline Run
         run: |
           bash ./scripts/test_fullPipeline.sh \
-          " --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "  || exit 1
+          " --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " \
+          "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
 
       - name: Test Full Pipeline run that ends with magAttributes
         run: |
           bash ./scripts/test_fullPipeline.sh \
           "  --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " \
-          example_params/fullPipeline_fraction/fullPipeline_fraction_magAttributes.yml  || exit 1
+          example_params/fullPipeline_fraction/fullPipeline_fraction_magAttributes.yml "/mnt/work/work/${{ github.head_ref }}" || exit 1
       - name: Test Full Pipeline run that ends with binning
         run: |
-          bash ./scripts/test_fullPipeline.sh "" example_params/fullPipeline_fraction/fullPipeline_fraction_binning_metabinner.yml || exit 1
+          bash ./scripts/test_fullPipeline.sh "" example_params/fullPipeline_fraction/fullPipeline_fraction_binning_metabinner.yml \
+          "/mnt/work/work" || exit 1
 
       - name: Test Aggregation Pipeline run based on per samples results.
         run: |
-          bash ./scripts/test_fullPipelineAggregate.sh " -c  test_data/assets/aws.config " || exit 1
+          bash ./scripts/test_fullPipelineAggregate.sh " -c  test_data/assets/aws.config " "" "/mnt/work/work/${{ github.head_ref }}"|| exit 1
 
       - name: Test if SRA S3 Entrypoint works 
         run: |
@@ -74,14 +74,14 @@ jobs:
       - name: Test MAG Attributes
         run: |
           bash ./scripts/test_magAttributes.sh \
-          "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 "  || exit 1
+          "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " \
+          "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
 
       - name: Test MAG Attributes Fraction
         run: |
           bash ./scripts/test_magAttributes.sh \
           "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " \
-          example_params/magAttributes_fraction/magAttributes.yml  || exit 1
-
+          example_params/magAttributes_fraction/magAttributes.yml "/mnt/work/work/${{ github.head_ref }}" || exit 1
   dereplication:
     concurrency: 
       group: ${{ github.head_ref }}
@@ -101,7 +101,7 @@ jobs:
           rm -rf /mnt/nextflow_cache/* 
       - name: Test Dereplication
         run: |
-          bash ./scripts/test_dereplication.sh || exit 1
+          bash ./scripts/test_dereplication.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
 
   readmapping:
     concurrency: 
@@ -122,7 +122,7 @@ jobs:
           rm -rf /mnt/nextflow_cache/* 
       - name: Test Read Mapping
         run: |
-          bash ./scripts/test_readMapping.sh || exit 1
+          bash ./scripts/test_readMapping.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
 
   assembly:
     concurrency: 
@@ -143,7 +143,7 @@ jobs:
           rm -rf /mnt/nextflow_cache/* 
       - name: Test Assembly
         run: |
-          bash ./scripts/test_assembly.sh || exit 1
+          bash ./scripts/test_assembly.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
 
   cooccurrence:
     concurrency: 
@@ -164,7 +164,7 @@ jobs:
           rm -rf /mnt/nextflow_cache/* 
       - name: Test Cooccurrence
         run: |
-          bash ./scripts/test_cooccurrence.sh || exit 1
+          bash ./scripts/test_cooccurrence.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
 
   fragment_recruitment:
     concurrency: 
@@ -185,4 +185,4 @@ jobs:
           rm -rf /mnt/nextflow_cache/* 
       - name: Test Fragment Recruitment
         run: |
-          bash ./scripts/test_ci_fragmentRecruitment.sh || exit 1
+          bash ./scripts/test_fragmentRecruitment.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1

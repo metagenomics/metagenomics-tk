@@ -30,7 +30,7 @@ process pMashSketchGenome {
     shell:
     '''
     ln -s g.fa !{binid}
-    mash sketch !{binid}  -o !{binid}.msh
+    mash sketch !{params.steps.dereplication.pasolli.additionalParams.mash_sketch} !{binid} -o !{binid}.msh
     GENOME_PATH=$(readlink -f g.fa)
     '''
 }
@@ -76,7 +76,7 @@ process pMashDist {
     shell:
     '''
     mash paste final_sketch !{sketches}
-    mash dist -p !{task.cpus} final_sketch.msh final_sketch.msh | cut -f 1,2,3 > distances.tsv
+    mash dist !{params.steps.dereplication.pasolli.additionalParams.mash_dist} -p !{task.cpus} final_sketch.msh final_sketch.msh | cut -f 1,2,3 > distances.tsv
     '''
 }
 
@@ -98,7 +98,7 @@ process pClusterDistances {
     shell:
     '''
     mkdir out
-    cluster.py -i distances.tsv -c !{params.steps.dereplication.pasolli.cutoff} -o out
+    cluster.py -i distances.tsv !{params.steps.dereplication.pasolli.additionalParams.cluster} -o out
     '''
 }
 
@@ -192,7 +192,7 @@ process pGetCluster {
     '''
     mkdir out
     cat <(echo "GENOME_A\tGENOME_B\tANI")  <(sed 's/ /\t/g' !{ani_values}) > ani_values.tsv
-    get_final_cluster.py -i !{genomeAttributes} -c !{cluster} -r ani_values.tsv -o out  -a !{params.steps.dereplication.pasolli.representativeAniCutoff}
+    get_final_cluster.py -i !{genomeAttributes} -c !{cluster} -r ani_values.tsv -o out  -a !{params.steps.dereplication.pasolli.additionalParams.representativeAniCutoff}
     cp out/representatives.tsv final_clusters.tsv
     '''
 }

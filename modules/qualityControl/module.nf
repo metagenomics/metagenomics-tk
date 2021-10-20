@@ -76,8 +76,8 @@ workflow _wFastqSplit {
             // Check if files are S3 URls and if the download parameter is specified config
             FASTP_FILE_IDX = 1
             reads | branch {
-              download: it[2].startsWith("s3://") && params?.steps?.qc.containsKey("download")
-              noDownload: !params?.steps?.qc.containsKey("download")
+              download: it[2].startsWith("s3://") && params?.steps?.qc.fastp.containsKey("download")
+              noDownload: !params?.steps?.qc.fastp.containsKey("download")
              } | set { samples }
 
              samples.noDownload | pFastpSplit

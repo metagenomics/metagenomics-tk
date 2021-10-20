@@ -19,7 +19,7 @@ process pBwaIndex {
       path('*.{amb,ann,bwt,pac,sa,fa}')
     shell:
       """
-      bwa index !{representatives}
+      bwa index !{params.steps.readMapping.bwa.additionalParams.bwa_index} !{representatives}
       """
 }
 
@@ -70,7 +70,6 @@ process pCovermCount {
       tuple val("${sample}"), path("${sample}_out/count.tsv"), emit: count
       tuple val("${sample}"), path("${sample}_out/rpkm.tsv"), emit: rpkm
       tuple val("${sample}"), path("${sample}_out/tpm.tsv"), emit: tpm
-      tuple val("${sample}"), path("${sample}_out/mean_mincov10.tsv"), emit: meanMincov10
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     shell:
     template('coverm.sh')
