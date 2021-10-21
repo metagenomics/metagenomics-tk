@@ -54,12 +54,8 @@ workflow wFragmentRecruitment {
    wFragmentRecruitmentFile(Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.samples), Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
 }
 
-workflow wAnnotateObjSt {
-   wAnnotateFile(Channel.from(file(params?.steps?.annotation?.input)), 'S3')
-}
-
-workflow wAnnotateLocal {
-   wAnnotateFile(Channel.from(file(params?.steps?.annotation?.input)), 'local')
+workflow wAnnotate {
+   wAnnotateFile(Channel.from(file(params?.steps?.annotation?.input)))
 }
 
 workflow wCooccurrence {
@@ -186,6 +182,7 @@ workflow wPipeline {
        wFragmentRecruitmentList(wUnmappedReadsList.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
     }
     wMagAttributesList(wBinning.out.bins)
+    wAnnotate(wBinning.out.bins)
     mapJoin(wMagAttributesList.out.checkm, wBinning.out.binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
 
     _wAggregate(samples, binsStats, wMagAttributesList.out.gtdb)
