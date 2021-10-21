@@ -126,7 +126,8 @@ workflow wAggregatePipeline {
 
 workflow _wAggregate {
    take:
-     samples
+     samplesPaired
+     samplesSingle
      binsStats
      gtdb
    main:
@@ -137,14 +138,13 @@ workflow _wAggregate {
      representativesListOfFiles = wDereplicateList.out
 
      REPRESENTATIVES_PATH_IDX = 0
+
      representativesListOfFiles \
 	| splitCsv(sep: '\t') \
         | map { it -> file(it[REPRESENTATIVES_PATH_IDX]) }\
         | set { representativesList }
 
-     samples | splitCsv(sep: '\t', header: true) | set {samplesChannel}
-
-     wListReadMappingBwa(samplesChannel, representativesList)
+     wListReadMappingBwa(samplesPaired, samplesSingle, representativesList)
 
      binsStats | wAnalyseMetabolites
 
@@ -167,23 +167,19 @@ workflow wPipeline {
     wSaveSettingsFile(Channel.fromPath(params.input))
 
     wQualityControlFile(Channel.fromPath(params.input))
-    wAssemblyList(wQualityControlFile.out.processed_reads)
 
-    wQualityControlFile.out.processed_reads \
-        | map { it -> "${it[0]}\t${it[1]}" } \
-        | collectFile(seed: "SAMPLE\tREADS", name: 'processed_reads.txt', newLine: true) \
-        | set { samples }
+    wQualityControlFile.out.readsPair | join(wQualityControlFile.out.readsSingle) | set { qcReads }
 
-    wBinning(wAssemblyList.out.contigs, wQualityControlFile.out.processed_reads)
+    wAssemblyList(qcReads)
 
-    wUnmappedReadsList(wQualityControlFile.out.processed_reads, wBinning.out.bins)
+    wBinning(wAssemblyList.out.contigs, qcReads)
 
     if(params?.steps?.fragmentRecruitment?.frhit){
-       wFragmentRecruitmentList(wUnmappedReadsList.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
+       wFragmentRecruitmentList(wBinning.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
     }
+
     wMagAttributesList(wBinning.out.bins)
     wAnnotate(wBinning.out.bins)
     mapJoin(wMagAttributesList.out.checkm, wBinning.out.binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
-
-    _wAggregate(samples, binsStats, wMagAttributesList.out.gtdb)
+    _wAggregate(wQualityControlFile.out.readsPair, wQualityControlFile.out.readsSingle, binsStats,wMagAttributesList.out.gtdb )
 }

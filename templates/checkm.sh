@@ -5,11 +5,11 @@ mkdir out
 FILE=$(mktemp !{sample}_checkm_XXXXXXXX.tsv)
 
 # run suggested checkm commands
-checkm tree --reduced_tree --pplacer_threads !{task.cpus}  -t !{task.cpus} -x !{ending} . out &> tree.log
+checkm tree !{params.steps.magAttributes.checkm.additionalParams.tree} --pplacer_threads !{task.cpus}  -t !{task.cpus} -x !{ending} . out &> tree.log
 checkm tree_qa out &> tree_qa.log
-checkm lineage_set out out/marker &> lineage.log
+checkm lineage_set !{params.steps.magAttributes.checkm.additionalParams.lineage_set} out out/marker &> lineage.log
 checkm analyze -x !{ending} -t !{task.cpus} out/marker . out &> analyze.log
-checkm qa --tab_table -t !{task.cpus} -f checkm.txt out/marker out  &> qa.log
+checkm qa !{params.steps.magAttributes.checkm.additionalParams.qa} --tab_table -t !{task.cpus} -f checkm.txt out/marker out  &> qa.log
 
 # reformat output files according to magAttributes standard
 echo -e "SAMPLE\tBIN_ID\tMarker lineage\t# genomes\t# markers\t# marker sets\t0\t1\t2\t3\t4\t5+\tCOMPLETENESS\tCONTAMINATION\tHETEROGENEITY" > $FILE

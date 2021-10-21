@@ -7,20 +7,31 @@ steps:
   qc:
     interleaved: false
     fastp:
-      params: " "
+       # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
+       additionalParams: "  "
   assembly:
     megahit:
-      params: " "
+      additionalParams: " --min-contig-len 200 "
   binning:
-    metabat:
-  sampleAnalysis:
     bowtie:
+      additionalParams: 
+        bowtie: " --quiet --very-sensitive "
+        # samtools flags are used to filter resulting bam file
+        samtoolsView: " -F 3584 " 
+    metabat:
+      additionalParams: "   "
   magAttributes:
     gtdb:
       buffer: 1000
-      database: "/vol/spool/gtdb/release202"
+      database: "/vol/spool/peter/gtdb/release202"
+      additionalParams: " --min_af 0.65 "
     checkm:
-      database: "/vol/spool/checkm/"
+      database: "/vol/spool/peter/meta-omics-toolkit/checkm"
       buffer: 200
+      additionalParams:
+        tree: " --reduced_tree "
+        lineage_set: " " 
+        qa: "  "
     prokka:
       defaultKingdom: 'Bacteria'
+      additionalParams: " --mincontiglen 200 "

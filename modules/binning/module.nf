@@ -73,20 +73,31 @@ process pBowtie {
     errorStrategy 'retry'
 
     input:
-    tuple val(sample), path(contigs), path(fastqs, stageAs: 'fastq.fq.gz')
+    tuple val(sample), path(contigs), path(pairedReads, stageAs: 'paired.fq.gz'), path(unpairedReads, stageAs: 'unpaired.fq.gz')
 
     output:
     tuple val("${sample}"), file("${sample}.bam"), optional: true, emit: mappedReads
+    tuple val("${sample}"), file("${sample}_unmapped.fq.gz"), optional: true, emit: unmappedReads
     tuple val("${sample}"), file("${sample}_bowtie_stats.txt"), optional: true, emit: stats
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
+    getUnmapped = params.steps.containsKey("fragmentRecruitment") ? "TRUE" : ""
     '''
     INDEX=!{sample}.index
+    # Build Bowtie Index
     bowtie2-build --threads !{task.cpus} --quiet !{contigs} $INDEX 
-    bowtie2 -p !{task.cpus}  --quiet --very-sensitive -x $INDEX --interleaved fastq.fq.gz 2> !{sample}_bowtie_stats.txt \
-          | samtools view -F 3584 --threads !{task.cpus} -bS - \
-          | samtools sort -l 9 --threads !{task.cpus} - > !{sample}.bam
+
+    # Run Bowtie
+    bowtie2 -p !{task.cpus} !{params.steps.binning.bowtie.additionalParams.bowtie} -x $INDEX \
+              --interleaved paired.fq.gz -U unpaired.fq.gz 2> !{sample}_bowtie_stats.txt \
+             | samtools view -F 3584 --threads !{task.cpus} -bS - \
+             | samtools sort -l 9 --threads !{task.cpus} - > !{sample}.bam
+
+    # If Fragment Recruitment is selected then reads that could not be mapped should be returned
+    if [ "!{getUnmapped}" == "TRUE" ]; then
+	samtools bam2fq -f 4 !{sample}.bam | pigz --best --processes !{task.cpus} > !{sample}_unmapped.fq.gz 
+    fi
     '''
 }
 
@@ -234,6 +245,11 @@ def createMap(binning){
   return chunkList;
 }
 
+/*
+*
+* This workflow takes an input_reads channel as input with the following format [SAMPLE, READS PAIRED, READS UNPAIRED]
+*
+*/
 workflow wBinning {
    take: 
      contigs
@@ -296,4 +312,5 @@ workflow wBinning {
      binsStats = binMap
      bins = binsList
      mapping = pBowtie.out.mappedReads
+     unmappedReads = pBowtie.out.unmappedReads
 }

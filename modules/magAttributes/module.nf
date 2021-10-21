@@ -126,7 +126,7 @@ process pProkka {
     BIN_ID="$(basename !{bin})"
 
     # Run Prokka
-    prokka  --cpus !{task.cpus} !{bin}   --outdir out --kingdom !{domain}
+    prokka !{params.steps.magAttributes.prokka.additionalParams}  --cpus !{task.cpus} !{bin}   --outdir out --kingdom !{domain}
 
     # Prepare output according to magAttributes specification
     for f in out/* ; do suffix=$(echo "${f##*.}"); mv $f ${BIN_PREFIX}.${suffix}; done
