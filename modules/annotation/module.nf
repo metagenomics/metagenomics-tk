@@ -188,7 +188,6 @@ workflow wAnnotateFile {
 
    take:
       projectTableFile
-      database_mode
    main:
 
       annotationTmpDir = params.tempdir + "/annotation"

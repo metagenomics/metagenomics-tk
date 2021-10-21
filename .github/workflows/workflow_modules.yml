@@ -150,3 +150,21 @@ jobs:
       - name: Test Fragment Recruitment
         run: |
           bash ./scripts/test_ci_fragmentRecruitment.sh || exit 1
+
+  annotation:
+    timeout-minutes: 700
+    needs: [full_pipeline]
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache nextflow cache
+        uses: actions/cache@v2
+        with:
+           path: ${{github.workspace}}/.nextflow
+           key: ${{github.head_ref}}-nextflow-cache
+      - name: clean up existing inputs directory
+        run: |
+          rm -rf /mnt/nextflow_cache/* 
+      - name: Test Annotation
+        run: |
+          bash ./scripts/test_ci_annotation.sh || exit 1
