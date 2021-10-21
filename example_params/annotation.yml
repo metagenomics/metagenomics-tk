@@ -17,15 +17,15 @@ steps:
          # on your shared file system (if you work on a single PC it does not need to be shared).
          # Provide an S3 style path to your diamond database if you use S3.
 
-         database: 's3://bene-test/databases/kegg-2021-01.dmnd'
-         #database: '/vol/spool/benedikt/meta-omics-toolkit/work/databases/kegg-2021-01.dmnd'
+         #database: 's3://bene-test/databases/kegg-2021-01.dmnd'
+         database: '/mnt/databases/kegg-2021-01.dmnd'
          params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
       kegg:
          # If you use a local KEGG copy provide the full path to a directory with all the linkage files.
          # If a S3 link is used, provide the same directory in the S3 format.
 
-         database: 's3://bene-test/databases/kegg_2021-01'
-         #database: '/vol/spool/benedikt/meta-omics-toolkit/work/databases/kegg/'
+         #database: 's3://bene-test/databases/kegg_2021-01'
+         database: '/mnt/databases/kegg_2021-01/'
       prodigal:
           mode: 'meta'
       keggFromDiamond:
