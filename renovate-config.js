@@ -3,7 +3,7 @@ module.exports = {
 	  dryRun: false,
 	  username: 'renovate-release',
 	  gitAuthor: 'Renovate Bot <bot@renovateapp.com>',
-	  onboarding: false,
+	  onboarding: true,
 	  platform: 'github',
           repositories: ["pbelmann/meta-omics-toolkit"],
 	  packageRules: [{
