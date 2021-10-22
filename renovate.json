@@ -1,3 +1,15 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json"
+    packageRules: [{
+	         "regexManagers": [
+	{
+		"fileMatch": ["^nextflow.config$"],
+	        "matchStrings": [
+	                               "_image* = \"(?<depName>.*?):(?<currentValue>.*?)\""
+	                        ],
+	        "datasourceTemplate": "docker"
+	                        }
+	        ]
+	 }
+ ]
 }
