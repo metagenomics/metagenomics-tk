@@ -5,6 +5,7 @@ module.exports = {
 	  gitAuthor: 'Renovate Bot <bot@renovateapp.com>',
 	  onboarding: true,
 	  platform: 'github',
+          repositories: ["pbelmann/meta-omics-toolkit"],
 	  packageRules: [{
 		"regexManagers": [
 		   {
