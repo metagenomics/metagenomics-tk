@@ -2,7 +2,7 @@ module.exports = {
 	  branchPrefix: 'renovate/',
 	  dryRun: true,
 	  username: 'renovate-release',
-	  gitAuthor: 'Renovate Bot',
+	  gitAuthor: 'Renovate Bot <bot@renovateapp.com>',
 	  onboarding: true,
 	  platform: 'github',
 	  packageRules: [{
