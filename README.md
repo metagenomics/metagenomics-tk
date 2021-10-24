@@ -1,6 +1,3 @@
-
-[![CI](https://github.com/pbelmann/meta-omics-toolkit/actions/workflows/workflow_modules.yml/badge.svg)](https://github.com/pbelmann/meta-omics-toolkit/actions/workflows/workflow_modules.yml)
-
 # Meta-Omics-Toolkit
 
 ## Modules
