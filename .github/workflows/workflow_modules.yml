@@ -180,7 +180,7 @@ jobs:
 
   annotation:
     timeout-minutes: 700
-    needs: [full_pipeline]
+    needs: [fragment_recruitment]
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2

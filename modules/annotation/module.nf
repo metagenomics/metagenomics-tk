@@ -189,26 +189,28 @@ workflow wAnnotateFile {
    take:
       projectTableFile
    main:
-
       annotationTmpDir = params.tempdir + "/annotation"
       file(annotationTmpDir).mkdirs()
       set_mode(params.steps.annotation.diamond.database)
       projectTableFile | splitCsv(sep: '\t', header: true) \
       | map{ [it.DATASET, file(it.PATH)] } \
       | collectFile(tempDir: params.tempdir + "/annotation") | map{ [it.name, it] } | _wAnnotation
+   emit:
+      keggAnnotation = _wAnnotation.out.keggAnnotation
 }
 
 
-workflow wAnnotate {
+workflow wAnnotateList {
 
    take:
       fasta
    main:
-
       annotationTmpDir = params.tempdir + "/annotation"
       file(annotationTmpDir).mkdirs()
       set_mode(params.steps.annotation.diamond.database)
       fasta | collectFile(tempDir: params.tempdir + "/annotation") | map{ [it.name, it] } | _wAnnotation
+    emit:
+      keggAnnotation = _wAnnotation.out.keggAnnotation
 }
 
 

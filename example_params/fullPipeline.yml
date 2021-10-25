@@ -3,6 +3,7 @@ summary: false
 input: "test_data/fullPipeline/reads_split.tsv"
 output: "output"
 runid: 1
+databases: "/mnt/databases/"
 steps:
   qc:
     interleaved: false
@@ -64,3 +65,15 @@ steps:
         coverm: " --min-covered-fraction 0 "
   cooccurrence:
     additionalParams: " -t 0.1 -z 80 -o 'correlation' "
+  annotation:
+     s5cmd:
+        params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
+        keyfile: 'xxx'
+     diamond:
+        database: 's3://bene-test/databases/kegg-2021-01.dmnd'
+        params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
+     kegg:
+        database: 's3://bene-test/databases/kegg_2021-01'
+     prodigal:
+         mode: 'meta'
+     keggFromDiamond:

@@ -10,7 +10,7 @@ include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/
 include { wAnalyseMetabolites } from './modules/metabolomics/module'
 include { wUnmappedReadsList; wUnmappedReadsFile } from './modules/sampleAnalysis/module'
 include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './modules/fragmentRecruitment/frhit/module'
-include { wAnnotateFile } from './modules/annotation/module'
+include { wAnnotateFile; wAnnotateList } from './modules/annotation/module'
 include { wCooccurrenceList; wCooccurrenceFile } from './modules/cooccurrence/module'
 
 
@@ -178,8 +178,8 @@ workflow wPipeline {
        wFragmentRecruitmentList(wBinning.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
     }
 
+    wAnnotateList(wBinning.out.bins)
     wMagAttributesList(wBinning.out.bins)
-    wAnnotate(wBinning.out.bins)
     mapJoin(wMagAttributesList.out.checkm, wBinning.out.binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
     _wAggregate(wQualityControlFile.out.readsPair, wQualityControlFile.out.readsSingle, binsStats,wMagAttributesList.out.gtdb )
 }
