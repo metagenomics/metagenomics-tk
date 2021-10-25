@@ -6,7 +6,7 @@ module.exports = {
 		  onboarding: false,
 		  platform: 'github',
 		  requireConfig: false,
-	          repositories: ["pbelmann/renovate"],
+	          repositories: ["pbelmann/meta-omics-toolkit"],
                   packageRules: [
                          {  "matchDatasources": ["docker"], versioning: "loose" }
 		  ],
