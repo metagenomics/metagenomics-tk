@@ -29,3 +29,17 @@ steps:
       prodigal:
           mode: 'meta'
       keggFromDiamond:
+
+resources:
+  large:
+    cpus: 28
+    memory: 256
+  medium:
+    cpus: 14
+    memory: 128
+  small:
+    cpus: 7
+    memory: 16
+  tiny:
+    cpus: 1
+    memory: 2
