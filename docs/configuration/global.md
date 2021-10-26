@@ -40,14 +40,14 @@ input:
 ```
 
 where:
-  * `path` is the path to file containing a column with `RUN_ID` as header.
+  * `path` is the path to a file containing a column with `RUN_ID` as header.
 
   * `bucket` is the S3 Bucket hosting the data.
 
   * `prefix` is the path to the actual SRA datasets.
 
   * `watch` if true, the file specified with the `path` attribute is watched and every time a new SRA run id is
-     appended, the pipeline is triggered. The pipeline will never finish in that mode.
+     appended, the pipeline is triggered. The pipeline will never finish in this mode.
 
 #### NCBI SRA
 
