@@ -28,8 +28,6 @@ process pBowtie {
 
     when params?.steps?.sampleAnalysis !== null 
 
-    errorStrategy 'retry'
-
     input:
     tuple val(sample), val(TYPE), path(contigs), path(fastqs, stageAs: 'fastq.fq.gz')
 

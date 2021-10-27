@@ -11,8 +11,6 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 
 process pFrHit {
 
-    errorStrategy 'ignore'
-
     label 'large'
 
     tag "$sample"
@@ -77,8 +75,6 @@ process pUnzip {
 
 
 process pCombinedAlignmentAnalysis {
-
-    errorStrategy 'ignore'
 
     label 'medium'
 
