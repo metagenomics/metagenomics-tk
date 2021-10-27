@@ -2,6 +2,7 @@ tempdir: "tmp"
 summary: false
 output: "output"
 runid: 1
+logDir: log
 steps:
   cooccurrence:
      gtdb: test_data/cooccurrence/gtdb.tsv

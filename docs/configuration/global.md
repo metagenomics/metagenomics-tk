@@ -9,6 +9,8 @@
 
  * `runid`: The run ID will be part of the output path and allows to distinguish between different pipeline configurations that were used for the same dataset.
 
+ * `logDir`: A path to a directory which is used to store log files.
+
  * `steps`: Steps allows to specify multiple pipeline modules for running the toolkit. We distinguish between two modes. You can either run one tool of
    the pipeline or the whole pipeline with different configurations.
 

@@ -130,8 +130,9 @@ pProcess {
 
 ```
 
+## Logs
 
-
+Log files should be stored in the user provided `logDir` directory.
 
 ## Other
 

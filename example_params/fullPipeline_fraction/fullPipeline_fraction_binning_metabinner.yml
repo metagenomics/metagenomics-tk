@@ -5,6 +5,7 @@ input:
     path: "test_data/fullPipeline/reads_split.tsv"
     watch: false
 output: "output"
+logDir: log
 runid: 1
 steps:
   qc:

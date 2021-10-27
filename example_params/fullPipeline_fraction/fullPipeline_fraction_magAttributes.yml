@@ -5,6 +5,7 @@ input:
     watch: false
 summary: true
 output: "output"
+logDir: log
 runid: 1
 steps:
   qc:
