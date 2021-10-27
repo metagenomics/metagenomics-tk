@@ -6,6 +6,6 @@ runid: 1
 input:
   SRA:
     NCBI:
-      path: test_data/SRA/samples.tsv 
+      path: test_data/SRA/ncbi_samples.tsv 
 steps:
 logDir: log
