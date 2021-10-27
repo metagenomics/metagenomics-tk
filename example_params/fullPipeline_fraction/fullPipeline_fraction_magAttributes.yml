@@ -1,11 +1,14 @@
 tempdir: "tmp"
-input: "test_data/fullPipeline/reads_split.tsv"
+input:
+  paired: 
+    path: "test_data/fullPipeline/reads_split.tsv"
+    watch: false
 summary: true
 output: "output"
+logDir: log
 runid: 1
 steps:
   qc:
-    interleaved: false
     fastp:
        # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
        additionalParams: "  "

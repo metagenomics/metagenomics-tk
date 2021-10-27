@@ -4,7 +4,6 @@
 
 All module configurations are the same as the full pipeline run with the sole difference that entry and param-file parameters are different.
 
-
 *Note!* Please do never place sensitive information in any params file since the content is upload as part of the pipeline run.
 
 ### Run Full Pipeline

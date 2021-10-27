@@ -1,0 +1,19 @@
+tempdir: "tmp"
+summary: false
+output: "output"
+logDir: log
+runid: 1
+input:
+  SRA:
+    S3:
+      path: test_data/SRA/samples.tsv 
+      bucket: "s3://ftp.era.ebi.ac.uk" 
+      prefix: "/vol1/fastq/"
+      watch: false
+steps:
+  qc:
+    fastp:
+      download:
+        s5cmdParams: " --retry-count 30 --no-verify-ssl --no-sign-request --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "
+      additionalParams: " "
+
