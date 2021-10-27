@@ -24,7 +24,7 @@ process getSRAPath {
     val(sraid)
 
     output:
-    tuple val("${sraid}"), val(path), optional: true
+    tuple val("${sraid}"), val(path), optional: true, emit: passed
 
     exec:
     PREFIX=params.input.SRA.S3.prefix
@@ -84,14 +84,25 @@ workflow _wSRAS3 {
          } else {
            idsFromPath | set { files }
          }
+
          files | splitCsv(sep: "\t", header: true) | map { it -> it.RUN_ID} | flatten | unique  \
-		| filter({ id -> id.length() <= MAX_LENGTH && id.length() >= MIN_LENGTH }) \
-		| getSRAPath | map { it -> [ it[SAMPLE_IDX], file(BUCKET + it[FASTQ_FILES_IDX]).listFiles()]} \
+		| branch {
+                   passed: it.length() <= MAX_LENGTH && it.length() >= MIN_LENGTH
+                           return it
+                   failed: it.length() > MAX_LENGTH || it.length() < MIN_LENGTH
+                           return it
+	        } | set { filteredIDs }
+
+         filteredIDs.passed | getSRAPath 
+ 
+         getSRAPath.out.passed | map { it -> [ it[SAMPLE_IDX], file(BUCKET + it[FASTQ_FILES_IDX]).listFiles()]} \
                 | map { it -> [ it[SAMPLE_IDX],  it[FASTQ_FILES_IDX].collect({ "s3:/$it" }) ] }
-                | _wCheckSRAFiles \
-     		| set { fastqs }
+                | _wCheckSRAFiles
+
         emit:
-          fastqs
+          fastqs = _wCheckSRAFiles.out.passedSamples
+          failedSRAFastqFiles = _wCheckSRAFiles.out.failedSRAIDs
+          incorrectAccessions = filteredIDs.failed
 }
 
 
@@ -109,13 +120,13 @@ def fetchRunAccessions( tsv ) {
 
     splitter.parseHeader( reader )
 
-    List<String> run_accessions = []
+    List<String> runAccessions = []
     Map<String, String> row
 
     while( row = splitter.fetchRecord( reader ) ) {
-       run_accessions.add( row['RUN_ID'] )
+       runAccessions.add( row['RUN_ID'] )
     }
-    return run_accessions
+    return runAccessions
 }
 
 
@@ -127,17 +138,32 @@ workflow _wCheckSRAFiles {
      FASTQ_LEFT_IDX=1
      FASTQ_RIGHT_IDX=2
      FASTQ_FILES_IDX = 1
+
      // Ensure that at least two fastq files are in the folder
      samples | filter({sample -> sample[FASTQ_FILES_IDX].size() >= 2 }) \
          // Ensure that paired end files are included
-	 | filter({sample -> sample[FASTQ_FILES_IDX].stream().allMatch { it -> it ==~ /.+(_1|_2).+$/ }}) \
+	 | branch {
+            passed: it[FASTQ_FILES_IDX].stream().allMatch { sraFile -> sraFile ==~ /.+(_1|_2).+$/ }
+                    return it
+            other: true
+                    return it
+         } | set { sraFiles  }
          // Ignore _3.fastq.gz files 
-         | map({ sample ->  [sample[SAMPLE_IDX], sample[FASTQ_FILES_IDX].findAll { it ==~ /.+(_1|_2).+$/} ].flatten()} ) \
+         sraFiles.passed | map({ sample ->  [sample[SAMPLE_IDX], sample[FASTQ_FILES_IDX].findAll { it ==~ /.+(_1|_2).+$/} ].flatten()} ) \
 	 //Set map entries
 	 | map({ sample -> [SAMPLE:sample[SAMPLE_IDX],READS1:sample[FASTQ_LEFT_IDX], READS2:sample[FASTQ_RIGHT_IDX]]}) \
 	 | set {fastqs}
+
+         // Return ids of samples without two fastq files
+         sraFiles.other | map { it -> it[SAMPLE_IDX] } | set { failedSRAIDs }
+
+         // report failed SRA ids
+         failedSRAIDs \
+	 | view { id -> "The following sample does not have two fastq files that match the patter '/.+(_1|_2).+\$/': $id " }
+
     emit:
-      fastqs
+      passedSamples = fastqs
+      failedSRAIDs = failedSRAIDs
 }
 
 
@@ -153,12 +179,18 @@ workflow _wSRANCBI {
          // check that SRA IDs have the correct length
          accessionsFiltered = accessions.findAll{ id -> id.length() <= MAX_LENGTH && id.length() >= MIN_LENGTH }
 
+         // get SRA IDs with incorrect length
+         incorrectAccessions = Channel.from(accessions.findAll{ id -> id.length() > MAX_LENGTH || id.length() < MIN_LENGTH })
+
          // check if the number of SRA files is correct and return the correct format 
-         Channel.fromSRA(accessionsFiltered.unique()) | _wCheckSRAFiles | set { fastqs }
+         Channel.fromSRA(accessionsFiltered.unique()) | _wCheckSRAFiles
 
        emit:
-         fastqs
+         fastqs = _wCheckSRAFiles.out.passedSamples
+         failedSRAFastqFiles = _wCheckSRAFiles.out.failedSRAIDs
+         incorrectAccessions = incorrectAccessions
 }
+
 
 /*
  *  The input modules defined three input sources: SRA NCBI, generic SRA S3 source that contains a column consisting of SRA IDs 
@@ -183,8 +215,21 @@ workflow wInputFile {
         _wSplitReads() | set { datasets }
         break;
       default:
-        println "WARNING unknown or no input parameter specified!"
+        println "WARNING: unknown or no input parameter specified!"
     }
+
+    datasets.incorrectAccessions \
+	| collectFile(newLine: true, seed: "RUN_ID", name: 'incorrectAccessions.tsv', storeDir: params.logDir)
+
+    datasets.incorrectAccessions \
+	| view { id -> "WARNING: The length of the ID $id is not between 9 and 12 characters and therefore will be skipped" }
+
+    datasets.failedSRAFastqFiles \
+	| collectFile(newLine: true, seed: "RUN_ID", name: 'accessionsMissingFiles.tsv', storeDir: params.logDir)
+
+    datasets.failedSRAFastqFiles \
+	| view { id -> "WARNING: The SRA ID $id does not provide paired end reads and therefore will be skipped" }
+
   emit:
-    data = datasets
+    data = datasets.fastqs
 }
