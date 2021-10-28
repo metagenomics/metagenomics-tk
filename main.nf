@@ -11,6 +11,7 @@ include { wAnalyseMetabolites } from './modules/metabolomics/module'
 include { wUnmappedReadsList; wUnmappedReadsFile } from './modules/sampleAnalysis/module'
 include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './modules/fragmentRecruitment/frhit/module'
 include { wCooccurrenceList; wCooccurrenceFile } from './modules/cooccurrence/module'
+include { wPlasmidsList } from './modules/plasmids/module'
 
 def mapJoin(channel_a, channel_b, key_a, key_b){
     channel_a \
@@ -145,6 +146,13 @@ workflow _wAggregate {
      wCooccurrenceList(wListReadMappingBwa.out.trimmedMean, gtdb)
 }
 
+workflow _wConfigurePipeline {
+    
+    if(params.steps.containsKey("plasmid")){
+      params.steps.assembly.megahit.fastg = true
+    }
+}
+
 
 /*
 * 
@@ -158,6 +166,8 @@ workflow _wAggregate {
 */
 workflow wPipeline {
    
+    _wConfigurePipeline
+
     wSaveSettingsFile(Channel.fromPath(params.input))
 
     wQualityControlFile(Channel.fromPath(params.input))
@@ -167,6 +177,8 @@ workflow wPipeline {
     wAssemblyList(qcReads)
 
     wBinning(wAssemblyList.out.contigs, qcReads)
+
+    wAssemblyList.out.fastg | join(wBinning.out.mapping) | wPlasmidsList
 
     if(params?.steps?.fragmentRecruitment?.frhit){
        wFragmentRecruitmentList(wBinning.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
