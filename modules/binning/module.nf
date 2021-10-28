@@ -64,6 +64,8 @@ process pBowtie {
 
     tag "$sample"
 
+    when params.steps.containsKey("binning") 
+
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "contigMapping", filename) }
 
     input:
