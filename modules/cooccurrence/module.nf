@@ -12,8 +12,6 @@ def getOutput(RUNID, TOOL, filename){
 
 process pVerticalConcat {
 
-    errorStrategy 'ignore'
-
     label 'tiny'
 
     when params.steps.containsKey("cooccurrence")
@@ -30,8 +28,6 @@ process pVerticalConcat {
 
 
 process pBuildNetwork {
-
-    errorStrategy 'ignore'
 
     label 'large'
    
@@ -56,8 +52,6 @@ process pBuildNetwork {
 
 
 process pVerticalConcatFinal {
-
-    errorStrategy 'ignore'
 
     label 'tiny'
 
