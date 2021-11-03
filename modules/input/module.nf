@@ -210,6 +210,17 @@ workflow wInputFile {
         } else if (SRA_MODE=="NCBI"){
            _wSRANCBI() | set { datasets }
         }
+        datasets.out.incorrectAccessions \
+         | collectFile(newLine: true, seed: "RUN_ID", name: 'incorrectAccessions.tsv', storeDir: params.logDir)
+
+        datasets.out.incorrectAccessions \
+         | view { id -> "WARNING: The length of the ID $id is not between 9 and 12 characters and therefore will be skipped" }
+
+        datasets.out.failedSRAFastqFiles \
+         | collectFile(newLine: true, seed: "RUN_ID", name: 'accessionsMissingFiles.tsv', storeDir: params.logDir)
+
+        datasets.out.failedSRAFastqFiles \
+         | view { id -> "WARNING: The SRA ID $id does not provide paired end reads and therefore will be skipped" }
         break;
       case "paired":
         _wSplitReads() | set { datasets }
@@ -217,18 +228,6 @@ workflow wInputFile {
       default:
         println "WARNING: unknown or no input parameter specified!"
     }
-
-    datasets.incorrectAccessions \
-	| collectFile(newLine: true, seed: "RUN_ID", name: 'incorrectAccessions.tsv', storeDir: params.logDir)
-
-    datasets.incorrectAccessions \
-	| view { id -> "WARNING: The length of the ID $id is not between 9 and 12 characters and therefore will be skipped" }
-
-    datasets.failedSRAFastqFiles \
-	| collectFile(newLine: true, seed: "RUN_ID", name: 'accessionsMissingFiles.tsv', storeDir: params.logDir)
-
-    datasets.failedSRAFastqFiles \
-	| view { id -> "WARNING: The SRA ID $id does not provide paired end reads and therefore will be skipped" }
 
   emit:
     data = datasets.fastqs
