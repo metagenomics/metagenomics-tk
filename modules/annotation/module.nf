@@ -25,6 +25,33 @@ def set_mode(pathString){
     }
 }
 
+
+/**
+*
+* Little hack to collect all files of a sample to one for annotation.
+*
+**/
+process pFlattenToTuple {
+
+      tag "$sample"
+
+      label 'small'
+
+      params?.steps.annotation.containsKey("diamond")
+
+   input:
+      tuple val(sample), file(fasta)
+
+   output:
+      tuple val("${sample}"), file("${sample}.fa"), emit: results
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
+
+   shell:
+      '''
+      cat *.fa > !{sample}.fa 
+      '''
+}
+
 /**
 *
 * Diamond is used to search for big input queries in large databases.
@@ -200,7 +227,13 @@ workflow wAnnotateFile {
 }
 
 
-workflow wAnnotateList {
+/**
+*
+* See wAnnotateFile for a description.
+* This entry point concatenates all files of a sample and annotates these. 
+*
+**/
+workflow wAnnotateSample {
 
    take:
       fasta
@@ -208,7 +241,8 @@ workflow wAnnotateList {
       annotationTmpDir = params.tempdir + "/annotation"
       file(annotationTmpDir).mkdirs()
       set_mode(params.steps.annotation.diamond.database)
-      fasta | collectFile(tempDir: params.tempdir + "/annotation") | map{ [it.name, it] } | _wAnnotation
+      fasta | pFlattenToTuple 
+      pFlattenToTuple.out.results | _wAnnotation
     emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }

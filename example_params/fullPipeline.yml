@@ -73,10 +73,10 @@ steps:
         params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
         keyfile: 'xxx'
      diamond:
-        database: 's3://bene-test/databases/kegg-2021-01.dmnd'
+        database: '/mnt/databases/kegg-2021-01.dmnd'
         params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
      kegg:
-        database: 's3://bene-test/databases/kegg_2021-01'
+        database: '/mnt/databases/kegg_2021-01/'
      prodigal:
          mode: 'meta'
      keggFromDiamond:
