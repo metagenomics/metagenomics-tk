@@ -2,6 +2,7 @@ tempdir: "tmp"
 summary: true
 output: "output"
 runid: 1
+logDir: log
 steps:
   magAttributes:
     input: "test_data/magAttributes/input.tsv"
@@ -20,3 +21,16 @@ steps:
       defaultKingdom: 'Bacteria'
       additionalParams: " --mincontiglen 200 "
 
+resources:
+  large:
+    cpus: 28
+    memory: 256
+  medium:
+    cpus: 14
+    memory: 128
+  small:
+    cpus: 7
+    memory: 16
+  tiny:
+    cpus: 1
+    memory: 2

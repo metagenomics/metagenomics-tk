@@ -65,15 +65,17 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 ## Process
 
-1. Process names should start `p`
+1. Process names should start `p`.
 
 2. The input and output of processes should contain a sample and/or bin and contig id.
 
 3. Pocesses should publish `.command.sh`, `.command.out`, `.command.log` and `.command.err` files but never `.command.run`.
 
+4. Custom error strategies that do not follow the strategy defined in nextflow.config, should be documented (see Megahit example).
+
 ## Configuration
 
-Every process should by configurable by providing a parameters string to the tool in the process.
+Every process should be configurable by providing a parameters string to the tool in the process.
 Every module should use the following specification in the configuration file:
 
 ```
@@ -130,8 +132,9 @@ pProcess {
 
 ```
 
+## Logs
 
-
+Log files should be stored in the user provided `logDir` directory.
 
 ## Other
 

@@ -14,8 +14,6 @@ process pMashSketchGenome {
 
     container "${params.mash_image}"
 
-    errorStrategy 'retry'
-
     label 'tiny'
 
     when params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli")
@@ -40,8 +38,6 @@ process pMashPaste {
 
     container "${params.mash_image}"
 
-    errorStrategy 'retry'
-
     label 'large'
 
     input:
@@ -60,8 +56,6 @@ process pMashPaste {
 process pMashDist {
 
     container "${params.mash_image}"
-
-    errorStrategy 'retry'
 
     label 'large'
 
@@ -83,8 +77,6 @@ process pMashDist {
 
 process pClusterDistances {
 
-    errorStrategy 'retry'
-
     input:
     file('distances.tsv')
 
@@ -104,8 +96,6 @@ process pClusterDistances {
 
 
 process pSelectRepresentative {
-
-    errorStrategy 'retry'
 
     input:
     path genome_table
@@ -128,8 +118,6 @@ process pSelectRepresentative {
 
 
 process pANIb {
-
-    errorStrategy 'retry'
 
     label 'small'
 

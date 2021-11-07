@@ -1,6 +1,7 @@
 tempdir: "tmp"
 summary: false
 output: "output"
+logDir: log
 runid: 1
 steps:
   fragmentRecruitment:
@@ -12,3 +13,16 @@ steps:
         frhit: " -c 95 "
         coverm: " --min-covered-fraction 0 "
              
+resources:
+  large:
+    cpus: 28
+    memory: 256
+  medium:
+    cpus: 14
+    memory: 128
+  small:
+    cpus: 7
+    memory: 16
+  tiny:
+    cpus: 1
+    memory: 2
