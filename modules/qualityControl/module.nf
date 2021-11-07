@@ -71,13 +71,11 @@ process pFastpSplitDownload {
 
 workflow _wFastqSplit {
        take:
-         readsTable
+         reads
        main:
-            // Check if files are S3 URls and if the download parameter is specified config
+            // Check if files are S3 URLs and if the download parameter is specified in the config
             FASTP_FILE_IDX = 1
-            readsTable | splitCsv(sep: '\t', header: true) \
-             | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} \
-             | branch {
+            reads | branch {
               download: it[2].startsWith("s3://") && params?.steps?.qc.fastp.containsKey("download")
               noDownload: !params?.steps?.qc.fastp.containsKey("download")
              } | set { samples }
@@ -111,6 +109,24 @@ workflow _wFastqSplit {
 
 
 /*
+ * Takes a channel as input that has the following format [SAMPLE, LEFT_READ_PATH, RIGHT READ_PATH]. 
+ * This module does read trimming, adapter removal and other quality control tasks.   
+ * 
+ * Output:
+ * Interleaved fastq files.
+ * 
+ */
+workflow wQualityControlList {
+  take:
+    reads
+  main:
+    reads | _wFastqSplit | set { results } 
+  emit:
+    readsPair = results.readsPair
+    readsSingle = results.readsSingle
+}
+
+/*
  * Takes a tab separated file of files containing reads as input and applies 
  * read trimming, adapter removal and other quality control tasks.   
  * Input file with columns seperated by tabs:
@@ -126,10 +142,10 @@ workflow wQualityControlFile {
      take:
        readsTable
      main:
-       if(params.steps.qc.interleaved){
-       //     _wFastqInterleavedSeperate(reads)
-       } else {
-         results = _wFastqSplit(readsTable)
+       if(!params.steps.qc.interleaved){
+         readsTable | splitCsv(sep: '\t', header: true) \
+            | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} \
+	    | _wFastqSplit | set { results }
        }
     emit:
       readsPair = results.readsPair

@@ -14,8 +14,6 @@ process pCmseq {
 
     label 'tiny'
 
-    errorStrategy 'retry'
-
     when params.steps.magAttributes.containsKey("prokka")
 
     input:
@@ -34,8 +32,6 @@ process pCmseq {
 process pCheckM {
 
     container "${params.checkm_image}"
-
-    errorStrategy 'ignore'
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }
 
@@ -62,8 +58,6 @@ process pGtdbtk {
 
     container "${params.gtdbtk_image}"
 
-    errorStrategy 'ignore'
-
     label 'large'
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }
@@ -89,8 +83,6 @@ process pGtdbtk {
 process pProkka {
 
     container "${params.prokka_image}"
-
-    errorStrategy 'ignore'
 
     label 'small'
 

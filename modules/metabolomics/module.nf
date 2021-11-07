@@ -15,7 +15,6 @@ process pCarveMe {
     time '10h'
     when params.steps.containsKey("metabolomics")
 
-    errorStrategy 'ignore'
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "carveme", filename) }
 
     input:
@@ -31,8 +30,6 @@ process pCarveMe {
 
 process pMemote {
     label 'tiny'
-
-    errorStrategy 'ignore'
 
     tag "$sample $id"
 
@@ -73,8 +70,6 @@ process pSmetanaDetailed {
 
     tag "$sample"
 
-    errorStrategy 'ignore'
-
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid , "smetana/detailed/", filename) }
 
     when params?.steps?.metabolomics?.smetana?.contains("detailed")
@@ -96,7 +91,6 @@ process pSmetanaGlobal {
 
     label 'large'
     tag "$sample"
-    errorStrategy 'ignore'
     when params?.steps?.metabolomics?.smetana?.contains("global")
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "smetana/global/", filename) }
@@ -141,7 +135,6 @@ process pBuildJson {
     tag "$sample $id"
     label 'tiny'
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmJson", filename) }
-    errorStrategy 'retry'
     input:
       tuple val(sample), val(id), path(mag_xml)
     output:
