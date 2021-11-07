@@ -1,11 +1,29 @@
 tempdir: "tmp"
 summary: false
 output: "output"
+logDir: log
 runid: 1
 logLevel: 1
 steps:
   fragmentRecruitment:
     frhit:
-      genomes: "/vol/spool/meta/test/data/bin.*.fa.gz"
-      samples: "/vol/spool/meta/test/sampleAnalysis/samples.tsv"
+      genomes: "test_data/fragmentRecruitment/mags.tsv"
+      samples: "test_data/fragmentRecruitment/samples.tsv"
       sort: true
+      additionalParams: 
+        frhit: " -c 95 "
+        coverm: " --min-covered-fraction 0 "
+             
+resources:
+  large:
+    cpus: 28
+    memory: 256
+  medium:
+    cpus: 14
+    memory: 128
+  small:
+    cpus: 7
+    memory: 16
+  tiny:
+    cpus: 1
+    memory: 2

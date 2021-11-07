@@ -3,10 +3,26 @@ summary: false
 output: "output"
 runid: 1
 logLevel: 1
+logDir: log
 steps:
   magAttributes:
     input: 
       alignments: "/vol/spool/meta/test/data/table.tsv"
       genomes: "/vol/spool/cmseq_20210607/genomes.tsv"
-    prokka
-    cmseq
+    prokka:
+      defaultKingdom: 'Bacteria'
+      additionalParams: " --mincontiglen 200 "
+    cmseq:
+resources:
+  large:
+    cpus: 28
+    memory: 256
+  medium:
+    cpus: 14
+    memory: 128
+  small:
+    cpus: 7
+    memory: 16
+  tiny:
+    cpus: 1
+    memory: 2

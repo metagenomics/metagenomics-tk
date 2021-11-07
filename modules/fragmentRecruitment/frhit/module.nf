@@ -20,8 +20,6 @@ def getAggregatedOutput(RUNID, TOOL, filename){
 
 process pFrHit {
 
-    errorStrategy 'ignore'
-
     label 'large'
 
     tag "$sample"
@@ -50,15 +48,15 @@ process pFrHit {
     HALF_AVG_LEN=$(bc <<< "${AVG_LEN} / 2")
     gunzip reads.fasta.gz
     echo "Min. Coverage Parameter: ${HALF_AVG_LEN}"
-    fr-hit -c 95 -f 1 -m ${HALF_AVG_LEN} -T !{task.cpus} -a reads.fasta -d !{genomesCombined} -o coverage/out.psl
+    fr-hit !{params.steps.fragmentRecruitment.frhit.additionalParams.frhit} -f 1 -m ${HALF_AVG_LEN} -T !{task.cpus} -a reads.fasta -d !{genomesCombined} -o coverage/out.psl
     if [ -s "coverage/out.psl" ] 
     then
       psl2sam.pl coverage/out.psl | samtools view -bT !{genomesCombined} - | samtools calmd -E - genomes | samtools view -Sb - | samtools sort -o - out > !{sample}.bam 2> /dev/null
-      coverm genome -t !{task.cpus} --min-covered-fraction 0 -b !{sample}.bam --genome-fasta-list !{genomesList} --methods count --output-file coverage/readCount.tsv
-      coverm genome -t !{task.cpus} --min-covered-fraction 0 -b !{sample}.bam --genome-fasta-list !{genomesList} --methods covered_fraction --output-file coverage/coveredFraction.tsv
-      coverm genome -t !{task.cpus} --min-covered-fraction 0 -b !{sample}.bam --genome-fasta-list !{genomesList} --methods covered_bases --output-file coverage/coveredBases.tsv
-      coverm genome -t !{task.cpus} --min-covered-fraction 0 -b !{sample}.bam --genome-fasta-list !{genomesList} --methods length --output-file coverage/genomeLength.tsv
-      coverm genome -t !{task.cpus} --min-covered-fraction 0 -b !{sample}.bam --genome-fasta-list !{genomesList} --methods trimmed_mean --output-file coverage/trimmedMean.tsv
+      coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b !{sample}.bam --genome-fasta-list !{genomesList} --methods count --output-file coverage/readCount.tsv
+      coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b !{sample}.bam --genome-fasta-list !{genomesList} --methods covered_fraction --output-file coverage/coveredFraction.tsv
+      coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b !{sample}.bam --genome-fasta-list !{genomesList} --methods covered_bases --output-file coverage/coveredBases.tsv
+      coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b !{sample}.bam --genome-fasta-list !{genomesList} --methods length --output-file coverage/genomeLength.tsv
+      coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b !{sample}.bam --genome-fasta-list !{genomesList} --methods trimmed_mean --output-file coverage/trimmedMean.tsv
     else
       echo "No reads could be recruited!"
     fi
@@ -79,15 +77,13 @@ process pUnzip {
 
   script:
   """
-  < $x zcat > ${x.baseName}
+  < $x zcat --force > ${x.baseName}
   """
 }
 
 
 
 process pCombinedAlignmentAnalysis {
-
-    errorStrategy 'ignore'
 
     label 'medium'
 
@@ -109,11 +105,11 @@ process pCombinedAlignmentAnalysis {
     '''
     mkdir coverage
     samtools merge -@ !{task.cpus} combined_alignments.bam !{alignments}
-    coverm genome -t !{task.cpus} --min-covered-fraction 0 -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods count --output-file coverage/readCount.tsv
-    coverm genome -t !{task.cpus} --min-covered-fraction 0 -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods covered_fraction --output-file coverage/coveredFraction.tsv
-    coverm genome -t !{task.cpus} --min-covered-fraction 0 -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods covered_bases --output-file coverage/coveredBases.tsv
-    coverm genome -t !{task.cpus} --min-covered-fraction 0 -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods length --output-file coverage/genomeLength.tsv
-    coverm genome -t !{task.cpus} --min-covered-fraction 0 -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods trimmed_mean --output-file coverage/trimmedMean.tsv
+    coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods count --output-file coverage/readCount.tsv
+    coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods covered_fraction --output-file coverage/coveredFraction.tsv
+    coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods covered_bases --output-file coverage/coveredBases.tsv
+    coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods length --output-file coverage/genomeLength.tsv
+    coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods trimmed_mean --output-file coverage/trimmedMean.tsv
     '''
 
 }
@@ -130,7 +126,10 @@ workflow wFragmentRecruitmentFile {
      sampleReadsFile | splitCsv(sep: '\t', header: true) \
        | map { sample -> [sample.SAMPLE, file(sample.READS)] } | set {sampleReadsList}
 
-     _wFragmentRecruitment(sampleReadsList, genomes)
+     genomes | splitCsv(sep: '\t', header: true) \
+       | map { genome -> file(genome.BINS) } | set {magsList}
+
+     _wFragmentRecruitment(sampleReadsList, magsList)
 }
 
 
@@ -153,13 +152,13 @@ workflow _wFragmentRecruitment {
      fragmentRecruitmentGenomes = params.tempdir + "/fragmentRecruitmentGenomes"
      file(fragmentRecruitmentGenomes).mkdirs()
 
-     genomes | branch { compressed: file(it).name.endsWith(".gz"); uncompressed: !file(it).name.endsWith(".gz") } | set { fileState }
-     
-     fileState.compressed | pUnzip | set{unzippedGenomes}
-     fileState.uncompressed | mix(unzippedGenomes) | collectFile(newLine: true){genome -> ["genomes_list", file(genome).path]} | set { genomesList } 
+     genomes | pUnzip | set {unzippedGenomes}
 
-     fileState.uncompressed | mix(unzippedGenomes) \
-       | collectFile(tempDir: fragmentRecruitmentGenomes, sort: params?.steps?.fragmentRecruitment?.frhit?.sort){ genome -> ["genomes",genome.text] } \
+     unzippedGenomes | collectFile(newLine: true){genome -> ["genomes_list", file(genome).path]} \
+       | set { genomesList } 
+
+     unzippedGenomes \
+       | collectFile(tempDir: fragmentRecruitmentGenomes, sort: params?.steps?.fragmentRecruitment?.frhit?.sort){ genome -> ["genomes", genome.text] } \
        | combine(genomesList) | set { genomesCombined }
 
      SAMPLE_NAME_IDX = 0

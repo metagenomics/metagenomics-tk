@@ -1,7 +1,7 @@
 nextflow.enable.dsl=2
 
-include { wSaveSettingsFile } from './modules/config/module'
-include { wQualityControlFile } from './modules/qualityControl/module'
+include { wSaveSettingsList } from './modules/config/module'
+include { wQualityControlFile; wQualityControlList} from './modules/qualityControl/module'
 include { wAssemblyFile; wAssemblyList } from './modules/assembly/module'
 include { wBinning } from './modules/binning/module.nf'
 include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
@@ -11,6 +11,7 @@ include { wAnalyseMetabolites } from './modules/metabolomics/module'
 include { wUnmappedReadsList; wUnmappedReadsFile } from './modules/sampleAnalysis/module'
 include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './modules/fragmentRecruitment/frhit/module'
 include { wCooccurrenceList; wCooccurrenceFile } from './modules/cooccurrence/module'
+include { wInputFile } from './modules/input/module'
 
 def mapJoin(channel_a, channel_b, key_a, key_b){
     channel_a \
@@ -29,6 +30,18 @@ workflow wAssembly {
 
 workflow wReadMapping {
    wFileReadMappingBwa()
+}
+
+workflow wSRATable {
+   SAMPLE_IDX = 0
+   FASTQ_FILE_LEFT_IDX = 1 
+   FASTQ_FILE_RIGHT_IDX = 2 
+   wInputFile() \
+	| map { sample ->  [ sample.SAMPLE, sample.READS1, sample.READS2 ] } \
+	| collectFile(newLine: true, seed: "SAMPLE\tREADS1\tREADS2"){ it -> [ "samples", it[SAMPLE_IDX] \
+	+ "\t" + it[FASTQ_FILE_LEFT_IDX].toString() \
+	+ "\t" + it[FASTQ_FILE_RIGHT_IDX].toString()] } \
+	| view({ it -> it.text })
 }
 
 workflow wDereplicationPath {
@@ -73,6 +86,7 @@ def collectFiles(dir, sra){
 workflow wAggregatePipeline {
     def baseDir = params.baseDir
     def runID = params.runid
+
 
     // List all available SRAIDs
     Channel.from(file(baseDir).list()) | filter({ path -> !(path ==~ /.*summary$/)}) \
@@ -120,7 +134,8 @@ workflow wAggregatePipeline {
 
 workflow _wAggregate {
    take:
-     samples
+     samplesPaired
+     samplesSingle
      binsStats
      gtdb
    main:
@@ -131,14 +146,13 @@ workflow _wAggregate {
      representativesListOfFiles = wDereplicateList.out
 
      REPRESENTATIVES_PATH_IDX = 0
+
      representativesListOfFiles \
 	| splitCsv(sep: '\t') \
         | map { it -> file(it[REPRESENTATIVES_PATH_IDX]) }\
         | set { representativesList }
 
-     samples | splitCsv(sep: '\t', header: true) | set {samplesChannel}
-
-     wListReadMappingBwa(samplesChannel, representativesList)
+     wListReadMappingBwa(samplesPaired, samplesSingle, representativesList)
 
      binsStats | wAnalyseMetabolites
 
@@ -157,26 +171,25 @@ workflow _wAggregate {
 * Left and right read could be https, s3 links or file path. 
 */
 workflow wPipeline {
-   
-    wSaveSettingsFile(Channel.fromPath(params.input))
 
-    wQualityControlFile(Channel.fromPath(params.input))
-    wAssemblyList(wQualityControlFile.out.processed_reads)
+    inputSamples = wInputFile()
 
-    wQualityControlFile.out.processed_reads \
-        | map { it -> "${it[0]}\t${it[1]}" } \
-        | collectFile(seed: "SAMPLE\tREADS", name: 'processed_reads.txt', newLine: true) \
-        | set { samples }
+    wSaveSettingsList(inputSamples | map { it -> it.SAMPLE })
 
-    wBinning(wAssemblyList.out.contigs, wQualityControlFile.out.processed_reads)
+    wQualityControlList(inputSamples | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} )
 
-    wUnmappedReadsList(wQualityControlFile.out.processed_reads, wBinning.out.bins)
+    wQualityControlList.out.readsPair | join(wQualityControlList.out.readsSingle) | set { qcReads }
+
+    wAssemblyList(qcReads)
+
+    wBinning(wAssemblyList.out.contigs, qcReads)
 
     if(params?.steps?.fragmentRecruitment?.frhit){
-       wFragmentRecruitmentList(wUnmappedReadsList.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
+       wFragmentRecruitmentList(wBinning.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
     }
-    wMagAttributesList(wBinning.out.bins)
-    mapJoin(wMagAttributesList.out.checkm, wBinning.out.binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
 
-    _wAggregate(samples, binsStats, wMagAttributesList.out.gtdb)
+    wMagAttributesList(wBinning.out.bins)
+
+    mapJoin(wMagAttributesList.out.checkm, wBinning.out.binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
+    _wAggregate(wQualityControlList.out.readsPair, wQualityControlList.out.readsSingle, binsStats,wMagAttributesList.out.gtdb )
 }

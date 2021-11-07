@@ -1,13 +1,30 @@
 tempdir: "tmp"
 summary: true
-input: "test_data/fullPipeline/reads_split_s3.tsv"
+input:
+  paired: 
+    path: "test_data/fullPipeline/reads_split_s3.tsv"
+    watch: false
 output: "output"
+logDir: log
 runid: 1
 logLevel: 1
 steps:
   qc:
-    download:
-      s5cmdParams: " --retry-count 30 --no-verify-ssl --no-sign-request --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "
     interleaved: false
     fastp:
-      params: " "
+      download:
+        s5cmdParams: " --retry-count 30 --no-verify-ssl --no-sign-request --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "
+      additionalParams: " "
+resources:
+  large:
+    cpus: 28
+    memory: 256
+  medium:
+    cpus: 14
+    memory: 128
+  small:
+    cpus: 7
+    memory: 16
+  tiny:
+    cpus: 1
+    memory: 2

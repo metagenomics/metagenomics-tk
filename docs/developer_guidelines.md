@@ -65,7 +65,7 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 ## Process
 
-1. Process names should start `p`
+1. Process names should start `p`.
 
 2. The input and output of processes should contain a sample and/or bin and contig id.
 
@@ -93,6 +93,71 @@ These values can be used in the publish dir directive to enable or disable the o
 ```
 
 Furthermore the params.LOG_LEVELS.* parameters can be used inside of a process to enable or disable intermediate results for debugging purposes.
+
+4. Custom error strategies that do not follow the strategy defined in nextflow.config, should be documented (see Megahit example).
+
+## Configuration
+
+Every process should be configurable by providing a parameters string to the tool in the process.
+Every module should use the following specification in the configuration file:
+
+```
+steps:
+  moduleName:
+    parameter: 42
+    processName:
+      additionalParams: " --super-flag "
+```
+
+Additional params can have a string value (like the example above) that is provided to the tool:
+
+```
+pProcess {
+
+   ...
+
+  shell:
+  """
+  supertool !{params.steps.moduleName.processName.parameter}  !{params.steps.moduleName.processName.additionalParams}
+  """
+}
+
+```
+
+The value of the `additionalParams` key can also be a map if multiple tools are used in the same process:
+
+``
+steps:
+  moduleName:
+    parameter: 42
+    processName:
+      additionalParams:
+         toolNameA: " -c 84  "
+         toolNameB: " --super-flag "
+```
+
+`parameter` fields can hold hardcoded parameters that hold a defined value like a number that should not be a string.
+One use case of those parameters is that they can be reused for multiple tools.
+
+Example:
+
+```
+pProcess {
+
+   ...
+
+  shell:
+  """
+  toolNameA --super-specific-number-flag !{params.steps.moduleName.parameter}
+  toolNameB --similar-flag-to-toolA !{params.steps.moduleName.parameter} 
+  """
+}
+
+```
+
+## Logs
+
+Log files should be stored in the user provided `logDir` directory.
 
 ## Other
 

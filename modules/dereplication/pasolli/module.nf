@@ -14,8 +14,6 @@ process pMashSketchGenome {
 
     container "${params.mash_image}"
 
-    errorStrategy 'retry'
-
     label 'tiny'
 
     publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/mash/sketch", filename) }, \
@@ -34,7 +32,7 @@ process pMashSketchGenome {
     shell:
     '''
     ln -s g.fa !{binid}
-    mash sketch !{binid}  -o !{binid}.msh
+    mash sketch !{params.steps.dereplication.pasolli.additionalParams.mash_sketch} !{binid} -o !{binid}.msh
     GENOME_PATH=$(readlink -f g.fa)
     publishLogs.sh !{binid}.sketch
     '''
@@ -44,8 +42,6 @@ process pMashSketchGenome {
 process pMashPaste {
 
     container "${params.mash_image}"
-
-    errorStrategy 'retry'
 
     label 'large'
 
@@ -69,8 +65,6 @@ process pMashDist {
 
     container "${params.mash_image}"
 
-    errorStrategy 'retry'
-
     label 'large'
 
     when params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli")
@@ -87,14 +81,12 @@ process pMashDist {
     shell:
     '''
     mash paste final_sketch !{sketches}
-    mash dist -p !{task.cpus} final_sketch.msh final_sketch.msh | cut -f 1,2,3 > distances.tsv
+    mash dist !{params.steps.dereplication.pasolli.additionalParams.mash_dist} -p !{task.cpus} final_sketch.msh final_sketch.msh | cut -f 1,2,3 > distances.tsv
     '''
 }
 
 
 process pClusterDistances {
-
-    errorStrategy 'retry'
 
     input:
     file('distances.tsv')
@@ -112,14 +104,12 @@ process pClusterDistances {
     shell:
     '''
     mkdir out
-    cluster.py -i distances.tsv -c !{params.steps.dereplication.pasolli.cutoff} -o out
+    cluster.py -i distances.tsv !{params.steps.dereplication.pasolli.additionalParams.cluster} -o out
     '''
 }
 
 
 process pSelectRepresentative {
-
-    errorStrategy 'retry'
 
     input:
     path genome_table
@@ -142,8 +132,6 @@ process pSelectRepresentative {
 
 
 process pANIb {
-
-    errorStrategy 'retry'
 
     publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/ANIb", filename) }, \
 	pattern: "{**.out,**.err, **.sh, **.log}", enabled: params.logLevel <= params.LOG_LEVELS.ALL 
@@ -214,7 +202,7 @@ process pGetCluster {
     '''
     mkdir out
     cat <(echo "GENOME_A\tGENOME_B\tANI")  <(sed 's/ /\t/g' !{ani_values}) > ani_values.tsv
-    get_final_cluster.py -i !{genomeAttributes} -c !{cluster} -r ani_values.tsv -o out  -a !{params.steps.dereplication.pasolli.representativeAniCutoff}
+    get_final_cluster.py -i !{genomeAttributes} -c !{cluster} -r ani_values.tsv -o out  -a !{params.steps.dereplication.pasolli.additionalParams.representativeAniCutoff}
     cp out/representatives.tsv final_clusters.tsv
     '''
 }
@@ -367,7 +355,7 @@ workflow _wDereplicate {
        | filter({ it.REPRESENTATIVE.toFloat() == IS_REPRESENTATIVE }) | map { it -> it['GENOME'] } \
        | join(genomesTable | map{ bin -> [bin.BIN_ID, bin.PATH] }) | map { bin -> bin[PATH_IDX] } \
        | set{representatives}
-//| collectFile(newLine: true) | view() 
+
   emit:
      representatives
 }

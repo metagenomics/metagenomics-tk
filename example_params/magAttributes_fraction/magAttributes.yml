@@ -3,11 +3,35 @@ summary: true
 output: "output"
 runid: 1
 logLevel: 1
+logDir: log
 steps:
   magAttributes:
     input: "test_data/magAttributes/input.tsv"
+    gtdb:
+      buffer: 1000
+      database: "/vol/spool/peter/gtdb/release202"
+      additionalParams: " --min_af 0.65 "
+    checkm:
+      database: "/vol/spool/peter/meta-omics-toolkit/checkm"
+      buffer: 200
+      additionalParams:
+        tree: " --reduced_tree "
+        lineage_set: " " 
+        qa: "  "
     prokka:
       defaultKingdom: 'Bacteria'
-    checkm:
-      database: "/vol/spool/checkm/"
-      buffer: 200
+      additionalParams: " --mincontiglen 200 "
+
+resources:
+  large:
+    cpus: 28
+    memory: 256
+  medium:
+    cpus: 14
+    memory: 128
+  small:
+    cpus: 7
+    memory: 16
+  tiny:
+    cpus: 1
+    memory: 2

@@ -24,7 +24,8 @@ process pFastpSplit {
     tuple val(sample), path(read1, stageAs: "read1.fq.gz"), path(read2, stageAs: "read2.fq.gz")
 
     output:
-    tuple val("${sample}"), path("${sample}_interleaved.qc.fq.gz"), emit: readsProcessed
+    tuple val("${sample}"), path("${sample}_interleaved.qc.fq.gz"), emit: readsPair
+    tuple val("${sample}"), path("${sample}_unpaired.qc.fq.gz"), emit: readsSingle
     tuple val("${sample}"), path("fastp_summary_before.tsv"), emit: fastpSummaryBefore
     tuple val("${sample}"), path("fastp_summary_after.tsv"), emit: fastpSummaryAfter
     tuple val("${sample}"), path("fastp.json"), emit: fastpSummary
@@ -55,7 +56,8 @@ process pFastpSplitDownload {
     tuple val(sample), env(read1Url), env(read2Url)
 
     output:
-    tuple val("${sample}"), path("${sample}_interleaved.qc.fq.gz"), emit: readsProcessed
+    tuple val("${sample}"), path("${sample}_interleaved.qc.fq.gz"), emit: readsPair
+    tuple val("${sample}"), path("${sample}_unpaired.qc.fq.gz"), emit: readsSingle
     tuple val("${sample}"), path("fastp_summary_before.tsv"), emit: fastpSummaryBefore
     tuple val("${sample}"), path("fastp_summary_after.tsv"), emit: fastpSummaryAfter
     tuple val("${sample}"), path("fastp.json"), emit: fastpSummary
@@ -69,15 +71,13 @@ process pFastpSplitDownload {
 
 workflow _wFastqSplit {
        take:
-         readsTable
+         reads
        main:
-            // Check if files are S3 URls and if the download parameter is specified config
+            // Check if files are S3 URLs and if the download parameter is specified in the config
             FASTP_FILE_IDX = 1
-            readsTable | splitCsv(sep: '\t', header: true) \
-             | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} \
-             | branch {
-              download: it[2].startsWith("s3://") && params?.steps?.qc.containsKey("download")
-              noDownload: !params?.steps?.qc.containsKey("download")
+            reads | branch {
+              download: it[2].startsWith("s3://") && params?.steps?.qc.fastp.containsKey("download")
+              noDownload: !params?.steps?.qc.fastp.containsKey("download")
              } | set { samples }
 
              samples.noDownload | pFastpSplit
@@ -100,11 +100,31 @@ workflow _wFastqSplit {
                 [ "fastp_summary_before.tsv", item[FASTP_FILE_IDX].text ]
                }
              }
-             pFastpSplit.out.readsProcessed | mix(pFastpSplitDownload.out.readsProcessed) | set {readsProcessed}
+             pFastpSplit.out.readsPair | mix(pFastpSplitDownload.out.readsPair) | set {readsPair}
+             pFastpSplit.out.readsSingle | mix(pFastpSplitDownload.out.readsSingle) | set {readsSingle}
       emit:
-        processed_reads = readsProcessed
+        readsPair = readsPair
+        readsSingle = readsSingle
 }
 
+
+/*
+ * Takes a channel as input that has the following format [SAMPLE, LEFT_READ_PATH, RIGHT READ_PATH]. 
+ * This module does read trimming, adapter removal and other quality control tasks.   
+ * 
+ * Output:
+ * Interleaved fastq files.
+ * 
+ */
+workflow wQualityControlList {
+  take:
+    reads
+  main:
+    reads | _wFastqSplit | set { results } 
+  emit:
+    readsPair = results.readsPair
+    readsSingle = results.readsSingle
+}
 
 /*
  * Takes a tab separated file of files containing reads as input and applies 
@@ -122,11 +142,12 @@ workflow wQualityControlFile {
      take:
        readsTable
      main:
-       if(params.steps.qc.interleaved){
-       //     _wFastqInterleavedSeperate(reads)
-       } else {
-         results = _wFastqSplit(readsTable)
+       if(!params.steps.qc.interleaved){
+         readsTable | splitCsv(sep: '\t', header: true) \
+            | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} \
+	    | _wFastqSplit | set { results }
        }
     emit:
-      processed_reads = results.processed_reads
+      readsPair = results.readsPair
+      readsSingle = results.readsSingle
 }
