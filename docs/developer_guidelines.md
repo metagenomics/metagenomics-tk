@@ -72,7 +72,7 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 3. Pocesses should publish `.command.sh`, `.command.out`, `.command.log` and `.command.err` files but never `.command.run`.
 In cases where processes process different data but publish it to the same folder these files would be overwritten on every run.
 For example when Prokka publishes log files of every genome to the same sample directory.
-For that reason these files need to be renamed to a file including a unique id (e.g. bin id). Please use `publishLogs.sh` file to
+For that reason these files need to be renamed, so that their names include a unique id (e.g. bin id). Please use `publishLogs.sh` file to
 rename those files. Examples can be viewed in the Checkm and Prokka process.
 
 ### Log Level
