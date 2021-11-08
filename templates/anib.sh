@@ -32,3 +32,5 @@ cat *_dir/out/*_percentage_identity.tab > ${DIRECTORY}/matrix.tab
 cat *_dir/*.tsv > ${DIRECTORY}/out.tsv 
 cat *_dir/*.tsv.upper > ${DIRECTORY}/out.tsv.upper
 cat *_dir/*.tsv.lower > ${DIRECTORY}/out.tsv.lower
+
+publishLogs.sh ${DIRECTORY}
