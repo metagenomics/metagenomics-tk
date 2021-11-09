@@ -46,7 +46,7 @@ process pCheckM {
 
     output:
     tuple path("${sample}_checkm_*.tsv", type: "file"), val("${sample}"), emit: checkm
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+    path("logs/*"), emit: logs
 
     shell:
     template 'checkm.sh'
@@ -73,7 +73,7 @@ process pGtdbtk {
     tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
     tuple path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), val("${sample}"), optional: true, emit: archea
     tuple path("${sample}_gtdbtk_*.tsv"), val("${sample}"), optional: true, emit: combined
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+    path("logs/*"), emit: logs
 
     shell:
     template 'gtdb.sh'
@@ -108,7 +108,7 @@ process pProkka {
     tuple file("*.sqn.gz"), env(BIN_ID), val("${sample}"), emit: sqn
     tuple file("*.txt"), env(BIN_ID), val("${sample}"), emit: txt
     tuple file("*.tsv"), env(BIN_ID), val("${sample}"), emit: tsv
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+    path("logs/*"), emit: logs
 
     shell:
     '''
@@ -125,6 +125,7 @@ process pProkka {
     sed -i  -e "2,$ s/^/!{sample}\t${BIN_ID}\t/"  -e "1,1 s/^/SAMPLE\tBIN_ID\t/g" *.tsv
     mv *.tsv !{sample}_prokka_${BIN_ID}.tsv
     gzip --best *gff *.faa *.fna *.ffn *.fsa *.gbk *.sqn *tbl
+    publishLogs.sh ${BIN_ID}
     '''
 
 }
