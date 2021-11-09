@@ -37,7 +37,7 @@ process pFlattenToTuple {
 
       label 'small'
 
-      params?.steps.annotation.containsKey("diamond")
+      when params?.steps.annotation.containsKey("diamond")
 
    input:
       tuple val(sample), file(fasta)
@@ -82,7 +82,7 @@ process pDiamond {
       // beforeScript is one way to create a directory outside of Docker to tackle this problem. 
       beforeScript "mkdir -p ${params.databases}"
 
-      params?.steps.annotation.containsKey("diamond")
+      when params?.steps.annotation.containsKey("diamond")
 
    input:
       tuple val(sample), file(fasta)
@@ -124,7 +124,7 @@ process pProdigal {
 
       publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "prodigal", filename) }
 
-      params?.steps.annotation.containsKey("prodigal")
+      when params?.steps.annotation.containsKey("prodigal")
 
    input:
       tuple val(sample), file(fasta)
@@ -174,7 +174,7 @@ process pKEGGFromDiamond {
       // beforeScript is one way to create a directory outside of Docker to tackle this problem.
       beforeScript "mkdir -p ${params.databases}"
 
-      params?.steps.annotation.containsKey("keggFromDiamond")
+      when params?.steps.annotation.containsKey("keggFromDiamond")
 
    input:
       tuple val(sample), file(diamond_result)
