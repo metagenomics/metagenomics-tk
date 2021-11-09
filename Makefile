@@ -57,7 +57,7 @@ nextflow: ## Downloads Nextflow binary
 	- wget -qO- https://get.nextflow.io | bash
 
 check: ## Checks if processes did failed in the current nextflow returns exit code 1. (Useful in github actions context)
-	! grep -q "FAILED" log/trace.tsv || (echo "$?"; exit 1)
+	! grep -q "FAILED" log/trace.tsv && grep -q "Succeeded" .nextflow.log || (echo "$?"; exit 1)
 
 ${DEST}/test/reads/small: ## Downloads split fastq files and creates tsv files which can be used as input for meta-omics-toolkit
 	- mkdir -p  ${DEST}/test/reads/small
