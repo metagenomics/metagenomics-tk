@@ -1,18 +1,19 @@
 
 # create input, output files and run default gtdbtk command
 mkdir output
-readlink -f !{bins} > bin.path
+ls -1 !{bins} | xargs -I {} readlink -f {} > bin.path
 paste -d$'\t' bin.path <(for p in $(cat bin.path); do basename $p; done) > input.tsv
 
+export GTDBTK_DATA_PATH=/refdata
 gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus} \
 	--extension !{ending} !{params.steps.magAttributes.gtdb.additionalParams}
 
 # reformat gtdbtk output files
 touch output/gtdbtk.bac120.summary.tsv
 touch output/gtdbtk.ar122.summary.tsv
-FILE_BAC=$(mktemp chunk_XXXXXXXXXX_!{sample}_gtdbtk.bac120.summary.tsv)
-FILE_ARC=$(mktemp chunk_XXXXXXXXXX_!{sample}_gtdbtk.ar122.summary.tsv)
-FILE_COMB=$(mktemp !{sample}_gtdbtk_XXXXXXX.tsv)
+FILE_BAC="$(mktemp -u chunk_XXXXXXXXXX)_!{sample}_gtdbtk.bac120.summary.tsv"
+FILE_ARC="$(mktemp -u chunk_XXXXXXXXXX)_!{sample}_gtdbtk.ar122.summary.tsv"
+FILE_COMB="$(mktemp -u !{sample}_gtdbtk_XXXXXXX).tsv"
 
 sed "s/^/SAMPLE\t/g" <(head -n 1 output/gtdbtk.bac120.summary.tsv) > $FILE_BAC
 sed "s/^/!{sample}\t/g"  <(tail -n +2 output/gtdbtk.bac120.summary.tsv) >> $FILE_BAC
