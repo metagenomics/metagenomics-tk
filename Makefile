@@ -57,7 +57,7 @@ nextflow: ## Downloads Nextflow binary
 	- wget -qO- https://get.nextflow.io | bash
 
 check: ## Checks if processes did failed in the current nextflow returns exit code 1. (Useful in github actions context)
-	! grep -q "FAILED" log/trace.tsv && grep -q "Succeeded" .nextflow.log || (echo "$?"; exit 1)
+	! grep -q "FAILED" log/trace.tsv && grep -q "Succeeded" nextflow.stdout.log || (echo "$?"; exit 1)
 
 ${DEST}/test/reads/small: ## Downloads split fastq files and creates tsv files which can be used as input for meta-omics-toolkit
 	- mkdir -p  ${DEST}/test/reads/small
@@ -90,7 +90,7 @@ ${DEST}/test/bins/small/: ## Downloads bins and creates a tsv file with bin prop
 
 
 run_small_full_test: ${DEST}/test/reads/small nextflow ${DEST}/test/bins/small/ ${DEST}/test/reads/small/interleaved.fq.gz ## Prepares input files like downloading bins and reads and executes Nextflow. The default configuration it runs the full pipeline locally.
-	./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR}_${ENTRY} -profile ${PROFILE} -resume -entry ${ENTRY} -params-file ${PARAMS_FILE} 
+	./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR}_${ENTRY} -profile ${PROFILE} -resume -entry ${ENTRY} -params-file ${PARAMS_FILE} | tee nextflow.stdout.log 
 
 
 help: ## Lists available Makefile commands

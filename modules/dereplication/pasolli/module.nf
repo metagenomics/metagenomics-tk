@@ -25,7 +25,7 @@ process pMashSketchGenome {
     output:
     path("${binid}.msh"), emit: sketch
     tuple env(GENOME_PATH), val("${binid}"), emit: stagedGenome
-    tuple env("${binid}"), val("${output}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
+    tuple val("${binid}"), val("${output}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
