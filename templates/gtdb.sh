@@ -10,9 +10,10 @@ gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus} \
 # reformat gtdbtk output files
 touch output/gtdbtk.bac120.summary.tsv
 touch output/gtdbtk.ar122.summary.tsv
-FILE_BAC=$(mktemp chunk_XXXXXXXXXX_!{sample}_gtdbtk.bac120.summary.tsv)
-FILE_ARC=$(mktemp chunk_XXXXXXXXXX_!{sample}_gtdbtk.ar122.summary.tsv)
-FILE_COMB=$(mktemp !{sample}_gtdbtk_XXXXXXX.tsv)
+FILE_ID=$(mktemp XXXXXXXXXX)
+FILE_BAC=chunk_${FILE_ID}_!{sample}_gtdbtk.bac120.summary.tsv
+FILE_ARC=chunk_${FILE_ID}_!{sample}_gtdbtk.ar122.summary.tsv
+FILE_COMB=!{sample}_gtdbtk_${FILE_ID}.tsv
 
 sed "s/^/SAMPLE\t/g" <(head -n 1 output/gtdbtk.bac120.summary.tsv) > $FILE_BAC
 sed "s/^/!{sample}\t/g"  <(tail -n +2 output/gtdbtk.bac120.summary.tsv) >> $FILE_BAC
@@ -24,5 +25,3 @@ GTDB_SUMMARY_TMP=gtdbtk_tmp.tsv
 cat <(head -n 1 ${FILE_BAC}) <(head -n 1 ${FILE_ARC}) | sort | uniq | sed 's/^/DOMAIN\t/g' > $GTDB_SUMMARY_TMP
 cat <(tail -n +2  ${FILE_ARC} | sed 's/^/ARCHAEA\t/g') <(tail -n +2  ${FILE_BAC} | sed 's/^/BACTERIA\t/g')  >> $GTDB_SUMMARY_TMP
 paste -d$'\t' <(cut -f 3 $GTDB_SUMMARY_TMP | sed '1,1s/user_genome/BIN_ID/') $GTDB_SUMMARY_TMP > $FILE_COMB
-
-publishLogs.sh $FILE_COMB
