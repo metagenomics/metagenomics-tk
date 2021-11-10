@@ -3,6 +3,7 @@ summary: true
 output: "output"
 logDir: log
 runid: 1
+logLevel: 1
 steps:
   magAttributes:
     input: "test_data/magAttributes/input.tsv"

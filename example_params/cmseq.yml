@@ -2,6 +2,7 @@ tempdir: "tmp"
 summary: false
 output: "output"
 runid: 1
+logLevel: 1
 logDir: log
 steps:
   magAttributes:
