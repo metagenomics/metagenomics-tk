@@ -210,7 +210,7 @@ workflow wInputFile {
         } else if (SRA_MODE=="NCBI"){
            _wSRANCBI() | set { datasets }
         }
-        datasets.out.incorrectAccessions \
+        datasets.incorrectAccessions \
          | collectFile(newLine: true, seed: "RUN_ID", name: 'incorrectAccessions.tsv', storeDir: params.logDir)
 
         datasets.incorrectAccessions \
