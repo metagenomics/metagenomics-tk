@@ -282,7 +282,7 @@ workflow wBinning {
 
      // Create summary if requested
      if(params.summary){
-       pGetBinStatistics.out.binsDepth \
+       pGetBinStatistics.out.contigsDepth \
 	| collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
          [ "metabat_bins_depth.tsv", item[1].text  ]
        }
