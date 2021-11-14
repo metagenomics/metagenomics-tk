@@ -1,5 +1,6 @@
 nextflow.enable.dsl=2
 
+include { pDumpLogs } from '../../utils/processes'
 
 def getOutput(RUNID, TOOL, filename){
     return "AGGREGATED" + '/' +  RUNID + '/' + params.modules.dereplication.name + '/' + 
@@ -16,9 +17,6 @@ process pMashSketchGenome {
 
     label 'tiny'
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/mash/sketch", filename) }, \
-	pattern: "{**.out,**.err, **.sh, **.log}", enabled: params.logLevel <= params.LOG_LEVELS.ALL 
-
     when params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli")
 
     input:
@@ -27,15 +25,17 @@ process pMashSketchGenome {
     output:
     path("${binid}.msh"), emit: sketch
     tuple env(GENOME_PATH), val("${binid}"), emit: stagedGenome
-    path("logs/*"), emit: logs
+    tuple val("${binid}"), val("${output}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput(params.runid, "pasolli/mash/sketch", "") 
     '''
     ln -s g.fa !{binid}
     mash sketch !{params.steps.dereplication.pasolli.additionalParams.mash_sketch} !{binid} -o !{binid}.msh
     GENOME_PATH=$(readlink -f g.fa)
-    publishLogs.sh !{binid}.sketch
     '''
+
 }
 
 
@@ -133,9 +133,6 @@ process pSelectRepresentative {
 
 process pANIb {
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/ANIb", filename) }, \
-	pattern: "{**.out,**.err, **.sh, **.log}", enabled: params.logLevel <= params.LOG_LEVELS.ALL 
-
     label 'small'
 
     input:
@@ -149,9 +146,11 @@ process pANIb {
 
     output:
     path("*.out/out.tsv"), emit: identity 
-    path("logs/*"), emit: logs
+    tuple env(DIRECTORY), val("${output}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput(params.runid, "pasolli/ANIb", "") 
     template 'anib.sh'
 }
 
@@ -159,9 +158,6 @@ process pANIb {
 process pTETRA {
 
     label 'small'
-
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/TETRA", filename) }, \
-	pattern: "{**.out,**.err, **.sh, **.log}", enabled: params.logLevel <= params.LOG_LEVELS.ALL 
 
     input:
     file("genome1*") 
@@ -171,12 +167,14 @@ process pTETRA {
 
     output:
     path("*.out/out.tsv"), emit: identity 
-    path("logs/*"), emit: logs
+    tuple env(DIRECTORY), val("${output}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     when:
     params.steps.dereplication.pasolli.method.contains("TETRA")
 
     shell:
+    def output = getOutput(params.runid, "pasolli/TETRA", "logs") 
     template 'tetra.sh'
 }
 
@@ -323,6 +321,8 @@ workflow _wDereplicate {
      result.mag2 | map(it -> file(it)) | buffer(size: defaultANIBuffer, remainder: true) | set { mag2 }
      pANIb(mag1, mag2)
      pTETRA(mag1, mag2)
+
+     pANIb.out.logs | mix(pTETRA.out.logs) | mix(pMashSketchGenome.out.logs) | pDumpLogs
 
      // Prepare output and collect representatives as channel
      pANIb.out.identity | mix(pTETRA.out.identity)  \
