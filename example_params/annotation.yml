@@ -1,5 +1,5 @@
 output: "output"
-summary: true
+summary: false
 runid: 1
 tempdir: "tmp"
 # Has to end with a /. If not a file named "database" will be created instead of a directory.
