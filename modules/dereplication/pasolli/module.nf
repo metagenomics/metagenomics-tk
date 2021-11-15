@@ -1,10 +1,11 @@
 nextflow.enable.dsl=2
 
+include { pDumpLogs } from '../../utils/processes'
 
 def getOutput(RUNID, TOOL, filename){
     return "AGGREGATED" + '/' +  RUNID + '/' + params.modules.dereplication.name + '/' + 
-         params.modules.dereplication.version.major + "." +  
-         params.modules.dereplication.version.minor + "." +  
+         params.modules.dereplication.version.major + "." +
+         params.modules.dereplication.version.minor + "." + 
          params.modules.dereplication.version.patch +  
          '/' + TOOL + '/' + filename
 }
@@ -13,8 +14,6 @@ def getOutput(RUNID, TOOL, filename){
 process pMashSketchGenome {
 
     container "${params.mash_image}"
-
-    errorStrategy 'retry'
 
     label 'tiny'
 
@@ -26,13 +25,17 @@ process pMashSketchGenome {
     output:
     path("${binid}.msh"), emit: sketch
     tuple env(GENOME_PATH), val("${binid}"), emit: stagedGenome
+    tuple val("${binid}"), val("${output}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput(params.runid, "pasolli/mash/sketch", "") 
     '''
     ln -s g.fa !{binid}
     mash sketch !{params.steps.dereplication.pasolli.additionalParams.mash_sketch} !{binid} -o !{binid}.msh
     GENOME_PATH=$(readlink -f g.fa)
     '''
+
 }
 
 
@@ -40,15 +43,16 @@ process pMashPaste {
 
     container "${params.mash_image}"
 
-    errorStrategy 'retry'
-
     label 'large'
+
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/mash/paste", filename) }
 
     input:
     path sketches, stageAs: 'sketch*.msh'
 
     output:
-    file('final_sketch.msh')
+    path('final_sketch.msh'), emit: sketch
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
     '''
@@ -61,17 +65,18 @@ process pMashDist {
 
     container "${params.mash_image}"
 
-    errorStrategy 'retry'
-
     label 'large'
 
     when params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli")
+
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/mash/dist", filename) }
 
     input:
     path sketches, stageAs: 'sketch*.msh'
 
     output:
-    file('distances.tsv')
+    path('distances.tsv'), emit: distance
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
     '''
@@ -83,17 +88,18 @@ process pMashDist {
 
 process pClusterDistances {
 
-    errorStrategy 'retry'
-
     input:
     file('distances.tsv')
 
     container "${params.python_env_image}"
 
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/clusterMashDist", filename) }
+
     label 'medium'
 
     output:
-    tuple file("distances.tsv"), file('out/clusters.tsv') 
+    tuple file("distances.tsv"), file('out/clusters.tsv'), emit: clusters
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
 
     shell:
     '''
@@ -104,8 +110,6 @@ process pClusterDistances {
 
 
 process pSelectRepresentative {
-
-    errorStrategy 'retry'
 
     input:
     path genome_table
@@ -129,8 +133,6 @@ process pSelectRepresentative {
 
 process pANIb {
 
-    errorStrategy 'retry'
-
     label 'small'
 
     input:
@@ -143,9 +145,12 @@ process pANIb {
     params.steps.dereplication.pasolli.method.contains("ANI")
 
     output:
-    file("*.out/out.tsv") 
+    path("*.out/out.tsv"), emit: identity 
+    tuple env(DIRECTORY), val("${output}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput(params.runid, "pasolli/ANIb", "") 
     template 'anib.sh'
 }
 
@@ -161,12 +166,15 @@ process pTETRA {
     container "${params.ani_image}"
 
     output:
-    file("*.out/out.tsv") 
+    path("*.out/out.tsv"), emit: identity 
+    tuple env(DIRECTORY), val("${output}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     when:
     params.steps.dereplication.pasolli.method.contains("TETRA")
 
     shell:
+    def output = getOutput(params.runid, "pasolli/TETRA", "logs") 
     template 'tetra.sh'
 }
 
@@ -185,7 +193,7 @@ process pGetCluster {
 
     output:
     path 'clusters.tsv', emit: finalClusters
-    path 'ani_values.tsv', emit: ani_values
+    path 'ani_values.tsv', emit: aniValues
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
@@ -395,7 +403,11 @@ workflow _wDereplicate {
 
      // concatenate (paste) multiple sketches in parallel and compute distance
      pMashSketchGenome.out.sketch | buffer(size: defaultMashBuffer, remainder: true) \
-         | pMashPaste | toList() | pMashDist | pClusterDistances | set { clusters }
+         | pMashPaste
+
+     pMashPaste.out.sketch | toList() | pMashDist 
+     pMashDist.out.distance | pClusterDistances 
+     pClusterDistances.out.clusters | set { clusters }
 
      pMashSketchGenome.out.stagedGenome | set { stagedGenomeBinIDMapping }
 
@@ -417,9 +429,11 @@ workflow _wDereplicate {
      pANIb(mag1, mag2)
      pTETRA(mag1, mag2)
 
+     pANIb.out.logs | mix(pTETRA.out.logs) | mix(pMashSketchGenome.out.logs) | pDumpLogs
+
      // Prepare output and collect representatives as channel
-     pANIb.out | mix(pTETRA.out)  \
-       | collectFile(newLine: true) | splitCsv(sep: '\t', header:false, skip: 0) | set {aniComparisons}
+     pANIb.out.identity | mix(pTETRA.out.identity)  \
+       | collectFile(newLine: true)  | splitCsv(sep: '\t', header:false, skip: 0) | set {aniComparisons}
 
      // Extract BIN_ID for final clustering
      GENOME_A_IDX = 0

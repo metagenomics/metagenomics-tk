@@ -1,5 +1,7 @@
 nextflow.enable.dsl=2
 
+include { pDumpLogs } from '../utils/processes'
+
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.magAttributes.name + '/' + 
          params.modules.magAttributes.version.major + "." +  
@@ -13,8 +15,6 @@ process pCmseq {
     container "${params.cmseq_image}"
 
     label 'tiny'
-
-    errorStrategy 'retry'
 
     when params.steps.magAttributes.containsKey("prokka")
 
@@ -35,8 +35,6 @@ process pCheckM {
 
     container "${params.checkm_image}"
 
-    errorStrategy 'ignore'
-
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm")
@@ -50,9 +48,11 @@ process pCheckM {
 
     output:
     tuple path("${sample}_checkm_*.tsv", type: "file"), val("${sample}"), emit: checkm
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+    tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput("${sample}", params.runid, "checkm", "")
     template 'checkm.sh'
     
 }
@@ -62,11 +62,10 @@ process pGtdbtk {
 
     container "${params.gtdbtk_image}"
 
-    errorStrategy 'ignore'
-
     label 'large'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }, \
+      pattern: "{**.tsv}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("gtdb")
 
@@ -79,9 +78,11 @@ process pGtdbtk {
     tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
     tuple path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), val("${sample}"), optional: true, emit: archea
     tuple path("${sample}_gtdbtk_*.tsv"), val("${sample}"), optional: true, emit: combined
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+    tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput("${sample}", params.runid, "gtdb", "")
     template 'gtdb.sh'
 }
 
@@ -90,11 +91,9 @@ process pProkka {
 
     container "${params.prokka_image}"
 
-    errorStrategy 'ignore'
-
     label 'small'
 
-    time '3h'
+    time '5h'
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }
 
@@ -116,9 +115,11 @@ process pProkka {
     tuple file("*.sqn.gz"), env(BIN_ID), val("${sample}"), emit: sqn
     tuple file("*.txt"), env(BIN_ID), val("${sample}"), emit: txt
     tuple file("*.tsv"), env(BIN_ID), val("${sample}"), emit: tsv
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+    tuple env(BIN_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput("${sample}", params.runid, "prokka", "")
     '''
     # Prepare Input Variables
     BIN=!{bin}
@@ -361,6 +362,9 @@ workflow _wMagAttributes {
          [ "${item[DATASET_IDX]}_archea_gtdbtk.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
        }
      }
+
+     pGtdbtk.out.logs | mix(pCheckM.out.logs) | mix(pProkka.out.logs) | pDumpLogs 
+
    emit:
      checkm = checkm_list
      gtdb = gtdb.combined

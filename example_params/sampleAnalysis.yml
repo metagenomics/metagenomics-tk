@@ -2,7 +2,22 @@ tempdir: "tmp"
 summary: false
 output: "/vol/spool/meta/out_pipeline"
 runid: 1
+logLevel: 1
+logDir: log
 steps:
   sampleAnalysis:
     reads: "/vol/spool/meta/test/sampleAnalysis/samples.tsv"
     bins: "/vol/spool/meta/test/sampleAnalysis/bins.tsv"
+resources:
+  large:
+    cpus: 28
+    memory: 256
+  medium:
+    cpus: 14
+    memory: 128
+  small:
+    cpus: 7
+    memory: 16
+  tiny:
+    cpus: 1
+    memory: 2
