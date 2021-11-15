@@ -41,9 +41,9 @@ jobs:
           bash ./scripts/test_fullPipeline.sh "" example_params/fullPipeline_fraction/fullPipeline_fraction_binning_metabinner.yml \
           "/mnt/work/work" || exit 1
 
-      - name: Test Aggregation Pipeline run based on per samples results.
-        run: |
-          bash ./scripts/test_fullPipelineAggregate.sh " -c  test_data/assets/aws.config " "" "/mnt/work/work/${{ github.head_ref }}"|| exit 1
+          #      - name: Test Aggregation Pipeline run based on per samples results.
+          #        run: |
+          #          bash ./scripts/test_fullPipelineAggregate.sh " -c  test_data/assets/aws.config " "" "/mnt/work/work/${{ github.head_ref }}"|| exit 1
 
       - name: Test if SRA S3 Entrypoint works 
         run: |

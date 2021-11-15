@@ -2,7 +2,8 @@
 # Prepare checkm patch, output directory and output file name
 echo '{"dataRoot": "/.checkm", "remoteManifestURL": "https://data.ace.uq.edu.au/public/CheckM_databases/", "manifestType": "CheckM", "remoteManifestName": ".dmanifest", "localManifestName": ".dmanifest"}' > /tmp/DATA_CONFIG
 mkdir out
-FILE=$(mktemp !{sample}_checkm_XXXXXXXX.tsv)
+FILE_ID=$(mktemp XXXXXXXX)
+FILE=!{sample}_checkm_${FILE_ID}.tsv
 
 # run suggested checkm commands
 checkm tree !{params.steps.magAttributes.checkm.additionalParams.tree} --pplacer_threads !{task.cpus}  -t !{task.cpus} -x !{ending} . out
@@ -16,4 +17,3 @@ echo -e "SAMPLE\tBIN_ID\tMarker lineage\t# genomes\t# markers\t# marker sets\t0\
 sed -i " 2,$ s/\t/.fa\t/"  checkm.txt
 tail -n +2 checkm.txt | sed "s/^/!{sample}\t/g"  >> $FILE
 
-publishLogs.sh $FILE
