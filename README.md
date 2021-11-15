@@ -112,7 +112,7 @@ You can set values of these columns to zero if data is not available or if you d
 The output tsv file (`final_clusters.tsv`) contains the columns `CLUSTER`, `GENOME` and `REPRESENTATIVE` where `CLUSTER` identifies a group of genomes, `GENOME` represents the path or
 link of a genome and `REPRESENTATIVE` is either 0 or 1 (selected as representative).
 If `sans` is specified in the configuration file (see examples folder), then [SANS](https://gitlab.ub.uni-bielefeld.de/gi/sans) is used to dereplicate every cluster reported by the previous step further down 
-in strain specific cluster. 
+to generate strain specific clusters. 
 
 ### Read Mapping
 
