@@ -1,3 +1,5 @@
+set -e
+
 OPTIONS=$1
 YAML="${2:-example_params/readMapping.yml}" 
 WORK="${3:-work}"

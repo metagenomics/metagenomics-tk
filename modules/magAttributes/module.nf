@@ -1,5 +1,7 @@
 nextflow.enable.dsl=2
 
+include { pDumpLogs } from '../utils/processes'
+
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.magAttributes.name + '/' + 
          params.modules.magAttributes.version.major + "." +  
@@ -46,9 +48,11 @@ process pCheckM {
 
     output:
     tuple path("${sample}_checkm_*.tsv", type: "file"), val("${sample}"), emit: checkm
-    path("logs/*"), emit: logs
+    tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput("${sample}", params.runid, "checkm", "")
     template 'checkm.sh'
     
 }
@@ -60,7 +64,8 @@ process pGtdbtk {
 
     label 'large'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }, \
+      pattern: "{**.tsv}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("gtdb")
 
@@ -73,9 +78,11 @@ process pGtdbtk {
     tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
     tuple path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), val("${sample}"), optional: true, emit: archea
     tuple path("${sample}_gtdbtk_*.tsv"), val("${sample}"), optional: true, emit: combined
-    path("logs/*"), emit: logs
+    tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput("${sample}", params.runid, "gtdb", "")
     template 'gtdb.sh'
 }
 
@@ -86,7 +93,7 @@ process pProkka {
 
     label 'small'
 
-    time '3h'
+    time '5h'
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }
 
@@ -108,9 +115,11 @@ process pProkka {
     tuple file("*.sqn.gz"), env(BIN_ID), val("${sample}"), emit: sqn
     tuple file("*.txt"), env(BIN_ID), val("${sample}"), emit: txt
     tuple file("*.tsv"), env(BIN_ID), val("${sample}"), emit: tsv
-    path("logs/*"), emit: logs
+    tuple env(BIN_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput("${sample}", params.runid, "prokka", "")
     '''
     # Prepare Input Variables
     BIN=!{bin}
@@ -125,7 +134,6 @@ process pProkka {
     sed -i  -e "2,$ s/^/!{sample}\t${BIN_ID}\t/"  -e "1,1 s/^/SAMPLE\tBIN_ID\t/g" *.tsv
     mv *.tsv !{sample}_prokka_${BIN_ID}.tsv
     gzip --best *gff *.faa *.fna *.ffn *.fsa *.gbk *.sqn *tbl
-    publishLogs.sh ${BIN_ID}
     '''
 
 }
@@ -354,6 +362,9 @@ workflow _wMagAttributes {
          [ "${item[DATASET_IDX]}_archea_gtdbtk.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
        }
      }
+
+     pGtdbtk.out.logs | mix(pCheckM.out.logs) | mix(pProkka.out.logs) | pDumpLogs 
+
    emit:
      checkm = checkm_list
      gtdb = gtdb.combined
