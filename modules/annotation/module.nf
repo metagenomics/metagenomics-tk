@@ -15,7 +15,6 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 * All other paths are seen as "local" mode paths and offline stored copys are expected.
 **/
 def set_mode(pathString){
-
     if (pathString.startsWith("s3://")){
         mode = "S3";
     } else if (pathString.startsWith("https://")) {
@@ -58,10 +57,10 @@ process pDiamond {
       params?.steps.annotation.containsKey("diamond")
 
    input:
-      tuple val(sample), file(fasta)
+      tuple val(sample), val(binID), file(fasta)
    
    output:
-      tuple val("${sample}"), path("diamond.${sample}.out"), emit: results
+      tuple val("${sample}"), val("${binID}"), path("diamond.${binID}.out"), emit: results
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
 
    shell:
@@ -69,14 +68,69 @@ process pDiamond {
          '''
          # Download the database if there is a more recent one online, or if the size differs.
          # The destination folder should be outside of the working directory to share the database with future processes.
-         s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.diamond.database} !{params.databases}
-         diamond !{params.steps.annotation.diamond.params} --threads !{task.cpus}  --out diamond.!{sample}.out \
-         --db !{params.databases}$(basename !{params.steps.annotation.diamond.database}) --query !{fasta}
+         DATABASE=!{params.databases}/diamond
+         mkdir -p ${DATABASE}
+         DIAMOND_PATH=$(readlink -f ${DATABASE}/*)
+         s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.diamond.database} ${DATABASE}
+         diamond !{params.steps.annotation.diamond.params} --threads !{task.cpus}  --out diamond.!{binID}.out \
+         --db ${DIAMOND_PATH} --query !{fasta}
          '''
       else if( mode == 'local')
          '''
-         diamond !{params.steps.annotation.diamond.params} --threads !{task.cpus} --out diamond.!{sample}.out \
+         diamond !{params.steps.annotation.diamond.params} --threads !{task.cpus} --out diamond.!{binID}.out \
          --db !{params.steps.annotation.diamond.database} --query !{fasta}
+         '''
+      else
+         error "Invalid annotation database mode: ${mode}"
+}
+
+
+process pResistanceGeneIdentifier {
+   
+      container "${params.rgi_image}"
+      
+      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases}"
+ 
+      tag "$sample"
+
+      label 'large'
+
+      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "rgi", filename) }
+      
+      // UID mapping does not work for some reason. Every time a database directory is created while running docker,
+      // the permissions are set to root. This leads to crashes later on.
+      // beforeScript is one way to create a directory outside of Docker to tackle this problem. 
+      beforeScript "mkdir -p ${params.databases}"
+
+      when params?.steps.annotation.containsKey("rgi")
+
+   input:
+      tuple val(sample), val(binID), file(fasta)
+   
+   output:
+      tuple val("${sample}"), val("${binID}"), path("${binID}.rgi.txt"), emit: results
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
+
+   shell:
+      if( mode == 'S3' || mode == 'local')
+         '''
+         DATABASE=!{params.databases}/rgi
+         CHECKSUM_FILE=${DATABASE}/checksum.txt
+         DOWNLOAD_LINK=!{params.steps.annotation.rgi.source}
+         MD5SUM=!{params.steps.annotation.rgi.md5sum}
+
+         mkdir -p ${DATABASE}
+         flock ${CHECKSUM_FILE} concurrentDownload.sh --output=${DATABASE} \
+           --checkpoint=${CHECKSUM_FILE} \
+           --command="wget -O data $DOWNLOAD_LINK && tar -xvf data ./card.json && rm data" \
+           --mode=MD5SUM --expectedMD5SUM=${MD5SUM}
+
+         sed 's/*//g' !{fasta} > input.faa
+         
+         rgi load --card_json ${DATABASE}/out/card.json --local
+         rgi main --input_sequence input.faa \
+                  --output_file !{binID}.rgi --input_type protein --local \
+                  --alignment_tool DIAMOND --num_threads !{task.cpus} --clean
          '''
       else
          error "Invalid annotation database mode: ${mode}"
@@ -97,22 +151,36 @@ process pProdigal {
 
       publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "prodigal", filename) }
 
-      params?.steps.annotation.containsKey("prodigal")
+      when params?.steps.annotation.containsKey("prodigal")
 
    input:
-      tuple val(sample), file(fasta)
+      val(mode)
+      tuple val(sample), val(binID), file(fasta)
 
    output:
-      tuple val("${sample}"), path("${sample}_prodigal.faa"), emit: amino
-      tuple val("${sample}"), path("${sample}_prodigal.fna"), emit: nucleotide
-      tuple val("${sample}"), path("${sample}_prodigal.gff"), emit: gff
+      tuple val("${sample}"), val("${binID}"), path("${binID}_prodigal.faa"), emit: amino
+      tuple val("${sample}"), val("${binID}"), path("${binID}_prodigal.fna"), emit: nucleotide
+      tuple val("${sample}"), val("${binID}"), path("${binID}_prodigal.gff"), emit: gff
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
 
    shell:
-      '''
-      prodigal -i !{fasta} -p !{params.steps.annotation.prodigal.mode} -f gff \
-      -o !{sample}_prodigal.gff -a !{sample}_prodigal.faa -d !{sample}_prodigal.fna
-      '''
+      if(mode == "param")
+        '''
+        pigz -f -dc !{fasta} | prodigal -p !{params.steps.annotation.prodigal.mode} -f gff \
+        -o !{binID}_prodigal.gff -a !{binID}_prodigal.faa -d !{binID}_prodigal.fna
+        '''
+      else if(mode == "single")
+        '''
+        pigz -f -dc !{fasta} | prodigal -p single -f gff \
+        -o !{binID}_prodigal.gff -a !{binID}_prodigal.faa -d !{binID}_prodigal.fna
+        '''
+      else if(mode == "meta")
+        '''
+        pigz -f -dc !{fasta} | prodigal -p meta -f gff \
+        -o !{binID}_prodigal.gff -a !{binID}_prodigal.faa -d !{binID}_prodigal.fna
+        '''
+      else
+         error "Invalid prodigal mode: ${mode}"
 }
 
 
@@ -147,13 +215,13 @@ process pKEGGFromDiamond {
       // beforeScript is one way to create a directory outside of Docker to tackle this problem.
       beforeScript "mkdir -p ${params.databases}"
 
-      params?.steps.annotation.containsKey("keggFromDiamond")
+      when params?.steps.annotation.containsKey("keggFromDiamond")
 
    input:
-      tuple val(sample), file(diamond_result)
+      tuple val(sample), val(binID), file(diamond_result)
 
    output:
-      tuple val("${sample}"), path("${sample}_kegg.tsv"), emit: kegg_diamond
+      tuple val("${sample}"), path("${binID}_kegg.tsv"), emit: kegg_diamond
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
 
    shell:
@@ -162,11 +230,11 @@ process pKEGGFromDiamond {
          # Download the database if there is a more recent one online, or if the size differs.
          # The destination folder should be outside of the working directory to share the database with future processes.
          s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.kegg.database}/* !{params.databases}kegg
-         diamond2kegg.py !{diamond_result} !{params.databases}kegg !{sample}_kegg.tsv 
+         diamond2kegg.py !{diamond_result} !{params.databases}kegg !{binID}_kegg.tsv 
          '''
       else if(mode == 'local')
          '''
-         diamond2kegg.py !{diamond_result} !{params.steps.annotation.kegg.database} !{sample}_kegg.tsv
+         diamond2kegg.py !{diamond_result} !{params.steps.annotation.kegg.database} !{binID}_kegg.tsv
          '''
       else 
          error "Invalid annotation database mode: ${mode}"
@@ -194,21 +262,35 @@ workflow wAnnotateFile {
       set_mode(params.steps.annotation.diamond.database)
       projectTableFile | splitCsv(sep: '\t', header: true) \
       | map{ [it.DATASET, file(it.PATH)] } \
-      | collectFile(tempDir: params.tempdir + "/annotation") | map{ [it.name, it] } | _wAnnotation
+      | collectFile(tempDir: params.tempdir + "/annotation") | map{ [it.name, it]} | set { input } 
+      | _wAnnotation(Channel.value("param"), input)
    emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }
 
+def flattenBins(binning){
+  def chunkList = [];
+  def SAMPLE_IDX = 0;
+  def BIN_PATHS_IDX = 1;
+  binning[BIN_PATHS_IDX].each {
+     chunkList.add([binning[SAMPLE_IDX], it]);
+  }
+  return chunkList;
+}
+
 
 workflow wAnnotateList {
-
    take:
+      prodigalMode
       fasta
    main:
       annotationTmpDir = params.tempdir + "/annotation"
       file(annotationTmpDir).mkdirs()
       set_mode(params.steps.annotation.diamond.database)
-      fasta | collectFile(tempDir: params.tempdir + "/annotation") | map{ [it.name, it] } | _wAnnotation
+//      fasta | collectFile(tempDir: params.tempdir + "/annotation") \
+//	| map{ [it.name, it] } | _wAnnotation
+
+      _wAnnotation(prodigalMode, fasta)
     emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }
@@ -224,16 +306,15 @@ workflow wAnnotateList {
 *
 **/ 
 workflow _wAnnotation {
-
    take:
+      prodigalMode
       fasta
    main:
-      fasta | pProdigal
+      pProdigal(prodigalMode,fasta)
       pDiamond(pProdigal.out.amino)
+      pProdigal.out.amino | pResistanceGeneIdentifier
       pKEGGFromDiamond(pDiamond.out.results)
       pKEGGFromDiamond.out.kegg_diamond | set { keggAnnotation }
    emit:
-      keggAnnotation
-
-   
+      keggAnnotation   
 }

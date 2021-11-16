@@ -18,3 +18,13 @@ for bin in $(basename !{contigs})*/bin* ; do
 	grep ">" ${bin} | sed 's/>//g' \
 		| sed "s/^/${BIN_NAME}\t/g" >> ${BIN_CONTIG_MAPPING}
 done
+
+# return not binned fasta files
+BINNED_IDS=binned.tsv
+grep -h ">" $(basename !{contigs})*/bin* | tr -d ">" > ${BINNED_IDS}
+if [ -s ${BINNED_IDS} ]; then
+        # Get all not binned Ids
+        NOT_BINNED=!{sample}_notBinned.fa
+	seqkit grep -vf ${BINNED_IDS} !{contigs} \
+	 | seqkit replace  -p '(.*)' -r "\${1} MAG=NotBinned" > ${NOT_BINNED}
+fi

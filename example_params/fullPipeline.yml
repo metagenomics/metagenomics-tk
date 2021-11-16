@@ -20,7 +20,7 @@ steps:
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
     metabat:
-      additionalParams: "   "
+      additionalParams: " --seed 234234  "
   magAttributes:
     gtdb:
       buffer: 1000
@@ -65,6 +65,20 @@ steps:
         coverm: " --min-covered-fraction 0 "
   cooccurrence:
     additionalParams: " -t 0.1 -z 80 -o 'correlation' "
+  plasmid:
+    SCAPP:
+      additionalParams: "   "
+    PlasClass:
+      threshold: 0.5 
+      additionalParams: "   "
+    PLSDB:
+      database: 
+        source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip
+        md5sum: caa846fbb689deba0e35ef559793b521
+      sharedKmerThreshold: 30
+      additionalParams:
+        mashSketch: " -S 42 -k 21 -s 1000 "
+        mashDist: " -v 0.5 -d 0.5 "
   annotation:
      s5cmd:
         params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
@@ -74,6 +88,22 @@ steps:
         params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
      kegg:
         database: 's3://bene-test/databases/kegg_2021-01'
+     rgi: 
+        source: https://card.mcmaster.ca/latest/data
+        md5sum: 4a91ed328192fa5ec53c6137a77720f2
      prodigal:
          mode: 'meta'
      keggFromDiamond:
+resources:
+  large:
+    cpus: 28
+    memory: 256
+  medium:
+    cpus: 14
+    memory: 128
+  small:
+    cpus: 7
+    memory: 16
+  tiny:
+    cpus: 1
+    memory: 2

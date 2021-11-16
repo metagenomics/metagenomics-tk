@@ -1,13 +1,14 @@
 nextflow.enable.dsl=2
 
+include { pGetBinStatistics as pGetBinStatistics; pGetBinStatistics as pGetNotBinnedStatistics} from './processes'
+
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + params.modules.binning.name + '/' + 
-          params.modules.binning.version.major + "." + 
-          params.modules.binning.version.minor + "." + 
+    return SAMPLE + '/' + RUNID + '/' + params.modules.binning.name + '/' +
+          params.modules.binning.version.major + "." +
+          params.modules.binning.version.minor + "." +
           params.modules.binning.version.patch +
           '/' + TOOL + '/' + filename
 }
-
 
 process pGetMappingQuality {
 
@@ -16,8 +17,6 @@ process pGetMappingQuality {
     tag "$sample"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "contigMappingQuality", filename) }
-
-    errorStrategy 'retry'
 
     label 'tiny'
 
@@ -35,31 +34,6 @@ process pGetMappingQuality {
 }
 
 
-process pGetBinStatistics {
-
-    container "${params.samtools_image}"
-
-    tag "$sample"
-
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "${binner}", filename) }
-
-    errorStrategy 'retry'
-
-    label 'tiny'
-
-    input:
-    tuple val(sample), path(binContigMapping), path(bam), val(binner), path(bins)
-
-    output:
-    tuple val("${sample}"), file("${sample}_contigs_depth.tsv"), optional: true, emit: contigsDepth
-    tuple val("${sample}"), file("${sample}_bins_stats.tsv"), optional: true, emit: binsStats
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-
-    shell:
-    template 'binStats.sh'
-}
-
-
 process pBowtie {
 
     container "${params.bowtie_image}"
@@ -68,9 +42,9 @@ process pBowtie {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "contigMapping", filename) }
+    when params.steps.containsKey("binning") 
 
-    errorStrategy 'retry'
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "contigMapping", filename) }
 
     input:
     tuple val(sample), path(contigs), path(pairedReads, stageAs: 'paired.fq.gz'), path(unpairedReads, stageAs: 'unpaired.fq.gz')
@@ -119,6 +93,7 @@ process pMetabat {
 
     output:
     tuple val("${sample}"), file("${sample}_bin.*.fa"), optional: true, emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
@@ -146,6 +121,7 @@ process pMetabinner {
 
     output:
     tuple val("${sample}"), file("${sample}_bin.*.fa"), optional: true, emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
@@ -264,6 +240,8 @@ workflow wBinning {
      contigs | join(pBowtie.out.mappedReads, by: SAMPLE_IDX) | (pMetabinner & pMetabat )
      pMetabinner.out.bins | mix(pMetabat.out.bins) | set { bins }
 
+     pMetabinner.out.notBinned | mix(pMetabat.out.notBinned) | set { notBinned }
+
      // Ensure that in case just one bin is produced that it still is a list
      bins | map({ it -> it[1] = aslist(it[1]); it  }) | set{ binsList }
 
@@ -288,7 +266,7 @@ workflow wBinning {
 
      // Create summary if requested
      if(params.summary){
-       pGetBinStatistics.out.binsDepth \
+       pGetBinStatistics.out.contigsDepth \
 	| collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
          [ "metabat_bins_depth.tsv", item[1].text  ]
        }
@@ -312,5 +290,6 @@ workflow wBinning {
      binsStats = binMap
      bins = binsList
      mapping = pBowtie.out.mappedReads
+     notBinnedContigs = notBinned
      unmappedReads = pBowtie.out.unmappedReads
 }

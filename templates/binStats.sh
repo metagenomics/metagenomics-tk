@@ -16,13 +16,6 @@ SEQKIT_BIN_STATS=${TEMP_DIR}/seqkit_bin_stats.tsv
 seqkit stat --threads !{task.cpus} -Ta !{bins} | sed '1s/^file/BIN_ID/' | sed '1s/^/SAMPLE\t/' \
 	| sed "1 ! s/^/!{sample}\t/" > ${SEQKIT_BIN_STATS}
 
-# Add bin id to stats
-#SEQKIT_BIN_STATS_IDS=${TEMP_DIR}/seqkit_bin_stats_correct_ids.tsv
-#paste -d$'\t'  <(cut -f 2 ${SEQKIT_BIN_STATS} \
-#                        | sed 's/\.fa$//g' \
-#                        | tail -n +2 \
-#                        | sed '1s;^;BIN_ID\n;') ${SEQKIT_BIN_STATS} > ${SEQKIT_BIN_STATS_IDS}
-
 # Compute average depth
 BIN_AVG_DEPTH=${TEMP_DIR}/bin_avg_depth.tsv
 for id in $(cut -f 6 ${BIN_DEPTH} | tail -n +2 | sort | uniq); do

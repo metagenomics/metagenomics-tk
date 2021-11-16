@@ -65,23 +65,25 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 ## Process
 
-1. Process names should start `p`
+1. Process names should start `p`.
 
 2. The input and output of processes should contain a sample and/or bin and contig id.
 
 3. Pocesses should publish `.command.sh`, `.command.out`, `.command.log` and `.command.err` files but never `.command.run`.
 
+4. Custom error strategies that do not follow the strategy defined in nextflow.config, should be documented (see Megahit example).
+
 ## Databases
 
 If the same databases is downloaded during runtime by multiple processes, it takes up an unnecessary ammount of disc space.
-One idea is too always use the same place to store these databases. This place should be described in `params.databses`.
-If other processes try too use this databses they can look at `params.databses` on this current machine. 
-If it is present it can be used, if not it should be downloaded. Through this procedure only one copy of each databses is used,
-which is space-saving.   
+One idea is to always use the same place to store these databases. This place should be described in `params.databases`.
+If other processes try to use this databses they can look at `params.databases` on this current machine. 
+If it is present it can be used, if not it should be downloaded. Through this procedure only one copy of each databases 
+is used, which is space-saving.   
 
 ## Configuration
 
-Every process should by configurable by providing a parameters string to the tool in the process.
+Every process should be configurable by providing a parameters string to the tool in the process.
 Every module should use the following specification in the configuration file:
 
 ```
