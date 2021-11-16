@@ -62,7 +62,7 @@ process pPlasClass {
 
 process pPLSDB {
 
-    label 'small'
+    label 'medium'
 
     tag "$binID"
 
