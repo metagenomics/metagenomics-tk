@@ -215,7 +215,6 @@ process pFinalize {
 
     output:
     file 'clusters.tsv' 
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
@@ -232,10 +231,8 @@ process pSANS {
 
     tag "Cluster ${clusterID}"
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/strains/sans", filename) }
-
     when:
-    params.steps.dereplication.containsKey("sans")
+    params.steps.containsKey("dereplication") && params.steps.dereplication.containsKey("sans")
 
     input:
     path(ids)
@@ -245,8 +242,11 @@ process pSANS {
     output:
     tuple val("${clusterID}"), file("${clusterID}_newick.txt"), emit: newick
     tuple val("${clusterID}"), file("${clusterID}_clusters.tsv"), emit: clusters
+    tuple val("${clusterID}"), val("${output}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput(params.runid, "pasolli/strain/sans", "") 
     '''
     mkdir input
     # get ID from list of genomes
@@ -254,12 +254,13 @@ process pSANS {
 	line=$(echo $g | cut -d '_' -f 2)
 	ID=$(sed "${line}q;d" !{ids})
 	ln -s $(readlink -f $g) input/${ID}
-    done 
+    done
     # Run SANS for a set of genomes and translate the newick tree to a set of clusters
     find $PWD/input -type l > input.tsv
     /sans/SANS-autoN.sh -i input.tsv !{params.steps.dereplication.sans.additionalParams} -N !{clusterID}_newick.txt
     /sans/scripts/newick2clusters.py !{clusterID}_newick.txt > !{clusterID}_clusters.tsv
     '''
+
 }
 
 
@@ -267,7 +268,7 @@ process pGetStrainClusterRepresentatives {
 
     label 'tiny'
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/strains/", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/strains", filename) }
 
     container "${params.python_env_image}"
 
@@ -280,6 +281,7 @@ process pGetStrainClusterRepresentatives {
 
     output:
     path 'clusters.tsv', emit: strainRepresentatives
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
@@ -383,6 +385,8 @@ workflow _wStrainDereplication {
 	| mix(SANSCluster) \
 	| collectFile(newLine:true, seed: "CLUSTER\tBIN_ID\tSTRAIN_CLUSTER"){ it -> ["strainCluster.tsv", it.join('\t')] } \
 	| set { strainRepresentatives }
+
+     pSANS.out.logs | pDumpLogs
      
      pGetStrainClusterRepresentatives(strainRepresentatives, genomesTableFile)
 }
@@ -429,8 +433,6 @@ workflow _wDereplicate {
      pANIb(mag1, mag2)
      pTETRA(mag1, mag2)
 
-     pANIb.out.logs | mix(pTETRA.out.logs) | mix(pMashSketchGenome.out.logs) | pDumpLogs
-
      // Prepare output and collect representatives as channel
      pANIb.out.identity | mix(pTETRA.out.identity)  \
        | collectFile(newLine: true)  | splitCsv(sep: '\t', header:false, skip: 0) | set {aniComparisons}
@@ -461,6 +463,10 @@ workflow _wDereplicate {
      PATH_IDX = 1
      pGetCluster.out.finalClusters | mix(pFinalize.out) | splitCsv(sep: '\t', header: true) \
 	| set { finalClusters  }
+
+     // report logs
+     pANIb.out.logs | mix(pTETRA.out.logs) \
+	| mix(pMashSketchGenome.out.logs) | pDumpLogs
 
      finalClusters | map { bin -> [bin.CLUSTER, bin.GENOME] } | set{ clustersGenome } 
      genomesTable | map { bin -> [bin.PATH, bin.BIN_ID] } \
