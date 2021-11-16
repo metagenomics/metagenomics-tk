@@ -72,8 +72,20 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 3. Pocesses should publish `.command.sh`, `.command.out`, `.command.log` and `.command.err` files but never `.command.run`.
 In cases where processes process different data but publish it to the same folder these files would be overwritten on every run.
 For example when Prokka publishes log files of every genome to the same sample directory.
-For that reason these files need to be renamed, so that their names include a unique id (e.g. bin id). Please use `publishLogs.sh` file to
-rename those files. Examples can be viewed in the Checkm and Prokka process.
+For that reason these files need to be renamed, so that their names include a unique id (e.g. bin id). 
+Please output those files to channel with the following entries and connect this channel to the pDumpLogs process that you can import
+from the utils module:
+
+```
+include { pDumpLogs } from '../utils/processes'
+
+...
+
+tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+```
+
+Examples can be viewed in the Checkm and Prokka process.
 
 ### Log Level
 
@@ -93,6 +105,12 @@ These values can be used in the publish dir directive to enable or disable the o
 ```
 
 Furthermore the params.LOG_LEVELS.* parameters can be used inside of a process to enable or disable intermediate results for debugging purposes.
+In case the log is the send to the pDumpLogs process (see Process section), you can specify the log level as part of the tuple:
+
+```
+tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+```
 
 4. Custom error strategies that do not follow the strategy defined in nextflow.config, should be documented (see Megahit example).
 
