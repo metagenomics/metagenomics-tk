@@ -70,6 +70,47 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 2. The input and output of processes should contain a sample and/or bin and contig id.
 
 3. Pocesses should publish `.command.sh`, `.command.out`, `.command.log` and `.command.err` files but never `.command.run`.
+In cases where processes process different data but publish it to the same folder these files would be overwritten on every run.
+For example when Prokka publishes log files of every genome to the same sample directory.
+For that reason these files need to be renamed, so that their names include a unique id (e.g. bin id). 
+Please output those files to channel with the following entries and connect this channel to the pDumpLogs process that you can import
+from the utils module:
+
+```
+include { pDumpLogs } from '../utils/processes'
+
+...
+
+tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+```
+
+Examples can be viewed in the Checkm and Prokka process.
+
+### Log Level
+
+Every configuration file must have a `logLevel` attribute that can have the following values:
+
+```
+ALL = 0  All logs are published
+INFO = 1 Just necessary logs are published
+```
+
+These values can be used in the publish dir directive to enable or disable the output of logs.
+
+
+```
+   publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/mash/sketch", filename) }, \
+        pattern: "{**.out,**.err, **.sh, **.log}", enabled: params.logLevel <= params.LOG_LEVELS.ALL
+```
+
+Furthermore the `params.LOG_LEVELS.*` parameters can be used inside of a process to enable or disable intermediate results for debugging purposes.
+In case the log is the send to the pDumpLogs process (see Process section), you can specify the log level as part of the tuple:
+
+```
+tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+```
 
 4. Custom error strategies that do not follow the strategy defined in nextflow.config, should be documented (see Megahit example).
 
@@ -139,6 +180,10 @@ pProcess {
 }
 
 ```
+
+## Logs
+
+Log files should be stored in the user provided `logDir` directory.
 
 ## Other
 

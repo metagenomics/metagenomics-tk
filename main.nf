@@ -1,7 +1,7 @@
 nextflow.enable.dsl=2
 
-include { wSaveSettingsFile } from './modules/config/module'
-include { wQualityControlFile } from './modules/qualityControl/module'
+include { wSaveSettingsList } from './modules/config/module'
+include { wQualityControlFile; wQualityControlList} from './modules/qualityControl/module'
 include { wAssemblyFile; wAssemblyList } from './modules/assembly/module'
 include { wBinning } from './modules/binning/module.nf'
 include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
@@ -16,7 +16,7 @@ include { wAnnotateFile; wAnnotateList as wAnnotateBinsList; \
 
 include { wCooccurrenceList; wCooccurrenceFile } from './modules/cooccurrence/module'
 include { wPlasmidsList; } from './modules/plasmids/module'
-
+include { wInputFile } from './modules/input/module'
 
 def mapJoin(channel_a, channel_b, key_a, key_b){
     channel_a \
@@ -35,6 +35,18 @@ workflow wAssembly {
 
 workflow wReadMapping {
    wFileReadMappingBwa()
+}
+
+workflow wSRATable {
+   SAMPLE_IDX = 0
+   FASTQ_FILE_LEFT_IDX = 1 
+   FASTQ_FILE_RIGHT_IDX = 2 
+   wInputFile() \
+	| map { sample ->  [ sample.SAMPLE, sample.READS1, sample.READS2 ] } \
+	| collectFile(newLine: true, seed: "SAMPLE\tREADS1\tREADS2"){ it -> [ "samples", it[SAMPLE_IDX] \
+	+ "\t" + it[FASTQ_FILE_LEFT_IDX].toString() \
+	+ "\t" + it[FASTQ_FILE_RIGHT_IDX].toString()] } \
+	| view({ it -> it.text })
 }
 
 workflow wDereplicationPath {
@@ -83,6 +95,7 @@ def collectFiles(dir, sra){
 workflow wAggregatePipeline {
     def baseDir = params.baseDir
     def runID = params.runid
+
 
     // List all available SRAIDs
     Channel.from(file(baseDir).list()) | filter({ path -> !(path ==~ /.*summary$/)}) \
@@ -174,9 +187,6 @@ def flattenBins(binning){
 }
 
 
-
-
-
 /*
 * 
 * Main workflow entrypoint. Takes list of files containing reads as input and produces assembly, binning, dereplication and metabolomics 
@@ -191,12 +201,14 @@ workflow wPipeline {
    
     _wConfigurePipeline()
 
-    wSaveSettingsFile(Channel.fromPath(params.input))
+    inputSamples = wInputFile()
 
-    wQualityControlFile(Channel.fromPath(params.input))
+    wSaveSettingsList(inputSamples | map { it -> it.SAMPLE })
 
-    wQualityControlFile.out.readsPair \
-	| join(wQualityControlFile.out.readsSingle) | set { qcReads }
+    wQualityControlList(inputSamples | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} )
+
+    wQualityControlList.out.readsPair \
+	| join(wQualityControlList.out.readsSingle) | set { qcReads }
 
     wAssemblyList(qcReads)
 
@@ -226,5 +238,5 @@ workflow wPipeline {
 
     mapJoin(wMagAttributesList.out.checkm, wBinning.out.binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
 
-    _wAggregate(wQualityControlFile.out.readsPair, wQualityControlFile.out.readsSingle, binsStats,wMagAttributesList.out.gtdb )
+    _wAggregate(wQualityControlFile.out.readsPair, wQualityControlFile.out.readsSingle, binsStats, wMagAttributesList.out.gtdb )
 }

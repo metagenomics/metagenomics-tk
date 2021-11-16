@@ -42,19 +42,13 @@ process pConfigUpload {
 
 
 /*
- * Takes a tab separated file of files containing sample identifiers as input and places meta-omics-toolkit specific files in sample directories.
- * Input tsv file must contain a column with SAMPLE as header.
+ * Takes a channel that must contain sample identifiers as values.
  *
  */
-workflow wSaveSettingsFile {
+workflow wSaveSettingsList {
      take:
-       samplesTable
+       samples
      main:
-          
-        // Parse TSV file to get sample ids 
-        samplesTable | splitCsv(sep: '\t', header: true) \
-           | map { it -> it.SAMPLE} | set{ samples }  \
-
        samples | combine(Channel.from(params)) \
            | combine(Channel.from(workflow.manifest)) | pConfigUpload
 }

@@ -1,7 +1,9 @@
 tempdir: "tmp"
 summary: false
 output: "output"
+logDir: log
 runid: 1
+logLevel: 1
 steps:
   assembly:
     input: test_data/assembly/samples.tsv 

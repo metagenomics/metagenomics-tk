@@ -2,7 +2,9 @@ tempdir: "tmp"
 summary: false
 output: "output"
 baseDir: "s3://meta_out/0/2/0"
+logDir: log
 runid: 1
+logLevel: 1
 steps:
   dereplication:
     pasolli:

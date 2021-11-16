@@ -1,6 +1,8 @@
 output: "output"
 summary: false
 runid: 1
+logLevel: 1
+logDir: log
 steps:
   dereplication:
     pasolli:

@@ -9,6 +9,15 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
           + '/' + TOOL + '/' + filename
 }
 
+
+def getAggregatedOutput(RUNID, TOOL, filename){
+    return AGGREGATED + '/' + RUNID + '/' + params.modules.fragmentRecruitment.name + '/' + 
+         params.modules.fragmentRecruitment.version.major + "."
+         params.modules.fragmentRecruitment.version.minor + "."
+         params.modules.fragmentRecruitment.version.patch
+          + '/' + TOOL + '/' + filename
+}
+
 process pFrHit {
 
     label 'large'
@@ -80,7 +89,7 @@ process pCombinedAlignmentAnalysis {
 
     when params.steps.containsKey("fragmentRecruitment")
 
-    publishDir "${params.output}/fragmentRecruitment"
+    publishDir params.output, saveAs: { filename -> getAggregatedOutput(params.runid, "frhit",  filename) }
 
     container "${params.samtools_bwa_image}"
 
