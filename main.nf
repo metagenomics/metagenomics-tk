@@ -238,5 +238,5 @@ workflow wPipeline {
 
     mapJoin(wMagAttributesList.out.checkm, wBinning.out.binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
 
-    _wAggregate(wQualityControlFile.out.readsPair, wQualityControlFile.out.readsSingle, binsStats, wMagAttributesList.out.gtdb )
+    _wAggregate(wQualityControlList.out.readsPair, wQualityControlList.out.readsSingle, binsStats, wMagAttributesList.out.gtdb )
 }
