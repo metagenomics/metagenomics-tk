@@ -16,9 +16,9 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 **/
 def set_mode(pathString){
 
-    if (pathString.startsWith("s3://")){
+    if (pathString?.startsWith("s3://")){
         mode = "S3";
-    } else if (pathString.startsWith("https://")) {
+    } else if (pathString?.startsWith("https://")) {
         mode = "S3";
     } else {
         mode = "local";
@@ -37,7 +37,7 @@ process pFlattenToTuple {
 
       label 'small'
 
-      when params?.steps.annotation.containsKey("diamond")
+      when params?.steps?.annotation?.containsKey("diamond")
 
    input:
       tuple val(sample), file(fasta)
@@ -82,7 +82,7 @@ process pDiamond {
       // beforeScript is one way to create a directory outside of Docker to tackle this problem. 
       beforeScript "mkdir -p ${params.databases}"
 
-      when params?.steps.annotation.containsKey("diamond")
+      when params?.steps?.annotation?.containsKey("diamond")
 
    input:
       tuple val(sample), file(fasta)
@@ -124,7 +124,7 @@ process pProdigal {
 
       publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "prodigal", filename) }
 
-      when params?.steps.annotation.containsKey("prodigal")
+      when params?.steps?.annotation?.containsKey("prodigal")
 
    input:
       tuple val(sample), file(fasta)
@@ -174,7 +174,7 @@ process pKEGGFromDiamond {
       // beforeScript is one way to create a directory outside of Docker to tackle this problem.
       beforeScript "mkdir -p ${params.databases}"
 
-      when params?.steps.annotation.containsKey("keggFromDiamond")
+      when params?.steps?.annotation?.containsKey("keggFromDiamond")
 
    input:
       tuple val(sample), file(diamond_result)
@@ -218,7 +218,7 @@ workflow wAnnotateFile {
    main:
       annotationTmpDir = params.tempdir + "/annotation"
       file(annotationTmpDir).mkdirs()
-      set_mode(params.steps.annotation.diamond.database)
+      set_mode(params?.steps?.annotation?.diamond?.database)
       projectTableFile | splitCsv(sep: '\t', header: true) \
       | map{ [it.DATASET, file(it.PATH)] } \
       | collectFile(tempDir: params.tempdir + "/annotation") | map{ [it.name, it] } | _wAnnotation
@@ -240,7 +240,7 @@ workflow wAnnotateSample {
    main:
       annotationTmpDir = params.tempdir + "/annotation"
       file(annotationTmpDir).mkdirs()
-      set_mode(params.steps.annotation.diamond.database)
+      set_mode(params?.steps?.annotation?.diamond?.database)
       fasta | pFlattenToTuple 
       pFlattenToTuple.out.results | _wAnnotation
     emit:
