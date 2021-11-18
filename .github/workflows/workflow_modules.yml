@@ -91,11 +91,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: Cache nextflow cache
-        uses: actions/cache@v2
-        with:
-           path: ${{github.workspace}}/.nextflow
-           key: dereplication
       - name: clean up existing inputs directory
         run: |
           rm -rf /mnt/nextflow_cache/* 
