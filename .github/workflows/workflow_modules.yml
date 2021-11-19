@@ -15,12 +15,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-
-      - name: Cache nextflow cache
-        uses: actions/cache@v2
-        with:
-           path: ${{github.workspace}}/.nextflow
-           key: full-pipeline
       - name: clean up existing inputs directory
         run: |
           rm -rf /mnt/nextflow_cache/* 
@@ -63,11 +57,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: Cache nextflow cache
-        uses: actions/cache@v2
-        with:
-           path: ${{github.workspace}}/.nextflow
-           key: mag_attributes
       - name: clean up existing inputs directory
         run: |
           rm -rf /mnt/nextflow_cache/* 
@@ -91,11 +80,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: Cache nextflow cache
-        uses: actions/cache@v2
-        with:
-           path: ${{github.workspace}}/.nextflow
-           key: dereplication
       - name: clean up existing inputs directory
         run: |
           rm -rf /mnt/nextflow_cache/* 
@@ -112,11 +96,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: Cache nextflow cache
-        uses: actions/cache@v2
-        with:
-           path: ${{github.workspace}}/.nextflow
-           key: dereplication
       - name: clean up existing inputs directory
         run: |
           rm -rf /mnt/nextflow_cache/* 
@@ -133,11 +112,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: Cache nextflow cache
-        uses: actions/cache@v2
-        with:
-           path: ${{github.workspace}}/.nextflow
-           key: dereplication
       - name: clean up existing inputs directory
         run: |
           rm -rf /mnt/nextflow_cache/* 
@@ -154,11 +128,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: Cache nextflow cache
-        uses: actions/cache@v2
-        with:
-           path: ${{github.workspace}}/.nextflow
-           key: dereplication
       - name: clean up existing inputs directory
         run: |
           rm -rf /mnt/nextflow_cache/* 
@@ -175,11 +144,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: Cache nextflow cache
-        uses: actions/cache@v2
-        with:
-           path: ${{github.workspace}}/.nextflow
-           key: ${{github.head_ref}}-nextflow-cache
       - name: clean up existing inputs directory
         run: |
           rm -rf /mnt/nextflow_cache/* 
@@ -193,11 +157,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: Cache nextflow cache
-        uses: actions/cache@v2
-        with:
-           path: ${{github.workspace}}/.nextflow
-           key: ${{github.head_ref}}-nextflow-cache
       - name: clean up existing inputs directory
         run: |
           rm -rf /mnt/nextflow_cache/* 
