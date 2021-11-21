@@ -18,7 +18,6 @@ jobs:
       - name: clean up existing inputs directory
         run: |
           rm -rf /mnt/nextflow_cache/* 
-
       - name: Test Full Pipeline Run
         run: |
           bash ./scripts/test_fullPipeline.sh \
