@@ -116,15 +116,11 @@ tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".comman
 
 ## Databases
 
-If the same databases is downloaded during runtime by multiple processes, it takes up an unnecessary ammount of disc space.
-One idea is too always use the same place to store these databases. This place should be described in `params.databses`.
-If other processes try too use this databses they can look at `params.databses` on this current machine. 
-If it is present it can be used, if not it should be downloaded. Through this procedure only one copy of each databses is used,
-<<<<<<< HEAD
+If the same database is downloaded during runtime by multiple processes, it takes up an unnecessary ammount of disc space.
+One idea is too always use the same place to store these databases. This place should be described in `params.databases`.
+If other processes try to use this databases they can look at `params.databases` on the current machine. 
+If it is present it can be used, if not it should be downloaded. Through this procedure only one copy of each databases is used,
 which is space-saving.   
-=======
-which is space-saving.
->>>>>>> 9760f5d5883b867ee9e4e9fe29acf780619fdfee
 
 ## Configuration
 

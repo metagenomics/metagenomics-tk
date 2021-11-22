@@ -15,10 +15,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: clean up existing inputs directory
-        run: |
-          rm -rf /mnt/nextflow_cache/* 
-
       - name: Test Full Pipeline Run
         run: |
           bash ./scripts/test_fullPipeline.sh \
@@ -57,9 +53,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: clean up existing inputs directory
-        run: |
-          rm -rf /mnt/nextflow_cache/* 
       - name: Test MAG Attributes
         run: |
           bash ./scripts/test_magAttributes.sh \
@@ -80,9 +73,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: clean up existing inputs directory
-        run: |
-          rm -rf /mnt/nextflow_cache/* 
       - name: Test Dereplication
         run: |
           bash ./scripts/test_dereplication.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
@@ -96,9 +86,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: clean up existing inputs directory
-        run: |
-          rm -rf /mnt/nextflow_cache/* 
       - name: Test Read Mapping
         run: |
           bash ./scripts/test_readMapping.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
@@ -112,9 +99,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: clean up existing inputs directory
-        run: |
-          rm -rf /mnt/nextflow_cache/* 
       - name: Test Assembly
         run: |
           bash ./scripts/test_assembly.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
@@ -128,9 +112,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: clean up existing inputs directory
-        run: |
-          rm -rf /mnt/nextflow_cache/* 
       - name: Test Cooccurrence
         run: |
           bash ./scripts/test_cooccurrence.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
@@ -144,9 +125,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: clean up existing inputs directory
-        run: |
-          rm -rf /mnt/nextflow_cache/* 
       - name: Test Fragment Recruitment
         run: |
           bash ./scripts/test_fragmentRecruitment.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
@@ -157,9 +135,6 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
-      - name: clean up existing inputs directory
-        run: |
-          rm -rf /mnt/nextflow_cache/* 
       - name: Test Annotation
         run: |
           bash ./scripts/test_annotation.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
