@@ -1,7 +1,7 @@
 nextflow.enable.dsl=2
 
 include { wSaveSettingsList } from './modules/config/module'
-include { wQualityControlFile; wQualityControlList} from './modules/qualityControl/module'
+include { wQualityControlFile; wQualityControlList; pJellyfish} from './modules/qualityControl/module'
 include { wAssemblyFile; wAssemblyList } from './modules/assembly/module'
 include { wBinning } from './modules/binning/module.nf'
 include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
@@ -81,6 +81,18 @@ def collectFiles(dir, sra){
            }
    }
    return fileList;
+}
+
+workflow wKmerCount {
+
+    inputSamples = wInputFile()
+
+    wQualityControlList(inputSamples | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} )
+
+    wQualityControlList.out.readsPair | join(wQualityControlList.out.readsSingle) | set { qcReads }
+
+    pJellyfish(qcReads)
+
 }
 
 workflow wAggregatePipeline {

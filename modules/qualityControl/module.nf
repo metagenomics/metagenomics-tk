@@ -68,6 +68,33 @@ process pFastpSplitDownload {
     template 'fastpSplitDownload.sh'
 }
 
+process pJellyfish {
+
+    label 'large'
+
+    tag "$sample"
+
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "jellyfish", filename) }
+
+    when:
+    params?.steps?.qc.containsKey("jellyfish")
+
+    container "${params.python_env_image}"
+
+    input:
+    tuple val(sample), path(read1), path(read2)
+
+    output:
+    tuple val("${sample}"), path("*.jf"), emit: jellyfishCount
+    tuple val("${sample}"), path("*.fa"), emit: jellyfishDump
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    shell:
+    '''
+    jellyfish-linux count -m 21 -s 100M -t !{task.cpus} -o !{sample}.jf <(zcat !{read1}) <(zcat !{read2})
+    jellyfish-linux dump !{sample}.jf > !{sample}.fa
+    '''
+}
 
 workflow _wFastqSplit {
        take:
