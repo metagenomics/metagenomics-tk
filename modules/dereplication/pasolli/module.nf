@@ -232,7 +232,9 @@ process pSANS {
     tag "Cluster ${clusterID}"
 
     when:
-    params.steps.containsKey("dereplication") && params.steps.dereplication.containsKey("sans")
+    params.steps.containsKey("dereplication") && \
+    params.steps.dereplication.containsKey("sans")
+
 
     input:
     path(ids)
@@ -257,7 +259,7 @@ process pSANS {
     done
     # Run SANS for a set of genomes and translate the newick tree to a set of clusters
     find $PWD/input -type l > input.tsv
-    /sans/SANS-autoN.sh -i input.tsv !{params.steps.dereplication.sans.additionalParams} -N !{clusterID}_newick.txt
+    /sans/SANS-autoN.sh -i input.tsv !{params?.steps?.dereplication?.sans?.additionalParams} -N !{clusterID}_newick.txt
     /sans/scripts/newick2clusters.py !{clusterID}_newick.txt > !{clusterID}_clusters.tsv
     '''
 

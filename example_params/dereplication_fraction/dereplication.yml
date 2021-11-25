@@ -1,15 +1,34 @@
 output: "output"
 summary: false
 runid: 1
+logLevel: 1
+logDir: log
 steps:
   dereplication:
     pasolli:
       input: "test_data/dereplication/input.tsv"
-      representativeAniCutoff: 0.95
       minimumCompleteness: 0
       maximumContamination: 5000
-      pyaniParameters: '-m ANIb'
       ANIBuffer: 20
-      MASHBuffer: 500
-      cutoff: 0.05
+      mashBuffer: 2000
       method: 'ANI'
+      additionalParams:
+        mash_sketch: ""
+        mash_dist: ""
+        #  cluster cutoff
+        cluster: " -c 0.05 "
+        pyani: " -m ANIb "
+        representativeAniCutoff: 0.95
+resources:
+  large:
+    cpus: 28
+    memory: 256
+  medium:
+    cpus: 14
+    memory: 128
+  small:
+    cpus: 7
+    memory: 16
+  tiny:
+    cpus: 1
+    memory: 2
