@@ -65,7 +65,7 @@ jobs:
           "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " \
           example_params/magAttributes_fraction/magAttributes.yml "/mnt/work/work/${{ github.head_ref }}" || exit 1
   dereplication:
-    concurrency: 
+    concurrency:
       group: ${{ github.head_ref }}
       cancel-in-progress: true
     timeout-minutes: 700
@@ -76,7 +76,10 @@ jobs:
       - name: Test Dereplication
         run: |
           bash ./scripts/test_dereplication.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
-
+      - name: Test Species Dereplication
+        run: |
+          bash ./scripts/test_dereplication.sh "" example_params/dereplication_fraction/dereplication.yml \
+                                                 "/mnt/work/work/${{ github.head_ref }}"  || exit 1
   readmapping:
     concurrency: 
       group: ${{ github.head_ref }}

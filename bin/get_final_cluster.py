@@ -62,7 +62,7 @@ def main(argv):
         genome_b = similar_representatives.iloc[i]["GENOME_B"]
         clusters = update_cluster(clusters, attributes, genome_a, genome_b)
 
-    clusters.to_csv(args.out_dir + "/representatives.tsv",sep='\t', index=False)
+    clusters.to_csv(args.out_dir + "/clusters.tsv",sep='\t', index=False)
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
