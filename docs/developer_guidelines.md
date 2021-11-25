@@ -191,3 +191,32 @@ Log files should be stored in the user provided `logDir` directory.
 
 2. Variable, method, workflow, folder and process names should be written in camelcase.
 
+## Tools
+
+### concurrentDownload.sh
+
+This script allows to synchronize the download of a database between multiple jobs and should be executed the following way.
+Before a database is downloaded, the script checks either the MD5SUM or the database version against a user specified parameter.
+
+```
+flock CHECKSUM_FILE concurrentDownload.sh --output=DATABASE \
+           --checkpoint=CHECKSUM_FILE \
+           --command=COMMAND \
+           --mode=MODE \
+           EXPECTED
+
+```
+
+where
+  * `CHECKSUM_FILE` is a file that is used for locking. Processes will check if the file is currently locked before trying to download anything.
+    This file should ideally placed in the `params.database` directory of the specific tool (e.g. !{params.databases}/rgi) and should be the same that
+    is also provided to the `--checkpoint parameter`.
+  
+  * `DATABASE` is the directory that is used for placing the specific database.
+
+  * `COMMAND` is the command used to download and extract the database. (e.g. "wget -O data $DOWNLOAD_LINK && tar -xvf data ./card.json && rm data")
+
+  * `MODE` can be either `MD5SUM` or `VERSION`.
+
+  * `EXPECTED`: Depending on the `MODE`, the `EXPECTED` parameter can be either `--expectedVersion=USER_DEFINED_DATABASE_VERSION` or `--expectedMD5SUM=USER_DEFINED_DATABASE_MD5SUM`. 
+

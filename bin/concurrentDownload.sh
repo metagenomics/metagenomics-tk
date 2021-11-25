@@ -33,7 +33,6 @@ compare(){
 	MD5SUM)
       echo "MD5SUM"
       cd ${DATABASE_OUT}
-      ls -1
       MD5SUM=$(find . -type f -exec md5sum {} + | sort | md5sum | cut -d ' ' -f 1)
       T=$(test "${MD5SUM}" = "${EXPECTED}")
       echo "${MD5SUM} md5SUM does not match, ${T}"
