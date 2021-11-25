@@ -87,6 +87,10 @@ tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".comman
 
 Examples can be viewed in the Checkm and Prokka process.
 
+## Logs
+
+Log files should be stored in the user provided `logDir` directory.
+
 ### Log Level
 
 Every configuration file must have a `logLevel` attribute that can have the following values:
@@ -181,15 +185,15 @@ pProcess {
 
 ```
 
-## Logs
+### Internal Configuration
 
-Log files should be stored in the user provided `logDir` directory.
+The `_wConfigurePipeline` workflow in the main.nf file should be used for setting 
+pipeline parameters that are need for fullfilling the user provided configuration.
 
-## Other
-
-1. Magic numbers should not be used.
-
-2. Variable, method, workflow, folder and process names should be written in camelcase.
+Example:
+Lets assume the user enables the plasmid module. In that case it is mandatory that 
+the assembler produces a fastg file independend of the user provided settings of the assembler.
+The `_wConfigurePipeline` method sets in that case the fastg parameter of any assembler to `true`.
 
 ## Tools
 
@@ -204,7 +208,6 @@ flock CHECKSUM_FILE concurrentDownload.sh --output=DATABASE \
            --command=COMMAND \
            --mode=MODE \
            EXPECTED
-
 ```
 
 where
@@ -219,4 +222,12 @@ where
   * `MODE` can be either `MD5SUM` or `VERSION`.
 
   * `EXPECTED`: Depending on the `MODE`, the `EXPECTED` parameter can be either `--expectedVersion=USER_DEFINED_DATABASE_VERSION` or `--expectedMD5SUM=USER_DEFINED_DATABASE_MD5SUM`. 
+
+
+## Other
+
+1. Magic numbers should not be used.
+
+2. Variable, method, workflow, folder and process names should be written in camelcase.
+
 

@@ -168,10 +168,20 @@ workflow _wAggregate {
      wCooccurrenceList(wListReadMappingBwa.out.trimmedMean, gtdb)
 }
 
+/*
+*
+* This workflow configures the pipeline and sets additional parameters that are
+* needed to fullfill the provided configuration.
+*
+*/
 workflow _wConfigurePipeline {
-    
+
+    // For Plasmid detection we need the assembly graph of the assembler
     if(params.steps.containsKey("plasmid")){
-      params.steps.assembly.megahit.fastg = true
+       def fastg = [ fastg: true]
+       params.steps.assembly.each { 
+	 assembler, parameter -> println(assembler); params.steps.assembly.get(assembler).putAll(fastg)
+       }
     }
 }
 
