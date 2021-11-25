@@ -58,7 +58,6 @@ workflow wCMSeqWorfklowFile {
 }
 
 workflow wMagAttributes {
-   print(params.modules.magAttributes.getClass())
    wMagAttributesFile(Channel.fromPath(params?.steps?.magAttributes?.input))
 }
 
@@ -180,7 +179,7 @@ workflow _wConfigurePipeline {
     if(params.steps.containsKey("plasmid")){
        def fastg = [ fastg: true]
        params.steps.assembly.each { 
-	 assembler, parameter -> println(assembler); params.steps.assembly.get(assembler).putAll(fastg)
+	 assembler, parameter -> params.steps.assembly.get(assembler).putAll(fastg)
        }
     }
 }

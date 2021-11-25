@@ -203,26 +203,25 @@ This script allows to synchronize the download of a database between multiple jo
 Before a database is downloaded, the script checks either the MD5SUM or the database version against a user specified parameter.
 
 ```
-flock CHECKSUM_FILE concurrentDownload.sh --output=DATABASE \
-           --checkpoint=CHECKSUM_FILE \
-           --command=COMMAND \
-           --mode=MODE \
-           EXPECTED
+flock LOCK_FILE concurrentDownload.sh --output=DATABASE \
+           --httpsCommand=COMMAND \
+           --localCommand=COMMAND \
+           --s3Command=COMMAND \
+           --link=LINK \
+           --expectedMD5SUM=USER_VERIFIED_DATABASE_MD5SUM
 ```
 
 where
-  * `CHECKSUM_FILE` is a file that is used for locking. Processes will check if the file is currently locked before trying to download anything.
-    This file should ideally placed in the `params.database` directory of the specific tool (e.g. !{params.databases}/rgi) and should be the same that
-    is also provided to the `--checkpoint parameter`.
+  * `LOCK_FILE` is a file that is used for locking. Processes will check if the file is currently locked before trying to download anything.
+    This file should ideally placed in the `params.database` directory of the specific tool (e.g. !{params.databases}/rgi).
   
   * `DATABASE` is the directory that is used for placing the specific database.
 
-  * `COMMAND` is the command used to download and extract the database. (e.g. "wget -O data $DOWNLOAD_LINK && tar -xvf data ./card.json && rm data")
+  * `COMMAND` is the command used to download and extract the database. (e.g. "wget -O data $DOWNLOAD_LINK && tar -xvf data ./card.json && rm data" for the `--httpsCommand` flag)
 
-  * `MODE` can be either `MD5SUM` or `VERSION`.
+  * `USER_VERIFIED_DATABASE_MD5SUM` is the MD5SUM of the *extracted* database that the user should test manually before executing the pipeline.
 
-  * `EXPECTED`: Depending on the `MODE`, the `EXPECTED` parameter can be either `--expectedVersion=USER_DEFINED_DATABASE_VERSION` or `--expectedMD5SUM=USER_DEFINED_DATABASE_MD5SUM`. 
-
+  * `LINK` is the link that will be used to test if is S3, HTTPS or a local path.
 
 ## Other
 

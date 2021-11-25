@@ -1,5 +1,6 @@
 nextflow.enable.dsl=2
 
+include { pDumpLogs } from '../utils/processes'
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.plasmids.name + '/' +
@@ -43,7 +44,8 @@ process pPlasClass {
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "PlasClass", filename) }
 
-    when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("PlasClass")
+    when:
+    params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("PlasClass")
 
     container "${params.PlasClass_image}"
 
@@ -53,7 +55,8 @@ process pPlasClass {
     output:
     tuple val("${sample}"), val("${binID}"), path("${binID}_plasmids.fasta.gz"), emit: plasmids, optional: true
     tuple val("${sample}"), val("${binID}"), path("${binID}_probs.tsv"), emit: probabilities
-    tuple file(".command.sh"), val("${binID}"), file(".command.out"), file(".command.err"), file(".command.log")
+    tuple env("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
     template("PlasClass.sh")
@@ -68,7 +71,10 @@ process pPLSDB {
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "PLSDB", filename) }
 
-    when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("PLSDB")
+    containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} "
+
+    when:
+    params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("PLSDB")
 
     container "${params.mash_image}"
 
@@ -76,9 +82,10 @@ process pPLSDB {
     tuple val(sample), val(binID), path(plasmids)
 
     output:
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     tuple val("${sample}"), val("${binID}"), path("${binID}.tsv"), emit: allHits
     tuple val("${sample}"), val("${binID}"), path("${binID}_kmerThreshold_*.tsv"), emit: filteredHitsMetadata
+    tuple env("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
     template("plsdb.sh")
@@ -87,10 +94,10 @@ process pPLSDB {
 
 workflow wPlasmidsList {
      take:
-       samplesAssembly
+       samplesContigs
        samplesBins
      main:
-       _wPlasmids(samplesAssembly, samplesBins)
+       _wPlasmids(samplesContigs, samplesBins)
     emit:
       newPlasmids = _wPlasmids.out.newPlasmids
 }
@@ -98,14 +105,24 @@ workflow wPlasmidsList {
 
 workflow _wPlasmids {
      take:
-       samplesAssembly
+       samplesContigs
        samplesBins
      main:
+       // search for new pladmids
        samplesBins | pSCAPP
-       samplesAssembly | pPlasClass
-       pPlasClass.out.plasmids | mix(pSCAPP.out.plasmids | map { plasmids -> [plasmids[0], "assembly", plasmids[1]] }) | pPLSDB
-       pSCAPP.out.plasmids | map { plasmids -> [plasmids[0], "plasmid", plasmids[1]] } \
+       samplesContigs | pPlasClass
+
+       pSCAPP.out.plasmids | map { plasmids -> [SAMPLE_IDX, "assembly", BIN_IDX] } \
 	| set { newPlasmids }
+
+       // check if there are known plasmids
+       SAMPLE_IDX = 0
+       BIN_IDX = 1
+       pPlasClass.out.plasmids \
+	| mix(newPlasmids) | pPLSDB
+
+       // store logs
+       pPlasClass.out.logs | mix(pPLSDB.out.logs) | pDumpLogs
      emit:
        probabilities = pPlasClass.out.probabilities
        newPlasmids = newPlasmids

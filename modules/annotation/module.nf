@@ -89,7 +89,8 @@ process pResistanceGeneIdentifier {
    
       container "${params.rgi_image}"
       
-      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases}"
+      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} \
+                        --volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
  
       tag "$sample"
 
@@ -97,12 +98,10 @@ process pResistanceGeneIdentifier {
 
       publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "rgi", filename) }
       
-      // UID mapping does not work for some reason. Every time a database directory is created while running docker,
-      // the permissions are set to root. This leads to crashes later on.
-      // beforeScript is one way to create a directory outside of Docker to tackle this problem. 
       beforeScript "mkdir -p ${params.databases}"
 
-      when params?.steps.annotation.containsKey("rgi")
+      when:
+      params?.steps.annotation.containsKey("rgi")
 
    input:
       tuple val(sample), val(binID), file(fasta)
@@ -112,28 +111,26 @@ process pResistanceGeneIdentifier {
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
 
    shell:
-      if( mode == 'S3' || mode == 'local')
-         '''
-         DATABASE=!{params.databases}/rgi
-         CHECKSUM_FILE=${DATABASE}/checksum.txt
-         DOWNLOAD_LINK=!{params.steps.annotation.rgi.source}
-         MD5SUM=!{params.steps.annotation.rgi.md5sum}
+      '''
+      DATABASE=!{params.databases}/rgi
+      LOCK_FILE=${DATABASE}/checksum.txt
+      DOWNLOAD_LINK=!{params.steps.annotation.rgi.source}
+      MD5SUM=!{params.steps.annotation.rgi.md5sum}
 
-         mkdir -p ${DATABASE}
-         flock ${CHECKSUM_FILE} concurrentDownload.sh --output=${DATABASE} \
-           --checkpoint=${CHECKSUM_FILE} \
-           --command="wget -O data $DOWNLOAD_LINK && tar -xvf data ./card.json && rm data" \
-           --mode=MD5SUM --expectedMD5SUM=${MD5SUM}
+      mkdir -p ${DATABASE}
+      flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
+         --link=$DOWNLOAD_LINK \
+         --httpsCommand="wget -O data ${DOWNLOAD_LINK} && tar -xvf data ./card.json && rm data" \
+         --s3Command="s5cmd !{params.steps?.annotation?.s5cmd.params} cp ${DOWNLOAD_LINK} data && tar -xvf data ./card.json && rm data" \
+         --localCommand="tar -xvf ${DOWNLOAD_LINK} ./card.json" \
+         --expectedMD5SUM=${MD5SUM}
 
-         sed 's/*//g' !{fasta} > input.faa
-         
-         rgi load --card_json ${DATABASE}/out/card.json --local
-         rgi main --input_sequence input.faa \
+       sed 's/*//g' !{fasta} > input.faa
+       rgi load --card_json ${DATABASE}/out/card.json --local
+       rgi main --input_sequence input.faa \
                   --output_file !{binID}.rgi --input_type protein --local \
                   --alignment_tool DIAMOND --num_threads !{task.cpus} --clean
-         '''
-      else
-         error "Invalid annotation database mode: ${mode}"
+       '''
 }
 
 /**

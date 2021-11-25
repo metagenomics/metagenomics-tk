@@ -1,13 +1,15 @@
 DATABASE=!{params.databases}/plsdb
-CHECKSUM_FILE=${DATABASE}/checksum.txt
+LOCK_FILE=${DATABASE}/checksum.txt
 DOWNLOAD_LINK=!{params.steps.plasmid.PLSDB.database.source}
 MD5SUM=!{params.steps.plasmid.PLSDB.database.md5sum}
 
 mkdir -p ${DATABASE}
-flock ${CHECKSUM_FILE} concurrentDownload.sh --output=${DATABASE} \
-	--checkpoint=${CHECKSUM_FILE} \
-	--command="wget -O out.zip $DOWNLOAD_LINK && unzip -q out.zip && rm out.zip" \
-	--mode=MD5SUM --expectedMD5SUM=${MD5SUM}
+flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
+	--link=$DOWNLOAD_LINK \
+	--httpsCommand="wget -O out.zip $DOWNLOAD_LINK && unzip -q out.zip && rm out.zip" \
+	--s3Command="s5cmd !{params.steps?.plasmid?.PLSDB?.database?.s5cmdParams} cp ${DOWNLOAD_LINK} out.zip && unzip -q out.zip && rm out.zip" \
+	--localCommand="unzip ${DOWNLOAD_LINK} -d . " \
+	--expectedMD5SUM=${MD5SUM}
 
 mash sketch -i !{params.steps.plasmid.PLSDB.additionalParams.mashSketch} -o query !{plasmids}
 

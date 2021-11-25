@@ -4,15 +4,15 @@ while [ $# -gt 0 ]; do
 	  case "$1" in
 	    --output=*) OUTPUT_PATH="${1#*=}"
 	    ;;
-	    --checkpoint=*) CHECKPOINT_FILE="${1#*=}"
+	    --expectedMD5SUM=*) EXPECTED_MD5SUM="${1#*=}"
 	    ;;
-	    --expectedVersion=*) EXPECTED="${1#*=}"
+	    --s3command=*) S3_COMMAND="${1#*=}"
 	    ;;
-	    --expectedMD5SUM=*) EXPECTED="${1#*=}"
+	    --httpsCommand=*) HTTPS_COMMAND="${1#*=}"
 	    ;;
-	    --command=*) COMMAND="${1#*=}"
+	    --localCommand=*) LOCAL_COMMAND="${1#*=}"
 	    ;;
-	    --mode=*) MODE="${1#*=}"
+	    --link=*) LINK="${1#*=}"
 	    ;;
 	    *)
               printf "***************************\n"
@@ -25,35 +25,58 @@ while [ $# -gt 0 ]; do
 done
 
 DATABASE_OUT=${OUTPUT_PATH}/out
+MD5SUM_FILE=${OUTPUT_PATH}/md5sum.txt
 mkdir -p ${DATABASE_OUT}
 
-compare(){
-   MODE=$1
-   case $MODE in
-	MD5SUM)
-      echo "MD5SUM"
-      cd ${DATABASE_OUT}
-      MD5SUM=$(find . -type f -exec md5sum {} + | sort | md5sum | cut -d ' ' -f 1)
-      T=$(test "${MD5SUM}" = "${EXPECTED}")
-      echo "${MD5SUM} md5SUM does not match, ${T}"
-      test "${MD5SUM}" = "${EXPECTED}" && grep -Fxq ${EXPECTED} $CHECKPOINT_FILE
-      ;;
-        VERSION)
-      echo "VERSION";
-      grep -Fxq $EXPECTED $CHECKPOINT_FILE;
-      ;;
-      *)
-      echo "Please provide either MD5SUM or VERSION as mode."
-      ;;
-   esac
-   return $?
+function getCommand() {
+    if [[ $LINK == s3://* ]]
+    then
+    	echo "$S3_COMMAND";
+    elif [[ $LINK == https://* ]]
+    then
+    	echo "$HTTPS_COMMAND";
+    elif [[ $LINK == /* ]]
+    then
+    	echo "$LOCAL_COMMAND";
+    fi
 }
 
-if [ -f "$CHECKPOINT_FILE" ] && compare $MODE ; then
+# Compares the expected MD5SUM to the one saved in checkpoint file.
+function compareExpectedToCheckpoint() {
+   if grep -Fxq ${EXPECTED_MD5SUM} $MD5SUM_FILE; then
+     return 0
+   else
+     return 1
+   fi
+}
+
+# Retrieve MD5SUM based on MD5SUM of MD5SUMs
+function getMD5SUM() {
+   cd ${DATABASE_OUT}
+   MD5SUM=$(find . -type f -exec md5sum {} + | sort | md5sum | cut -d ' ' -f 1)
+   echo ${MD5SUM}
+}
+
+if [ -f "$MD5SUM_FILE" ] && compareExpectedToCheckpoint $MODE ; then
     echo "Database already exists!"
 else 
     echo "Database will be downloaded!"
+    # remove wrong version of the database
+    rm -rf ${DATABASE_OUT} ${MD5SUM_FILE}
+
+    mkdir -p ${DATABASE_OUT}
+
+    # download database
     cd ${DATABASE_OUT}
-    eval "$COMMAND"
-    echo ${EXPECTED} > ${CHECKPOINT_FILE}
+    COMMAND=$(getCommand)
+    eval "$COMMAND"        
+
+    # compute MD5SUM and save it in the checkpoint file
+    MD5SUM=$(getMD5SUM)
+    if [[ "${MD5SUM}" == "${EXPECTED_MD5SUM}" ]]; then
+            echo ${MD5SUM} > ${MD5SUM_FILE}
+    else
+	    echo " Computed MD5SUM does not match to the expected one. "
+	    exit 1
+    fi
 fi
