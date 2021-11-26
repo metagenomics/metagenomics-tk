@@ -210,16 +210,16 @@ workflow wInputFile {
         } else if (SRA_MODE=="NCBI"){
            _wSRANCBI() | set { datasets }
         }
-        datasets.out.incorrectAccessions \
+        datasets.incorrectAccessions \
          | collectFile(newLine: true, seed: "RUN_ID", name: 'incorrectAccessions.tsv', storeDir: params.logDir)
 
-        datasets.out.incorrectAccessions \
+        datasets.incorrectAccessions \
          | view { id -> "WARNING: The length of the ID $id is not between 9 and 12 characters and therefore will be skipped" }
 
-        datasets.out.failedSRAFastqFiles \
+        datasets.failedSRAFastqFiles \
          | collectFile(newLine: true, seed: "RUN_ID", name: 'accessionsMissingFiles.tsv', storeDir: params.logDir)
 
-        datasets.out.failedSRAFastqFiles \
+        datasets.failedSRAFastqFiles \
          | view { id -> "WARNING: The SRA ID $id does not provide paired end reads and therefore will be skipped" }
         break;
       case "paired":

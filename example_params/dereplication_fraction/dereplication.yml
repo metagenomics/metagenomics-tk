@@ -19,8 +19,6 @@ steps:
         cluster: " -c 0.05 "
         pyani: " -m ANIb "
         representativeAniCutoff: 0.95
-    sans:
-      additionalParams: " -k 15 -f strict -w 25  -t 400 " 
 resources:
   large:
     cpus: 28
