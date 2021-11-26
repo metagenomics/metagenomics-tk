@@ -9,7 +9,7 @@ jobs:
   merge_job:
   # this job will only run if the PR has been merged
     if: github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
     - run: |
         rm -rf /mnt/work/work/${{ github.head_ref }}_*
@@ -17,7 +17,7 @@ jobs:
   close_job:
   # this job will only run if the PR has been closed without being merged
     if: github.event.pull_request.merged == false
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
     - run: |
         rm -rf /mnt/work/work/${{ github.head_ref }}_*
