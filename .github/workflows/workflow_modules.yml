@@ -131,3 +131,13 @@ jobs:
       - name: Test Fragment Recruitment
         run: |
           bash ./scripts/test_fragmentRecruitment.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
+
+  annotation:
+    timeout-minutes: 700
+    needs: [fragment_recruitment]
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Test Annotation
+        run: |
+          bash ./scripts/test_annotation.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1

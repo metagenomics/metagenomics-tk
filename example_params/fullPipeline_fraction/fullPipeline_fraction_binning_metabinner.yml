@@ -25,6 +25,9 @@ steps:
     metabinner:
       minContigLength: 500
       kmerSize: 4
+  annotation:
+    diamond:
+      database: '/mnt/databases/kegg-2021-01.dmnd'
 resources:
   large:
     cpus: 28

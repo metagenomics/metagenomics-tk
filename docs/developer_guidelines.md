@@ -114,6 +114,14 @@ tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".comman
 
 4. Custom error strategies that do not follow the strategy defined in nextflow.config, should be documented (see Megahit example).
 
+## Databases
+
+If the same database is downloaded during runtime by multiple processes, it takes up an unnecessary ammount of disc space.
+One idea is too always use the same place to store these databases. This place should be described in `params.databases`.
+If other processes try to use this databases they can look at `params.databases` on the current machine. 
+If it is present it can be used, if not it should be downloaded. Through this procedure only one copy of each databases is used,
+which is space-saving.   
+
 ## Configuration
 
 Every process should be configurable by providing a parameters string to the tool in the process.
@@ -182,4 +190,3 @@ Log files should be stored in the user provided `logDir` directory.
 1. Magic numbers should not be used.
 
 2. Variable, method, workflow, folder and process names should be written in camelcase.
-

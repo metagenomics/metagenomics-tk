@@ -4,7 +4,7 @@ while IFS= read -r genomes_to_compare; do
     GENOME2=$(echo "$genomes_to_compare" | cut -d$'\t' -f 2)
 
     dir=${GENOME1}_vs_${GENOME2}_dir
-    mkdir $dir
+    mkdir -p $dir
     cd $dir
     ln -s ../$GENOME1 ${GENOME1}.fa
     ln -s ../$GENOME2 ${GENOME2}.fa

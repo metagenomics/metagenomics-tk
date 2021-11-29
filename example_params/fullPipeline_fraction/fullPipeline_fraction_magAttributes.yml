@@ -3,7 +3,7 @@ input:
   paired: 
     path: "test_data/fullPipeline/reads_split.tsv"
     watch: false
-summary: true
+summary: false
 output: "output"
 logDir: log
 runid: 1
@@ -39,6 +39,9 @@ steps:
     prokka:
       defaultKingdom: 'Bacteria'
       additionalParams: " --mincontiglen 200 "
+  annotation:
+    diamond:
+      database: '/mnt/databases/kegg-2021-01.dmnd'
 resources:
   large:
     cpus: 28

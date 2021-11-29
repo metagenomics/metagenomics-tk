@@ -161,7 +161,34 @@ In addition, this module produces a file `SAMPLE_gtdbtk_CHUNK.tsv` that combines
 
 ##### Checkm
 
-The Checkm output adheres to the magAttributes specification and adds a `BIN_ID` and `SAMPLE` column to the output file. 
+The Checkm output adheres to the magAttributes specification and adds a `BIN_ID` and `SAMPLE` column to the output file.
+
+### Annotation
+
+```
+-entry wAnnotateLocal -params-file example_params/annotation.yml
+```
+
+#### Input  
+
+* [params-file](example_params/annotation.yml)
+
+* [Tsv Table](test_data/annotation/input_small.tsv)
+
+#### Output
+
+##### Diamond
+
+Calculated significant matches of a nucleotide/protein query which was compared against a database.
+
+##### Prodigal
+
+Predicted genes in the `*.faa` `*.fna` and `*.gff` file format.
+
+##### KEGGFromDiamond
+
+Result `*.tsv` file filled with KEGG informations (linke modules, KO's, ...) which could be linked to the input Diamond hits.
+  
 
 ## Error Strategy
 
@@ -176,8 +203,8 @@ You will have to create a configuration file that can be provided to nextflow wi
 
 ```
 aws {
-  accessKey = xxx
-  secretKey = xxx
+  accessKey = 'xxx'
+  secretKey = 'xxx'
 
     client {
       s_3_path_style_access = true
@@ -192,6 +219,16 @@ aws {
 ```
 
 If you want to upload tool results to s3, just update the output parameter in the configuration file from `/path/to/output` to `s3://bucket/path/to/output`
+
+If you want to use the annotation module, you also have to provide your credentials in an aws credential style.
+Create a file that looks like this and fill in your credentials:
+
+```
+[default]
+aws_access_key_id=ABCDEKEY
+aws_secret_access_key=ABCDEKEY
+```
+You have to reference this file in the annotation parameter yml's s5cmd keyfiles section.  
 
 ## Other 
 
