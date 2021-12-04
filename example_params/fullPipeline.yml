@@ -11,8 +11,10 @@ logLevel: 1
 steps:
   qc:
     fastp:
-       # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
-       additionalParams: "  "
+      # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
+      additionalParams: "  "
+    jellyfish:
+      additionalParams: " -m 21 -s 100M "
   assembly:
     megahit:
       additionalParams: " --min-contig-len 200 "

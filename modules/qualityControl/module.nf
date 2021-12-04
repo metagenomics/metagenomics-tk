@@ -68,13 +68,21 @@ process pFastpSplitDownload {
     template 'fastpSplitDownload.sh'
 }
 
+/**
+*
+* Process to generate a k-mer profile of every input metagenome run with the fullpipeline.
+* Input: Sample_Name, Forward-Read, Reverse-Read
+* Output: Zipped Jellyfish and k-mer count file
+* !! At the end of each run files will be moved to the publishDir because of their size !!  
+*
+**/
 process pJellyfish {
 
     label 'large'
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "jellyfish", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "jellyfish", filename) }, mode: 'move'
 
     when:
     params?.steps?.qc.containsKey("jellyfish")
@@ -85,14 +93,15 @@ process pJellyfish {
     tuple val(sample), path(read1), path(read2)
 
     output:
-    tuple val("${sample}"), path("*.jf"), emit: jellyfishCount
-    tuple val("${sample}"), path("*.fa"), emit: jellyfishDump
+    tuple val("${sample}"), path("*.jf.gz"), emit: jellyfishCount
+    tuple val("${sample}"), path("*.fa.gz"), emit: jellyfishDump
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
-    jellyfish-linux count -m 21 -s 100M -t !{task.cpus} -o !{sample}.jf <(zcat !{read1}) <(zcat !{read2})
-    jellyfish-linux dump !{sample}.jf > !{sample}.fa
+    jellyfish-linux count !{params?.steps?.qc.jellyfish.additionalParams} -t !{task.cpus} -o !{sample}.jf <(zcat !{read1}) <(zcat !{read2})
+    jellyfish-linux dump !{sample}.jf | pigz --best --processes !{task.cpus} > !{sample}.fa.gz
+    pigz --best --processes !{task.cpus} !{sample}.jf
     '''
 }
 
