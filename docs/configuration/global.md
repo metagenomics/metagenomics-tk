@@ -11,6 +11,9 @@
 
  * `logDir`: A path to a directory which is used to store log files.
 
+ * `scratch`: The scratch value can be either `false` or a path on a worker node. If a path is set, then the nextflow process in `slurm` mode is executed on the provided path.
+    If the standard mode is used, then the parameter is ignored.
+
  * `steps`: Steps allows to specify multiple pipeline modules for running the toolkit. We distinguish between two modes. You can either run one tool of
    the pipeline or the whole pipeline with different configurations.
 

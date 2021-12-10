@@ -3,6 +3,7 @@ summary: false
 runid: 1
 logDir: log
 tempdir: "tmp"
+scratch: "/vol/scratch"
 # Has to end with a /. If not a file named "database" will be created instead of a directory.
 # The path has to be absolute to work with docker.
 # You can skip this parameter if you use the local database mode.

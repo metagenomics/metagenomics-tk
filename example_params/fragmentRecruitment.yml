@@ -4,6 +4,7 @@ output: "output"
 logDir: log
 runid: 1
 logLevel: 1
+scratch: "/vol/scratch"
 steps:
   fragmentRecruitment:
     frhit:
