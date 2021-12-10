@@ -4,6 +4,7 @@ output: "output"
 runid: 1
 logLevel: 1
 logDir: log
+scratch: "/vol/scratch"
 steps:
   cooccurrence:
      gtdb: test_data/cooccurrence/gtdb.tsv

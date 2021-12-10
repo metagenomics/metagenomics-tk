@@ -3,6 +3,7 @@ summary: false
 output: "output"
 logDir: log
 runid: 1
+scratch: "/vol/scratch"
 input:
   SRA:
     S3:
