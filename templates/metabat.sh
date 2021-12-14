@@ -1,3 +1,5 @@
+shopt -s nullglob
+
 # Run metabat
 runMetaBat.sh !{params.steps.binning.metabat.additionalParams} !{contigs} !{bam}
 
