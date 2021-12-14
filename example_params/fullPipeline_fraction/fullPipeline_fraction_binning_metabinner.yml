@@ -8,6 +8,7 @@ output: "output"
 logDir: log
 runid: 1
 logLevel: 1
+databases: "/mnt/databases/"
 steps:
   qc:
     fastp:

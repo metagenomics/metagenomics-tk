@@ -3,6 +3,7 @@ summary: false
 input: "test_data/fullPipeline/reads_split.tsv"
 output: "output"
 runid: 1
+databases: "/mnt/databases/"
 steps:
   qc:
     interleaved: false

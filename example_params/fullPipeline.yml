@@ -17,6 +17,7 @@ steps:
   assembly:
     megahit:
       additionalParams: " --min-contig-len 200 "
+      fastg: true
   binning:
     bowtie:
       additionalParams: 
@@ -72,6 +73,7 @@ steps:
   plasmid:
     SCAPP:
       additionalParams: "   "
+      fastg: false
     PlasClass:
       threshold: 0.5 
       additionalParams: "   "
@@ -82,7 +84,7 @@ steps:
       sharedKmerThreshold: 30
       additionalParams:
         mashSketch: " -S 42 -k 21 -s 1000 "
-        mashDist: " -v 0.5 -d 0.5 "
+        mashDist: " -v 0.2 -d 0.2 "
   annotation:
      s5cmd:
         params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
@@ -93,8 +95,8 @@ steps:
      kegg:
         database: 's3://bene-test/databases/kegg_2021-01'
      rgi: 
-        source: https://card.mcmaster.ca/latest/data
-        md5sum: 4a91ed328192fa5ec53c6137a77720f2
+        source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/data
+        md5sum: ddc655280ef838923d8d72e42833b33c
      prodigal:
          mode: 'meta'
      keggFromDiamond:
