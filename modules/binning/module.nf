@@ -69,7 +69,7 @@ process pBowtie {
              | samtools sort -l 9 --threads !{task.cpus} - > !{sample}.bam
 
     # If Fragment Recruitment is selected then reads that could not be mapped should be returned
-    if [ "!{getUnmapped}" == "TRUE" ]; then
+    if [[ "!{getUnmapped}" == "TRUE" ]]; then
 	samtools bam2fq -f 4 !{sample}.bam | pigz --best --processes !{task.cpus} > !{sample}_unmapped.fq.gz 
     fi
     '''
