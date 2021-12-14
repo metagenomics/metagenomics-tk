@@ -15,9 +15,18 @@ mash sketch -i !{params.steps.plasmid.PLSDB.additionalParams.mashSketch} -o quer
 
 mash dist ${DATABASE}/out/plsdb.msh query.msh -p !{task.cpus} !{params.steps.plasmid.PLSDB.additionalParams.mashDist} > !{binID}.tsv
 sort -rgk 5,5 !{binID}.tsv | sed 's/\/.*$//g' \
-     | awk -v threshold=!{params.steps.plasmid.PLSDB.sharedKmerThreshold} '($5+0 > threshold) {print $0}' | cut -f 1  > ids.tsv
+     | awk -v threshold=!{params.steps.plasmid.PLSDB.sharedKmerThreshold} '($5+0 > threshold) {print $0}' > matches.tsv
 
 OUTPUT=!{binID}_kmerThreshold_!{params.steps.plasmid.PLSDB.sharedKmerThreshold}.tsv
 
-cat  <(head -n 1 ${DATABASE}/out/plsdb.tsv | sed 's/^/SAMPLE\tBIN_ID\t/g') \
-	<(grep -f ids.tsv ${DATABASE}/out/plsdb.tsv | sed "s/^/!{sample}\t!{binID}\t/g" ) > ${OUTPUT} 
+while IFS=$"\t" read line ; do 
+	hit=$(echo "$line" | cut -f 1); 
+	grep -w $hit ${DATABASE}/out/plsdb.tsv \
+		| sed "s/^/${line}\t/g" \
+		| sed "s/^/!{sample}\t!{binID}\t/g" ; 
+done <matches.tsv  > matches_detailed.tsv 
+
+cat <(head -n 1 ${DATABASE}/out/plsdb.tsv \
+	| sed "s/^/MASH_REFERENCE\tMASH_QUERY\tMASH_DISTANCE\tMASH_P_VALUE\tMASH_MATCHING_HASHES\t/g"  \
+	| sed 's/^/SAMPLE\tBIN_ID\t/g') matches_detailed.tsv > ${OUTPUT}
+
