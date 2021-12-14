@@ -73,7 +73,6 @@ steps:
   plasmid:
     SCAPP:
       additionalParams: "   "
-      fastg: false
     PlasClass:
       threshold: 0.5 
       additionalParams: "   "
