@@ -27,9 +27,9 @@ process pSCAPP {
     tuple val(sample), path(assemblyGraph), val(maxKmer), path(bam)
 
     output:
-    tuple val("${sample}"), path("${sample}_plasmids.fasta.gz"), emit: plasmids
+    tuple val("${sample}"), path("${sample}_plasmids.fasta.gz"), emit: plasmids, optional: true
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-    tuple val("${sample}"), path("${sample}_plasmids_stats.tsv"), emit: plasmidsStats
+    tuple val("${sample}"), path("${sample}_plasmids_stats.tsv"), emit: plasmidsStats, optional: true
 
     shell:
     template("SCAPP.sh")
@@ -40,12 +40,12 @@ process pPlasClass {
 
     label 'medium'
 
-    tag "$binID"
+    tag "$sample $binID"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "PlasClass", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "PlasClass", filename) }, \
+        pattern: "{**.tsv,**.fasta.gz}"
 
-    when:
-    params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("PlasClass")
+    when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("PlasClass")
 
     container "${params.PlasClass_image}"
 
@@ -55,10 +55,11 @@ process pPlasClass {
     output:
     tuple val("${sample}"), val("${binID}"), path("${binID}_plasmids.fasta.gz"), emit: plasmids, optional: true
     tuple val("${sample}"), val("${binID}"), path("${binID}_probs.tsv"), emit: probabilities
-    tuple env("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+    tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput("${sample}", params.runid, "PlasClass", "")
     template("PlasClass.sh")
 }
 
@@ -67,14 +68,14 @@ process pPLSDB {
 
     label 'medium'
 
-    tag "$binID"
+    tag "$sample $binID"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "PLSDB", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "PLSDB", filename) }, \
+            pattern: "{**.tsv}"
 
     containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} "
 
-    when:
-    params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("PLSDB")
+    when params.steps.containsKey("plasmid") && params.steps.plasmid.containsKey("PLSDB")
 
     container "${params.mash_image}"
 
@@ -84,10 +85,11 @@ process pPLSDB {
     output:
     tuple val("${sample}"), val("${binID}"), path("${binID}.tsv"), emit: allHits
     tuple val("${sample}"), val("${binID}"), path("${binID}_kmerThreshold_*.tsv"), emit: filteredHitsMetadata
-    tuple env("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+    tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput("${sample}", params.runid, "PLSDB", "")
     template("plsdb.sh")
 }
 
@@ -112,12 +114,13 @@ workflow _wPlasmids {
        samplesBins | pSCAPP
        samplesContigs | pPlasClass
 
-       pSCAPP.out.plasmids | map { plasmids -> [SAMPLE_IDX, "assembly", BIN_IDX] } \
+       SAMPLE_IDX = 0
+       BIN_IDX = 1
+
+       pSCAPP.out.plasmids | map { plasmids -> [plasmids[SAMPLE_IDX], "assembly", plasmids[BIN_IDX]] } \
 	| set { newPlasmids }
 
        // check if there are known plasmids
-       SAMPLE_IDX = 0
-       BIN_IDX = 1
        pPlasClass.out.plasmids \
 	| mix(newPlasmids) | pPLSDB
 
@@ -126,4 +129,5 @@ workflow _wPlasmids {
      emit:
        probabilities = pPlasClass.out.probabilities
        newPlasmids = newPlasmids
+
 }
