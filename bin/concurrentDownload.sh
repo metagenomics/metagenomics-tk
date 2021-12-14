@@ -6,7 +6,7 @@ while [ $# -gt 0 ]; do
 	    ;;
 	    --expectedMD5SUM=*) EXPECTED_MD5SUM="${1#*=}"
 	    ;;
-	    --s3command=*) S3_COMMAND="${1#*=}"
+	    --s3Command=*) S3_COMMAND="${1#*=}"
 	    ;;
 	    --httpsCommand=*) HTTPS_COMMAND="${1#*=}"
 	    ;;
