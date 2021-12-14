@@ -11,7 +11,8 @@ transform.sh ${MEGAHIT_OUTPUT_DIR}/final.contigs.fa ${ASSEMBLY_OUTPUT} !{sample}
 paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") <(seqkit stat -Ta ${ASSEMBLY_OUTPUT}) > !{sample}_contigs_stats.tsv
 
 # transform assembly to assembly graph
-if [ "!{convertToFastg}" == "TRUE" ]; then
+maxKmer="default"
+if [[ "!{convertToFastg}" == "TRUE" ]]; then
 	# Maximum chosen Kmer
 	maxKmer=$(cat ${MEGAHIT_OUTPUT_DIR}/options.json  | jq  '.k_max')
 
