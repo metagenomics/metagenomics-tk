@@ -14,7 +14,7 @@ All module configurations are the same as the full pipeline run with the sole di
 
 where
  *  /shared/directory/test is a directory that is shared between multiple machines.
- * PROFILE can be either `local` or `slurm` depending on which environment the pipeline should be executed.
+ * PROFILE can be either `standard` (local use) or `slurm` depending on which environment the pipeline should be executed.
 
 **Note!** Metabolomics part is currently excluded from full pipeline run.
 
@@ -110,7 +110,9 @@ You can set values of these columns to zero if data is not available or if you d
 #### Output
 
 The output tsv file (`final_clusters.tsv`) contains the columns `CLUSTER`, `GENOME` and `REPRESENTATIVE` where `CLUSTER` identifies a group of genomes, `GENOME` represents the path or
-link of a genome and `REPRESENTATIVE` is either 0 or 1 (selected as representative). 
+link of a genome and `REPRESENTATIVE` is either 0 or 1 (selected as representative).
+If `sans` is specified in the configuration file (see examples folder), then [SANS](https://gitlab.ub.uni-bielefeld.de/gi/sans) is used to dereplicate every cluster reported by the previous step further down 
+to generate strain specific clusters. 
 
 ### Read Mapping
 

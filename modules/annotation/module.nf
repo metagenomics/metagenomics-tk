@@ -1,4 +1,5 @@
 nextflow.enable.dsl=2
+
 include { pDumpLogs } from '../utils/processes'
 
 mode = 'mode_not_set'
@@ -28,6 +29,8 @@ def set_mode(pathString){
     }
 }
 
+
+>>>>>>> master
 /**
 *
 * Diamond is used to search for big input queries in large databases.
@@ -227,7 +230,6 @@ process pKEGGFromDiamond {
       // the permissions are set to root. This leads to crashes later on.
       // beforeScript is one way to create a directory outside of Docker to tackle this problem.
       beforeScript "mkdir -p ${params.databases}"
-
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("keggFromDiamond")
 
    input:
@@ -283,6 +285,7 @@ workflow wAnnotateFile {
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }
 
+
 def flattenBins(binning){
   def chunkList = [];
   def SAMPLE_IDX = 0;
@@ -294,6 +297,12 @@ def flattenBins(binning){
 }
 
 
+/**
+*
+* See wAnnotateFile for a description.
+* This entry point concatenates all files of a sample and annotates these. 
+*
+**/
 workflow wAnnotateList {
    take:
       prodigalMode
@@ -302,7 +311,6 @@ workflow wAnnotateList {
       annotationTmpDir = params.tempdir + "/annotation"
       file(annotationTmpDir).mkdirs()
       set_mode(params.steps?.annotation?.diamond?.database)
-
       _wAnnotation(prodigalMode, fasta)
     emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation

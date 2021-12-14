@@ -2,7 +2,7 @@ CURRENT_DIR = $(shell pwd)
 
 
 ifndef PROFILE
-	override PROFILE = "local,conda"
+	override PROFILE = "standard,conda"
 endif
 
 ifndef DEST

@@ -18,6 +18,7 @@ include { wCooccurrenceList; wCooccurrenceFile } from './modules/cooccurrence/mo
 include { wPlasmidsList; } from './modules/plasmids/module'
 include { wInputFile } from './modules/input/module'
 
+
 def mapJoin(channel_a, channel_b, key_a, key_b){
     channel_a \
         | map{ it -> [it[key_a], it] } \
@@ -244,7 +245,6 @@ workflow wPipeline {
     wAnnotateUnbinnedList(Channel.value("meta"), notBinnedContigs)
 
     wMagAttributesList(wBinning.out.bins)
-
     mapJoin(wMagAttributesList.out.checkm, wBinning.out.binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
 
     _wAggregate(wQualityControlList.out.readsPair, wQualityControlList.out.readsSingle, binsStats, wMagAttributesList.out.gtdb )
