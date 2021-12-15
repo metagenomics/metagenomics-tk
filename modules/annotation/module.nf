@@ -30,7 +30,6 @@ def set_mode(pathString){
 }
 
 
->>>>>>> master
 /**
 *
 * Diamond is used to search for big input queries in large databases.
@@ -108,7 +107,7 @@ process pResistanceGeneIdentifier {
       label 'large'
 
       publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "rgi", filename) }, \
-         pattern: "{**.rgi.txt}"
+         pattern: "{**.rgi.tsv}"
 
       
       beforeScript "mkdir -p ${params.databases}"
@@ -119,7 +118,7 @@ process pResistanceGeneIdentifier {
       tuple val(sample), val(binID), file(fasta)
    
    output:
-      tuple val("${sample}"), val("${binID}"), path("${binID}.rgi.txt"), emit: results
+      tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}.rgi.tsv"), emit: results
       tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -130,7 +129,9 @@ process pResistanceGeneIdentifier {
       LOCK_FILE=${DATABASE}/checksum.txt
       DOWNLOAD_LINK=!{params.steps.annotation.rgi.source}
       MD5SUM=!{params.steps.annotation.rgi.md5sum}
+      ADDITIONAL_RGI_PARAMS=!{params.steps.annotation.rgi.additionalParams}
 
+      # Download CARD database
       mkdir -p ${DATABASE}
       flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
          --link=$DOWNLOAD_LINK \
@@ -139,11 +140,18 @@ process pResistanceGeneIdentifier {
          --localCommand="tar -xvf ${DOWNLOAD_LINK} ./card.json" \
          --expectedMD5SUM=${MD5SUM}
 
-       sed 's/*//g' !{fasta} > input.faa
-       rgi load --card_json ${DATABASE}/out/card.json --local
-       rgi main --input_sequence input.faa \
-                  --output_file !{binID}.rgi --input_type protein --local \
-                  --alignment_tool DIAMOND --num_threads !{task.cpus} --clean
+      # strip '*' sign from amino acid files
+      sed 's/*//g' !{fasta} > input.faa
+
+      RGI_OUTPUT=!{binID}.rgi
+      # load CARD database and run rgi
+      rgi load --card_json ${DATABASE}/out/card.json --local
+      rgi main --input_sequence input.faa \
+                  --output_file ${RGI_OUTPUT} --input_type protein --local \
+                  --alignment_tool DIAMOND --num_threads !{task.cpus} --clean ${ADDITIONAL_RGI_PARAMS}
+
+      #  add sample and binid information to rgi output
+      sed  '1 s/^/SAMPLE\tBIN_ID\t/g' ${RGI_OUTPUT}.txt | sed "2,$ s/^/!{sample}\t!{binID}\t/g" > !{sample}_!{binID}.rgi.tsv
        '''
 }
 
@@ -260,9 +268,8 @@ process pKEGGFromDiamond {
 /**
 *
 * This entry point uses a file to grab all fasta files in the referenced directories for annotation.
-* These fastas will be combined to one file to start the main annotation workflow.
 * You need to call (and fill out) the aws credential file with -c to use this module!
-* The .tsv file has to have: DATASET PATH entries.
+* The .tsv file has to have: DATASET, BIN_ID and PATH entries.
 * 
 * The "database_mode" is used to choose which database path is expected.
 * If the Diamond-databasepath starts with "https://" or "s3://" the object storage based mode is used.
@@ -278,9 +285,8 @@ workflow wAnnotateFile {
       file(annotationTmpDir).mkdirs()
       set_mode(params.steps.annotation.diamond.database)
       projectTableFile | splitCsv(sep: '\t', header: true) \
-      | map{ [it.DATASET, file(it.PATH)] } \
-      | collectFile(tempDir: params.tempdir + "/annotation") | map{ [it.name, it]} | set { input } 
-      | _wAnnotation(Channel.value("param"), input)
+      | map{ [it.DATASET, it.BIN_ID, file(it.PATH)] } | set { input } 
+      _wAnnotation(Channel.value("param"), input)
    emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }
@@ -300,7 +306,6 @@ def flattenBins(binning){
 /**
 *
 * See wAnnotateFile for a description.
-* This entry point concatenates all files of a sample and annotates these. 
 *
 **/
 workflow wAnnotateList {
@@ -340,7 +345,6 @@ workflow _wAnnotation {
       pProdigal.out.logs | mix(pDiamond.out.logs) \
 	| mix(pResistanceGeneIdentifier.out.logs) \
 	| mix(pKEGGFromDiamond.out.logs) | pDumpLogs
-
    emit:
       keggAnnotation   
 }

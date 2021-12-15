@@ -32,7 +32,7 @@ process pSCAPP {
     tuple val("${sample}"), path("${sample}_plasmids_stats.tsv"), emit: plasmidsStats, optional: true
 
     shell:
-    template("SCAPP.sh")
+    template("scapp.sh")
 }
 
 
@@ -53,14 +53,14 @@ process pPlasClass {
     tuple val(sample), val(binID), path(assembly)
 
     output:
-    tuple val("${sample}"), val("${binID}"), path("${binID}_plasmids.fasta.gz"), emit: plasmids, optional: true
-    tuple val("${sample}"), val("${binID}"), path("${binID}_probs.tsv"), emit: probabilities
+    tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}_plasmids.fasta.gz"), emit: plasmids, optional: true
+    tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}_probs.tsv"), emit: probabilities
     tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
     output = getOutput("${sample}", params.runid, "PlasClass", "")
-    template("PlasClass.sh")
+    template("plasClass.sh")
 }
 
 
@@ -83,8 +83,8 @@ process pPLSDB {
     tuple val(sample), val(binID), path(plasmids)
 
     output:
-    tuple val("${sample}"), val("${binID}"), path("${binID}.tsv"), emit: allHits
-    tuple val("${sample}"), val("${binID}"), path("${binID}_kmerThreshold_*.tsv"), emit: filteredHitsMetadata
+    tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}.tsv"), emit: allHits
+    tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}_kmerThreshold_*.tsv"), emit: filteredHitsMetadata
     tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -94,12 +94,21 @@ process pPLSDB {
 }
 
 
+workflow wPlasmidsPath {
+         Channel.from(file(params.steps.plasmid.input)) \
+		| splitCsv(sep: '\t', header: true) \
+		| map {it -> [ it.DATASET, it.BIN_ID, it.PATH ]} | set {samplesContigs}
+
+         _wPlasmids(samplesContigs, Channel.empty())
+}
+
+
 workflow wPlasmidsList {
      take:
        samplesContigs
-       samplesBins
+       samplesReads
      main:
-       _wPlasmids(samplesContigs, samplesBins)
+       _wPlasmids(samplesContigs, samplesReads)
     emit:
       newPlasmids = _wPlasmids.out.newPlasmids
 }
@@ -108,16 +117,17 @@ workflow wPlasmidsList {
 workflow _wPlasmids {
      take:
        samplesContigs
-       samplesBins
+       samplesReads
      main:
        // search for new pladmids
-       samplesBins | pSCAPP
+       samplesReads | pSCAPP
        samplesContigs | pPlasClass
 
        SAMPLE_IDX = 0
        BIN_IDX = 1
 
-       pSCAPP.out.plasmids | map { plasmids -> [plasmids[SAMPLE_IDX], "assembly", plasmids[BIN_IDX]] } \
+       pSCAPP.out.plasmids \
+	| map { plasmids -> [plasmids[SAMPLE_IDX], "assembly", plasmids[BIN_IDX]] } \
 	| set { newPlasmids }
 
        // check if there are known plasmids
@@ -129,5 +139,4 @@ workflow _wPlasmids {
      emit:
        probabilities = pPlasClass.out.probabilities
        newPlasmids = newPlasmids
-
 }

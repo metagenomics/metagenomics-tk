@@ -163,6 +163,39 @@ In addition, this module produces a file `SAMPLE_gtdbtk_CHUNK.tsv` that combines
 
 The Checkm output adheres to the magAttributes specification and adds a `BIN_ID` and `SAMPLE` column to the output file.
 
+### Plasmids
+
+The plasmid module is able to identify contigs as plasmids and it is able to assemble plasmids from the samples fastq data.
+For running the plasmid assembly we suggest to run the full pipeline mode with the enabled [plasmid module](example_params/fullPipeline_fraction/fullPipeline_fraction_plasmid.yml).
+
+```
+-entry wPlasmidsPath -params-file example_params/plasmids.yml
+```
+
+#### Input
+
+* [params-file](example_params/plasmid.yml)
+
+* [Tsv Table](test_data/plasmid/input_contigs.tsv)
+
+#### Output
+
+##### SCAPP
+
+SCAPP detects plasmid sequences out of the samples assembly graph.
+It reports sequences as gzipped fasta files (`*_plasmids.fasta.gz`). A basic statistic (`*_plasmids_stats.tsv`)
+is also generated.
+
+##### PlasClass
+
+PlasClass is able to identify contigs as plasmids. It reports gzipped fata files (`*_plasmids.fasta.gz`)
+and their probabilities (`*_probs.tsv`).
+
+##### PLSDB
+
+PLSDB includes a curated set of plasmid sequences that were extracted from databases like refseq.
+The metadata of found sequences are reported in `*.tsv` and the metadata of the filtered sequences in `*_kmerThreshold_X.tsv`.
+
 ### Annotation
 
 ```
@@ -189,6 +222,9 @@ Predicted genes in the `*.faa` `*.fna` and `*.gff` file format.
 
 Result `*.tsv` file filled with KEGG informations (linke modules, KO's, ...) which could be linked to the input Diamond hits.
   
+##### Resistance Gene Identifier (rgi)
+
+The `*rgi.tsv` files contain the found CARD genes.
 
 ## Error Strategy
 

@@ -15,7 +15,7 @@ include { wAnnotateFile; wAnnotateList as wAnnotateBinsList; \
 	  wAnnotateList as wAnnotateUnbinnedList; wAnnotateList as wAnnotatePlasmidList } from './modules/annotation/module'
 
 include { wCooccurrenceList; wCooccurrenceFile } from './modules/cooccurrence/module'
-include { wPlasmidsList; } from './modules/plasmids/module'
+include { wPlasmidsList; wPlasmidsPath; } from './modules/plasmids/module'
 include { wInputFile } from './modules/input/module'
 
 
@@ -52,6 +52,10 @@ workflow wSRATable {
 
 workflow wDereplicationPath {
    wDereplicatePath()
+}
+
+workflow wPlasmids {
+   wPlasmidsPath()
 }
 
 workflow wCMSeqWorfklowFile {

@@ -1,0 +1,42 @@
+tempdir: "tmp"
+summary: false
+input:
+  paired:
+    path: "test_data/fullPipeline/reads_split.tsv"
+    watch: false
+output: "output"
+runid: 1
+databases: "/mnt/databases/"
+logDir: log
+steps:
+  qc:
+    interleaved: false
+    fastp:
+       # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
+       additionalParams: "  "
+  assembly:
+    megahit:
+      fastg: false
+      additionalParams: " --min-contig-len 200 "
+  binning:
+    bowtie:
+      additionalParams: 
+        bowtie: " --quiet --very-sensitive "
+        samtoolsView: " -F 3584 " 
+    metabat:
+      additionalParams: "   "
+  plasmid:
+    SCAPP:
+      additionalParams: "   "
+    PlasClass:
+      threshold: 0.5 
+      additionalParams: "   "
+    PLSDB:
+      database: 
+        source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip
+        md5sum: caa846fbb689deba0e35ef559793b521
+      sharedKmerThreshold: 30
+      additionalParams:
+        mashSketch: " -S 42 -k 21 -s 1000 "
+        mashDist: " -v 0.2 -d 0.2 "
+

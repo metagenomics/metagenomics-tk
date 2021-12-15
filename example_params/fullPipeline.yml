@@ -96,6 +96,7 @@ steps:
      rgi: 
         source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/data
         md5sum: ddc655280ef838923d8d72e42833b33c
+        additionalParams: ""
      prodigal:
          mode: 'meta'
      keggFromDiamond:
