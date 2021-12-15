@@ -9,6 +9,7 @@ logDir: log
 runid: 1
 databases: "/mnt/databases/"
 logLevel: 1
+scratch: "/vol/scratch"
 steps:
   qc:
     fastp:

@@ -3,6 +3,7 @@ summary: false
 runid: 1
 logLevel: 1
 logDir: log
+scratch: "/vol/scratch"
 steps:
   dereplication:
     pasolli:
