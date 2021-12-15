@@ -255,11 +255,11 @@ process pKEGGFromDiamond {
          # Download the database if there is a more recent one online, or if the size differs.
          # The destination folder should be outside of the working directory to share the database with future processes.
          s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.kegg.database}/* !{params.databases}kegg
-         diamond2kegg.py !{diamond_result} !{params.databases}kegg !{binID}_kegg.tsv 
+         diamond2kegg.py !{diamond_result} !{params.databases}kegg !{sample}_!{binID}_kegg.tsv 
          '''
       else if(mode == 'local')
          '''
-         diamond2kegg.py !{diamond_result} !{params.steps.annotation.kegg.database} !{binID}_kegg.tsv
+         diamond2kegg.py !{diamond_result} !{params.steps.annotation.kegg.database} !{sample}_!{binID}_kegg.tsv
          '''
       else 
          error "Invalid annotation database mode: ${mode}"
