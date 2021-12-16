@@ -29,8 +29,7 @@ jobs:
 
       - name: Test Full Pipeline run that ends with plasmids
         run: |
-          bash ./scripts/test_fullPipeline.sh \
-          "  --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " \
+          bash ./scripts/test_fullPipeline.sh "" \
           example_params/fullPipeline_fraction/fullPipeline_fraction_plasmid.yml "/mnt/work/work/${{ github.head_ref }}" || exit 1
 
 
