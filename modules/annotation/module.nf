@@ -244,7 +244,7 @@ process pKEGGFromDiamond {
       tuple val(sample), val(binID), file(diamond_result)
 
    output:
-      tuple val("${sample}"), path("${binID}_kegg.tsv"), emit: kegg_diamond
+      tuple val("${sample}"), path("${sample}_${binID}_kegg.tsv"), emit: kegg_diamond
       tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
