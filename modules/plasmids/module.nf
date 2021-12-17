@@ -70,6 +70,8 @@ process pPLSDB {
 
     tag "$sample $binID"
 
+    beforeScript "mkdir -p ${params.databases}"
+
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "PLSDB", filename) }, \
             pattern: "{**.tsv}"
 

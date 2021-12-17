@@ -3,7 +3,7 @@ summary: false
 output: "output"
 logDir: log
 runid: 1
-databases: "/vol/spool/peter/plasmids/meta-omics-toolkit/databases"
+databases: "/mnt/databases/"
 logLevel: 1
 steps:
   plasmid:
