@@ -65,7 +65,6 @@ workflow _wSplitReads {
 }
 
 
-
 workflow _wSRAS3 {
        main:
          MAX_LENGTH=12
@@ -94,7 +93,7 @@ workflow _wSRAS3 {
 	        } | set { filteredIDs }
 
          filteredIDs.passed | getSRAPath 
- 
+
          getSRAPath.out.passed | map { it -> [ it[SAMPLE_IDX], file(BUCKET + it[FASTQ_FILES_IDX]).listFiles()]} \
                 | map { it -> [ it[SAMPLE_IDX],  it[FASTQ_FILES_IDX].collect({ "s3:/$it" }) ] }
                 | _wCheckSRAFiles
@@ -139,11 +138,10 @@ workflow _wCheckSRAFiles {
      FASTQ_RIGHT_IDX=2
      FASTQ_FILES_IDX = 1
 
-     // Ensure that at least two fastq files are in the folder
-     samples | filter({sample -> sample[FASTQ_FILES_IDX].size() >= 2 }) \
+     //samples | filter({sample -> sample[FASTQ_FILES_IDX].size() >= 2 }) 
          // Ensure that paired end files are included
-	 | branch {
-            passed: it[FASTQ_FILES_IDX].stream().allMatch { sraFile -> sraFile ==~ /.+(_1|_2).+$/ }
+     samples | branch {
+            passed: it[FASTQ_FILES_IDX].size() >= 2 && it[FASTQ_FILES_IDX].stream().allMatch { sraFile -> sraFile ==~ /.+(_1|_2).+$/ }
                     return it
             other: true
                     return it
