@@ -1,6 +1,9 @@
 output: "output"
 summary: false
 runid: 1
+logLevel: 1
+logDir: log
+scratch: "/vol/scratch"
 steps:
   dereplication:
     pasolli:
@@ -17,6 +20,8 @@ steps:
         cluster: " -c 0.05 "
         pyani: " -m ANIb "
         representativeAniCutoff: 0.95
+    sans:
+      additionalParams: " -k 15 -f strict -w 25  -t 400 " 
 resources:
   large:
     cpus: 28

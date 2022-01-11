@@ -4,7 +4,6 @@
 
 All module configurations are the same as the full pipeline run with the sole difference that entry and param-file parameters are different.
 
-
 *Note!* Please do never place sensitive information in any params file since the content is upload as part of the pipeline run.
 
 ### Run Full Pipeline
@@ -15,7 +14,7 @@ All module configurations are the same as the full pipeline run with the sole di
 
 where
  *  /shared/directory/test is a directory that is shared between multiple machines.
- * PROFILE can be either `local` or `slurm` depending on which environment the pipeline should be executed.
+ * PROFILE can be either `standard` (local use) or `slurm` depending on which environment the pipeline should be executed.
 
 **Note!** Metabolomics part is currently excluded from full pipeline run.
 
@@ -111,7 +110,9 @@ You can set values of these columns to zero if data is not available or if you d
 #### Output
 
 The output tsv file (`final_clusters.tsv`) contains the columns `CLUSTER`, `GENOME` and `REPRESENTATIVE` where `CLUSTER` identifies a group of genomes, `GENOME` represents the path or
-link of a genome and `REPRESENTATIVE` is either 0 or 1 (selected as representative). 
+link of a genome and `REPRESENTATIVE` is either 0 or 1 (selected as representative).
+If `sans` is specified in the configuration file (see examples folder), then [SANS](https://gitlab.ub.uni-bielefeld.de/gi/sans) is used to dereplicate every cluster reported by the previous step further down 
+to generate strain specific clusters. 
 
 ### Read Mapping
 
@@ -160,7 +161,34 @@ In addition, this module produces a file `SAMPLE_gtdbtk_CHUNK.tsv` that combines
 
 ##### Checkm
 
-The Checkm output adheres to the magAttributes specification and adds a `BIN_ID` and `SAMPLE` column to the output file. 
+The Checkm output adheres to the magAttributes specification and adds a `BIN_ID` and `SAMPLE` column to the output file.
+
+### Annotation
+
+```
+-entry wAnnotateLocal -params-file example_params/annotation.yml
+```
+
+#### Input  
+
+* [params-file](example_params/annotation.yml)
+
+* [Tsv Table](test_data/annotation/input_small.tsv)
+
+#### Output
+
+##### Diamond
+
+Calculated significant matches of a nucleotide/protein query which was compared against a database.
+
+##### Prodigal
+
+Predicted genes in the `*.faa` `*.fna` and `*.gff` file format.
+
+##### KEGGFromDiamond
+
+Result `*.tsv` file filled with KEGG informations (linke modules, KO's, ...) which could be linked to the input Diamond hits.
+  
 
 ## Error Strategy
 
@@ -175,8 +203,8 @@ You will have to create a configuration file that can be provided to nextflow wi
 
 ```
 aws {
-  accessKey = xxx
-  secretKey = xxx
+  accessKey = 'xxx'
+  secretKey = 'xxx'
 
     client {
       s_3_path_style_access = true
@@ -191,6 +219,16 @@ aws {
 ```
 
 If you want to upload tool results to s3, just update the output parameter in the configuration file from `/path/to/output` to `s3://bucket/path/to/output`
+
+If you want to use the annotation module, you also have to provide your credentials in an aws credential style.
+Create a file that looks like this and fill in your credentials:
+
+```
+[default]
+aws_access_key_id=ABCDEKEY
+aws_secret_access_key=ABCDEKEY
+```
+You have to reference this file in the annotation parameter yml's s5cmd keyfiles section.  
 
 ## Other 
 

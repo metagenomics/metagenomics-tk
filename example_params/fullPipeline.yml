@@ -1,11 +1,17 @@
 tempdir: "tmp"
 summary: false
-input: "test_data/fullPipeline/reads_split.tsv"
+input:
+  paired:
+    path: "test_data/fullPipeline/reads_split.tsv"
+    watch: false
 output: "output"
+logDir: log
 runid: 1
+databases: "/mnt/databases/"
+logLevel: 1
+scratch: "/vol/scratch"
 steps:
   qc:
-    interleaved: false
     fastp:
        # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
        additionalParams: "  "
@@ -64,6 +70,18 @@ steps:
         coverm: " --min-covered-fraction 0 "
   cooccurrence:
     additionalParams: " -t 0.1 -z 80 -o 'correlation' "
+  annotation:
+     s5cmd:
+        params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
+        keyfile: 'xxx'
+     diamond:
+        database: '/mnt/databases/kegg-2021-01.dmnd'
+        params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
+     kegg:
+        database: '/mnt/databases/kegg_2021-01/'
+     prodigal:
+         mode: 'meta'
+     keggFromDiamond:
 resources:
   large:
     cpus: 28

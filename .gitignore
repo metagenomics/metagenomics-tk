@@ -1,4 +1,5 @@
 *.log*
+log
 work
 .nextflow
 nextflow
@@ -17,3 +18,5 @@ test/reads
 aws*
 output
 .chglog/
+.idea
+*.iml

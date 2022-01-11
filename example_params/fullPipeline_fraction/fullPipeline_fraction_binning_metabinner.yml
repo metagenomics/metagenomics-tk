@@ -1,11 +1,16 @@
 tempdir: "tmp"
 summary: false
-input: "test_data/fullPipeline/reads_split.tsv"
+input:
+  paired:
+    path: "test_data/fullPipeline/reads_split.tsv"
+    watch: false
 output: "output"
+logDir: log
 runid: 1
+logLevel: 1
+scratch: "/vol/scratch"
 steps:
   qc:
-    interleaved: false
     fastp:
        # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
        additionalParams: "  "
@@ -21,6 +26,9 @@ steps:
     metabinner:
       minContigLength: 500
       kmerSize: 4
+  annotation:
+    diamond:
+      database: '/mnt/databases/kegg-2021-01.dmnd'
 resources:
   large:
     cpus: 28

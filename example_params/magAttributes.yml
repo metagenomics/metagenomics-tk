@@ -1,7 +1,10 @@
 tempdir: "tmp"
 summary: true
 output: "output"
+logDir: log
 runid: 1
+logLevel: 1
+scratch: "/vol/scratch"
 steps:
   magAttributes:
     input: "test_data/magAttributes/input.tsv"

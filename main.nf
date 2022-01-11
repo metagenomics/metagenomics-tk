@@ -1,7 +1,7 @@
 nextflow.enable.dsl=2
 
-include { wSaveSettingsFile } from './modules/config/module'
-include { wQualityControlFile } from './modules/qualityControl/module'
+include { wSaveSettingsList } from './modules/config/module'
+include { wQualityControlFile; wQualityControlList} from './modules/qualityControl/module'
 include { wAssemblyFile; wAssemblyList } from './modules/assembly/module'
 include { wBinning } from './modules/binning/module.nf'
 include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
@@ -10,7 +10,10 @@ include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/
 include { wAnalyseMetabolites } from './modules/metabolomics/module'
 include { wUnmappedReadsList; wUnmappedReadsFile } from './modules/sampleAnalysis/module'
 include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './modules/fragmentRecruitment/frhit/module'
+include { wAnnotateFile; wAnnotateSample } from './modules/annotation/module'
 include { wCooccurrenceList; wCooccurrenceFile } from './modules/cooccurrence/module'
+include { wInputFile } from './modules/input/module'
+
 
 def mapJoin(channel_a, channel_b, key_a, key_b){
     channel_a \
@@ -29,6 +32,18 @@ workflow wAssembly {
 
 workflow wReadMapping {
    wFileReadMappingBwa()
+}
+
+workflow wSRATable {
+   SAMPLE_IDX = 0
+   FASTQ_FILE_LEFT_IDX = 1 
+   FASTQ_FILE_RIGHT_IDX = 2 
+   wInputFile() \
+	| map { sample ->  [ sample.SAMPLE, sample.READS1, sample.READS2 ] } \
+	| collectFile(newLine: true, seed: "SAMPLE\tREADS1\tREADS2"){ it -> [ "samples", it[SAMPLE_IDX] \
+	+ "\t" + it[FASTQ_FILE_LEFT_IDX].toString() \
+	+ "\t" + it[FASTQ_FILE_RIGHT_IDX].toString()] } \
+	| view({ it -> it.text })
 }
 
 workflow wDereplicationPath {
@@ -52,6 +67,10 @@ workflow wFragmentRecruitment {
    wFragmentRecruitmentFile(Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.samples), Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
 }
 
+workflow wAnnotate {
+   wAnnotateFile(Channel.from(file(params?.steps?.annotation?.input)))
+}
+
 workflow wCooccurrence {
    wCooccurrenceFile()
 }
@@ -73,6 +92,7 @@ def collectFiles(dir, sra){
 workflow wAggregatePipeline {
     def baseDir = params.baseDir
     def runID = params.runid
+
 
     // List all available SRAIDs
     Channel.from(file(baseDir).list()) | filter({ path -> !(path ==~ /.*summary$/)}) \
@@ -157,12 +177,14 @@ workflow _wAggregate {
 * Left and right read could be https, s3 links or file path. 
 */
 workflow wPipeline {
-   
-    wSaveSettingsFile(Channel.fromPath(params.input))
 
-    wQualityControlFile(Channel.fromPath(params.input))
+    inputSamples = wInputFile()
 
-    wQualityControlFile.out.readsPair | join(wQualityControlFile.out.readsSingle) | set { qcReads }
+    wSaveSettingsList(inputSamples | map { it -> it.SAMPLE })
+
+    wQualityControlList(inputSamples | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} )
+
+    wQualityControlList.out.readsPair | join(wQualityControlList.out.readsSingle) | set { qcReads }
 
     wAssemblyList(qcReads)
 
@@ -172,8 +194,8 @@ workflow wPipeline {
        wFragmentRecruitmentList(wBinning.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
     }
 
+    wAnnotateSample(wBinning.out.bins)
     wMagAttributesList(wBinning.out.bins)
-
     mapJoin(wMagAttributesList.out.checkm, wBinning.out.binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
-    _wAggregate(wQualityControlFile.out.readsPair, wQualityControlFile.out.readsSingle, binsStats,wMagAttributesList.out.gtdb )
+    _wAggregate(wQualityControlList.out.readsPair, wQualityControlList.out.readsSingle, binsStats,wMagAttributesList.out.gtdb )
 }

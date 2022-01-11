@@ -1,10 +1,8 @@
-tempdir: "tmp"
-summary: false
 output: "output"
-baseDir: "s3://meta_out/0/2/0"
-logDir: log
+summary: false
 runid: 1
 logLevel: 1
+logDir: log
 scratch: "/vol/scratch"
 steps:
   dereplication:
@@ -22,16 +20,10 @@ steps:
         cluster: " -c 0.05 "
         pyani: " -m ANIb "
         representativeAniCutoff: 0.95
-  readMapping:
-    bwa:
-      additionalParams:
-        bwa_index: ""
-        bwa_mem: ""
-        coverm: " --min-covered-fraction 0 "
 resources:
   large:
     cpus: 28
-    memory: 250
+    memory: 256
   medium:
     cpus: 14
     memory: 128

@@ -1,0 +1,12 @@
+tempdir: "tmp"
+summary: false
+output: "output"
+logDir: log
+runid: 1
+scratch: "/vol/scratch"
+input:
+  SRA:
+    NCBI:
+      path: test_data/SRA/ncbi_samples.tsv 
+steps:
+logDir: log

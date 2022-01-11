@@ -1,11 +1,16 @@
 tempdir: "tmp"
-input: "test_data/fullPipeline/reads_split.tsv"
-summary: true
+input:
+  paired: 
+    path: "test_data/fullPipeline/reads_split.tsv"
+    watch: false
+summary: false
 output: "output"
+logDir: log
 runid: 1
+logLevel: 1
+scratch: "/vol/scratch"
 steps:
   qc:
-    interleaved: false
     fastp:
        # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
        additionalParams: "  "
@@ -35,6 +40,9 @@ steps:
     prokka:
       defaultKingdom: 'Bacteria'
       additionalParams: " --mincontiglen 200 "
+  annotation:
+    diamond:
+      database: '/mnt/databases/kegg-2021-01.dmnd'
 resources:
   large:
     cpus: 28

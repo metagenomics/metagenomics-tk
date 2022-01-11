@@ -2,6 +2,9 @@ tempdir: "tmp"
 summary: false
 output: "/vol/spool/meta/out_pipeline"
 runid: 1
+logLevel: 1
+logDir: log
+scratch: "/vol/scratch"
 steps:
   sampleAnalysis:
     reads: "/vol/spool/meta/test/sampleAnalysis/samples.tsv"

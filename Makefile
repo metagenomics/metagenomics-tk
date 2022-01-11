@@ -2,7 +2,7 @@ CURRENT_DIR = $(shell pwd)
 
 
 ifndef PROFILE
-	override PROFILE = "local,conda"
+	override PROFILE = "standard,conda"
 endif
 
 ifndef DEST
@@ -90,7 +90,7 @@ ${DEST}/test/bins/small/: ## Downloads bins and creates a tsv file with bin prop
 
 
 run_small_full_test: ${DEST}/test/reads/small nextflow ${DEST}/test/bins/small/ ${DEST}/test/reads/small/interleaved.fq.gz ## Prepares input files like downloading bins and reads and executes Nextflow. The default configuration it runs the full pipeline locally.
-	./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR}_${ENTRY} -profile ${PROFILE} -resume -entry ${ENTRY} -params-file ${PARAMS_FILE} 
+	./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR}_${ENTRY} -profile ${PROFILE} -resume -entry ${ENTRY} -params-file ${PARAMS_FILE}; exit $$?
 
 
 help: ## Lists available Makefile commands
