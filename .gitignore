@@ -20,3 +20,5 @@ output
 .chglog/
 .idea
 *.iml
+databases
+credentials

@@ -87,6 +87,10 @@ tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".comman
 
 Examples can be viewed in the Checkm and Prokka process.
 
+## Logs
+
+Log files should be stored in the user provided `logDir` directory.
+
 ### Log Level
 
 Every configuration file must have a `logLevel` attribute that can have the following values:
@@ -104,8 +108,8 @@ These values can be used in the publish dir directive to enable or disable the o
         pattern: "{**.out,**.err, **.sh, **.log}", enabled: params.logLevel <= params.LOG_LEVELS.ALL
 ```
 
-Furthermore the params.LOG_LEVELS.* parameters can be used inside of a process to enable or disable intermediate results for debugging purposes.
-In case the log is the send to the pDumpLogs process (see Process section), you can specify the log level as part of the tuple:
+Furthermore the `params.LOG_LEVELS.*` parameters can be used inside of a process to enable or disable intermediate results for debugging purposes.
+In cases where the log is send to the pDumpLogs process (see Process section), you can specify the log level as part of the tuple:
 
 ```
 tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
@@ -181,9 +185,44 @@ pProcess {
 
 ```
 
-## Logs
+### Internal Configuration
 
-Log files should be stored in the user provided `logDir` directory.
+The `_wConfigurePipeline` workflow in the main.nf file should be used for setting 
+pipeline parameters that are need for fullfilling the user provided configuration.
+
+Example:
+Lets assume the user enables the plasmid module. In that case it is mandatory that 
+the assembler produces a fastg file independend of the user provided settings of the assembler.
+In that case the fastg parameter of any assembler will be set to `true` by the `_wConfigurePipeline` method.
+
+## Tools
+
+### concurrentDownload.sh
+
+This script allows to synchronize the download of a database between multiple jobs and should be executed the following way.
+
+```
+flock LOCK_FILE concurrentDownload.sh --output=DATABASE \
+           --httpsCommand=COMMAND \
+           --localCommand=COMMAND \
+           --s3Command=COMMAND \
+           --link=LINK \
+           --expectedMD5SUM=USER_VERIFIED_DATABASE_MD5SUM
+```
+
+Before a database is downloaded, the script checks either the MD5SUM or the database version against a user specified parameter.
+
+where
+  * `LOCK_FILE` is a file that is used for locking. Processes will check if the file is currently locked before trying to download anything.
+    This file should ideally placed in the `params.database` directory of the specific tool (e.g. !{params.databases}/rgi).
+  
+  * `DATABASE` is the directory that is used for placing the specific database.
+
+  * `COMMAND` is the command used to download and extract the database. (e.g. "wget -O data $DOWNLOAD_LINK && tar -xvf data ./card.json && rm data" for the `--httpsCommand` flag)
+
+  * `USER_VERIFIED_DATABASE_MD5SUM` is the MD5SUM of the *extracted* database that the user should test manually before executing the pipeline.
+
+  * `LINK` is the link that will be used to test if the file is accessible by S3, HTTPS or is available via a local path.
 
 ## Other
 

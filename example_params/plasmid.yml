@@ -1,0 +1,36 @@
+tempdir: "tmp"
+summary: false
+output: "output"
+logDir: log
+runid: 1
+databases: "/mnt/databases/"
+logLevel: 1
+steps:
+  plasmid:
+    input: "test_data/plasmid/input_contigs.tsv"
+    SCAPP:
+      additionalParams: "   "
+    PlasClass:
+      threshold: 0.5 
+      additionalParams: "   "
+    PLSDB:
+      database: 
+        source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip
+        md5sum: caa846fbb689deba0e35ef559793b521
+      sharedKmerThreshold: 30
+      additionalParams:
+        mashSketch: " -S 42 -k 21 -s 1000 "
+        mashDist: " -v 0.2 -d 0.2 "
+resources:
+  large:
+    cpus: 28
+    memory: 256
+  medium:
+    cpus: 14
+    memory: 128
+  small:
+    cpus: 7
+    memory: 16
+  tiny:
+    cpus: 1
+    memory: 2

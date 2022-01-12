@@ -10,8 +10,12 @@ include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/
 include { wAnalyseMetabolites } from './modules/metabolomics/module'
 include { wUnmappedReadsList; wUnmappedReadsFile } from './modules/sampleAnalysis/module'
 include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './modules/fragmentRecruitment/frhit/module'
-include { wAnnotateFile; wAnnotateSample } from './modules/annotation/module'
+
+include { wAnnotateFile; wAnnotateList as wAnnotateBinsList; \
+	  wAnnotateList as wAnnotateUnbinnedList; wAnnotateList as wAnnotatePlasmidList } from './modules/annotation/module'
+
 include { wCooccurrenceList; wCooccurrenceFile } from './modules/cooccurrence/module'
+include { wPlasmidsList; wPlasmidsPath; } from './modules/plasmids/module'
 include { wInputFile } from './modules/input/module'
 
 
@@ -50,12 +54,15 @@ workflow wDereplicationPath {
    wDereplicatePath()
 }
 
+workflow wPlasmids {
+   wPlasmidsPath()
+}
+
 workflow wCMSeqWorfklowFile {
    wCMSeqWorkflowFile(Channel.from(params?.steps?.matAttributes?.input?.genomes), Channel.from(params?.steps?.matAttributes?.input?.alignments))
 }
 
 workflow wMagAttributes {
-   print(params.modules.magAttributes.getClass())
    wMagAttributesFile(Channel.fromPath(params?.steps?.magAttributes?.input))
 }
 
@@ -165,6 +172,34 @@ workflow _wAggregate {
      wCooccurrenceList(wListReadMappingBwa.out.trimmedMean, gtdb)
 }
 
+/*
+*
+* This workflow configures the pipeline and sets additional parameters that are
+* needed to fullfill the provided configuration.
+*
+*/
+workflow _wConfigurePipeline {
+
+    // For plasmid detection we need the assembly graph of the assembler
+    if(params.steps.containsKey("plasmid")){
+       def fastg = [ fastg: true]
+       params.steps.assembly.each { 
+	 assembler, parameter -> params.steps.assembly.get(assembler).putAll(fastg)
+       }
+    }
+}
+
+
+def flattenBins(binning){
+  def chunkList = [];
+  def SAMPLE_IDX = 0;
+  def BIN_PATHS_IDX = 1;
+  binning[BIN_PATHS_IDX].each {
+     chunkList.add([binning[SAMPLE_IDX], it]);
+  }
+  return chunkList;
+}
+
 
 /*
 * 
@@ -177,6 +212,8 @@ workflow _wAggregate {
 * Left and right read could be https, s3 links or file path. 
 */
 workflow wPipeline {
+   
+    _wConfigurePipeline()
 
     inputSamples = wInputFile()
 
@@ -184,18 +221,35 @@ workflow wPipeline {
 
     wQualityControlList(inputSamples | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} )
 
-    wQualityControlList.out.readsPair | join(wQualityControlList.out.readsSingle) | set { qcReads }
+    wQualityControlList.out.readsPair \
+	| join(wQualityControlList.out.readsSingle) | set { qcReads }
 
     wAssemblyList(qcReads)
 
     wBinning(wAssemblyList.out.contigs, qcReads)
 
+    wBinning.out.notBinnedContigs \
+	| map { notBinned -> [ notBinned[0], "notBinned", notBinned[1]]} \
+	| set {notBinnedContigs}
+
+    wBinning.out.binsStats  \
+	| map{ bin -> [bin.SAMPLE, bin.BIN_ID, bin.PATH]} \
+	| set { bins}
+
+    wPlasmidsList(bins | mix(notBinnedContigs), wAssemblyList.out.fastg | join(wBinning.out.mapping))
+
     if(params?.steps?.fragmentRecruitment?.frhit){
        wFragmentRecruitmentList(wBinning.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
     }
 
-    wAnnotateSample(wBinning.out.bins)
+    wAnnotatePlasmidList(Channel.value("meta"), wPlasmidsList.out.newPlasmids)
+
+    wAnnotateBinsList(Channel.value("single"), bins)
+
+    wAnnotateUnbinnedList(Channel.value("meta"), notBinnedContigs)
+
     wMagAttributesList(wBinning.out.bins)
     mapJoin(wMagAttributesList.out.checkm, wBinning.out.binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
-    _wAggregate(wQualityControlList.out.readsPair, wQualityControlList.out.readsSingle, binsStats,wMagAttributesList.out.gtdb )
+
+    _wAggregate(wQualityControlList.out.readsPair, wQualityControlList.out.readsSingle, binsStats, wMagAttributesList.out.gtdb )
 }

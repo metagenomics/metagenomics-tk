@@ -47,6 +47,15 @@ for binId in $(cut -f 2 $METABINNER_RESULT | sort | uniq); do
 		| sed "s/^/${BIN_NAME}\t/g" >> ${BIN_CONTIG_MAPPING}
 done
 
+# return not binned contigs
+BINNED_IDS=binned.tsv
+grep -h ">" *.fa | tr -d ">" > ${BINNED_IDS}
+if [ -s ${BINNED_IDS} ]; then
+        NOT_BINNED=!{sample}_notBinned.fa
+        seqkit grep -vf ${BINNED_IDS} !{contigs} \
+	 | seqkit replace  -p '(.*)' -r "\${1} MAG=NotBinned" > ${NOT_BINNED}
+fi
+
 # Quickfix
 # Explanation: the metabinner biocontainer does contain perl scripts that use a hardcoded path to
 # perl interpreter /usr/bin/perl which does not exist in the container. Thats why the container is 

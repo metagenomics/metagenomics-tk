@@ -16,7 +16,7 @@ process pCmseq {
 
     label 'tiny'
 
-    when params.steps.magAttributes.containsKey("prokka")
+    when params.steps.magAttributes.containsKey("cmseq")
 
     input:
     tuple val(sample), file(gff), file(bam), file(bai)
@@ -35,7 +35,8 @@ process pCheckM {
 
     container "${params.checkm_image}"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }, \
+      pattern: "{**.tsv}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm")
 
@@ -95,7 +96,8 @@ process pProkka {
 
     time '5h'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }, \
+      pattern: "{**.gff.gz,**.fna.gz,**.faa.gz,**.sqn.gz,**.txt,**.tsv,**.fsa.gz,**.ffn.gz,**.gbk.gz,**.tbl.gz}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("prokka")
 
@@ -104,13 +106,11 @@ process pProkka {
 
     output:
     tuple file("*.gff.gz"), env(BIN_ID), val("${sample}"), emit: gff 
-    tuple file("*.err"), env(BIN_ID), val("${sample}"), emit: err 
     tuple file("*.faa.gz"), env(BIN_ID), val("${sample}"), emit: faa 
     tuple file("*.fna.gz"), env(BIN_ID), val("${sample}"), emit: fna 
     tuple file("*.ffn.gz"), env(BIN_ID), val("${sample}"), emit: ffn 
     tuple file("*.fsa.gz"), env(BIN_ID), val("${sample}"), emit: fsa 
     tuple file("*.gbk.gz"), env(BIN_ID), val("${sample}"), emit: gbk
-    tuple file("*.log"), env(BIN_ID), val("${sample}"), emit: log
     tuple file("*.tbl.gz"), env(BIN_ID), val("${sample}"), emit: tbl
     tuple file("*.sqn.gz"), env(BIN_ID), val("${sample}"), emit: sqn
     tuple file("*.txt"), env(BIN_ID), val("${sample}"), emit: txt
@@ -193,14 +193,12 @@ workflow wMagAttributesFile {
        | groupTuple(by: DATASET_IDX) | _wMagAttributes
    emit:
      checkm = _wMagAttributes.out.checkm
-     prokka_err = _wMagAttributes.out.prokka_err
      prokka_faa = _wMagAttributes.out.prokka_faa
      prokka_ffn = _wMagAttributes.out.prokka_ffn
      prokka_fna = _wMagAttributes.out.prokka_fna
      prokka_fsa = _wMagAttributes.out.prokka_fsa
      prokka_gbk = _wMagAttributes.out.prokka_gbk
      prokka_gff = _wMagAttributes.out.prokka_gff
-     prokka_log = _wMagAttributes.out.prokka_log
      prokka_sqn = _wMagAttributes.out.prokka_sqn
      prokka_tbl = _wMagAttributes.out.prokka_tbl
      prokka_tsv = _wMagAttributes.out.prokka_tsv
@@ -236,14 +234,12 @@ workflow wMagAttributesList {
    emit:
      checkm = _wMagAttributes.out.checkm
      gtdb = _wMagAttributes.out.gtdb
-     prokka_err = _wMagAttributes.out.prokka_err
      prokka_faa = _wMagAttributes.out.prokka_faa
      prokka_ffn = _wMagAttributes.out.prokka_ffn
      prokka_fna = _wMagAttributes.out.prokka_fna
      prokka_fsa = _wMagAttributes.out.prokka_fsa
      prokka_gbk = _wMagAttributes.out.prokka_gbk
      prokka_gff = _wMagAttributes.out.prokka_gff
-     prokka_log = _wMagAttributes.out.prokka_log
      prokka_sqn = _wMagAttributes.out.prokka_sqn
      prokka_tbl = _wMagAttributes.out.prokka_tbl
      prokka_tsv = _wMagAttributes.out.prokka_tsv
@@ -368,14 +364,12 @@ workflow _wMagAttributes {
    emit:
      checkm = checkm_list
      gtdb = gtdb.combined
-     prokka_err = pProkka.out.err
      prokka_faa = pProkka.out.faa
      prokka_ffn = pProkka.out.ffn
      prokka_fna = pProkka.out.fna
      prokka_fsa = pProkka.out.fsa
      prokka_gbk = pProkka.out.gbk
      prokka_gff = pProkka.out.gff
-     prokka_log = pProkka.out.log
      prokka_sqn = pProkka.out.sqn
      prokka_tbl = pProkka.out.tbl
      prokka_tsv = pProkka.out.tsv

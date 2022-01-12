@@ -28,10 +28,12 @@ process pMegahit {
     output:
     tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs
     tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigsStats
+    tuple val("${sample}"), path("${sample}_contigs.fastg"), env(maxKmer), emit: fastg, optional: true
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     includeUnpairedReads = unpairedReads.name != "NOT_SET" ? " -r ${unpairedReads} " : ''
+    convertToFastg = params.steps.assembly.megahit.fastg ? "TRUE" : "FALSE"
     template 'megahit.sh'
 }
 
@@ -49,6 +51,7 @@ workflow wAssemblyList {
        readsList | _wAssembly
     emit:
       contigs = _wAssembly.out.contigs
+      fastg = _wAssembly.out.fastg
 }
 
 
@@ -89,4 +92,5 @@ workflow _wAssembly {
        }
     emit:
       contigs = pMegahit.out.contigs
+      fastg = pMegahit.out.fastg
 }

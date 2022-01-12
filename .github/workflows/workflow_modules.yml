@@ -26,6 +26,13 @@ jobs:
           bash ./scripts/test_fullPipeline.sh \
           "  --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " \
           example_params/fullPipeline_fraction/fullPipeline_fraction_magAttributes.yml "/mnt/work/work/${{ github.head_ref }}" || exit 1
+
+      - name: Test Full Pipeline run that ends with plasmids
+        run: |
+          bash ./scripts/test_fullPipeline.sh "" \
+          example_params/fullPipeline_fraction/fullPipeline_fraction_plasmid.yml "/mnt/work/work/${{ github.head_ref }}" || exit 1
+
+
       - name: Test Full Pipeline run that ends with binning
         run: |
           bash ./scripts/test_fullPipeline.sh "" example_params/fullPipeline_fraction/fullPipeline_fraction_binning_metabinner.yml \
@@ -141,3 +148,12 @@ jobs:
       - name: Test Annotation
         run: |
           bash ./scripts/test_annotation.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
+  plasmid:
+    timeout-minutes: 700
+    needs: [annotation]
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+      - name: Plasmid
+        run: |
+          bash ./scripts/test_plasmids.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
