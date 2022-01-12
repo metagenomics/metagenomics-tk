@@ -121,7 +121,7 @@ workflow _wPlasmids {
        samplesContigs
        samplesReads
      main:
-       // search for new pladmids
+       // search for new plasmids
        samplesReads | pSCAPP
        samplesContigs | pPlasClass
 

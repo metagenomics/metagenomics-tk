@@ -180,7 +180,7 @@ workflow _wAggregate {
 */
 workflow _wConfigurePipeline {
 
-    // For Plasmid detection we need the assembly graph of the assembler
+    // For plasmid detection we need the assembly graph of the assembler
     if(params.steps.containsKey("plasmid")){
        def fastg = [ fastg: true]
        params.steps.assembly.each { 

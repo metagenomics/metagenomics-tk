@@ -109,7 +109,7 @@ These values can be used in the publish dir directive to enable or disable the o
 ```
 
 Furthermore the `params.LOG_LEVELS.*` parameters can be used inside of a process to enable or disable intermediate results for debugging purposes.
-In case the log is the send to the pDumpLogs process (see Process section), you can specify the log level as part of the tuple:
+In cases where the log is send to the pDumpLogs process (see Process section), you can specify the log level as part of the tuple:
 
 ```
 tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
@@ -193,14 +193,13 @@ pipeline parameters that are need for fullfilling the user provided configuratio
 Example:
 Lets assume the user enables the plasmid module. In that case it is mandatory that 
 the assembler produces a fastg file independend of the user provided settings of the assembler.
-The `_wConfigurePipeline` method sets in that case the fastg parameter of any assembler to `true`.
+In that case the fastg parameter of any assembler will be set to `true` by the `_wConfigurePipeline` method.
 
 ## Tools
 
 ### concurrentDownload.sh
 
 This script allows to synchronize the download of a database between multiple jobs and should be executed the following way.
-Before a database is downloaded, the script checks either the MD5SUM or the database version against a user specified parameter.
 
 ```
 flock LOCK_FILE concurrentDownload.sh --output=DATABASE \
@@ -210,6 +209,8 @@ flock LOCK_FILE concurrentDownload.sh --output=DATABASE \
            --link=LINK \
            --expectedMD5SUM=USER_VERIFIED_DATABASE_MD5SUM
 ```
+
+Before a database is downloaded, the script checks either the MD5SUM or the database version against a user specified parameter.
 
 where
   * `LOCK_FILE` is a file that is used for locking. Processes will check if the file is currently locked before trying to download anything.
@@ -221,7 +222,7 @@ where
 
   * `USER_VERIFIED_DATABASE_MD5SUM` is the MD5SUM of the *extracted* database that the user should test manually before executing the pipeline.
 
-  * `LINK` is the link that will be used to test if is S3, HTTPS or a local path.
+  * `LINK` is the link that will be used to test if the file is accessible by S3, HTTPS or is available via a local path.
 
 ## Other
 
