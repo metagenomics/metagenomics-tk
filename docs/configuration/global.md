@@ -68,7 +68,7 @@ input:
 ## Optional configuration of computational resources used for pipeline runs
 
 The toolkit uses the following machine types (flavours) for running tools. All flavours can be optionally
-adjusted by modifying the cpus and memory parameters. If for example the largest flavour is not available
+adjusted by modifying the cpus and memory (in GB) parameters. If for example the largest flavour is not available
 in the infrastructure, `cpus` and `memory` parameters can be modified to fit the medium flavour. If larger
 flavours are available, it makes especially sense to increase the `cpus` and `memory` values of the `large`
 flavour to speed up for example assembly and read mapping.

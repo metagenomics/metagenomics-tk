@@ -18,7 +18,7 @@ steps:
 resources:
   large:
     cpus: 28
-    memory: 256
+    memory: 250
   medium:
     cpus: 14
     memory: 128
