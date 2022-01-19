@@ -1,0 +1,42 @@
+use_directory_urls: true
+site_name: Meta-Omics-Toolkit
+docs_dir: ../docs
+
+markdown_extensions:
+  - pymdownx.highlight:
+       anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true 
+  - pymdownx.snippets:
+       base_path: ../docs/
+
+plugins:
+  - search
+  - print-site:
+        add_to_navigation: false
+        print_page_title: 'Meta-Omics-Toolkit'
+        enumerate_headings: true
+        add_table_of_contents: true
+        toc_title: "Table of Contents"
+    
+theme:
+  name: material
+
+nav:
+  - "Home": README.md
+  - "Global Pipeline Configuration Settings": pipeline_configuration.md
+  - "Modules":
+    - modules/annotation.md
+    - modules/assembly.md
+    - modules/cooccurrence.md
+    - modules/dereplication.md
+    - modules/fragment_recruitment.md
+    - modules/magAttributes.md
+    - modules/plasmids.md
+    - modules/readMapping.md
+  - "Developer":
+    - developer_guidelines.md
+    - pipeline_specification.md
+    - module_specification.md

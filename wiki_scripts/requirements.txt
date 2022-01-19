@@ -1,0 +1,7 @@
+mkdocs
+mkdocs-material
+mkdocs-print-site-plugin
+html5lib
+requests
+htmlark
+pymdown-extensions
