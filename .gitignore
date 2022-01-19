@@ -22,3 +22,6 @@ output
 *.iml
 databases
 credentials
+wiki_venv
+*.html
+wiki_scripts/site/
