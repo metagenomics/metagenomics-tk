@@ -3,7 +3,7 @@ name: CI
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [ dev ]
 
   workflow_dispatch:
 jobs:
@@ -12,7 +12,7 @@ jobs:
       group: ${{ github.head_ref }}
       cancel-in-progress: true
     timeout-minutes: 700
-    runs-on: self-hosted
+    runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
       - name: Test Full Pipeline Run
@@ -57,7 +57,7 @@ jobs:
       cancel-in-progress: true
     timeout-minutes: 700
     needs: [full_pipeline]
-    runs-on: self-hosted
+    runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
       - name: Test MAG Attributes
@@ -76,8 +76,8 @@ jobs:
       group: ${{ github.head_ref }}
       cancel-in-progress: true
     timeout-minutes: 700
+    runs-on: [ self-hosted, slurm]
     needs: [mag_attributes]
-    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
       - name: Test Dereplication
@@ -93,7 +93,7 @@ jobs:
       cancel-in-progress: true
     timeout-minutes: 700
     needs: [dereplication]
-    runs-on: self-hosted
+    runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
       - name: Test Read Mapping
@@ -106,7 +106,7 @@ jobs:
       cancel-in-progress: true
     timeout-minutes: 700
     needs: [readmapping]
-    runs-on: self-hosted
+    runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
       - name: Test Assembly
@@ -119,7 +119,7 @@ jobs:
       cancel-in-progress: true
     timeout-minutes: 700
     needs: [assembly]
-    runs-on: self-hosted
+    runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
       - name: Test Cooccurrence
@@ -132,7 +132,7 @@ jobs:
       cancel-in-progress: true
     timeout-minutes: 700
     needs: [cooccurrence]
-    runs-on: self-hosted
+    runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
       - name: Test Fragment Recruitment
@@ -142,7 +142,7 @@ jobs:
   annotation:
     timeout-minutes: 700
     needs: [fragment_recruitment]
-    runs-on: self-hosted
+    runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
       - name: Test Annotation
@@ -151,7 +151,7 @@ jobs:
   plasmid:
     timeout-minutes: 700
     needs: [annotation]
-    runs-on: self-hosted
+    runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
       - name: Plasmid

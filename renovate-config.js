@@ -7,6 +7,7 @@ module.exports = {
 		  platform: 'github',
 		  requireConfig: false,
 	          repositories: ["pbelmann/meta-omics-toolkit"],
+		  baseBranches: ["dev"],
                   packageRules: [
                          {  "matchDatasources": ["docker"], versioning: "loose" }
 		  ],
