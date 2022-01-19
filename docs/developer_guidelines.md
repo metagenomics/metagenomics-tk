@@ -1,4 +1,4 @@
-# Developer Guidelines
+# Guidelines
 
 ## Commit and Release Guidelines
 
@@ -15,14 +15,22 @@ Example:
 feat(assembly): megahit added
 ```
 
-`feat` can be replaced by one of the formats specified in the options sections of the [config](.chglog/config.yml) file.
+`feat` can be replaced by one of the formats specified in the options sections of the config file (see example below).
 Scope can for example represent a module, a configuration or a specific document.
 
 A new release should be made the following way: 
+
 1. Update pipeline version in the nextflow manifest `nextflow.config`.
+
 2. Create a release on Github.
+
 3. Run `git fetch` on the master branch to get the latest tag.
+
 4. Run `make changelog` and paste the output on the Github release section.
+
+```YAML
+---8<--- "../.chglog/config.yml"
+```
 
 ## Testing
 
@@ -30,7 +38,7 @@ Tests for local use are specified in the `scripts` folder. Bash scripts that sta
 Scripts for local use accept arguments for specifying local dependencies:
 
 Examples:
-```
+```BASH
 bash scripts/test_fullPipeline.sh   --steps.magAttributes.checkm.database=/vol/spool/checkm --steps.magAttributes.gtdb.database=/vol/spool/gtdb/release202
 bash scripts/test_fragmentRecruitment.sh  --steps.fragmentRecruitment.frhit.genomes=test/bins/small/bin.*.fa --steps.fragmentRecruitment.frhit.samples=test/reads/small/reads.tsv 
 bash scripts/test_dereplication.sh  --steps.dereplication.pasolli.input=test/bins/small/attributes.tsv
@@ -40,7 +48,7 @@ bash scripts/test_magAttributes.sh  --steps.magAttributes.input=test/bins/small/
 ## Modules
 
 Functionality is structured in modules (assembly, binning, dereplication, .etc). Each module can have multiple workflows.
-Every module follows the output definition specified in the [output specification](specification.md)  document. The name and the version of the
+Every module follows the output definition specified in the [output specification](pipeline_specification.md)  document. The name and the version of the
 module is specified in the `modules` section of the `nextflow.config` file.
 
 ### Workflows
@@ -53,7 +61,7 @@ module is specified in the `modules` section of the `nextflow.config` file.
 
 ## Versioning
 
-All modules are versioned according to [semantic versioning](https://semver.org/). The version number is incorporated in the output directory (see [output specification](specification.md)) 
+All modules are versioned according to [semantic versioning](https://semver.org/). The version number is incorporated in the output directory (see [output specification](pipeline_specification.md)) 
 for easier parsing of the output directory. In the following we give examples when to increment which part of of the version identifier:
 
 Given a version number MAJOR.MINOR.PATCH, increment the:
@@ -76,7 +84,7 @@ For that reason these files need to be renamed, so that their names include a un
 Please output those files to channel with the following entries and connect this channel to the pDumpLogs process that you can import
 from the utils module:
 
-```
+```JAVA
 include { pDumpLogs } from '../utils/processes'
 
 ...
@@ -103,7 +111,7 @@ INFO = 1 Just necessary logs are published
 These values can be used in the publish dir directive to enable or disable the output of logs.
 
 
-```
+```JAVA
    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/mash/sketch", filename) }, \
         pattern: "{**.out,**.err, **.sh, **.log}", enabled: params.logLevel <= params.LOG_LEVELS.ALL
 ```
@@ -131,7 +139,7 @@ which is space-saving.
 Every process should be configurable by providing a parameters string to the tool in the process.
 Every module should use the following specification in the configuration file:
 
-```
+```YAML
 steps:
   moduleName:
     parameter: 42
@@ -141,7 +149,7 @@ steps:
 
 Additional params can have a string value (like the example above) that is provided to the tool:
 
-```
+```JAVA
 pProcess {
 
    ...
@@ -156,7 +164,7 @@ pProcess {
 
 The value of the `additionalParams` key can also be a map if multiple tools are used in the same process:
 
-``
+```YAML
 steps:
   moduleName:
     parameter: 42
@@ -201,7 +209,7 @@ In that case the fastg parameter of any assembler will be set to `true` by the `
 
 This script allows to synchronize the download of a database between multiple jobs and should be executed the following way.
 
-```
+```BASH
 flock LOCK_FILE concurrentDownload.sh --output=DATABASE \
            --httpsCommand=COMMAND \
            --localCommand=COMMAND \

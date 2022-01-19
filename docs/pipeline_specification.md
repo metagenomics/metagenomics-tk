@@ -1,3 +1,5 @@
+# Pipeline Specification
+
 ## Output and best practice
 
 ### Motivation
@@ -37,7 +39,7 @@ Every dataset must contain a `TOOL` folder called `config`. The `config` folder 
 
 ### Examples
 
-## Example 1:
+#### Example 1:
 
 We assume that the following folder already exists:
 
@@ -53,7 +55,7 @@ If the MODULE output does not contain a BINNING output then the existing RUN fol
 /SRA1/1/BINNING/0.3/METABAT
 ```
 
-## Example 2:
+#### Example 2:
 
 We assume that the following folders already exists:
 
