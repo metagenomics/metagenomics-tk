@@ -203,6 +203,15 @@ Lets assume the user enables the plasmid module. In that case it is mandatory th
 the assembler produces a fastg file independend of the user provided settings of the assembler.
 In that case the fastg parameter of any assembler will be set to `true` by the `_wConfigurePipeline` method.
 
+## Wiki
+
+For building the documentation we are using [mkdocs](https://www.mkdocs.org/) in combination with [mkdocs-material](https://squidfunk.github.io/mkdocs-material/)
+and a [plugin](https://timvink.github.io/mkdocs-print-site-plugin/index.html) for building static single page html files.
+The wiki HTML files are uploaded to S3 storage on pull request merge events in the master and dev branch (see Makefile commands using `make help`).
+
+You can work on these html files locally by running `make dev_wiki`. But please note that by build the static html file for upload, the navigation might change.
+You can view the final html file by building the html file (see Makefile `make help`). 
+
 ## Tools
 
 ### concurrentDownload.sh
