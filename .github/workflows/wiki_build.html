@@ -1,0 +1,13 @@
+name: Build Publish Documentation
+on:
+  push:
+    branches:
+      - dev
+      - master 
+
+jobs:
+  build_job:
+    runs-on: [self-hosted, html]
+    steps:
+    - run: |
+    	make publish_wiki_html BRANCH=${{ github.base_ref }}
