@@ -17,6 +17,41 @@
  * `steps`: Steps allows to specify multiple pipeline modules for running the toolkit. We distinguish between two modes. You can either run one tool of
    the pipeline or the whole pipeline with different configurations.
 
+## S3 Configuration
+
+All modules of the pipeline can be used in conjunction with S3.
+You will have to create a configuration file that can be provided to nextflow with " -c " Parameter.
+
+```
+aws {
+  accessKey = 'xxx'
+  secretKey = 'xxx'
+
+    client {
+      s_3_path_style_access = true
+      connectionTimeout = 120000
+      maxParallelTransfers = 28 
+      maxErrorRetry = 10
+      protocol = 'HTTPS'
+      endpoint = 'https://openstack.cebitec.uni-bielefeld.de:8080'
+      signerOverride = 'AWSS3V4SignerType'
+    }
+}
+```
+
+If you want to upload tool results to s3, just update the output parameter in the configuration file from `/path/to/output` to `s3://bucket/path/to/output`
+
+If you want to use the annotation module, you also have to provide your credentials in an aws credential style.
+Create a file that looks like this and fill in your credentials:
+
+```
+[default]
+aws_access_key_id=ABCDEKEY
+aws_secret_access_key=ABCDEKEY
+```
+You have to reference this file in the annotation parameter yml's s5cmd keyfiles section.  
+
+
 ## Configuration of input parameters of the full pipeline mode
 
 ### Generic Input
