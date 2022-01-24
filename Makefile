@@ -62,7 +62,7 @@ wiki_build.html: wiki_venv ## Build wiki html
 		htmlark site/print_page/index.html -o ../wiki_build.html \
 	)
 
-publish_wiki_html: wiki_build.html ## Publish Wiki html
+publish_wiki_html: wiki_build.html ## Publish wiki html
 	mc cp wiki_build.html dereplication/meta-omics-toolkit/${BRANCH}.html
 	
 dev_wiki: wiki_venv ## Start mkdocs developer session

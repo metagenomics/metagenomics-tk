@@ -34,15 +34,15 @@ A new release should be made the following way:
 
 ## Testing
 
-Tests for local use are specified in the `scripts` folder. Bash scripts that start with `test_ci_` are used by github actions for continious integration tests.
-Scripts for local use accept arguments for specifying local dependencies:
+Tests for local use are specified in the `scripts` folder. These scripts are also used as part of the continuous integration tests.
+If you want to run these scripts locally, you will have to override the paths to the databases you have downloaded:
 
 Examples:
 ```BASH
-bash scripts/test_fullPipeline.sh   --steps.magAttributes.checkm.database=/vol/spool/checkm --steps.magAttributes.gtdb.database=/vol/spool/gtdb/release202
-bash scripts/test_fragmentRecruitment.sh  --steps.fragmentRecruitment.frhit.genomes=test/bins/small/bin.*.fa --steps.fragmentRecruitment.frhit.samples=test/reads/small/reads.tsv 
-bash scripts/test_dereplication.sh  --steps.dereplication.pasolli.input=test/bins/small/attributes.tsv
-bash scripts/test_magAttributes.sh  --steps.magAttributes.input=test/bins/small/attributes.tsv
+bash scripts/test_fullPipeline.sh  " --steps.magAttributes.checkm.database=/vol/spool/checkm --steps.magAttributes.gtdb.database=/vol/spool/gtdb/release202 "
+bash scripts/test_fragmentRecruitment.sh  " --steps.fragmentRecruitment.frhit.genomes=test/bins/small/bin.*.fa --steps.fragmentRecruitment.frhit.samples=test/reads/small/reads.tsv "
+bash scripts/test_dereplication.sh "  --steps.dereplication.pasolli.input=test/bins/small/attributes.tsv "
+bash scripts/test_magAttributes.sh "  --steps.magAttributes.input=test/bins/small/attributes.tsv "
 ```
 
 ## Modules
