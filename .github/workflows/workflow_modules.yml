@@ -70,6 +70,7 @@ jobs:
           bash ./scripts/test_magAttributes.sh \
           "  --steps.magAttributes.checkm.database=${WORK_DIR}/checkm  --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 " \
           example_params/magAttributes_fraction/magAttributes.yml "${WORK_DIR}/${{ github.head_ref }}" || exit 1
+
   dereplication:
     concurrency:
       group: ${{ github.head_ref }}
