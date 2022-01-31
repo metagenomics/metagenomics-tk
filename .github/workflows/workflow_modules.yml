@@ -6,6 +6,9 @@ on:
     branches: [ dev ]
 
   workflow_dispatch:
+
+env:
+  WORK_DIR: "/vol/spool"
 jobs:
   full_pipeline:
     concurrency: 
@@ -18,29 +21,25 @@ jobs:
       - name: Test Full Pipeline Run
         run: |
           bash ./scripts/test_fullPipeline.sh \
-          " --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " \
-          "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
+          " --steps.magAttributes.checkm.database=${WORK_DIR}/checkm --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 " \
+          "" "${WORK_DIR}/${{ github.head_ref }}" || exit 1
 
       - name: Test Full Pipeline run that ends with magAttributes
         run: |
           bash ./scripts/test_fullPipeline.sh \
-          "  --steps.magAttributes.checkm.database=/mnt/checkm --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " \
-          example_params/fullPipeline_fraction/fullPipeline_fraction_magAttributes.yml "/mnt/work/work/${{ github.head_ref }}" || exit 1
+          "  --steps.magAttributes.checkm.database=${WORK_DIR}/checkm --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 " \
+          example_params/fullPipeline_fraction/fullPipeline_fraction_magAttributes.yml "${WORK_DIR}/${{ github.head_ref }}" || exit 1
 
       - name: Test Full Pipeline run that ends with plasmids
         run: |
           bash ./scripts/test_fullPipeline.sh "" \
-          example_params/fullPipeline_fraction/fullPipeline_fraction_plasmid.yml "/mnt/work/work/${{ github.head_ref }}" || exit 1
+          example_params/fullPipeline_fraction/fullPipeline_fraction_plasmid.yml "${WORK_DIR}/${{ github.head_ref }}" || exit 1
 
 
       - name: Test Full Pipeline run that ends with binning
         run: |
           bash ./scripts/test_fullPipeline.sh "" example_params/fullPipeline_fraction/fullPipeline_fraction_binning_metabinner.yml \
-          "/mnt/work/work" || exit 1
-
-          #      - name: Test Aggregation Pipeline run based on per samples results.
-          #        run: |
-          #          bash ./scripts/test_fullPipelineAggregate.sh " -c  test_data/assets/aws.config " "" "/mnt/work/work/${{ github.head_ref }}"|| exit 1
+          "${WORK_DIR}/${{ github.head_ref }}" || exit 1
 
       - name: Test if SRA S3 Entrypoint works 
         run: |
@@ -63,14 +62,14 @@ jobs:
       - name: Test MAG Attributes
         run: |
           bash ./scripts/test_magAttributes.sh \
-          "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " \
-          "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
+          "  --steps.magAttributes.checkm.database=${WORK_DIR}/checkm  --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 " \
+          "" "${WORK_DIR}/${{ github.head_ref }}" || exit 1
 
       - name: Test MAG Attributes Fraction
         run: |
           bash ./scripts/test_magAttributes.sh \
-          "  --steps.magAttributes.checkm.database=/mnt/checkm  --steps.magAttributes.gtdb.database=/mnt/gtdb/release202 " \
-          example_params/magAttributes_fraction/magAttributes.yml "/mnt/work/work/${{ github.head_ref }}" || exit 1
+          "  --steps.magAttributes.checkm.database=${WORK_DIR}/checkm  --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 " \
+          example_params/magAttributes_fraction/magAttributes.yml "${WORK_DIR}/${{ github.head_ref }}" || exit 1
   dereplication:
     concurrency:
       group: ${{ github.head_ref }}
@@ -82,11 +81,11 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test Dereplication
         run: |
-          bash ./scripts/test_dereplication.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
+          bash ./scripts/test_dereplication.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" || exit 1
       - name: Test Species Dereplication
         run: |
           bash ./scripts/test_dereplication.sh "" example_params/dereplication_fraction/dereplication.yml \
-                                                 "/mnt/work/work/${{ github.head_ref }}"  || exit 1
+                                                 "${WORK_DIR}/${{ github.head_ref }}"  || exit 1
   readmapping:
     concurrency: 
       group: ${{ github.head_ref }}
@@ -98,7 +97,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test Read Mapping
         run: |
-          bash ./scripts/test_readMapping.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
+          bash ./scripts/test_readMapping.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" || exit 1
 
   assembly:
     concurrency: 
@@ -111,7 +110,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test Assembly
         run: |
-          bash ./scripts/test_assembly.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
+          bash ./scripts/test_assembly.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" || exit 1
 
   cooccurrence:
     concurrency: 
@@ -124,7 +123,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test Cooccurrence
         run: |
-          bash ./scripts/test_cooccurrence.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
+          bash ./scripts/test_cooccurrence.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" || exit 1
 
   fragment_recruitment:
     concurrency: 
@@ -137,7 +136,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test Fragment Recruitment
         run: |
-          bash ./scripts/test_fragmentRecruitment.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
+          bash ./scripts/test_fragmentRecruitment.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" || exit 1
 
   annotation:
     timeout-minutes: 700
@@ -147,7 +146,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test Annotation
         run: |
-          bash ./scripts/test_annotation.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
+          bash ./scripts/test_annotation.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" || exit 1
   plasmid:
     timeout-minutes: 700
     needs: [annotation]
@@ -156,4 +155,4 @@ jobs:
       - uses: actions/checkout@v2
       - name: Plasmid
         run: |
-          bash ./scripts/test_plasmids.sh "" "" "/mnt/work/work/${{ github.head_ref }}" || exit 1
+          bash ./scripts/test_plasmids.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" || exit 1
