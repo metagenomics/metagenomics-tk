@@ -32,6 +32,24 @@ def set_mode(pathString){
 
 /**
 *
+* Set Docker mount point for database folder if the file must be downloaded first,
+* otherwise mount the file directly if it is already available on the filesystem.
+*
+**/
+def setDockerMount(pathString){
+    if(pathString != null){
+      if(pathString.startsWith("/")){
+        return " --volume " +  pathString + ":" + pathString + " ";
+      } else {
+        return " --volume ${params.databases}:${params.databases} ";
+      }
+    }
+}
+
+
+
+/**
+*
 * Diamond is used to search for big input queries in large databases.
 * Though not as precise as blast it is way faster if you handle large amounts of data.
 * You need to call (and fill out) the aws credential file with -c to use this module! 
@@ -46,8 +64,8 @@ process pDiamond {
       // Therefore this place has to be mounted to the docker container to be accessible during run time.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} \
-      --volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
+      containerOptions " --user 1000:1000 " + setDockerMount(params.steps?.annotation?.diamond?.database) \
+      + "--volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
  
       tag "$sample"
 
@@ -228,8 +246,8 @@ process pKEGGFromDiamond {
       // Therefore this place has to be mounted to the docker container to be accessible during runtime.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} \
-      --volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
+      containerOptions " --user 1000:1000 " + setDockerMount(params.steps?.annotation?.kegg?.database) \
+      + "--volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
 
       publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromDiamond", filename) }, \
          pattern: "{**.tsv}"
