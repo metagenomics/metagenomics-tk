@@ -43,7 +43,7 @@ steps:
       additionalParams: " --mincontiglen 200 "
   annotation:
     diamond:
-      database: '/mnt/databases/kegg-2021-01.dmnd'
+      database: '/vol/spool/databases/kegg-2021-01.dmnd'
 resources:
   large:
     cpus: 28
