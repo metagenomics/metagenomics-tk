@@ -65,7 +65,7 @@ process pDiamond {
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
       containerOptions " --user 1000:1000 " + setDockerMount(params.steps?.annotation?.diamond?.database) \
-      + "--volume ${params?.steps?.annotation?.s5cmd?.keyfile}:/.aws/credentials"
+      + "--volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
  
       tag "$sample"
 
