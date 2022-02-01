@@ -90,10 +90,10 @@ steps:
         params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
         keyfile: 'xxx'
      diamond:
-        database: '/mnt/databases/kegg-2021-01.dmnd'
+        database: '/vol/spool/databases/kegg-2021-01.dmnd'
         params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
      kegg:
-        database: '/mnt/databases/kegg_2021-01/'
+        database: '/vol/spool/databases/kegg_2021-01/'
      rgi: 
         source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/data
         md5sum: ddc655280ef838923d8d72e42833b33c
@@ -104,7 +104,7 @@ steps:
 resources:
   large:
     cpus: 28
-    memory: 250
+    memory: 246
   medium:
     cpus: 14
     memory: 128
