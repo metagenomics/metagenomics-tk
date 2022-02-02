@@ -14,13 +14,13 @@ steps:
 resources:
   large:
     cpus: 28
-    memory: 250
+    memory: 246
   medium:
     cpus: 14
-    memory: 128
+    memory: 121
   small:
     cpus: 7
-    memory: 16
+    memory: 14
   tiny:
     cpus: 1
-    memory: 2
+    memory: 1

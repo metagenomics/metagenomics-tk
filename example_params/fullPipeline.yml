@@ -33,7 +33,12 @@ steps:
       database: "/vol/spool/gtdb/release202"
       additionalParams: " --min_af 0.65 "
     checkm:
-      database: "/vol/spool/checkm"
+      database:
+        source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz"
+        md5sum: c51aac3735075d23945b09af9ede8fe8
+        s5cmd:
+          params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
+          keyfile: 'xxx'
       buffer: 200
       additionalParams:
         tree: " --reduced_tree "
@@ -107,10 +112,10 @@ resources:
     memory: 246
   medium:
     cpus: 14
-    memory: 128
+    memory: 121
   small:
     cpus: 7
-    memory: 16
+    memory: 14
   tiny:
     cpus: 1
-    memory: 2
+    memory: 1
