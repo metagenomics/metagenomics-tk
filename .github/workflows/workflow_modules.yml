@@ -48,7 +48,7 @@ jobs:
 
       - name: Test if SRA S3 Input module works 
         run: |
-          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config "  ./example_params/fullPipelineSRAQC.yml ${PROFILE} || exit 1
+          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config "  ./example_params/fullPipelineSRAQC.yml "" ${PROFILE} || exit 1
 
 
   mag_attributes:
