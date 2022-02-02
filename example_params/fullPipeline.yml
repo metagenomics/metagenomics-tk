@@ -33,12 +33,7 @@ steps:
       database: "/vol/spool/gtdb/release202"
       additionalParams: " --min_af 0.65 "
     checkm:
-      database:
-        source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz"
-        md5sum: c51aac3735075d23945b09af9ede8fe8
-        s5cmd:
-          params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
-          keyfile: 'xxx'
+      database: "/vol/spool/peter/meta-omics-toolkit/checkm"
       buffer: 200
       additionalParams:
         tree: " --reduced_tree "
@@ -93,7 +88,7 @@ steps:
   annotation:
      s5cmd:
         params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
-        keyfile: 'xxx'
+        #        keyfile: 'xxx'
      diamond:
         database: '/vol/spool/databases/kegg-2021-01.dmnd'
         params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
