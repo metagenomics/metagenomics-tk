@@ -39,4 +39,16 @@ steps:
       additionalParams:
         mashSketch: " -S 42 -k 21 -s 1000 "
         mashDist: " -v 0.2 -d 0.2 "
-
+resources:
+  large:
+    cpus: 28
+    memory: 246
+  medium:
+    cpus: 14
+    memory: 121
+  small:
+    cpus: 7
+    memory: 14
+  tiny:
+    cpus: 1
+    memory: 1
