@@ -1,13 +1,12 @@
-name: "Build Publish Documentation"
+name: "Publish Documentation"
 on:
   push:
-    branches:
-      - dev
-      - master 
+    branches: [ dev, master ]
 
 jobs:
   build_job:
     runs-on: [self-hosted, html]
     steps:
-    - run: |
-    	make publish_wiki_html BRANCH=${{ github.base_ref }}
+      - name: "Publish wiki"
+        run: |
+           make publish_wiki_html BRANCH=${{ github.base_ref }}
