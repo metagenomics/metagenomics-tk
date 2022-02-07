@@ -30,10 +30,21 @@ steps:
   magAttributes:
     gtdb:
       buffer: 1000
-      database: "/vol/spool/gtdb/release202"
+      database:
+              #  extractedDBPath: "/vol/spool/gtdb/release202" 
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb.tar.gz
+          md5sum: c00f2bf8a817d4987b1dda78eb525e16
+          s5cmd:
+            params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
       additionalParams: " --min_af 0.65 "
     checkm:
-      database: "/vol/spool/peter/meta-omics-toolkit/checkm"
+      database:
+        download:
+          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz"
+          md5sum: c51aac3735075d23945b09af9ede8fe8
+          s5cmd:
+            params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
       buffer: 200
       additionalParams:
         tree: " --reduced_tree "
@@ -78,29 +89,48 @@ steps:
       threshold: 0.5 
       additionalParams: "   "
     PLSDB:
-      database: 
-        source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip
-        md5sum: caa846fbb689deba0e35ef559793b521
       sharedKmerThreshold: 30
+      database:
+              #        extractedDBPath: "/vol/spool/peter/plsdb" 
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip
+          md5sum: caa846fbb689deba0e35ef559793b521
+          s5cmd:
+            params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
       additionalParams:
         mashSketch: " -S 42 -k 21 -s 1000 "
         mashDist: " -v 0.2 -d 0.2 "
   annotation:
-     s5cmd:
-        params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
-        #        keyfile: 'xxx'
      diamond:
-        database: '/vol/spool/databases/kegg-2021-01.dmnd'
         params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
-     kegg:
-        database: '/vol/spool/databases/kegg_2021-01/'
+        database:
+                #   extractedDBPath: '/vol/spool/peter/kegg-2021-01.dmnd' 
+          download:
+            source: s3://bene-test/databases/kegg-2021-01.dmnd
+            md5sum: 8f5e2cea11160ebf8568278595ea1aea
+            s5cmd:
+              params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
+              keyfile: '/vol/spool/peter/meta-omics-toolkit/credentials'
+     keggFromDiamond:
+       database:
+               #   extractedDBPath: "/vol/spool/peter/meta-omics-toolkit/databases/kegg_2021-01/" 
+         download:
+            source: s3://bene-test/databases/kegg.tar.gz
+            md5sum: 69c560ad12058117d4ad66d9db6d81e3
+            s5cmd:
+              params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
+              keyfile: '/vol/spool/peter/meta-omics-toolkit/credentials'
      rgi: 
-        source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/data
-        md5sum: ddc655280ef838923d8d72e42833b33c
-        additionalParams: ""
+       additionalParams: ""
+       database:
+              #  extractedDBPath: "/vol/spool/peter/card.json" 
+         download:
+           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/data
+           md5sum: ddc655280ef838923d8d72e42833b33c
+           s5cmd:
+             params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
      prodigal:
          mode: 'meta'
-     keggFromDiamond:
 resources:
   large:
     cpus: 28
