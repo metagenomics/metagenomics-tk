@@ -6,7 +6,11 @@ while [ $# -gt 0 ]; do
 	    ;;
 	    --expectedMD5SUM=*) EXPECTED_MD5SUM="${1#*=}"
 	    ;;
-	    --s3Command=*) S3_COMMAND="${1#*=}"
+	    --s3FileCommand=*) S3_FILE_COMMAND="${1#*=}"
+	    ;;
+	    --s3DirectoryCommand=*) S3_DIRECTORY_COMMAND="${1#*=}"
+	    ;;
+	    --s5cmdAdditionalParams=*) S5CMD_ADDITIONAL_PARAMS="${1#*=}"
 	    ;;
 	    --httpsCommand=*) HTTPS_COMMAND="${1#*=}"
 	    ;;
@@ -31,7 +35,11 @@ mkdir -p ${DATABASE_OUT}
 function getCommand() {
     if [[ $LINK == s3://* ]]
     then
-    	echo "$S3_COMMAND";
+	if [[ $(./bin/s5cmd ${S5CMD_ADDITIONAL_PARAMS} --json ls ${LINK} | jq -r '.type') == "directory" ]]; then
+		echo "$S3_DIRECTORY_COMMAND"
+	else
+		echo "$S3_FILE_COMMAND"
+	fi
     elif [[ $LINK == https://* ]]
     then
     	echo "$HTTPS_COMMAND";
@@ -73,6 +81,8 @@ else
 
     # compute MD5SUM and save it in the checkpoint file
     MD5SUM=$(getMD5SUM)
+    echo "MD5SUM: ${MD5SUM}"
+    echo "EXPECTED MD5SUM: ${EXPECTED_MD5SUM}"
     if [[ "${MD5SUM}" == "${EXPECTED_MD5SUM}" ]]; then
             echo ${MD5SUM} > ${MD5SUM_FILE}
     else

@@ -64,6 +64,27 @@ process pPlasClass {
 }
 
 
+
+
+def setDockerMount(config){
+    if(config.containsKey("extractedDBPath")){
+        return " --volume " + config.extractedDBPath + ":" + config.extractedDBPath ;
+    } else if (config.containsKey("download")) {
+        volumeMountStr = ""
+        if(config.download.source.startsWith("/")){
+          volumeMountStr += " --volume " + config.download.source + ":" + config.download.source + " --volume ${params.databases}:${params.databases} ";
+        } else {
+          volumeMountStr += " --volume ${params.databases}:${params.databases} ";
+        }
+        if(config.download.containsKey("s5cmd") && config.download.s5cmd.containsKey("keyfile")){
+          volumeMountStr += " --volume ${config.download.s5cmd.keyfile}:/.aws/credentials   "
+        }
+        return volumeMountStr;
+    }
+}
+
+
+
 process pPLSDB {
 
     label 'medium'
@@ -75,7 +96,7 @@ process pPLSDB {
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "PLSDB", filename) }, \
             pattern: "{**.tsv}"
 
-    containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} "
+    containerOptions " --user 1000:1000 " + setDockerMount(params.steps.plasmid.PLSDB.database)
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid.containsKey("PLSDB")
 

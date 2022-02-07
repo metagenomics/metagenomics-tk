@@ -10,6 +10,33 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
          '/' + TOOL + '/' + filename
 }
 
+
+
+/**
+*
+* Set Docker mount point for database folder if the file must be downloaded first,
+* otherwise mount the file directly if it is already available on the filesystem.
+*
+**/
+def setDockerMount(config){
+    if(config.containsKey("extractedDBPath")){
+        extractedDBPath = config.extractedDBPath
+        return " --volume " + extractedDBPath + ":" + extractedDBPath ;
+    } else if (config.containsKey("download")) {
+        volumeMountStr = ""
+        if(config.download.source.startsWith("/")){
+          volumeMountStr += " --volume " + config.download.source + ":" + config.download.source + " --volume ${params.databases}:${params.databases} ";
+        } else {
+          volumeMountStr += " --volume ${params.databases}:${params.databases} ";
+        }
+        if(config.download.containsKey("s5cmd") && config.download.s5cmd.containsKey("keyfile")){
+          volumeMountStr += " --volume ${config.download.s5cmd.keyfile}:/.aws/credentials   "
+        }
+        return volumeMountStr;
+    }
+}
+
+
 process pCmseq {
 
     container "${params.cmseq_image}"
@@ -40,7 +67,9 @@ process pCheckM {
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm")
 
-    containerOptions " --user 1000:1000  --volume ${params.steps.magAttributes.checkm.database}:/.checkm "
+    containerOptions " --user 1000:1000 " + setDockerMount(params.steps.magAttributes.checkm.database) 
+
+    beforeScript "mkdir -p ${params.databases}"
 
     label 'medium'
 
@@ -70,8 +99,8 @@ process pGtdbtk {
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("gtdb")
 
-    containerOptions " --user 1000:1000  --volume ${params.steps.magAttributes.gtdb.database}:/refdata"
-   
+    containerOptions " --user 1000:1000 " + setDockerMount(params.steps.magAttributes.gtdb.database)
+
     input:
     tuple val(sample), val(ending), path(bins) 
 
