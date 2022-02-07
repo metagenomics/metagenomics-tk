@@ -1,4 +1,4 @@
-name: Build Publish Documentation
+name: "Build Publish Documentation"
 on:
   push:
     branches:
