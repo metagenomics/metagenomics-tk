@@ -104,22 +104,10 @@ steps:
      diamond:
         params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
         database:
-                #   extractedDBPath: '/vol/spool/peter/kegg-2021-01.dmnd' 
-          download:
-            source: s3://bene-test/databases/kegg-2021-01.dmnd
-            md5sum: 8f5e2cea11160ebf8568278595ea1aea
-            s5cmd:
-              params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
-              keyfile: '/vol/spool/peter/meta-omics-toolkit/credentials'
+          extractedDBPath: '/mnt/databases/kegg-2021-01.dmnd'
      keggFromDiamond:
        database:
-               #   extractedDBPath: "/vol/spool/peter/meta-omics-toolkit/databases/kegg_2021-01/" 
-         download:
-            source: s3://bene-test/databases/kegg.tar.gz
-            md5sum: 69c560ad12058117d4ad66d9db6d81e3
-            s5cmd:
-              params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
-              keyfile: '/vol/spool/peter/meta-omics-toolkit/credentials'
+         extractedDBPath: "/mnt/databases/kegg_2021-01/" 
      rgi: 
        additionalParams: ""
        database:
