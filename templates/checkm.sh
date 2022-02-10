@@ -4,31 +4,26 @@ mkdir out
 FILE_ID=$(mktemp XXXXXXXX)
 FILE=!{sample}_checkm_${FILE_ID}.tsv
 
-EXTRACTED_DB="!{params.steps?.magAttributes?.checkm?.database?.extractedDBPath}"
-
 # Check developer documentation
-if [[ $EXTRACTED_DB == "null" ]] 
+if [ -z "!{EXTRACTED_DB}" ]
 then
   DATABASE=!{params.databases}/checkm
-  LOCK_FILE=${DATABASE}/checksum.txt
-  DOWNLOAD_LINK=!{params.steps.magAttributes.checkm.database.download.source}
-  MD5SUM=!{params.steps.magAttributes.checkm.database.download.md5sum}
-  S5CMD_PARAMS=!{params.steps?.magAttributes?.checkm?.download?.s5cmd?.params}
+  LOCK_FILE=${DATABASE}/lock.txt
 
   echo '{"dataRoot": "!{params.databases}/checkm/out", "remoteManifestURL": "https://data.ace.uq.edu.au/public/CheckM_databases/", "manifestType": "CheckM", "remoteManifestName": ".dmanifest", "localManifestName": ".dmanifest"}' > /tmp/DATA_CONFIG
 
   # Download checkm database if necessary
   mkdir -p ${DATABASE}
   flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
-    --link=$DOWNLOAD_LINK \
-    --httpsCommand="wget -O checkm.tar.gz ${DOWNLOAD_LINK} && tar -xzvf checkm.tar.gz && rm checkm.tar.gz" \
-    --s3FileCommand="s5cmd ${S5CMD_PARAMS} cp ${DOWNLOAD_LINK} checkm.tar.gz && tar -xzvf checkm.tar.gz && rm checkm.tar.gz" \
-    --s3DirectoryCommand="s5cmd ${S5CMD_PARAMS} cp ${DOWNLOAD_LINK} . " \
-    --s5cmdAdditionalParams="${S5CMD_PARAMS}" \
-    --localCommand="tar -xzvf ${DOWNLOAD_LINK}" \
-    --expectedMD5SUM=${MD5SUM}
+    --link=!{DOWNLOAD_LINK} \
+    --httpsCommand="wget -O checkm.tar.gz !{DOWNLOAD_LINK} && tar -xzvf checkm.tar.gz && rm checkm.tar.gz" \
+    --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} checkm.tar.gz && tar -xzvf checkm.tar.gz && rm checkm.tar.gz" \
+    --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} . " \
+    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
+    --localCommand="tar -xzvf !{DOWNLOAD_LINK}" \
+    --expectedMD5SUM=!{MD5SUM}
 else
-  echo '{"dataRoot": ${EXTRACTED_DB}, "remoteManifestURL": "https://data.ace.uq.edu.au/public/CheckM_databases/", "manifestType": "CheckM", "remoteManifestName": ".dmanifest", "localManifestName": ".dmanifest"}' > /tmp/DATA_CONFIG
+  echo '{"dataRoot": "!{EXTRACTED_DB}", "remoteManifestURL": "https://data.ace.uq.edu.au/public/CheckM_databases/", "manifestType": "CheckM", "remoteManifestName": ".dmanifest", "localManifestName": ".dmanifest"}' > /tmp/DATA_CONFIG
 fi
 
 # run suggested checkm commands
