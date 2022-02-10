@@ -2,7 +2,7 @@
 
  * `tempdir`: Temporary directory for storing files that are used to collect intermediate files.
 
- * `summary`: If true a summary folder is created storing results of all samples combined
+ * `summary`: If true a summary folder is created storing results of all samples combined.
 
  * `output`: Output directory for storing pipeline results. If an S3 bucket is specified with the corresponding S3 credentials (See S3 configuration section) then
    the output is written to S3.
@@ -17,10 +17,14 @@
  * `steps`: Steps allows to specify multiple pipeline modules for running the toolkit. We distinguish between two modes. You can either run one tool of
    the pipeline or the whole pipeline with different configurations.
 
+ * `databases`: This parameter specifies a place where files are downloaded to. If the `slurm` profile is used and databases should be downloaded, the path **must** point to a folder 
+    which is not shared between the worker nodes. If the `standard` profile is used, it **must** be folder which is shared between all nodes. 
+
 ## S3 Configuration
 
-All modules of the pipeline can be used in conjunction with S3.
+All modules inputs and outputs can be used in conjunction with S3.
 You will have to create a configuration file that can be provided to nextflow with " -c " Parameter.
+Please note that for using databases you have to provide an additional aws credentials file (see database section). 
 
 ```
 aws {
@@ -38,19 +42,6 @@ aws {
     }
 }
 ```
-
-If you want to upload tool results to s3, just update the output parameter in the configuration file from `/path/to/output` to `s3://bucket/path/to/output`
-
-If you want to use the annotation module, you also have to provide your credentials in an aws credential style.
-Create a file that looks like this and fill in your credentials:
-
-```
-[default]
-aws_access_key_id=ABCDEKEY
-aws_secret_access_key=ABCDEKEY
-```
-You have to reference this file in the annotation parameter yml's s5cmd keyfiles section.  
-
 
 ## Configuration of input parameters of the full pipeline mode
 
@@ -99,6 +90,108 @@ input:
     NCBI:
       path: test_data/SRA/samples.tsv
 ```
+
+## Database input configuration
+
+Whenever a database field can be specified as part of the tool configuration (such as in gtdb or checkm), you are able to provide different methods to
+fetch the database. In all settings, please make sure that the file has the same ending (e.g. .zip, .tar.gz) as specified in the corresponding tool section.
+With the exception of the `extractedDBPath` parameter, all other input types (https, s3,...) download the database to the folder specified in the `database` parameter.
+
+### Extracted Database Path
+
+If you have already downloaded and extracted the database, you can specify the path using the `extractedDBPath` parameter.
+This setting is available in standard and slurm mode. In slurm mode the path can be to a db on worker node.
+
+Example:
+```
+database:
+  extractedDBPath: /vol/spool/gtdb/release202
+```
+
+### HTTPS Download
+
+The toolkit is able to download and extract the database, as long as the file ending equals to the one specified in the corresponding tool section (.zip. tar.gz)
+This setting is available in standard and slurm mode. 
+
+
+Example:
+```
+database:
+  download:
+    source: 'https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb.tar.gz'
+    md5sum: 77180f6a02769e7eec6b8c22d3614d2e 
+```
+
+### Local File Path
+
+This setting allows you to reuse an already downloaded database. 
+
+Example:
+```
+database:
+  download:
+    source: '/vol/spool/gtdb.tar.gz'
+    md5sum: 77180f6a02769e7eec6b8c22d3614d2e 
+```
+
+### S3 Download
+
+You can specify an S3 link and configure the s3 call via the `s5cmd.params` and `s5cmd.keyfile` parameter.
+The `s5cmd.params` parameter allows you to set any setting available of the [s5cmd](https://github.com/peak/s5cmd) commandline tool. 
+Via the `s5cmd.kefile` parameter you can provide the path to a credentials file in case your s3 database link is not public.
+
+In the following example the compressed file will be downloaded and extracted.
+
+Example for publicly available compressed database:
+```
+database:
+  download:
+    source: 's3://databases/gtdb.tar.gz'
+    md5sum: 77180f6a02769e7eec6b8c22d3614d2e 
+    s5cmd:
+      params: '--retry-count 30 --no-sign-request --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
+```
+
+If your database is already extracted and available via s3, you can specify the s3 link using a wildcard as in the next example.
+Example for a not publicly available uncompressed database:
+
+```
+database:
+  download:
+    source: 's3://databases/gtdb/*'
+    md5sum: 77180f6a02769e7eec6b8c22d3614d2e 
+    s5cmd:
+      params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
+      keyfile: /vol/spool/credentials
+```
+
+Your credentials file should follow the AWS credentials pattern:
+
+```
+[default]
+aws_access_key_id=XXXXXXXX
+aws_secret_access_key=XXXXXX
+```
+
+### Updating Database MD5SUMs 
+
+The md5sum is computed over all md5sums of all files of the extracted database.
+If you need to update the md5sum because you updated your database you have to download the database 
+and run the following command
+
+```
+find /path/to/db -type f -exec md5sum {} \; | sort | cut -d ' ' -f 1 | md5sum | cut -d ' ' -f 1
+```
+
+### Database Download strategy
+
+The toolkit allows to download databases on multiple nodes and tries to synchronize the download process between
+multiple jobs on a node. However not all possible combinations of profiles and download types are reasonable.
+
+| PROFILE     | Download to Shared  NFS | Download to worker scratch dir | Reuse extracted directory |
+| :---------- | :--------------- | :------------------------------------ | :------------------------ |
+| STANDARD    | :material-check: |  :material-close:                     | :material-check:          |
+| SLURM       | :material-check-all: | :material-check:                  | :material-check:  On scratch and nfs dir |
 
 ## Optional configuration of computational resources used for pipeline runs
 
