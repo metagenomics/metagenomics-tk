@@ -212,22 +212,51 @@ The wiki HTML files are uploaded to S3 storage on pull request merge events in t
 You can work on these html files locally by running `make dev_wiki`. But please note that by build the static html file for upload, the navigation might change.
 You can view the final html file by building the html file (see Makefile `make help`). 
 
-## Tools
+## Utils
 
-### concurrentDownload.sh
+We do not want to duplicate code and thats why we should store methods in the lib/Utils.groovy file. The Utils class can be used in any module. 
 
-This script allows to synchronize the download of a database between multiple jobs and should be executed the following way.
+## Database Download
+
+This section explains how a developer is able to implement the database download strategy as explained in the [user documentation](##-Database-input-configuration). 
+Example implementations can be found in the gtdb, checkm or rgi scripts.
+
+The first step is to check if the user provides an already extracted database: 
+
+```
+DB_PATH=""
+if [ -z "!{EXTRACTED_DB}" ]
+then
+   # Fetch user parameter for not extracted db path and run flock (see next section)
+   DB_PATH="not extracted"
+else
+  # Set variable to extracted db path
+fi
+```
+
+Since the download is not directly handled by nextflow and paths to the files need to be downloaded, any file or directory must be
+mounted first to the container. For this reason you have to add the `setDockerMount` function with the database config as input to 
+the `containerOptions` parameter:
+
+```
+containerOptions " other container options " + setDockerMount(params.steps?.magAttributes?.checkm?.database)
+```
+
+### Filesystem locks
+
+Multiple jobs of the same process (e.g. GTDB) are able to synchronize the download of a database by using filesystem locks.
+The download is handled by the `concurrentDownload.sh` script and should be executed the following way:
 
 ```BASH
 flock LOCK_FILE concurrentDownload.sh --output=DATABASE \
            --httpsCommand=COMMAND \
            --localCommand=COMMAND \
-           --s3Command=COMMAND \
+           --s3FileCommand=COMMAND \
+           --s3DirectoryCommand=COMMAND \
+           --s5cmdAdditionalParams=S5CMD_PARAMS \
            --link=LINK \
            --expectedMD5SUM=USER_VERIFIED_DATABASE_MD5SUM
 ```
-
-Before a database is downloaded, the script checks either the MD5SUM or the database version against a user specified parameter.
 
 where
   * `LOCK_FILE` is a file that is used for locking. Processes will check if the file is currently locked before trying to download anything.
@@ -235,14 +264,33 @@ where
   
   * `DATABASE` is the directory that is used for placing the specific database.
 
-  * `COMMAND` is the command used to download and extract the database. (e.g. "wget -O data $DOWNLOAD_LINK && tar -xvf data ./card.json && rm data" for the `--httpsCommand` flag)
+  * `COMMAND` is the command used to download and extract the database and to remove it afterwards. 
+    (e.g. "wget -O data.tar.gz $DOWNLOAD_LINK && tar -xvf data.tar.gz ./card.json && rm data.tar.gz" for the `--httpsCommand` flag)
 
   * `USER_VERIFIED_DATABASE_MD5SUM` is the MD5SUM of the *extracted* database that the user should test manually before executing the pipeline.
 
+  * `S5CMD_PARAMS` allows you to set s5cmd specific parameters. For more information check the s5cmd documentation. 
+
   * `LINK` is the link that will be used to test if the file is accessible by S3, HTTPS or is available via a local path.
+
+  * `USER_VERIFIED_DATABASE_MD5SUM` Before a database is downloaded, the script checks the MD5SUM of an already downloaded database against a user specified one.
+     If it does not equal, the script will download the database again.
+
+### Tests
+
+You can test your tool against different database inputs by using the `make runDatabaseTest` command. You will have to specify multiple databases 
+that are accessible via https, S3, local path etc. Please check github actions file for how to run these tests.
+
+## Polished Variables
+
+Sometimes user input variables must be polished before they can used in our code.
+Thats why the nextflow config adds a namespace to the params namespace called `polished`.
+For example the params.databases variable must end with a slash in order to be used as part of a docker mount.
+Thats why there is a variable `params.polished.databases` that should be used instead.  
 
 ## Other
 
 1. Magic numbers should not be used.
 
 2. Variable, method, workflow, folder and process names should be written in camelcase.
+

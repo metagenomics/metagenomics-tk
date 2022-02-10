@@ -23,13 +23,16 @@ For running the plasmid assembly we suggest to run the full pipeline mode with t
     ---8<--- "../example_params/plasmid.yml"
     ```
 
-
-
 === "TSV Table"
 
     ```TSV
     ---8<--- "../test_data/plasmid/input_contigs.tsv"
     ```
+
+### Databases
+
+PLSDB needs a plasmid database as input. See [database section](##-Database-input-configuration) for possible download strategies.
+The compressed database must be a zip file. 
 
 ## Output
 
@@ -49,4 +52,6 @@ and their probabilities (`*_probs.tsv`).
 PLSDB includes a curated set of plasmid sequences that were extracted from databases like refseq.
 The metadata of found sequences are reported in `*.tsv` and the metadata of the filtered sequences in `*_kmerThreshold_X.tsv`.
 
+PLSDB needs a plasmid database as input. See [database section](##-Database-input-configuration) for possibly download strategies.
+The compressed database must be a zip file. 
 
