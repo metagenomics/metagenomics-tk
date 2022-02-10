@@ -7,14 +7,15 @@ on:
 
   workflow_dispatch:
 
+concurrency: 
+  group: ${{ github.head_ref }}
+  cancel-in-progress: true
+
 env:
   WORK_DIR: "/vol/spool"
   PROFILE: "slurm"
 jobs:
   full_pipeline:
-    concurrency: 
-      group: ${{ github.head_ref }}
-      cancel-in-progress: true
     timeout-minutes: 700
     runs-on: [ self-hosted, slurm]
     steps:
@@ -22,24 +23,25 @@ jobs:
       - name: Test Full Pipeline Run
         run: |
           bash ./scripts/test_fullPipeline.sh \
-          " --steps.magAttributes.checkm.database=${WORK_DIR}/checkm --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 " \
+          " --steps.magAttributes.checkm.database=${WORK_DIR}/checkm --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 --databases=/vol/scratch/databases/ " \
           "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
 
       - name: Test Full Pipeline run that ends with magAttributes
         run: |
           bash ./scripts/test_fullPipeline.sh \
-          "  --steps.magAttributes.checkm.database=${WORK_DIR}/checkm --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 " \
+          "  --steps.magAttributes.checkm.database=${WORK_DIR}/checkm --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 --databases=/vol/scratch/databases/ " \
           example_params/fullPipeline_fraction/fullPipeline_fraction_magAttributes.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
 
       - name: Test Full Pipeline run that ends with plasmids
         run: |
-          bash ./scripts/test_fullPipeline.sh "" \
+          bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/ " \
           example_params/fullPipeline_fraction/fullPipeline_fraction_plasmid.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
 
 
       - name: Test Full Pipeline run that ends with binning
         run: |
-          bash ./scripts/test_fullPipeline.sh "" example_params/fullPipeline_fraction/fullPipeline_fraction_binning_metabinner.yml \
+          bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/  " \
+          example_params/fullPipeline_fraction/fullPipeline_fraction_binning_metabinner.yml \
           "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
 
       - name: Test if SRA S3 Entrypoint works 
@@ -52,9 +54,6 @@ jobs:
 
 
   mag_attributes:
-    concurrency: 
-      group: ${{ github.head_ref }}
-      cancel-in-progress: true
     timeout-minutes: 700
     needs: [full_pipeline]
     runs-on: [ self-hosted, slurm]
@@ -63,19 +62,42 @@ jobs:
       - name: Test MAG Attributes
         run: |
           bash ./scripts/test_magAttributes.sh \
-          "  --steps.magAttributes.checkm.database=${WORK_DIR}/checkm  --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 " \
+          " --databases=/vol/scratch/databases/  --steps.magAttributes.checkm.database=${WORK_DIR}/checkm  --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 " \
           "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
 
       - name: Test MAG Attributes Fraction
         run: |
           bash ./scripts/test_magAttributes.sh \
-          "  --steps.magAttributes.checkm.database=${WORK_DIR}/checkm  --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 " \
+          " --databases=/vol/scratch/databases/ --steps.magAttributes.checkm.database=${WORK_DIR}/checkm  --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 " \
           example_params/magAttributes_fraction/magAttributes.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
+      - name: Test Checkm runs against different database parameters
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/checkm/" \
+                               MODULE_DB_TEST_MD5SUM="bb60fdba139d9eafa8345de1405ce581" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/checkm" MODULE_DB_TEST_S3PATH="s3://databases/checkm_data_2015_01_16.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/checkm/*"  \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/checkm \
+                               MODULE_DB_TEST_YML=example_params/magAttributes.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.magAttributes.checkm.database=env(database),del(.steps.magAttributes.gtdb,.steps.magAttributes.prokka)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/checkm_yaml_database_tests"
+      
+      - name: Test GTDB runs against different database parameters
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/gtdb/release202" \
+                               MODULE_DB_TEST_MD5SUM="f57c74e7b2d7ebf8b294ac25b913318f" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/gtdb.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/gtdb.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/gtdb/*" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
+                               MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/gtdb \
+                               MODULE_DB_TEST_YML=example_params/magAttributes.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.magAttributes.gtdb.database=env(database),del(.steps.magAttributes.checkm,.steps.magAttributes.prokka)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/gtdb_yaml_database_tests" 
 
   dereplication:
-    concurrency:
-      group: ${{ github.head_ref }}
-      cancel-in-progress: true
     timeout-minutes: 700
     runs-on: [ self-hosted, slurm]
     needs: [mag_attributes]
@@ -89,9 +111,6 @@ jobs:
           bash ./scripts/test_dereplication.sh "" example_params/dereplication_fraction/dereplication.yml \
                                                  "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
   readmapping:
-    concurrency: 
-      group: ${{ github.head_ref }}
-      cancel-in-progress: true
     timeout-minutes: 700
     needs: [dereplication]
     runs-on: [ self-hosted, slurm]
@@ -102,9 +121,6 @@ jobs:
           bash ./scripts/test_readMapping.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
 
   assembly:
-    concurrency: 
-      group: ${{ github.head_ref }}
-      cancel-in-progress: true
     timeout-minutes: 700
     needs: [readmapping]
     runs-on: [ self-hosted, slurm]
@@ -115,9 +131,6 @@ jobs:
           bash ./scripts/test_assembly.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
 
   cooccurrence:
-    concurrency: 
-      group: ${{ github.head_ref }}
-      cancel-in-progress: true
     timeout-minutes: 700
     needs: [assembly]
     runs-on: [ self-hosted, slurm]
@@ -128,9 +141,6 @@ jobs:
           bash ./scripts/test_cooccurrence.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
 
   fragment_recruitment:
-    concurrency: 
-      group: ${{ github.head_ref }}
-      cancel-in-progress: true
     timeout-minutes: 700
     needs: [cooccurrence]
     runs-on: [ self-hosted, slurm]
@@ -148,7 +158,53 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test Annotation
         run: |
-          bash ./scripts/test_annotation.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+          bash ./scripts/test_annotation.sh " --databases=/vol/scratch/databases/ " "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+      - name: Test rgi against different database configurations
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/card/card.json" \
+                               MODULE_DB_TEST_MD5SUM="a32393d17ac478c6e9d95ca2b7ec1b30" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/data" \
+                               MODULE_DB_TEST_PATH="/vol/spool/peter/data" MODULE_DB_TEST_S3PATH="s3://databases/data" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/card/*" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
+                               MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/rgi \
+                               MODULE_DB_TEST_YML=example_params/annotation.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.annotation.rgi.database=env(database),del(.steps.annotation.diamond,.steps.annotation.keggFromDiamond)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/rgi_yaml_database_tests"
+                               MODULE_DB_TEST_SKIP_TESTS="https"
+
+      - name: Test keggFromDiamond against different database configurations
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-2021-01" \
+                               MODULE_DB_TEST_MD5SUM="69538151ecf4128f4cb1e0ac21ff55b3" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/bene-test/databases/kegg.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg.tar.gz" MODULE_DB_TEST_S3PATH="s3://bene-test/databases/kegg.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://bene-test/databases/kegg_2021-01/*"  \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
+                               MODULE_DB_TEST_GENERATED_YML=vol/spool/generated_yamls/kegg \
+                               MODULE_DB_TEST_YML=example_params/annotation.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.annotation.keggFromDiamond.database=env(database),del(.steps.annotation.rgi)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/kegg_yaml_database_tests" \
+                               MODULE_DB_TEST_SKIP_TESTS="https"
+
+      - name: Test diamond against different database configurations
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-2021-01.dmnd" \
+                               MODULE_DB_TEST_MD5SUM="3826557e100dfdc3584f3e7acb62396a" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/bene-test/databases/kegg-2021-01.dmnd.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg-2021-01.dmnd.gz" MODULE_DB_TEST_S3PATH="s3://bene-test/databases/kegg-2021-01.dmnd.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://bene-test/databases/kegg-2021-01.dmnd.gz" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
+                               MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/diamond \
+                               MODULE_DB_TEST_YML=example_params/annotation.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.annotation.diamond.database=env(database),del(.steps.annotation.rgi,.steps.annotation.keggFromDiamond)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" \
+                               MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/diamond_yaml_database_tests" \
+                               MODULE_DB_TEST_SKIP_TESTS="https"
+
   plasmid:
     timeout-minutes: 700
     needs: [annotation]
@@ -157,4 +213,17 @@ jobs:
       - uses: actions/checkout@v2
       - name: Plasmid
         run: |
-          bash ./scripts/test_plasmids.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+          bash ./scripts/test_plasmids.sh " --databases=/vol/scratch/databases/  " "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+      - name: Plasmids Database Test
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/plsdb" \
+                               MODULE_DB_TEST_MD5SUM="9e919e67f8489f8b3a5289423500cb82" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/plsdb.zip" \
+                               MODULE_DB_TEST_S3PATH="s3://databases/plsdb.zip" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/plsdb/*" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
+                               MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids \
+                               MODULE_DB_TEST_YML=example_params/plasmid.yml MODULE_DB_TEST_YML_PATH="'.steps.plasmid.PLSDB.database=env(database)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/plasmid_yaml_database_tests"

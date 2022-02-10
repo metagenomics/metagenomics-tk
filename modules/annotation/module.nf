@@ -32,7 +32,7 @@ process pDiamond {
       // Therefore this place has to be mounted to the docker container to be accessible during run time.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 " + setDockerMount(params.steps?.annotation?.diamond?.database)
+      containerOptions " --user 1000:1000 " + Utils.getDockerMount(params.steps?.annotation?.diamond?.database, params) 
  
       tag "$sample"
 
@@ -44,7 +44,7 @@ process pDiamond {
       // UID mapping does not work for some reason. Every time a database directory is created while running docker,
       // the permissions are set to root. This leads to crashes later on.
       // beforeScript is one way to create a directory outside of Docker to tackle this problem. 
-      beforeScript "mkdir -p ${params.databases}"
+      beforeScript "mkdir -p ${params.polished.databases}"
 
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("diamond")
 
@@ -59,73 +59,44 @@ process pDiamond {
 
    shell:
    output = getOutput("${sample}", params.runid, "diamond", "")
+   EXTRACTED_DB=params.steps?.annotation?.diamond?.database?.extractedDBPath ?: ""
+   DOWNLOAD_LINK=params.steps?.annotation?.diamond?.database?.download?.source ?: ""
+   MD5SUM=params?.steps?.annotation?.diamond?.database?.download?.md5sum ?: ""
+   S5CMD_PARAMS=params.steps?.annotation?.diamond?.database?.download?.s5cmd?.params ?: ""
    '''
-   EXTRACTED_DB="!{params.steps?.annotation?.diamond?.database?.extractedDBPath}"
 
    DIAMOND_FILE=""
-   if [[ $EXTRACTED_DB == "null" ]] 
+   if [ -z "!{EXTRACTED_DB}" ] 
    then
-         DATABASE=!{params.databases}/diamond
-         LOCK_FILE=${DATABASE}/checksum.txt
-         DOWNLOAD_LINK=!{params.steps?.annotation?.diamond?.database?.download?.source}
-         MD5SUM=!{params?.steps?.annotation?.diamond?.database?.download?.md5sum}
+         DATABASE=!{params.polished.databases}/diamond
+         LOCK_FILE=${DATABASE}/lock.txt
 
          mkdir -p ${DATABASE}
-         S5CMD_PARAMS="!{params.steps?.annotation?.diamond?.database?.download?.s5cmd?.params}"
          flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
-            --link=$DOWNLOAD_LINK \
-            --httpsCommand="wget -O db.dmnd ${DOWNLOAD_LINK}" \
-            --s3FileCommand="s5cmd ${S5CMD_PARAMS}  cp ${DOWNLOAD_LINK} db.dmnd " \
-            --s3DirectoryCommand="s5cmd ${S5CMD_PARAMS} cp ${DOWNLOAD_LINK} db.dmnd " \
-	    --s5cmdAdditionalParams="${S5CMD_PARAMS}" \
-            --localCommand="cp ${DOWNLOAD_LINK} ./db.dmnd" \
-            --expectedMD5SUM=${MD5SUM}
+            --link=!{DOWNLOAD_LINK} \
+            --httpsCommand="wget -O db.dmnd.gz !{DOWNLOAD_LINK}  && gunzip db.dmnd.gz " \
+            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} db.dmnd.gz && gunzip db.dmnd.gz " \
+            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} db.dmnd.gz && gunzip db.dmnd.gz " \
+	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
+            --localCommand="gunzip -c !{DOWNLOAD_LINK} > ./db.dmnd" \
+            --expectedMD5SUM=!{MD5SUM}
 
           DIAMOND_FILE="${DATABASE}/out/db.dmnd"
     else
-          DIAMOND_FILE="${EXTRACTED_DB}"
+          DIAMOND_FILE="!{EXTRACTED_DB}"
     fi
 
-    # Download the database if there is a more recent one online, or if the size differs.
-    # The destination folder should be outside of the working directory to share the database with future processes.
     diamond !{params.steps.annotation.diamond.params} --threads !{task.cpus}  --out !{binID}.diamond.out \
       --db ${DIAMOND_FILE} --query !{fasta}
-
    '''
 }
-
-/**
-*
-* Set Docker mount point for database folder if the file must be downloaded first,
-* otherwise mount the file directly if it is already available on the filesystem.
-*
-**/
-def setDockerMount(config){
-    if(config.containsKey("extractedDBPath")){
-        extractedDBPath = config.extractedDBPath
-        return " --volume " + extractedDBPath + ":" + extractedDBPath ;
-    } else if (config.containsKey("download")) {
-        volumeMountStr = ""
-        if(config.download.source.startsWith("/")){
-          volumeMountStr += " --volume " + config.download.source + ":" + config.download.source + " --volume ${params.databases}:${params.databases} ";
-        } else {
-          volumeMountStr += " --volume ${params.databases}:${params.databases} ";
-        }
-        if(config.download.containsKey("s5cmd") && config.download.s5cmd.containsKey("keyfile")){
-          volumeMountStr += " --volume ${config.download.s5cmd.keyfile}:/.aws/credentials   "
-        }
-        return volumeMountStr;
-    }
-}
-
-
 
 
 process pResistanceGeneIdentifier {
    
       container "${params.rgi_image}"
       
-      containerOptions " --user 1000:1000 " + setDockerMount(params.steps.annotation.rgi.database) 
+      containerOptions " --user 1000:1000 " + Utils.getDockerMount(params?.steps?.annotation?.rgi?.database, params) 
  
       tag "$sample $binID"
 
@@ -134,7 +105,7 @@ process pResistanceGeneIdentifier {
       publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "rgi", filename) }, \
          pattern: "{**.rgi.tsv}"
       
-      beforeScript "mkdir -p ${params.databases}"
+      beforeScript "mkdir -p ${params.polished.databases}"
 
       when params.steps.containsKey("annotation") && params?.steps.annotation.containsKey("rgi")
 
@@ -147,35 +118,34 @@ process pResistanceGeneIdentifier {
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
    shell:
+   EXTRACTED_DB=params.steps?.annotation?.rgi?.database?.extractedDBPath ?: ""
+   DOWNLOAD_LINK=params.steps?.annotation?.rgi?.database?.download?.source ?: ""
+   MD5SUM=params?.steps?.annotation?.rgi?.database?.download?.md5sum ?: ""
+   S5CMD_PARAMS=params.steps?.annotation?.rgi?.database?.download?.s5cmd?.params ?: ""
    '''
    ADDITIONAL_RGI_PARAMS=!{params.steps?.annotation?.rgi?.additionalParams}
-   EXTRACTED_DB="!{params.steps?.annotation?.rgi?.database?.extractedDBPath}"
 
    # Check developer documentation
    CARD_JSON=""
-   if [[ $EXTRACTED_DB == "null" ]] 
+   if [ -z "!{EXTRACTED_DB}" ] 
    then
-        DATABASE=!{params.databases}/rgi
-        LOCK_FILE=${DATABASE}/checksum.txt
-        DOWNLOAD_LINK=!{params.steps?.annotation?.rgi?.database?.download?.source}
-        MD5SUM=!{params?.steps?.annotation?.rgi?.database?.download?.md5sum}
-        S5CMD_PARAMS=!{params.steps?.annotation?.rgi?.download?.s5cmd?.params}
+        DATABASE=!{params.polished.databases}/rgi
+        LOCK_FILE=${DATABASE}/lock.txt
 
-	echo ${MD5SUM}
         # Download CARD database
         mkdir -p ${DATABASE}
         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
-         --link=$DOWNLOAD_LINK \
-         --httpsCommand="wget -O data ${DOWNLOAD_LINK} && tar -xvf data ./card.json && rm data" \
-         --s3DirectoryCommand="s5cmd ${S5CMD_PARAMS} cp ${DOWNLOAD_LINK} . " \
-         --s3FileCommand="s5cmd ${S5CMD_PARAMS} cp ${DOWNLOAD_LINK} data && tar -xvf data ./card.json && rm data" \
-	 --s5cmdAdditionalParams="${S5CMD_PARAMS}" \
-         --localCommand="tar -xvf ${DOWNLOAD_LINK} ./card.json" \
-         --expectedMD5SUM=${MD5SUM}
+         --link=!{DOWNLOAD_LINK} \
+         --httpsCommand="wget -O data !{DOWNLOAD_LINK} && tar -xvf data && rm data" \
+         --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} . " \
+         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} data && tar -xvf data  && rm data" \
+	 --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
+         --localCommand="tar -xvf !{DOWNLOAD_LINK}" \
+         --expectedMD5SUM=!{MD5SUM}
 
-         CARD_JSON="${DATABASE}/out/card.json"
+         CARD_JSON="$(readlink -f ${DATABASE}/out/card.json)"
    else
-         CARD_JSON="${EXTRACTED_DB}"
+         CARD_JSON="!{EXTRACTED_DB}"
    fi
 
    # strip '*' sign from amino acid files
@@ -266,7 +236,7 @@ process pKEGGFromDiamond {
       // Therefore this place has to be mounted to the docker container to be accessible during runtime.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 " + setDockerMount(params.steps?.annotation?.keggFromDiamond?.database)
+      containerOptions " --user 1000:1000 " + Utils.getDockerMount(params.steps?.annotation?.keggFromDiamond?.database, params)
 
       publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromDiamond", filename) }, \
          pattern: "{**.tsv}"
@@ -274,7 +244,7 @@ process pKEGGFromDiamond {
       // UID mapping does not work for some reason. Every time a database directory is created while running docker,
       // the permissions are set to root. This leads to crashes later on.
       // beforeScript is one way to create a directory outside of Docker to tackle this problem.
-      beforeScript "mkdir -p ${params.databases}"
+      beforeScript "mkdir -p ${params.polished.databases}"
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("keggFromDiamond")
 
    input:
@@ -287,34 +257,33 @@ process pKEGGFromDiamond {
 
    shell:
       output = getOutput("${sample}", params.runid, "keggFromDiamond", "")
+      DOWNLOAD_LINK=params.steps?.annotation?.keggFromDiamond?.database?.download?.source ?: ""
+      MD5SUM=params?.steps?.annotation?.keggFromDiamond?.database?.download?.md5sum ?: ""
+      S5CMD_PARAMS=params.steps?.annotation?.keggFromDiamond?.database?.download?.s5cmd?.params ?: ""
+      EXTRACTED_DB=params.steps?.annotation?.keggFromDiamond?.database?.extractedDBPath ?: ""
       '''
-
-      EXTRACTED_DB="!{params.steps?.annotation?.keggFromDiamond?.database?.extractedDBPath}"
 
       # Check developer documentation
       KEGG_DB=""
-      if [[ $EXTRACTED_DB == "null" ]] 
+      if [[ -z "!{EXTRACTED_DB}" ]] 
       then
-        DATABASE=!{params.databases}/kegg
-        LOCK_FILE=${DATABASE}/checksum.txt
-        DOWNLOAD_LINK=!{params.steps?.annotation?.keggFromDiamond?.database?.download?.source}
-        MD5SUM=!{params?.steps?.annotation?.keggFromDiamond?.database?.download?.md5sum}
-        S5CMD_PARAMS="!{params.steps?.annotation?.keggFromDiamond?.database?.download?.s5cmd?.params}"
+        DATABASE=!{params.polished.databases}/kegg
+        LOCK_FILE=${DATABASE}/lock.txt
 
         # Download CARD database
         mkdir -p ${DATABASE}
         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
-         --link=$DOWNLOAD_LINK \
-         --httpsCommand="wget -O kegg.tar.gz ${DOWNLOAD_LINK} && tar -xzvf kegg.tar.gz && rm kegg.tar.gz " \
-         --s3DirectoryCommand="s5cmd ${S5CMD_PARAMS} cp ${DOWNLOAD_LINK} . " \
-         --s3FileCommand="s5cmd ${S5CMD_PARAMS} cp ${DOWNLOAD_LINK} kegg.tar.gz && tar -xzvf kegg.tar.gz && rm kegg.tar.gz " \
-	 --s5cmdAdditionalParams="${S5CMD_PARAMS}" \
-         --localCommand="tar -xzvf ${DOWNLOAD_LINK} . " \
-         --expectedMD5SUM=${MD5SUM}
+         --link=!{DOWNLOAD_LINK} \
+         --httpsCommand="wget -O kegg.tar.gz !{DOWNLOAD_LINK} && tar -xzvf kegg.tar.gz && rm kegg.tar.gz " \
+         --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} . " \
+         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} kegg.tar.gz && tar -xzvf kegg.tar.gz && rm kegg.tar.gz " \
+	 --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
+         --localCommand="tar -xzvf !{DOWNLOAD_LINK} " \
+         --expectedMD5SUM=!{MD5SUM}
 
          KEGG_DB="${DATABASE}/out/"
       else
-         KEGG_DB="${EXTRACTED_DB}"
+         KEGG_DB="!{EXTRACTED_DB}"
       fi
       diamond2kegg.py !{diamond_result} ${KEGG_DB} !{sample}_!{binID}_kegg.tsv 
       '''

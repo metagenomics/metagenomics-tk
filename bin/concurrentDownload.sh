@@ -35,10 +35,10 @@ mkdir -p ${DATABASE_OUT}
 function getCommand() {
     if [[ $LINK == s3://* ]]
     then
-	if [[ $(./bin/s5cmd ${S5CMD_ADDITIONAL_PARAMS} --json ls ${LINK} | jq -r '.type') == "directory" ]]; then
-		echo "$S3_DIRECTORY_COMMAND"
-	else
+	if [[ $(s5cmd ${S5CMD_ADDITIONAL_PARAMS}  ls ${LINK} | wc -l) == 1 ]]; then
 		echo "$S3_FILE_COMMAND"
+	else
+		echo "$S3_DIRECTORY_COMMAND"
 	fi
     elif [[ $LINK == https://* ]]
     then
@@ -61,7 +61,7 @@ function compareExpectedToCheckpoint() {
 # Retrieve MD5SUM based on MD5SUM of MD5SUMs
 function getMD5SUM() {
    cd ${DATABASE_OUT}
-   MD5SUM=$(find . -type f -exec md5sum {} + | sort | md5sum | cut -d ' ' -f 1)
+   MD5SUM=$(find * -type f -exec md5sum {} + | sort | cut -d ' ' -f 1 | md5sum | cut -d ' ' -f 1)
    echo ${MD5SUM}
 }
 

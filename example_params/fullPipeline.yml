@@ -31,20 +31,15 @@ steps:
     gtdb:
       buffer: 1000
       database:
-              #  extractedDBPath: "/vol/spool/gtdb/release202" 
         download:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb.tar.gz
-          md5sum: c00f2bf8a817d4987b1dda78eb525e16
-          s5cmd:
-            params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
+          md5sum: f57c74e7b2d7ebf8b294ac25b913318f
       additionalParams: " --min_af 0.65 "
     checkm:
       database:
         download:
           source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz"
-          md5sum: c51aac3735075d23945b09af9ede8fe8
-          s5cmd:
-            params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
+          md5sum: bb60fdba139d9eafa8345de1405ce581
       buffer: 200
       additionalParams:
         tree: " --reduced_tree "
@@ -91,12 +86,9 @@ steps:
     PLSDB:
       sharedKmerThreshold: 30
       database:
-              #        extractedDBPath: "/vol/spool/peter/plsdb" 
         download:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip
-          md5sum: caa846fbb689deba0e35ef559793b521
-          s5cmd:
-            params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
+          md5sum: 52c65f4f1e8024a78743ac0972395c56
       additionalParams:
         mashSketch: " -S 42 -k 21 -s 1000 "
         mashDist: " -v 0.2 -d 0.2 "
@@ -104,19 +96,16 @@ steps:
      diamond:
         params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
         database:
-          extractedDBPath: '/mnt/databases/kegg-2021-01.dmnd'
+          extractedDBPath: '/vol/spool/toolkit/kegg-2021-01.dmnd'
      keggFromDiamond:
        database:
-         extractedDBPath: "/mnt/databases/kegg_2021-01/" 
+         extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 
      rgi: 
        additionalParams: ""
        database:
-              #  extractedDBPath: "/vol/spool/peter/card.json" 
          download:
            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/data
-           md5sum: ddc655280ef838923d8d72e42833b33c
-           s5cmd:
-             params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
+           md5sum: a32393d17ac478c6e9d95ca2b7ec1b30
      prodigal:
          mode: 'meta'
 resources:

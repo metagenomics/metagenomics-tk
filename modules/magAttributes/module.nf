@@ -12,31 +12,6 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 
 
 
-/**
-*
-* Set Docker mount point for database folder if the file must be downloaded first,
-* otherwise mount the file directly if it is already available on the filesystem.
-*
-**/
-def setDockerMount(config){
-    if(config.containsKey("extractedDBPath")){
-        extractedDBPath = config.extractedDBPath
-        return " --volume " + extractedDBPath + ":" + extractedDBPath ;
-    } else if (config.containsKey("download")) {
-        volumeMountStr = ""
-        if(config.download.source.startsWith("/")){
-          volumeMountStr += " --volume " + config.download.source + ":" + config.download.source + " --volume ${params.databases}:${params.databases} ";
-        } else {
-          volumeMountStr += " --volume ${params.databases}:${params.databases} ";
-        }
-        if(config.download.containsKey("s5cmd") && config.download.s5cmd.containsKey("keyfile")){
-          volumeMountStr += " --volume ${config.download.s5cmd.keyfile}:/.aws/credentials   "
-        }
-        return volumeMountStr;
-    }
-}
-
-
 process pCmseq {
 
     container "${params.cmseq_image}"
@@ -67,9 +42,9 @@ process pCheckM {
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm")
 
-    containerOptions " --user 1000:1000 " + setDockerMount(params.steps.magAttributes.checkm.database) 
+    containerOptions " --user 1000:1000 " + Utils.getDockerMount(params.steps?.magAttributes?.checkm?.database, params) 
 
-    beforeScript "mkdir -p ${params.databases}"
+    beforeScript "mkdir -p ${params.polished.databases}"
 
     label 'medium'
 
@@ -83,6 +58,10 @@ process pCheckM {
 
     shell:
     output = getOutput("${sample}", params.runid, "checkm", "")
+    S5CMD_PARAMS=params?.steps?.magAttributes?.checkm?.database?.download?.s5cmd?.params ?: "" 
+    DOWNLOAD_LINK=params?.steps?.magAttributes?.checkm?.database?.download?.source ?: ""
+    MD5SUM=params.steps?.magAttributes?.checkm?.database?.download?.md5sum ?: ""
+    EXTRACTED_DB=params.steps?.magAttributes?.checkm?.database?.extractedDBPath ?: ""
     template 'checkm.sh'
     
 }
@@ -99,7 +78,9 @@ process pGtdbtk {
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("gtdb")
 
-    containerOptions " --user 1000:1000 " + setDockerMount(params.steps.magAttributes.gtdb.database)
+    containerOptions " --user 1000:1000 " + Utils.getDockerMount(params?.steps?.magAttributes?.gtdb?.database, params) 
+
+    beforeScript "mkdir -p ${params.polished.databases}"
 
     input:
     tuple val(sample), val(ending), path(bins) 
@@ -113,6 +94,10 @@ process pGtdbtk {
 
     shell:
     output = getOutput("${sample}", params.runid, "gtdb", "")
+    S5CMD_PARAMS=params?.steps?.magAttributes?.gtdb?.database?.download?.s5cmd?.params ?: ""
+    DOWNLOAD_LINK=params?.steps?.magAttributes?.gtdb?.database?.download?.source ?: ""
+    MD5SUM=params.steps?.magAttributes?.gtdb?.database?.download?.md5sum ?: ""
+    EXTRACTED_DB=params.steps?.magAttributes?.gtdb?.database?.extractedDBPath ?: ""
     template 'gtdb.sh'
 }
 

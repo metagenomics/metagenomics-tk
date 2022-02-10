@@ -29,7 +29,9 @@ steps:
       kmerSize: 4
   annotation:
     diamond:
-      database: '/vol/spool/databases/kegg-2021-01.dmnd'
+      params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
+      database:
+          extractedDBPath: '/vol/spool/toolkit/kegg-2021-01.dmnd'
 resources:
   large:
     cpus: 28

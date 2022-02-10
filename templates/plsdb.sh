@@ -9,7 +9,7 @@ then
   LOCK_FILE=${DATABASE}/checksum.txt
   DOWNLOAD_LINK=!{params?.steps?.plasmid?.PLSDB?.database?.download?.source}
   MD5SUM=!{params?.steps?.plasmid?.PLSDB?.database?.download?.md5sum}
-  S5CMD_PARAMS="!{params.steps?.plasmid?.PLSDB?.database?.download?.s5cmd.params}"
+  S5CMD_PARAMS="!{params.steps?.plasmid?.PLSDB?.database?.download?.s5cmd?.params}"
 
   # Download plsdb database if necessary
   mkdir -p ${DATABASE}
