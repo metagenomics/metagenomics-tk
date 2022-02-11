@@ -18,6 +18,24 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 
 /**
 *
+* Set Docker mount point for database folder if the file must be downloaded first,
+* otherwise mount the file directly if it is already available on the filesystem.
+*
+**/
+def setDockerMount(pathString){
+    if(pathString != null){
+      if(pathString.startsWith("/")){
+        return " --volume " +  pathString + ":" + pathString + " ";
+      } else {
+        return " --volume ${params.databases}:${params.databases} ";
+      }
+    }
+}
+
+
+
+/**
+*
 * Diamond is used to search for big input queries in large databases.
 * Though not as precise as blast it is way faster if you handle large amounts of data.
 * You need to call (and fill out) the aws credential file with -c to use this module! 

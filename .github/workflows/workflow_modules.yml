@@ -227,3 +227,4 @@ jobs:
                                MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids \
                                MODULE_DB_TEST_YML=example_params/plasmid.yml MODULE_DB_TEST_YML_PATH="'.steps.plasmid.PLSDB.database=env(database)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/plasmid_yaml_database_tests"
+
