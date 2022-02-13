@@ -23,13 +23,13 @@ jobs:
       - name: Test Full Pipeline Run
         run: |
           bash ./scripts/test_fullPipeline.sh \
-          " --steps.magAttributes.checkm.database=${WORK_DIR}/checkm --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 --databases=/vol/scratch/databases/ " \
+          " --databases=/vol/scratch/databases/ " \
           "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
 
       - name: Test Full Pipeline run that ends with magAttributes
         run: |
           bash ./scripts/test_fullPipeline.sh \
-          "  --steps.magAttributes.checkm.database=${WORK_DIR}/checkm --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 --databases=/vol/scratch/databases/ " \
+          " --databases=/vol/scratch/databases/ " \
           example_params/fullPipeline_fraction/fullPipeline_fraction_magAttributes.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
 
       - name: Test Full Pipeline run that ends with plasmids
@@ -62,13 +62,13 @@ jobs:
       - name: Test MAG Attributes
         run: |
           bash ./scripts/test_magAttributes.sh \
-          " --databases=/vol/scratch/databases/  --steps.magAttributes.checkm.database=${WORK_DIR}/checkm  --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 " \
+          " --databases=/vol/scratch/databases/  " \
           "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
 
       - name: Test MAG Attributes Fraction
         run: |
           bash ./scripts/test_magAttributes.sh \
-          " --databases=/vol/scratch/databases/ --steps.magAttributes.checkm.database=${WORK_DIR}/checkm  --steps.magAttributes.gtdb.database=${WORK_DIR}/gtdb/release202 " \
+          " --databases=/vol/scratch/databases/ " \
           example_params/magAttributes_fraction/magAttributes.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
       - name: Test Checkm runs against different database parameters
         run: |
