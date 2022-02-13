@@ -122,7 +122,6 @@ jobs:
 
   assembly:
     timeout-minutes: 700
-    needs: [readmapping]
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
