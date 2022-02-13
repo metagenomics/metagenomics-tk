@@ -100,12 +100,12 @@ steps:
      keggFromDiamond:
        database:
          extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 
-     rgi: 
+     rgi:
        additionalParams: ""
        database:
          download:
            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/data
-           md5sum: a32393d17ac478c6e9d95ca2b7ec1b30
+           md5sum: 2a1e01f01e904ed6e126b5ac162764c8
      prodigal:
          mode: 'meta'
 resources:
