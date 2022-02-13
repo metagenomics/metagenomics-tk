@@ -17,7 +17,7 @@ steps:
       database: 
         download:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip
-          md5sum: 52c65f4f1e8024a78743ac0972395c56
+          md5sum: 6ff7858779832c8f39d3da362c0c3123
       sharedKmerThreshold: 30
       additionalParams:
         mashSketch: " -S 42 -k 21 -s 1000 "
