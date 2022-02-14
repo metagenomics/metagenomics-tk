@@ -163,7 +163,7 @@ jobs:
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/card/card.json" \
                                MODULE_DB_TEST_MD5SUM="a32393d17ac478c6e9d95ca2b7ec1b30" \
                                MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/data" \
-                               MODULE_DB_TEST_PATH="/vol/spool/peter/data" MODULE_DB_TEST_S3PATH="s3://databases/data" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/data" MODULE_DB_TEST_S3PATH="s3://databases/data" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/card/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
