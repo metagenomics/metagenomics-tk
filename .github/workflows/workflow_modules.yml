@@ -175,14 +175,14 @@ jobs:
 
       - name: Test keggFromDiamond against different database configurations
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-2021-01" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg_2021-01" \
                                MODULE_DB_TEST_MD5SUM="69538151ecf4128f4cb1e0ac21ff55b3" \
                                MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/bene-test/databases/kegg.tar.gz" \
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg.tar.gz" MODULE_DB_TEST_S3PATH="s3://bene-test/databases/kegg.tar.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://bene-test/databases/kegg_2021-01/*"  \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
-                               MODULE_DB_TEST_GENERATED_YML=vol/spool/generated_yamls/kegg \
+                               MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/kegg \
                                MODULE_DB_TEST_YML=example_params/annotation.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.annotation.keggFromDiamond.database=env(database),del(.steps.annotation.rgi)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/kegg_yaml_database_tests" \
