@@ -13,27 +13,27 @@ yamlToTest="${10}"
 yamlKey="${11}"
 skipTests="${12}"
 
-if [[ "extracted" != *"$skipTests"* ]]; then
+if [[ -z "$skipTests" ]] || [[ "extracted" != *"$skipTests"* ]]; then
 database="{extractedDBPath: ${extractedPath} }" \
 	yq ${yamlKey} ${yamlToTest} > ${basePath}/extractedPath.yml
 fi
 
-if [[ "https" != *"$skipTests"* ]]; then
+if [[ -z "$skipTests" ]] || [[ "https" != *"$skipTests"* ]]; then
 database="{download: {source: ${https}, md5sum: ${md5sum}} }" \
 	yq ${yamlKey} ${yamlToTest} > ${basePath}/https.yml
 fi
 
-if [[ "compressed" != *"$skipTests"* ]]; then
+if [[ -z "$skipTests" ]] || [[ "compressed" != *"$skipTests"* ]]; then
 database="{download: {source: ${compressedPath}, md5sum: ${md5sum}} }" \
 	yq ${yamlKey} ${yamlToTest} > ${basePath}/compressedPath.yml
 fi
 
-if [[ "s3File" != *"$skipTests"* ]]; then
+if [[ -z "$skipTests" ]] || [[ "s3File" != *"$skipTests"* ]]; then
 database="{download: {source: ${s3File}, md5sum: ${md5sum}, s5cmd: { params: ${s5cmdCommand}, keyfile: ${s5cmdKey} }}}" \
 	yq ${yamlKey} ${yamlToTest} > ${basePath}/s3File.yml
 fi
 
-if [[ "s3Directory" != *"$skipTests"* ]]; then
+if [[ -z "$skipTests" ]] || [[ "s3Directory" != *"$skipTests"* ]]; then
 database="{download: {source: ${s3Directory}, md5sum: ${md5sum}, s5cmd: { params: ${s5cmdCommand}, keyfile: ${s5cmdKey} }}}" \
 	yq ${yamlKey} ${yamlToTest} > ${basePath}/s3Directory.yml
 fi
