@@ -75,7 +75,7 @@ jobs:
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/checkm/" \
                                MODULE_DB_TEST_MD5SUM="bb60fdba139d9eafa8345de1405ce581" \
                                MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/checkm.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/checkm_data_2015_01_16.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/checkm_data_2015_01_16.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/checkm_data_2015_01_16.tar.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/checkm/*"  \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/checkm \
@@ -216,7 +216,7 @@ jobs:
       - name: Plasmids Database Test
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/plsdb" \
-                               MODULE_DB_TEST_MD5SUM="9e919e67f8489f8b3a5289423500cb82" \
+                               MODULE_DB_TEST_MD5SUM="52c65f4f1e8024a78743ac0972395c56" \
                                MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip" \
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/plsdb.zip" \
                                MODULE_DB_TEST_S3PATH="s3://databases/plsdb.zip" \
