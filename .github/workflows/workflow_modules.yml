@@ -75,7 +75,7 @@ jobs:
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/checkm/" \
                                MODULE_DB_TEST_MD5SUM="bb60fdba139d9eafa8345de1405ce581" \
                                MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/checkm" MODULE_DB_TEST_S3PATH="s3://databases/checkm_data_2015_01_16.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/checkm.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/checkm_data_2015_01_16.tar.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/checkm/*"  \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/checkm \
@@ -161,7 +161,7 @@ jobs:
       - name: Test rgi against different database configurations
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/card/card.json" \
-                               MODULE_DB_TEST_MD5SUM="a32393d17ac478c6e9d95ca2b7ec1b30" \
+                               MODULE_DB_TEST_MD5SUM="2a1e01f01e904ed6e126b5ac162764c8" \
                                MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/data" \
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/data" MODULE_DB_TEST_S3PATH="s3://databases/data" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/card/*" \
