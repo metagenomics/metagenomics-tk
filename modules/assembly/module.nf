@@ -51,7 +51,7 @@ process pMetaspades {
     container "${params.metaspades_image}"
 
     input:
-    tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz'), path(unpairedReads)
+    tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz')
 
     output:
     tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs
