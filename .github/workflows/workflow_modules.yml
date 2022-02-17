@@ -125,9 +125,13 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
-      - name: Test Assembly
+      - name: Test Megahit Assembly
         run: |
           bash ./scripts/test_assembly.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+
+      - name: Test Metaspades Assembly
+        run: |
+          bash ./scripts/test_assembly.sh "" example_params/assemblyMetaspades.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
 
   cooccurrence:
     timeout-minutes: 700
