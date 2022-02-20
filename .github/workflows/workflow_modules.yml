@@ -39,7 +39,6 @@ jobs:
           bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/ " \
           example_params/fullPipeline_fraction/fullPipeline_fraction_plasmid.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
 
-
       - name: Test Full Pipeline run that ends with binning
         run: |
           bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/  " \
