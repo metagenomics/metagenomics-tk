@@ -24,7 +24,7 @@
 
 Diamond and KeGGFromDiamond need a specific diamond and kegg database as input.
 See [database section](##-Database-input-configuration) for possible download strategies.
-The compressed kegg database must be a tar.gz file and the diamond file must gzipped. 
+The compressed kegg database must be a tar.gz file and the diamond file must be gzipped. 
 
 ## Output
 
