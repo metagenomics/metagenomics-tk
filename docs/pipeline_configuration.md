@@ -18,7 +18,7 @@
    the pipeline or the whole pipeline with different configurations.
 
  * `databases`: This parameter specifies a place where files are downloaded to. If the `slurm` profile is used and databases should be downloaded, the path **must** point to a folder 
-    which is not shared between the worker nodes. If the `standard` profile is used, it **must** be folder which is shared between all nodes. 
+    which is not shared between the worker nodes. If the `standard` profile is used, it **must** be a folder which is shared between all nodes. 
 
 ## S3 Configuration
 
@@ -95,12 +95,12 @@ input:
 
 Whenever a database field can be specified as part of the tool configuration (such as in gtdb or checkm), you are able to provide different methods to
 fetch the database. In all settings, please make sure that the file has the same ending (e.g. .zip, .tar.gz) as specified in the corresponding tool section.
-With the exception of the `extractedDBPath` parameter, all other input types (https, s3,...) download the database to the folder specified in the `database` parameter.
+With the exception of the `extractedDBPath` parameter, all other input types (https, s3,...) will download the database to the folder specified in the `database` parameter.
 
 ### Extracted Database Path
 
 If you have already downloaded and extracted the database, you can specify the path using the `extractedDBPath` parameter.
-This setting is available in standard and slurm mode. In slurm mode the path can be to a db on worker node.
+This setting is available in standard and slurm mode. In slurm mode the path can point to a db on the worker node.
 
 Example:
 ```
@@ -110,7 +110,7 @@ database:
 
 ### HTTPS Download
 
-The toolkit is able to download and extract the database, as long as the file ending equals to the one specified in the corresponding tool section (.zip. tar.gz)
+The toolkit is able to download and extract the database, as long as the file ending equals the one specified in the corresponding tool section (.zip, tar.gz)
 This setting is available in standard and slurm mode. 
 
 
@@ -136,9 +136,9 @@ database:
 
 ### S3 Download
 
-You can specify an S3 link and configure the s3 call via the `s5cmd.params` and `s5cmd.keyfile` parameter.
+You can specify an S3 link and configure the S3 call via the `s5cmd.params` and `s5cmd.keyfile` parameter.
 The `s5cmd.params` parameter allows you to set any setting available of the [s5cmd](https://github.com/peak/s5cmd) commandline tool. 
-Via the `s5cmd.kefile` parameter you can provide the path to a credentials file in case your s3 database link is not public.
+Via the `s5cmd.kefile` parameter you can provide the path to a credentials file in case your S3 database link is not public.
 
 In the following example the compressed file will be downloaded and extracted.
 
@@ -152,7 +152,7 @@ database:
       params: '--retry-count 30 --no-sign-request --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
 ```
 
-If your database is already extracted and available via s3, you can specify the s3 link using a wildcard as in the next example.
+If your database is already extracted and available via S3, you can specify the S3 link using a wildcard as in the next example.
 Example for a not publicly available uncompressed database:
 
 ```
