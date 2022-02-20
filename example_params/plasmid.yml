@@ -11,12 +11,13 @@ steps:
     SCAPP:
       additionalParams: "   "
     PlasClass:
-      threshold: 0.5 
+      threshold: 0.5
       additionalParams: "   "
     PLSDB:
       database: 
-        source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip
-        md5sum: caa846fbb689deba0e35ef559793b521
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip
+          md5sum: 52c65f4f1e8024a78743ac0972395c56
       sharedKmerThreshold: 30
       additionalParams:
         mashSketch: " -S 42 -k 21 -s 1000 "
