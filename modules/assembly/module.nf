@@ -60,7 +60,7 @@ process pMetaspades {
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
-    outputFastg = params.steps.assembly.metaspades.fastg ? "TRUE" : "FALSE"
+    outputFastg = params?.steps?.assembly?.metaspades?.fastg ? "TRUE" : "FALSE"
     template 'metaspades.sh'
 }
 
