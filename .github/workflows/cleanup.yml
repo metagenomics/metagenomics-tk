@@ -6,6 +6,9 @@ on:
     types: [ closed ]
     branches: [ dev ]
 
+env:
+  WORK_DIR: "/vol/spool"
+
 jobs:
   merge_job:
   # this job will only run if the PR has been merged
@@ -13,7 +16,7 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
     - run: |
-        rm -rf /mnt/work/work/${{ github.head_ref }}_*
+        rm -rf  ${WORK_DIR}/${{ github.head_ref }}*
 
   close_job:
   # this job will only run if the PR has been closed without being merged
@@ -21,4 +24,4 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
     - run: |
-        rm -rf /mnt/work/work/${{ github.head_ref }}_*
+        rm -rf ${WORK_DIR}/${{ github.head_ref }}*
