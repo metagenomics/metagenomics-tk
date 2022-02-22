@@ -17,6 +17,6 @@ paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") <(seqkit stat -Ta ${ASSEMBLY_GZIPPE
 maxKmer="default"
 if [[ "!{outputFastg}" == "TRUE" ]]; then
 	# Maximum chosen Kmer
-	maxKmer=$(ls -1  ${METASPADES_OUTPUT_DIR}* | grep -P "^K" | sed 's/K//g' | sort -n | tail -n 1)
+	maxKmer=$(ls -1  ${METASPADES_OUTPUT_DIR}* | grep "^K" | sed 's/K//g' | sort -n | tail -n 1)
 	mv ${ASSEMBLY_GRAPH_OUTPUT} !{sample}_contigs.fastg
 fi
