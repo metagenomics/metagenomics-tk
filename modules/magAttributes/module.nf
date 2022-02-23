@@ -36,7 +36,7 @@ process pCheckM {
     container "${params.checkm_image}"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }, \
-      pattern: "{**.tsv}"
+      pattern: "{**.tsv,**.out,**.err,**.log,**.sh}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm")
 
@@ -66,7 +66,7 @@ process pGtdbtk {
     label 'large'
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }, \
-      pattern: "{**.tsv}"
+      pattern: "{**.tsv,**.out,**.err,**.log,**.sh}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("gtdb")
 
@@ -97,7 +97,7 @@ process pProkka {
     time '5h'
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }, \
-      pattern: "{**.gff.gz,**.fna.gz,**.faa.gz,**.sqn.gz,**.txt,**.tsv,**.fsa.gz,**.ffn.gz,**.gbk.gz,**.tbl.gz}"
+      pattern: "{**.gff.gz,**.fna.gz,**.faa.gz,**.sqn.gz,**.txt,**.tsv,**.fsa.gz,**.ffn.gz,**.gbk.gz,**.tbl.gz,**.out,**.err,**.log,**.sh}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("prokka")
 
