@@ -117,7 +117,7 @@ process pSelectRepresentative {
 
     container "${params.python_env_image}"
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/species/selectedRepresentatives", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/selectedRepresentatives", filename) }
 
     label 'medium'
 
@@ -182,7 +182,7 @@ process pGetCluster {
 
     label 'tiny'
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/species/clusters", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/clusters", filename) }
 
     container "${params.python_env_image}"
 
@@ -211,7 +211,7 @@ process pFinalize {
     val finalized
     file cluster 
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/species/clusters", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/clusters", filename) }
 
     output:
     file 'clusters.tsv' 
@@ -248,7 +248,7 @@ process pSANS {
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
-    output = getOutput(params.runid, "pasolli/strain/sans", "") 
+    output = getOutput(params.runid, "pasolli/sans", "") 
     '''
     mkdir input
     # get ID from list of genomes
@@ -270,7 +270,7 @@ process pGetStrainClusterRepresentatives {
 
     label 'tiny'
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/strains", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/sans", filename) }
 
     container "${params.python_env_image}"
 
