@@ -2,6 +2,8 @@ name: "Publish Documentation"
 on:
   push:
     branches: [ dev, master ]
+    paths-ignore:
+       - 'docker/**/VERSION'
 
 jobs:
   build_job:
