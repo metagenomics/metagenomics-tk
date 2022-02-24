@@ -5,6 +5,8 @@ on:
   pull_request:
     types: [ closed ]
     branches: [ dev ]
+    paths-ignore: 
+       - 'docker/**/VERSION'
 
 env:
   WORK_DIR: "/vol/spool"
