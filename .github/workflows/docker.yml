@@ -16,10 +16,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Log into registry
+      - name: Log into docker registry
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login ${{ secrets.DOCKER_REGISTRY_URL }} -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-      - name: Build and push the images
+      - name: Build and publish docker images
         run: |
-            make build_docker ${{ github.event.before }} ${{ github.sha }} ${{ secrets.DOCKER_REGISTRY_URL }} ${{ secrets.REPOSITORY }}
+            make build_publish_docker ${{ github.event.before }} ${{ github.sha }} ${{ secrets.DOCKER_REGISTRY_URL }} ${{ secrets.REPOSITORY }}
   
