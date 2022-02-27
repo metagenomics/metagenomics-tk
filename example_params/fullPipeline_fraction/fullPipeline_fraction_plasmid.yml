@@ -6,6 +6,7 @@ input:
     watch: false
 output: "output"
 runid: 1
+scratch: "/vol/scratch"
 databases: "/mnt/databases/"
 logDir: log
 steps:
