@@ -23,4 +23,4 @@ jobs:
 
       - name: Build and publish docker images
         run: |
-            make build_publish_docker COMMIT_START=${{ github.event.before }} COMMIT_END=${{ github.sha }} DOCKER_URL=${{ secrets.DOCKER_REGISTRY_URL }} DOCKER_REPOSITORY=${{ secrets.REPOSITORY }}
+            make build_publish_docker COMMIT_START=${{ github.event.before }} COMMIT_END=${{ github.sha }} DOCKER_REPOSITORY=${{ secrets.REPOSITORY }}
