@@ -8,9 +8,9 @@ on:
     paths:
       - 'docker/**/VERSION'
 jobs:
-  push:
-    runs-on: ubuntu-latest
 
+  push:
+    runs-on: [self-hosted, docker]
     steps:
       - uses: actions/checkout@v2
         with:
