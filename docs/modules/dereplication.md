@@ -25,7 +25,7 @@
 
 ## Output
 
-The output tsv file (`clusters.tsv`in the clusters folder) contains the columns `CLUSTER`, `GENOME` and `REPRESENTATIVE` where `CLUSTER` identifies a group of genomes, `GENOME` represents the path or
+The output tsv file (`clusters.tsv`in the cluster`s folder) contains the columns `CLUSTER`, `GENOME` and `REPRESENTATIVE` where `CLUSTER` identifies a group of genomes, `GENOME` represents the path or
 link of a genome and `REPRESENTATIVE` is either 0 or 1 (selected as representative).
 If `sans` is specified in the configuration file (see examples folder), then [SANS](https://gitlab.ub.uni-bielefeld.de/gi/sans) is used to dereplicate the genomes of every cluster that was reported by the previous step. 
 The SANS output can be found in the `sans` folder.
