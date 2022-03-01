@@ -9,15 +9,8 @@ on:
       - 'docker/**/VERSION'
 jobs:
   push:
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, dockerPush ]
     steps:
-      - name: Force Install GIT latest
-        run: |
-          apt-get install -y software-properties-common \
-          && apt-get update \
-          && add-apt-repository -y ppa:git-core/ppa \
-          && apt-get update \
-          && apt-get install -y git
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
