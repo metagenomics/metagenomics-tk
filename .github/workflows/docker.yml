@@ -3,14 +3,13 @@ name: Docker
 on:
   push:
     branches:
-      - main
+      - master
       - dev
     paths:
       - 'docker/**/VERSION'
 jobs:
 
   push:
-    runs-on: [self-hosted, dockerPush]
     steps:
       - uses: actions/checkout@v2
         with:
