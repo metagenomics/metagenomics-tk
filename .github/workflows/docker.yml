@@ -10,7 +10,7 @@ on:
 jobs:
 
   push:
-    runs-on: [self-hosted, docker]
+    runs-on: [self-hosted, dockerPush]
     steps:
       - uses: actions/checkout@v2
         with:
