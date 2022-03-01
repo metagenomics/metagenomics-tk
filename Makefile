@@ -96,7 +96,7 @@ dev_wiki: wiki_venv ## Start mkdocs developer session
 	)
 
 build_publish_docker:
-	./scripts/buildPublishImage.sh ${COMMIT_START} ${COMMIT_END} ${DOCKER_URL} ${DOCKER_REPOSITORY}
+	bash ./scripts/buildPublishImage.sh ${COMMIT_START} ${COMMIT_END} ${DOCKER_URL} ${DOCKER_REPOSITORY}
 
 	
 run_small_full_test: nextflow ## Prepares input files like downloading bins and reads and executes Nextflow. The default configuration it runs the full pipeline locally.
