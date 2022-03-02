@@ -5,6 +5,7 @@ logDir: log
 runid: 1
 databases: "/mnt/databases/"
 logLevel: 1
+scratch: "/vol/scratch"
 steps:
   plasmid:
     input: "test_data/plasmid/input_contigs.tsv"

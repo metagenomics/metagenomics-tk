@@ -95,6 +95,9 @@ dev_wiki: wiki_venv ## Start mkdocs developer session
 		mkdocs serve; \
 	)
 
+build_publish_docker:
+	bash ./scripts/buildPublishImage.sh ${COMMIT_START} ${COMMIT_END} ${DOCKER_REPOSITORY}
+
 	
 run_small_full_test: nextflow ## Prepares input files like downloading bins and reads and executes Nextflow. The default configuration it runs the full pipeline locally.
 	./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR}_${ENTRY} -profile ${PROFILE} -resume -entry ${ENTRY} -params-file ${PARAMS_FILE}; exit $$?

@@ -4,6 +4,8 @@ name: CI
 on:
   pull_request:
     branches: [ dev ]
+    paths-ignore:
+       - 'docker/**/VERSION'
 
   workflow_dispatch:
 
@@ -36,7 +38,6 @@ jobs:
         run: |
           bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/ " \
           example_params/fullPipeline_fraction/fullPipeline_fraction_plasmid.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
-
 
       - name: Test Full Pipeline run that ends with binning
         run: |
@@ -125,9 +126,13 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
-      - name: Test Assembly
+      - name: Test Megahit Assembly
         run: |
           bash ./scripts/test_assembly.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+
+      - name: Test Metaspades Assembly
+        run: |
+          bash ./scripts/test_assembly.sh "" example_params/assemblyMetaspades.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
 
   cooccurrence:
     timeout-minutes: 700

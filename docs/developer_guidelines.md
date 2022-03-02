@@ -203,6 +203,15 @@ Lets assume the user enables the plasmid module. In that case it is mandatory th
 the assembler produces a fastg file independend of the user provided settings of the assembler.
 In that case the fastg parameter of any assembler will be set to `true` by the `_wConfigurePipeline` method.
 
+## Toolkit Docker Images
+
+Dockerfiles of Docker images that are build by toolkit developers can be found in the `docker` directory.
+The name of the directory (i.e.: `toolkit-python-env` in `docker/toolkit-python-env`) is used for the docker image name. All images belong to the
+[metagenomics](https://hub.docker.com/u/metagenomics) dockerhub organisation which is owned by the Computational Metagenomics group in Bielefeld.
+A docker repository in the `metagenomics` orginsation must be created by the organisation owner, before the actual image can be build.
+The version of the image specified in the `VERSION` file (i.e. `docker/toolkit-python-env/VERSION`) is used for the image tag (`metagenomics/toolkit-python-env:VERSION`).
+An image build is only triggered if the version in the VERSION file is updated on the dev or master branch.
+
 ## Wiki
 
 For building the documentation we are using [mkdocs](https://www.mkdocs.org/) in combination with [mkdocs-material](https://squidfunk.github.io/mkdocs-material/)
