@@ -1,0 +1,11 @@
+--- /usr/local/lib/python3.6/dist-packages/checkm/checkmData.py
++++ /usr/local/lib/python3.6/dist-packages/checkm/checkmData.py
+@@ -36,7 +36,7 @@
+     """
+     def __init__(self):
+         self.logger = logging.getLogger('timestamp')
+-        self.configFile = os.path.abspath(resource_filename('checkm', 'DATA_CONFIG'))
++        self.configFile = '/tmp/DATA_CONFIG'
+         self.values = self.getConfig()
+ 
+ #-----------------------------------------------------------------------------
