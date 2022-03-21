@@ -1,4 +1,4 @@
-FROM ubuntu:21.04
+FROM ubuntu:21.10
 ENV VERSION=3.0.3
 RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime && \
     apt update && apt install git python3-pip -y && \
