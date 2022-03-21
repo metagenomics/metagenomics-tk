@@ -1,5 +1,5 @@
 FROM ubuntu:21.04
-ENV VERSION=3.0.4
+ENV VERSION=3.0.3
 RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime && \
     apt update && apt install wget git python3-pip -y && \
     git clone -b ${VERSION} https://github.com/phac-nml/mob-suite.git && \
