@@ -6,8 +6,9 @@ LABEL license="https://github.com/tseemann/prokka#licence"
 
 # install dependencies
 RUN apt-get update && \
-    apt-get -y install libdatetime-perl libxml-simple-perl libdigest-md5-perl git default-jre bioperl hmmer wget \
-                       zlib1g-dev python liblzma-dev libbz2-dev xz-utils curl g++ make &&\ 
+    apt-get -y --no-install-recommends install libdatetime-perl libxml-simple-perl libdigest-md5-perl git default-jre bioperl hmmer wget \
+                       zlib1g-dev python liblzma-dev libbz2-dev xz-utils curl g++ make \
+                       less bzip2 gzip libidn11-dev &&\ 
     apt-get clean && apt-get autoclean && rm -rf /var/lib/apt/lists/*
 
 #get Bioperl
