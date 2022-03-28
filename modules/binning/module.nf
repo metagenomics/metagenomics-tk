@@ -1,12 +1,17 @@
 nextflow.enable.dsl=2
 
-include { pGetBinStatistics as pGetBinStatistics; pGetBinStatistics as pGetNotBinnedStatistics} from './processes'
+include { pGetBinStatistics as pGetBinStatistics; \
+	pGetBinStatistics as pGetNotBinnedStatistics; \
+	pCovermContigsCoverage} from './processes'
+
+def getModulePath(module){
+    return module.name + '/' + module.version.major + "." +
+          module.version.minor + "." +
+          module.version.patch
+}
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + params.modules.binning.name + '/' +
-          params.modules.binning.version.major + "." +
-          params.modules.binning.version.minor + "." +
-          params.modules.binning.version.patch +
+    return SAMPLE + '/' + RUNID + '/' + getModulePath(params.modules.binning)  +
           '/' + TOOL + '/' + filename
 }
 
@@ -234,7 +239,10 @@ workflow wBinning {
      // Map reads against assembly and retrieve mapping quality
      SAMPLE_IDX=0
      contigs | join(inputReads, by: SAMPLE_IDX) | pBowtie
-     pBowtie.out.mappedReads | pGetMappingQuality 
+     pBowtie.out.mappedReads | (pGetMappingQuality)
+
+     pCovermContigsCoverage(Channel.value(params?.steps?.binning.containsKey("contigsCoverage")), Channel.value([getModulePath(params.modules.binning), \
+	"contigCoverage", params?.steps?.binning?.contigsCoverage?.additionalParams]), pBowtie.out.mappedReads)
 
      // Run binning tool
      contigs | join(pBowtie.out.mappedReads, by: SAMPLE_IDX) | (pMetabinner & pMetabat )
@@ -292,4 +300,5 @@ workflow wBinning {
      mapping = pBowtie.out.mappedReads
      notBinnedContigs = notBinned
      unmappedReads = pBowtie.out.unmappedReads
+     contigCoverage = pCovermContigsCoverage.out.coverage     
 }

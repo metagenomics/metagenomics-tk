@@ -29,4 +29,11 @@ class Utils {
     	return "";
     }
   }
+
+  static String getModulePath(module){
+    return module.name + '/' + module.version.major + "." +
+          module.version.minor + "." +
+          module.version.patch
+  }
+
 }
