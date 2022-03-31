@@ -74,7 +74,7 @@ jobs:
       - name: Test Checkm runs against different database parameters
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/checkm/" \
-                               MODULE_DB_TEST_MD5SUM="bb60fdba139d9eafa8345de1405ce581" \
+                               MODULE_DB_TEST_MD5SUM="0963b301dfe9345ea4be1246e32f6728" \
                                MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz" \
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/checkm_data_2015_01_16.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/checkm_data_2015_01_16.tar.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/checkm/*"  \
