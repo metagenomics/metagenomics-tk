@@ -78,3 +78,49 @@ process pCovermContigsCoverage {
 	| sed "2,$ s/^/!{sample}\t/g" > !{sample}_metabat_coverm_coverage.tsv
     '''
 }
+
+
+process pBowtie2 {
+
+    container "${params.bowtie_image}"
+
+    label 'large'
+
+    tag "Sample: $sample"
+
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
+
+    input:
+    val(run)
+    tuple val(module), val(outputToolDir), val(bowtieParams), val(getUnmapped)
+    tuple val(sample), path(contigs), path(pairedReads, stageAs: 'paired.fq.gz'), path(unpairedReads, stageAs: 'unpaired.fq.gz')
+
+    when:
+    run
+
+    output:
+    tuple val("${sample}"), file("${sample}.bam"), optional: true, emit: mappedReads
+    tuple val("${sample}"), file("${sample}_unmapped.fq.gz"), optional: true, emit: unmappedReads
+    tuple val("${sample}"), file("${sample}_bowtie_stats.txt"), optional: true, emit: stats
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    shell:
+    getUnmapped = getUnmapped ? "TRUE" : ""
+    '''
+    INDEX=!{sample}.index
+    # Build Bowtie Index
+    bowtie2-build --threads !{task.cpus} --quiet !{contigs} $INDEX
+
+    # Run Bowtie
+    bowtie2 -p !{task.cpus} !{bowtieParams} -x $INDEX \
+              --interleaved paired.fq.gz -U unpaired.fq.gz 2> !{sample}_bowtie_stats.txt \
+             | samtools view -F 3584 --threads !{task.cpus} -bS - \
+             | samtools sort -l 9 --threads !{task.cpus} - > !{sample}.bam
+
+    # If Fragment Recruitment is selected then reads that could not be mapped should be returned
+    if [[ "!{getUnmapped}" == "TRUE" ]]; then
+        samtools bam2fq -f 4 !{sample}.bam | pigz --best --processes !{task.cpus} > !{sample}_unmapped.fq.gz
+    fi
+    '''
+}
+

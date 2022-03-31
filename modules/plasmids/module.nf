@@ -1,8 +1,7 @@
 nextflow.enable.dsl=2
 
 include { pDumpLogs } from '../utils/processes'
-include { pBowtie} from '../binning/module'
-include { pCovermContigsCoverage} from '../binning/processes'
+include { pCovermContigsCoverage; pBowtie2} from '../binning/processes'
 
 include { pPlaton as pPlatonCircular; \
           pPlaton as pPlatonLinear; \
@@ -212,7 +211,8 @@ workflow _runCircularAnalysis {
 
        newPlasmids | (pPlasClassCircular & pMobTyperCircular & pViralVerifyPlasmidCircular & pPlatonCircular)
 
-       pSCAPP.out.plasmids | join(samplesReads) | pBowtie
+       pBowtie2(Channel.value(params.steps.plasmid?.containsKey("SCAPP")), Channel.value([Utils.getModulePath(params.modules.plasmids), \
+	"SCAPP/contigMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, false]), pSCAPP.out.plasmids | join(samplesReads))
 
        pCovermContigsCoverage(Channel.value(true), Channel.value([Utils.getModulePath(params?.modules?.plasmids) \
 	,"SCAPP/coverage", params?.steps?.plasmid?.SCAPP?.additionalParams?.coverm]), pBowtie.out.mappedReads) 
