@@ -10,7 +10,9 @@ include { pPlaton as pPlatonCircular; \
           pViralVerifyPlasmid as pViralVerifyPlasmidCircular; \
           pViralVerifyPlasmid as pViralVerifyPlasmidLinear; \
           pMobTyper as pMobTyperLinear; \
-          pMobTyper as pMobTyperCircular; } from './processes'
+          pMobTyper as pMobTyperCircular;
+          pFilter as pCircularPlasmidsFilter;
+          pFilter as pContigsPlasmidsFilter } from './processes'
 
 def getBasePath(SAMPLE, RUNID, TOOL){
     return SAMPLE + '/' + RUNID + '/' + params.modules.plasmids.name + '/' +
@@ -49,48 +51,6 @@ process pSCAPP {
     shell:
     output = getOutput("${sample}", params.runid, "SCAPP", "")
     template("scapp.sh")
-}
-
-
-process pFilter {
-
-    label 'small'
-
-    tag "$sample $binID"
-
-    container "${params.ubuntu_image}"
-
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "MetagenomeAssemblyContigFilter", filename) }, \
-        pattern: "{**.tsv,**.fasta.gz}"
-
-    when params.steps.containsKey("plasmid") && params.steps.plasmid.containsKey("MetagenomeAssemblyContigFilter")
-
-    input:
-    tuple val(sample), val(binID), val(size), path(contigs), path(contigHeaderFiles)
-
-    output:
-    tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}_plasmids_filtered.fasta.gz"), emit: plasmids, optional: true
-    tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
-        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
-
-    shell:
-    MIN_LENGTH=params.steps?.plasmid?.MetagenomeAssemblyContigFilter?.minLength
-    NUMBER_OF_CONTIGS=size+1
-    switch(params.steps?.plasmid?.MetagenomeAssemblyContigFilter.method) {
-      case "OR":
-       '''
-       for file in !{contigHeaderFiles}; do 
-    	 csvtk cut -f CONTIG --tabs ${file} | tail -n +2 >> filtered_header.tsv
-       done
-       sort filtered_header.tsv | uniq > filtered_sorted_header.tsv
-       seqkit grep -f filtered_sorted_header.tsv !{contigs} | seqkit seq --min-len !{MIN_LENGTH} \
-	| pigz -c > !{sample}_!{binID}_plasmids_filtered.fasta.gz
-       '''
-       break;
-      case "AND":
-       template("filter_and.sh")
-       break;
-    }
 }
 
 
@@ -166,7 +126,7 @@ workflow _runNonPlasmidAssemblyAnalysis {
 	| mix(pViralVerifyPlasmidLinear.out.plasmidsStats) \
 	| set { plasmidsStats }
 
-      if(params?.steps?.plasmid.containsKey("MetagenomeAssemblyContigFilter")){
+      if(params?.steps?.plasmid.containsKey("Filter")){
       	// Group outputs of multiple tools (e.g. Platon output and MobTyper and Plasclass) and use them for filtering
       	SAMPLE_ID_IDX = 0 
       	BIN_ID_IDX = 1 
@@ -179,9 +139,9 @@ workflow _runNonPlasmidAssemblyAnalysis {
 	 | combine(samplesContigs, by: [SAMPLE_ID_IDX, BIN_ID_IDX]) \
          | groupTuple(by: [SAMPLE_ID_IDX, BIN_ID_IDX]) \
          | map { result -> [result[SAMPLE_ID_IDX], result[BIN_ID_IDX], selectedFilterTools.size(), result[FASTA_IDX][0], result[CONTIG_HEADER_IDX]] } \
-         | pFilter
+         | pContigsPlasmidsFilter
 
-      	pFilter.out.plasmids | set { samplesContigsPlasmids }
+      	pContigsPlasmidsFilter.out.plasmids | set { samplesContigsPlasmids }
       } else {
       	samplesContigs | set { samplesContigsPlasmids }
       }
@@ -215,13 +175,45 @@ workflow _runCircularAnalysis {
 	"SCAPP/contigMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, false]), pSCAPP.out.plasmids | join(samplesReads))
 
        pCovermContigsCoverage(Channel.value(true), Channel.value([Utils.getModulePath(params?.modules?.plasmids) \
-	,"SCAPP/coverage", params?.steps?.plasmid?.SCAPP?.additionalParams?.coverm]), pBowtie.out.mappedReads) 
+	,"SCAPP/coverage", params?.steps?.plasmid?.SCAPP?.additionalParams?.coverm]), pBowtie2.out.mappedReads) 
 
-       pSCAPP.out.logs | mix(pPlasClassCircular.out.logs) | mix(pMobTyperCircular.out.logs)  \
+       // Check which tools the user has chosen for filtering contigs
+       selectedFilterTools = params?.steps?.plasmid.findAll({ tool, options -> {  options instanceof Map && options?.filter } }).collect{it.key}
+       Channel.from(selectedFilterTools) | set { toolsChannel }
+
+       // Collect output
+       pPlatonCircular.out.plasmidsStats \
+ 	| mix(pPlasClassCircular.out.probabilities) \
+	| mix(pMobTyperCircular.out.plasmidsStats) \
+	| mix(pViralVerifyPlasmidCircular.out.plasmidsStats) \
+	| set { plasmidsStats }
+
+       if(params?.steps?.plasmid.containsKey("Filter")){
+      	// Group outputs of multiple tools (e.g. Platon output and MobTyper and Plasclass) and use them for filtering
+      	 SAMPLE_ID_IDX = 0 
+      	 BIN_ID_IDX = 1 
+      	 TOOL_TYPE_IDX = 2 
+      	 CONTIG_HEADER_IDX = 3
+      	 FASTA_IDX = 4
+
+      	 plasmidsStats \
+	  | filter({result ->  result[TOOL_TYPE_IDX] in selectedFilterTools }) \
+          | combine(newPlasmids, by: [SAMPLE_ID_IDX, BIN_ID_IDX] ) \
+          | groupTuple(by: [SAMPLE_ID_IDX, BIN_ID_IDX]) \
+          | map { result -> [result[SAMPLE_ID_IDX], result[BIN_ID_IDX], selectedFilterTools.size(), result[FASTA_IDX][0], result[CONTIG_HEADER_IDX]] } \
+          | pCircularPlasmidsFilter
+
+      	 pCircularPlasmidsFilter.out.plasmids | set { filteredPlasmids }
+
+      } else {
+      	 newPlasmids | set { filteredPlasmids }
+      }
+
+      pSCAPP.out.logs | mix(pPlasClassCircular.out.logs) | mix(pMobTyperCircular.out.logs)  \
 	| mix(pViralVerifyPlasmidCircular.out.logs) | mix(pPlatonCircular.out.logs) | pDumpLogs
 
     emit:
-      plasmids = newPlasmids
+      plasmids = filteredPlasmids
       coverage = pCovermContigsCoverage.out.coverage
 }
 

@@ -232,3 +232,48 @@ process pPlaton {
     sed -e '1 s/^/SAMPLE\tBIN_ID\t/g' -e "2,$ s/^/!{sample}\t!{binID}\t/g" *.tsv > !{sample}_!{binID}_platon.tsv
     '''
 }
+
+
+process pFilter {
+
+    label 'small'
+
+    tag "$sample $binID"
+
+    container "${params.ubuntu_image}"
+
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "filtered", filename) }, \
+        pattern: "{**.tsv,**.fasta.gz}"
+
+    when params.steps.containsKey("plasmid") && params.steps.plasmid.containsKey("Filter")
+
+    input:
+    tuple val(sample), val(binID), val(size), path(contigs), path(contigHeaderFiles)
+
+    output:
+    tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}_plasmids_filtered.fasta.gz"), emit: plasmids, optional: true
+    tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+
+    shell:
+    MIN_LENGTH=params.steps?.plasmid?.Filter?.minLength
+    NUMBER_OF_CONTIGS=size+1
+    switch(params.steps?.plasmid?.Filter.method) {
+      case "OR":
+       '''
+       for file in !{contigHeaderFiles}; do 
+    	 csvtk cut -f CONTIG --tabs ${file} | tail -n +2 >> filtered_header.tsv
+       done
+       sort filtered_header.tsv | uniq > filtered_sorted_header.tsv
+       seqkit grep -f filtered_sorted_header.tsv !{contigs} | seqkit seq --min-len !{MIN_LENGTH} \
+	| pigz -c > !{sample}_!{binID}_plasmids_filtered.fasta.gz
+       '''
+       break;
+      case "AND":
+       template("filter_and.sh")
+       break;
+    }
+}
+
+
+
