@@ -229,6 +229,42 @@ jobs:
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids \
-                               MODULE_DB_TEST_YML=example_params/plasmid.yml MODULE_DB_TEST_YML_PATH="'.steps.plasmid.PLSDB.database=env(database)'" \
+                               MODULE_DB_TEST_YML=example_params/plasmid.yml MODULE_DB_TEST_YML_PATH="'.steps.plasmid.PLSDB.database=env(database),del(.steps.plasmid.Platon,.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.MobTyper)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/plasmid_yaml_database_tests"
+
+      - name: ViralVerify Plasmid Test
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/pfam.hmm" \
+                               MODULE_DB_TEST_MD5SUM="c80b75bd48ec41760bbca19c70616e36" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/pfam.hmm.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/pfam.hmm.gz" MODULE_DB_TEST_S3PATH="s3://databases/pfam.hmm.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/pfam.hmm.gz" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.plasmid.ViralVerifyPlasmid.database=env(database),del(.steps.plasmid.Platon,.steps.plasmid.PlasClass,.steps.plasmid.MobTyper,.steps.plasmid.PLSDB)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" \
+                               MODULE_DB_TEST_GENERATED_YML_DIR="plasmid_yaml_database_tests"
+
+      - name: Platon Test
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/platon" \
+                               MODULE_DB_TEST_MD5SUM="f6d1701704396182c6c9daca053eb9d6" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/platon.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/platon.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/platon.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/platon.tar.gz" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.plasmid.Platon.database=env(databaseß),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.MobTyper,.steps.plasmid.PLSDB)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="plasmid_yaml_database_tests"
+
+      - name: MobTyper Test
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/mob_suite" \
+                               MODULE_DB_TEST_MD5SUM="ed67193666c95738123e696f40df6172" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_suite.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/mob_suite.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/mob_suite.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/mob_suite.tar.gz" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.plasmid.MobTyper.database=env(database),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.Platon,.steps.plasmid.PLSDB)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="plasmid_yaml_database_tests"
 
