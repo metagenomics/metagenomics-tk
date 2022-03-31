@@ -3,15 +3,13 @@
 The plasmid module is able to identify contigs as plasmids and also to assemble plasmids from the samples fastq data. The module is executed in two
 parts. In the first part contigs of a metagenome assembler are scanned for plasmids. In the second part a plasmid assembler is used to assemble
 circular plasmids out of raw reads. All plasmid detection tools are executed on the circular assembly result and on the contigs of the metagenome assembler.
-But just in the case of the metagenome contigs, the plasmid detection tool results are also used for filtering. Just the filtered contigs are used for downstream
-analysis. 
+Just the filtered sequences are used for downstream analysis. 
 
 The identification of plasmids is based on the combined result of tools which have a `filter` property assigned. Results of all tools that
 have the `filter` property set to true are combined either by a logical `OR` or by a logical `AND`. It is also possible to simply run a tool without
 using its result as filter by setting `filter` to `false`. If a tool should be not executed then the tool section should be removed.
 Only the detected plasmids will be used for downstream analysis.
 
-All tools that can be used for filtering are also applied for detecting plasmids in circular assemblies.
 For running plasmid assembly we suggest to run the full pipeline mode with the enabled plasmids module. See input example configuration files.
 
 ## Input
@@ -38,6 +36,53 @@ For running plasmid assembly we suggest to run the full pipeline mode with the e
 
     ```TSV
     ---8<--- "../test_data/plasmid/input_contigs.tsv"
+    ```
+
+=== "Setup"
+
+    ```mermaid
+flowchart TD
+    A[Metaspades or Megahit] --> C[Assembly graph] 
+    subgraph circ [Circular Plasmids]
+        C --> D[SCAPP]
+        subgraph fc [User selected combination of tools for filtering contigs using logical OR or AND]
+        direction LR
+            pa[Platon]
+            vi[ViralVerify]
+            mo[MobTyper]
+            plc[PlasClass]
+        end
+        D --> fc
+        D --> ca[Contig Abundance]
+        D --> ga[Gene Abundance]
+        fc --> ap[Filtered Assembled Plasmids]
+    end
+    subgraph luc [Linear or Circular Plasmids]
+    gac[Gene Abundance] 
+    c[Contigs]
+        subgraph fl [User selected combination of tools for filtering contigs using logical OR or AND]
+        direction LR
+            p[Platon]
+            v[ViralVerify]
+            m[MobTyper]
+            pl[PlasClass]
+        end
+    d[Detected Plasmids]
+    c --> cac[Contig Abundance]
+    end
+    A --> c --> fl
+    fl --> d
+    
+    subgraph an [Annotation Module]
+        vf[VFDB]
+        ba[BacMet]
+        pl[PLSDB]
+        rgi[RGI]
+        ke[KEGG]
+        o[...]
+    end
+    luc --> an
+    circ --> an
     ```
 
 ### Databases
