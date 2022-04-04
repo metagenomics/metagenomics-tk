@@ -135,11 +135,11 @@ steps:
       vfdb:
         params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
         database:
-          extractedDBPath: '/vol/spool/peter/meta-omics-toolkit/bacmet/vfdb_out.dmnd'
+          extractedDBPath: '/vol/spool/toolkit/vfdb_out.dmnd'
       bacmet:
         params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
         database:
-          extractedDBPath: '/vol/spool/peter/meta-omics-toolkit/bacmet/bacmet_out.dmnd'
+          extractedDBPath: '/vol/spool/toolkit/bacmet_out.dmnd'
     rgi:
       additionalParams: ""
       database:
