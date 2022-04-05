@@ -126,7 +126,7 @@ workflow _runNonPlasmidAssemblyAnalysis {
 	| mix(pViralVerifyPlasmidLinear.out.plasmidsStats) \
 	| set { plasmidsStats }
 
-      if(params?.steps?.plasmid.containsKey("Filter")){
+      if(params?.steps?.plasmid.find{ it.key == "Filter" }?.value){
       	// Group outputs of multiple tools (e.g. Platon output and MobTyper and Plasclass) and use them for filtering
       	SAMPLE_ID_IDX = 0 
       	BIN_ID_IDX = 1 
@@ -188,7 +188,7 @@ workflow _runCircularAnalysis {
 	| mix(pViralVerifyPlasmidCircular.out.plasmidsStats) \
 	| set { plasmidsStats }
 
-       if(params?.steps?.plasmid.containsKey("Filter")){
+       if(params?.steps?.plasmid.find{ it.key == "Filter" }?.value){
       	// Group outputs of multiple tools (e.g. Platon output and MobTyper and Plasclass) and use them for filtering
       	 SAMPLE_ID_IDX = 0 
       	 BIN_ID_IDX = 1 
