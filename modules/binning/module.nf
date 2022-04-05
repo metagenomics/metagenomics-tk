@@ -199,8 +199,7 @@ workflow wBinning {
 	"contigMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, params.steps.containsKey("fragmentRecruitment")]), contigs | join(inputReads, by: SAMPLE_IDX))
 
      pBowtie2.out.mappedReads | (pGetMappingQuality)
-
-     pCovermContigsCoverage(Channel.value(params?.steps?.binning.containsKey("contigsCoverage")), Channel.value([getModulePath(params.modules.binning), \
+     pCovermContigsCoverage(Channel.value(params?.steps?.binning.find{ it.key == "contigsCoverage"}?.value), Channel.value([getModulePath(params.modules.binning), \
 	"contigCoverage", params?.steps?.binning?.contigsCoverage?.additionalParams]), pBowtie2.out.mappedReads)
 
      // Run binning tool
