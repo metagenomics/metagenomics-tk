@@ -396,7 +396,7 @@ workflow _wAnnotation {
 	     it.value?.database?.extractedDBPath ?: "", \
              it.value.database?.download?.source ?: "", \
              it.value.database?.download?.md5sum ?: "", \
-             it.value.download?.s5cmd?.params ?: "" ]
+             it.value.database?.download?.s5cmd?.params ?: "" ]
       })
 
       // Run all amino acid outputs against all databases 
