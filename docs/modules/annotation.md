@@ -3,7 +3,7 @@
 The annotation module is able to predict genes and annotate those based on a set of user provided databases.
 A user can add additional Diamond formatted databases as part of the diamond configuration by adding a key (Example: `kegg` ) with 
 a possible download strategy. See [database section](##-Database-input-configuration) for possible download strategies.
-In addition the resistance gene identifier is executed by default.
+In addition, the resistance gene identifier is executed by default.
 
 ## Input  
 

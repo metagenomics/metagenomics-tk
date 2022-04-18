@@ -7,10 +7,10 @@ Just the filtered sequences are used for downstream analysis.
 
 The identification of plasmids is based on the combined result of tools which have a `filter` property assigned. Results of all tools that
 have the `filter` property set to true are combined either by a logical `OR` or by a logical `AND`. It is also possible to simply run a tool without
-using its result as filter by setting `filter` to `false`. If a tool should be not executed then the tool section should be removed.
+using its result as filter by setting `filter` to `false`. If a tool should not be executed then the tool section should be removed.
 Only the detected plasmids will be used for downstream analysis.
 
-For running plasmid assembly we suggest to run the full pipeline mode with the enabled plasmids module. See input example configuration files.
+For running a plasmid assembly we suggest running the full pipeline mode with the enabled plasmids module. See input example configuration files.
 
 ## Input
 

@@ -43,7 +43,7 @@ process pViralVerifyPlasmid {
     tag "Sample: $sample, BinID: $binID"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "ViralVerifyPlasmid", filename) }, \
-        pattern: "{**.tsv}"
+        pattern: "{**.tsv, **.out, **.err, **.log}"
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("ViralVerifyPlasmid")
 
@@ -111,7 +111,7 @@ process pMobTyper {
     tag "Sample: $sample, BinID: $binID"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "MobTyper", filename) }, \
-        pattern: "{**.tsv}"
+        pattern: "{**.tsv, **.out, **.err, **.log}"
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("MobTyper")
 
@@ -147,7 +147,7 @@ process pPlasClass {
     tag "$sample $binID"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "PlasClass", filename) }, \
-        pattern: "{**.tsv}"
+        pattern: "{**.tsv, **.out, **.err, **.log}"
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("PlasClass")
 
@@ -177,7 +177,7 @@ process pPlaton {
     containerOptions " --user root:root " + Utils.getDockerMount(params.steps?.plasmid?.Platon?.database, params)
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "Platon", filename) }, \
-        pattern: "{**.tsv}"
+        pattern: "{**.tsv, **.out, **.err, **.log}"
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("Platon")
 
@@ -243,7 +243,7 @@ process pFilter {
     container "${params.ubuntu_image}"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "filtered", filename) }, \
-        pattern: "{**.tsv,**.fasta.gz}"
+        pattern: "{**.tsv,**.fasta.gz, **.out, **.err, **.log}"
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid.containsKey("Filter")
 
