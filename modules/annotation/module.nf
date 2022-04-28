@@ -148,8 +148,8 @@ process pResistanceGeneIdentifier {
          CARD_JSON="!{EXTRACTED_DB}"
    fi
 
-   # strip '*' sign from amino acid files
-   sed 's/*//g' !{fasta} > input.faa
+   # gunzip (if required) and strip '*' sign from amino acid files
+   zcat -f !{fasta} | sed 's/*//g' > input.faa
 
    RGI_OUTPUT=!{binID}.rgi
    # load CARD database and run rgi
@@ -161,57 +161,6 @@ process pResistanceGeneIdentifier {
    #  add sample and binid information to rgi output
    sed  '1 s/^/SAMPLE\tBIN_ID\t/g' ${RGI_OUTPUT}.txt | sed "2,$ s/^/!{sample}\t!{binID}\t/g" > !{sample}_!{binID}.rgi.tsv
    '''
-}
-
-/**
-*
-* Prodigal is used to predict genes in fasta files.
-*
-**/
-process pProdigal {
-
-      tag "$sample"
-
-      label 'small'
-
-      container "${params.prodigal_image}"
-
-      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "prodigal", filename) }, \
-         pattern: "{**.faa,**.fna,**.gff}"
-
-      when params.steps.containsKey("annotation") && params.steps.annotation.containsKey("prodigal")
-
-   input:
-      val(mode)
-      tuple val(sample), val(binID), file(fasta)
-
-   output:
-      tuple val("${sample}"), val("${binID}"), path("${binID}_prodigal.faa"), emit: amino
-      tuple val("${sample}"), val("${binID}"), path("${binID}_prodigal.fna"), emit: nucleotide
-      tuple val("${sample}"), val("${binID}"), path("${binID}_prodigal.gff"), emit: gff
-      tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
-        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
-
-
-   shell:
-      output = getOutput("${sample}", params.runid, "prodigal", "")
-      if(mode == "param")
-        '''
-        pigz -f -dc !{fasta} | prodigal -p !{params.steps.annotation.prodigal.mode} -f gff \
-        -o !{binID}_prodigal.gff -a !{binID}_prodigal.faa -d !{binID}_prodigal.fna
-        '''
-      else if(mode == "single")
-        '''
-        pigz -f -dc !{fasta} | prodigal -p single -f gff \
-        -o !{binID}_prodigal.gff -a !{binID}_prodigal.faa -d !{binID}_prodigal.fna
-        '''
-      else if(mode == "meta")
-        '''
-        pigz -f -dc !{fasta} | prodigal -p meta -f gff \
-        -o !{binID}_prodigal.gff -a !{binID}_prodigal.faa -d !{binID}_prodigal.fna
-        '''
-      else
-         error "Invalid prodigal mode: ${mode}"
 }
 
 
@@ -289,6 +238,141 @@ process pKEGGFromDiamond {
       '''
 }
 
+
+/**
+*
+* Helper method to get the appropriate flag for the prodigal mode depending on the set prodigalMode 
+* and the parameter set as params.steps.annotation.prokka.prodigalMode
+* 
+**/
+def getProdigalModeString(prodigalMode) {
+    if(prodigalMode == "param") {
+        prodigalMode = params.steps.annotation.prokka.prodigalMode
+    }
+    if (prodigalMode == "single") {
+        prodigalModeStr = ""
+    } else if (prodigalMode == "meta") {
+        prodigalModeStr = "--metagenome"
+    } else {
+        error "Invalid prodigal mode: ${prodigalMode}"
+    }
+        return prodigalModeStr
+}
+
+/**
+*
+* Helper workflow to create the input for prokka, set inputs in correct order and get taxonomy from gtdb results if available
+* 
+**/
+workflow _wCreateProkkaInput {
+    take:
+        fasta
+        gtdb
+    main:
+        DATASET_IDX = 0
+        BIN_ID_IDX = 1
+        PATH_IDX = 2
+        if(gtdb){
+            //get GTDB domains from the tsv file with Taxonomy for all bins:
+            GTDB_FILE_IDX = 0
+            DOMAIN_IDX = 0
+            gtdb | filter(it -> file(it[GTDB_FILE_IDX]).text?.trim()) \
+             | splitCsv(sep: '\t', header: true) \
+             | map { it ->  def command = it[GTDB_FILE_IDX].classification.split(';')[DOMAIN_IDX].minus('d__'); [it[GTDB_FILE_IDX].SAMPLE, it[GTDB_FILE_IDX].BIN_ID, command] } \
+             | set { gtdbDomain }
+            //set domain for each bin
+            DOMAIN_PROKKA_INPUT_IDX = 3
+            fasta  |  map {it -> [it[DATASET_IDX], it[BIN_ID_IDX], file(it[PATH_IDX]) ]} \
+             | join(gtdbDomain, by:[DATASET_IDX, BIN_ID_IDX], remainder: true) \
+             | map { it -> [ it[DATASET_IDX], it[BIN_ID_IDX], it[PATH_IDX], it[DOMAIN_PROKKA_INPUT_IDX]?:params?.steps?.annotation?.prokka?.defaultKingdom ] } \
+             | set { prokkaInput }
+        } else {
+            //if no gtdb annotation available, default to the defaultKingdom in params
+            fasta | map { it -> [it[DATASET_IDX], it[BIN_ID_IDX], it[PATH_IDX], params?.steps?.annotation?.prokka?.defaultKingdom]} | set { prokkaInput }
+        }
+        
+    emit:
+        prokkaInput
+}
+
+
+/**
+*
+* Prokka is a tool to annotate, bacterial, archael and viral genomes.
+* Input is a mode for the gene prediction tool prodigal included in prokak, which can be:
+* - "single" for larger contigs 
+* - "meta" for smaller contigs / metagenomes
+* - "param" sets prodigalMode to whatever is defined as params.steps.annotation.prokka.prodigalMode
+* Other input is a tuple consisting of sample, binID, path to fasta file and the domain (for gene prediction)
+* locusTag setzen? Eindeutiger Tag den wir ersetzen koennen
+* 
+**/
+process pProkka {
+
+    container "${params.prokka_image}"
+
+    containerOptions " --user root:root "
+
+    label 'small'
+
+    time '5h'
+
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }, \
+      pattern: "{**.gff.gz,**.fna.gz,**.faa.gz,**.sqn.gz,**.txt,**.tsv,**.fsa.gz,**.ffn.gz,**.gbk.gz,**.tbl.gz}"
+
+    when params.steps.containsKey("annotation") && params.steps.annotation.containsKey("prokka")
+
+    input:
+      val(prodigalMode)
+      tuple val(sample), val(binID), file(fasta), val(domain)
+
+    output:
+      tuple val("${sample}"), val("${binID}"), file("*.gff.gz"), emit: gff 
+      tuple val("${sample}"), val("${binID}"), file("*.faa.gz"), emit: faa 
+      tuple val("${sample}"), val("${binID}"), file("*.fna.gz"), emit: fna 
+      tuple val("${sample}"), val("${binID}"), file("*.ffn.gz"), emit: ffn 
+      tuple val("${sample}"), val("${binID}"), file("*.fsa.gz"), emit: fsa 
+      tuple val("${sample}"), val("${binID}"), file("*.gbk.gz"), emit: gbk 
+      tuple val("${sample}"), val("${binID}"), file("*.tbl.gz"), emit: tbl 
+      tuple val("${sample}"), val("${binID}"), file("*.sqn.gz"), emit: sqn 
+      tuple val("${sample}"), val("${binID}"), file("*.txt"), emit: txt 
+      //for tsv output in newer prokka version, include the following line:
+      //tuple val("${sample}"), val("${binID}"), file("*.tsv"), emit: tsv 
+      tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+
+    shell:
+      output = getOutput("${sample}", params.runid, "prokka", "")
+      prodigalModeStr = getProdigalModeString(prodigalMode)
+
+      '''
+      # Prepare Input Variables
+      BIN=!{fasta}
+      BIN_PREFIX=$(echo "${BIN%.*}")
+      BIN_ID="$(basename !{fasta})"
+
+      #remove -c option from prokka to allow gene predictions at contig borders
+      #sed -i 's/-c -m -g $gcode/-m -g $gcode/g' /usr/local/bin/prokka
+
+      # Run Prokka
+      if [[ !{fasta} == *.gz ]]; then
+        zcat -f !{fasta} > input.fasta
+        prokka !{params.steps.annotation.prokka.additionalParams} !{prodigalModeStr} --partialgenes --cpus !{task.cpus} --outdir out --kingdom !{domain} input.fasta
+        #rm input.fasta
+      else 
+        prokka !{params.steps.annotation.prokka.additionalParams} !{prodigalModeStr} --partialgenes --cpus !{task.cpus} --outdir out --kingdom !{domain} !{fasta}
+      fi
+
+      # Prepare output 
+      for f in out/* ; do suffix=$(echo "${f##*.}"); mv $f ${BIN_PREFIX}.${suffix}; done
+      #for tsv output in newer prokka version, include those two lines:
+      #sed -i  -e "2,$ s/^/!{sample}\t${BIN_ID}\t/"  -e "1,1 s/^/SAMPLE\tBIN_ID\t/g" *.tsv
+      #mv *.tsv !{sample}_prokka_${BIN_ID}.tsv
+      gzip --best *gff *.faa *.fna *.ffn *.fsa *.gbk *.sqn *tbl
+      '''
+}
+
+
 /**
 *
 * This entry point uses a file to grab all fasta files in the referenced directories for annotation.
@@ -335,38 +419,46 @@ workflow wAnnotateList {
    take:
       prodigalMode
       fasta
+      gtdb
    main:
       annotationTmpDir = params.tempdir + "/annotation"
       file(annotationTmpDir).mkdirs()
-      _wAnnotation(prodigalMode, fasta)
+      _wAnnotation(prodigalMode, fasta, gtdb)
     emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }
 
 
 
-/**
-*
-* The main annotation workflow. 
-* It is build to handle one big input fasta file.
-* On this file genes will be predicted, these will be diamond-blasted against kegg. 
-* At the end kegg-infos of the results will be collected and presented.
-*
-**/ 
 workflow _wAnnotation {
    take:
       prodigalMode
       fasta
+      gtdb
    main:
-      pProdigal(prodigalMode,fasta)
-      pDiamond(pProdigal.out.amino)
-      pProdigal.out.amino | pResistanceGeneIdentifier
+
+      _wCreateProkkaInput(fasta, gtdb)
+      pProkka(prodigalMode, _wCreateProkkaInput.out.prokkaInput)
+      
+      pDiamond(pProkka.out.faa)
+      pProkka.out.faa | pResistanceGeneIdentifier
       pKEGGFromDiamond(pDiamond.out.results)
       pKEGGFromDiamond.out.kegg_diamond | set { keggAnnotation }
 
-      pProdigal.out.logs | mix(pDiamond.out.logs) \
+      pProkka.out.logs | mix(pDiamond.out.logs) \
 	| mix(pResistanceGeneIdentifier.out.logs) \
 	| mix(pKEGGFromDiamond.out.logs) | pDumpLogs
    emit:
-      keggAnnotation   
+      keggAnnotation
+      prokka_faa = pProkka.out.faa
+      prokka_ffn = pProkka.out.ffn
+      prokka_fna = pProkka.out.fna
+      prokka_fsa = pProkka.out.fsa
+      prokka_gbk = pProkka.out.gbk
+      prokka_gff = pProkka.out.gff
+      prokka_sqn = pProkka.out.sqn
+      prokka_tbl = pProkka.out.tbl
+      //for tsv output in newer prokka version, include the following line:
+      //prokka_tsv = pProkka.out.tsv
+      prokka_txt = pProkka.out.txt 
 }
