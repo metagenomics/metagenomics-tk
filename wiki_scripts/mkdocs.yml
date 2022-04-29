@@ -3,10 +3,12 @@ site_name: Meta-Omics-Toolkit
 docs_dir: ../docs
 
 markdown_extensions:
-  - pymdownx.highlight:
-       anchor_linenums: true
   - pymdownx.inlinehilite
-  - pymdownx.superfences
+  - pymdownx.superfences:
+        custom_fences:
+           - name: mermaid
+             class: mermaid
+             format: !!python/name:mermaid2.fence_mermaid
   - pymdownx.tabbed:
       alternate_style: true 
   - pymdownx.snippets:
@@ -14,6 +16,7 @@ markdown_extensions:
 
 plugins:
   - search
+  - mermaid2
   - print-site:
         add_to_navigation: false
         print_page_title: 'Meta-Omics-Toolkit'
@@ -21,6 +24,9 @@ plugins:
         add_table_of_contents: true
         toc_title: "Table of Contents"
     
+extra_javascript:
+   - https://unpkg.com/mermaid/dist/mermaid.min.js
+
 theme:
   name: material
 

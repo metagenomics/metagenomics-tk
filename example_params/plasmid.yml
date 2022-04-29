@@ -3,26 +3,57 @@ summary: false
 output: "output"
 logDir: log
 runid: 1
-databases: "/mnt/databases/"
+databases: "/vol/scratch/databases/"
 logLevel: 1
 scratch: "/vol/scratch"
 steps:
   plasmid:
     input: "test_data/plasmid/input_contigs.tsv"
     SCAPP:
+      additionalParams: 
+        SCAPP: "  "
+        bowtie: "  "
+        coverm: "  "
+    ViralVerifyPlasmid:
+      filter: true
+      filterString: "Uncertain - plasmid or chromosomal|Plasmid"
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/pfam.hmm.gz
+          md5sum: c80b75bd48ec41760bbca19c70616e36
+      additionalParams: " --thr 7 "
+    MobTyper:
+      filter: true
+      minLength: 5000
+      additionalParams: " --min_length 9000  "
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_suite.tar.gz
+          md5sum: ed67193666c95738123e696f40df6172
+    Platon:
+      filter: false
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/platon.tar.gz
+          md5sum: f6d1701704396182c6c9daca053eb9d6
       additionalParams: "   "
     PlasClass:
-      threshold: 0.5
+      filter: true
+      threshold: 0.5 
       additionalParams: "   "
+    Filter:
+      method: "AND"
+      minLength: 0 
     PLSDB:
-      database: 
+      sharedKmerThreshold: 30
+      database:
         download:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip
           md5sum: 52c65f4f1e8024a78743ac0972395c56
-      sharedKmerThreshold: 30
       additionalParams:
         mashSketch: " -S 42 -k 21 -s 1000 "
         mashDist: " -v 0.2 -d 0.2 "
+
 resources:
   large:
     cpus: 28

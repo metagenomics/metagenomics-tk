@@ -236,7 +236,7 @@ workflow wPipeline {
 	| map{ bin -> [bin.SAMPLE, bin.BIN_ID, bin.PATH]} \
 	| set { bins}
 
-    wPlasmidsList(bins | mix(notBinnedContigs), wAssemblyList.out.fastg | join(wBinning.out.mapping))
+    wPlasmidsList(bins | mix(notBinnedContigs), wAssemblyList.out.fastg | join(wBinning.out.mapping), qcReads)
 
     if(params?.steps?.fragmentRecruitment?.frhit){
        wFragmentRecruitmentList(wBinning.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
@@ -245,11 +245,11 @@ workflow wPipeline {
     wMagAttributesList(wBinning.out.bins)
     mapJoin(wMagAttributesList.out.checkm, wBinning.out.binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
 
-    wAnnotatePlasmidList(Channel.value("meta"), wPlasmidsList.out.newPlasmids, null)
+    wAnnotatePlasmidList(Channel.value("meta"), wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage)
 
-    wAnnotateBinsList(Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null)
+    wAnnotateBinsList(Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, wBinning.out.contigCoverage)
 
-    wAnnotateUnbinnedList(Channel.value("meta"), notBinnedContigs, null)
+    wAnnotateUnbinnedList(Channel.value("meta"), notBinnedContigs, null, wBinning.out.contigCoverage)
 
     _wAggregate(wQualityControlList.out.readsPair, wQualityControlList.out.readsSingle, binsStats, wMagAttributesList.out.gtdb )
 }

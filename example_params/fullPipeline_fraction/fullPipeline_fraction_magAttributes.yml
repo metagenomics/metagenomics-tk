@@ -24,6 +24,8 @@ steps:
         bowtie: " --quiet --very-sensitive "
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
+    contigsCoverage:
+      additionalParams: ""
     metabat:
       additionalParams: "   "
   magAttributes:
@@ -38,7 +40,7 @@ steps:
       database:
         download:
           source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz"
-          md5sum: bb60fdba139d9eafa8345de1405ce581
+          md5sum: 0963b301dfe9345ea4be1246e32f6728
       buffer: 200
       additionalParams:
         tree: " --reduced_tree "
@@ -49,8 +51,9 @@ steps:
       additionalParams: " --mincontiglen 200 "
   annotation:
     diamond:
-      params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
-      database:
+      kegg:
+        params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
+        database:
           extractedDBPath: '/vol/spool/toolkit/kegg-2021-01.dmnd'
 resources:
   large:

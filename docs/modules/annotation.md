@@ -1,5 +1,10 @@
 # Annotation
 
+The annotation module is able to predict genes and annotate those based on a set of user provided databases.
+A user can add additional Diamond formatted databases as part of the diamond configuration by adding a key (Example: `kegg` ) with 
+a possible download strategy. See [database section](##-Database-input-configuration) for possible download strategies.
+In addition, the resistance gene identifier is executed by default.
+
 ## Input  
 
 === "Command"
@@ -22,15 +27,16 @@
 
 ### Databases
 
-Diamond and KeGGFromDiamond need a specific diamond and kegg database as input.
+KeGGFromDiamond is only executed if genes are searched against the kegg diamond database. In the diamond section there must be a diamond run specified with `kegg` as 
+identifier (see example configuration file).
+KeGGFromDiamond need a kegg database as input which must be a tar.gz file.
 See [database section](##-Database-input-configuration) for possible download strategies.
-The compressed kegg database must be a tar.gz file and the diamond file must be gzipped. 
 
 ## Output
 
 ### Diamond
 
-Calculated significant matches of a nucleotide/protein query which was compared against a database.
+Calculated significant matches of a nucleotide/protein query which was compared against a user provided set of databases.
 
 ### Prodigal
 

@@ -4,7 +4,7 @@ PLASMIDS_OUTPUT=!{sample}_plasmids.fasta.gz
 # https://github.com/Shamir-Lab/SCAPP/issues/26
 trap 'if [[ $? == 1 ]]; then echo OK; exit 0; fi' EXIT
 
-scapp -g !{assemblyGraph} -k !{maxKmer} -p !{task.cpus} !{params.steps.plasmid.SCAPP.additionalParams} -b !{bam} -o .
+scapp -g !{assemblyGraph} -k !{maxKmer} -p !{task.cpus} !{params.steps.plasmid.SCAPP.additionalParams.SCAPP} -b !{bam} -o .
 
 if [ -s *.confident_cycs.fasta ]; then
   # The following function modifies the assembly fasta headers according to the pattern: SAMPLEID_SEQUENCECOUNTER_SEQUENCEHASH
@@ -16,6 +16,6 @@ if [ -s *.confident_cycs.fasta ]; then
 	        | csvtk --tabs transpose | sed 's/"//g' > ${PLASMID_STATS}
 
   echo -e "SAMPLE\tID\tLENGTH\tGC" > ${PLASMID_STATS}
-  seqkit fx2tab -l -g -n -i  test1_plasmids.fasta.gz \
+  seqkit fx2tab -l -g -n -i  ${PLASMIDS_OUTPUT} \
 	| sed "s/^/!{sample}\t/g"  >> ${PLASMID_STATS} 
 fi

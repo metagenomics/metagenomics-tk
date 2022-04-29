@@ -9,9 +9,10 @@ steps:
    annotation:
       input: "test_data/annotation/input_small.tsv"
       diamond:
-         params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
-         database:
-           extractedDBPath: '/vol/spool/toolkit/kegg-2021-01.dmnd'
+        kegg:
+          params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
+          database:
+             extractedDBPath: '/vol/spool/toolkit/kegg-2021-01.dmnd'
       keggFromDiamond:
          database:
            extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/"

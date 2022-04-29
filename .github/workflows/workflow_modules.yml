@@ -74,7 +74,7 @@ jobs:
       - name: Test Checkm runs against different database parameters
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/checkm/" \
-                               MODULE_DB_TEST_MD5SUM="bb60fdba139d9eafa8345de1405ce581" \
+                               MODULE_DB_TEST_MD5SUM="0963b301dfe9345ea4be1246e32f6728" \
                                MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz" \
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/checkm_data_2015_01_16.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/checkm_data_2015_01_16.tar.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/checkm/*"  \
@@ -162,7 +162,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test Annotation
         run: |
-          bash ./scripts/test_annotation.sh " --steps.annotation.diamond.database.extractedDBPath=/vol/spool/toolkit/kegg-2021-01.dmnd --steps.annotation.keggFromDiamond.database.extractedDBPath=/vol/spool/toolkit/kegg_2021-01/ --databases=/vol/scratch/databases/ " "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+          bash ./scripts/test_annotation.sh " --steps.annotation.diamond.kegg.database.extractedDBPath=/vol/spool/toolkit/kegg-2021-01.dmnd --steps.annotation.keggFromDiamond.database.extractedDBPath=/vol/spool/toolkit/kegg_2021-01/ --databases=/vol/scratch/databases/ " "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
       - name: Test rgi against different database configurations
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/card/card.json" \
@@ -204,7 +204,7 @@ jobs:
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/diamond \
                                MODULE_DB_TEST_YML=example_params/annotation.yml \
-                               MODULE_DB_TEST_YML_PATH="'.steps.annotation.diamond.database=env(database),del(.steps.annotation.rgi,.steps.annotation.keggFromDiamond)'" \
+                               MODULE_DB_TEST_YML_PATH="'.steps.annotation.diamond.kegg.database=env(database),del(.steps.annotation.rgi,.steps.annotation.keggFromDiamond)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" \
                                MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/diamond_yaml_database_tests" \
                                MODULE_DB_TEST_SKIP_TESTS="https"
@@ -229,6 +229,42 @@ jobs:
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids \
-                               MODULE_DB_TEST_YML=example_params/plasmid.yml MODULE_DB_TEST_YML_PATH="'.steps.plasmid.PLSDB.database=env(database)'" \
+                               MODULE_DB_TEST_YML=example_params/plasmid.yml MODULE_DB_TEST_YML_PATH="'.steps.plasmid.PLSDB.database=env(database),del(.steps.plasmid.Platon,.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.MobTyper)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/plasmid_yaml_database_tests"
+
+      - name: ViralVerify Plasmid Test
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/pfam.hmm" \
+                               MODULE_DB_TEST_MD5SUM="c80b75bd48ec41760bbca19c70616e36" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/pfam.hmm.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/pfam.hmm.gz" MODULE_DB_TEST_S3PATH="s3://databases/pfam.hmm.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/pfam.hmm.gz" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.plasmid.ViralVerifyPlasmid.database=env(database),del(.steps.plasmid.Platon,.steps.plasmid.PlasClass,.steps.plasmid.MobTyper,.steps.plasmid.PLSDB)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" \
+                               MODULE_DB_TEST_GENERATED_YML_DIR="plasmid_yaml_database_tests"
+
+      - name: Platon Test
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/platon" \
+                               MODULE_DB_TEST_MD5SUM="f6d1701704396182c6c9daca053eb9d6" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/platon.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/platon.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/platon.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/platon.tar.gz" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.plasmid.Platon.database=env(databaseß),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.MobTyper,.steps.plasmid.PLSDB)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="plasmid_yaml_database_tests"
+
+      - name: MobTyper Test
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/mob_suite" \
+                               MODULE_DB_TEST_MD5SUM="ed67193666c95738123e696f40df6172" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_suite.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/mob_suite.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/mob_suite.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/mob_suite.tar.gz" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.plasmid.MobTyper.database=env(database),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.Platon,.steps.plasmid.PLSDB)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="plasmid_yaml_database_tests"
 

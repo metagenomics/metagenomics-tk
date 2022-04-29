@@ -3,7 +3,7 @@ ASSEMBLY_OUTPUT=${METASPADES_OUTPUT_DIR}/contigs.fasta
 ASSEMBLY_GRAPH_OUTPUT=${METASPADES_OUTPUT_DIR}/assembly_graph.fastg
 
 # run metaspades
-spades.py -t !{task.cpus} --meta -o ${METASPADES_OUTPUT_DIR} --12 interleaved.fq.gz !{params.steps.assembly.metaspades.additionalParams}
+spades.py -t !{task.cpus} --memory $(echo !{task.memory} | cut -f 1 -d ' ') --meta -o ${METASPADES_OUTPUT_DIR} --12 interleaved.fq.gz !{params.steps.assembly.metaspades.additionalParams}
 
 ASSEMBLY_GZIPPED_OUTPUT=!{sample}_contigs.fa.gz
 
