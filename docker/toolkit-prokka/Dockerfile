@@ -33,10 +33,7 @@ RUN wget https://github.com/tseemann/barrnap/archive/0.9.tar.gz &&\
     make test
 
 #get prokka
-RUN git clone https://github.com/tseemann/prokka && \
-    cd prokka && \
-    git fetch origin pull/219/head:partialgenes && \
-    git checkout partialgenes
+RUN git clone https://github.com/nkleinbo/prokka
 
 # install tbl2asn manually since the one included with prokka is expired.
 RUN wget ftp://ftp.ncbi.nih.gov/toolbox/ncbi_tools/converters/by_program/tbl2asn/linux64.tbl2asn.gz -O linux64.tbl2asn.gz && \
