@@ -33,8 +33,35 @@ process pMegahit {
 
     shell:
     includeUnpairedReads = unpairedReads.name != "NOT_SET" ? " -r ${unpairedReads} " : ''
-    convertToFastg = params.steps.assembly.megahit.fastg ? "TRUE" : "FALSE"
+    convertToFastg = params?.steps?.assembly?.megahit?.fastg ? "TRUE" : "FALSE"
     template 'megahit.sh'
+}
+
+
+process pMetaspades {
+
+    label 'large'
+
+    tag "$sample"
+
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "metaspades", filename) }
+
+    when params?.steps.containsKey("assembly") && params?.steps?.assembly.containsKey("metaspades")
+
+    container "${params.metaspades_image}"
+
+    input:
+    tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz')
+
+    output:
+    tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs
+    tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigsStats
+    tuple val("${sample}"), path("${sample}_contigs.fastg"), env(maxKmer), emit: fastg, optional: true
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    shell:
+    outputFastg = params?.steps?.assembly?.metaspades?.fastg ? "TRUE" : "FALSE"
+    template 'metaspades.sh'
 }
 
 
@@ -84,13 +111,25 @@ workflow _wAssembly {
      take:
        readsList
      main:
-       readsList | pMegahit
+       readsList | pMegahit 
+
+       // Metaspades does only accept paired end
+       // Thats why orphaned reads are filtered out
+       SAMPLE_ID = 0
+       PAIRED_END_ID = 1
+       readsList | map { seq -> [seq[SAMPLE_ID], seq[PAIRED_END_ID]] } | pMetaspades
+
        if(params.summary){
-         pMegahit.out.contigsStats | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
+         pMegahit.out.contigsStats | mix(pMetaspades.out.contigsStats) | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
            [ "contigs_stats.tsv", item[1].text ]
          }
        }
+      
+       pMegahit.out.contigs | mix(pMetaspades.out.contigs) | set { contigs }
+
+       pMegahit.out.fastg | mix(pMetaspades.out.fastg) | set { fastg }
+       
     emit:
-      contigs = pMegahit.out.contigs
-      fastg = pMegahit.out.fastg
+      contigs = contigs
+      fastg = fastg
 }

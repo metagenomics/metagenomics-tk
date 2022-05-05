@@ -4,7 +4,35 @@ mkdir output
 ls -1 !{bins} | xargs -I {} readlink -f {} > bin.path
 paste -d$'\t' bin.path <(for p in $(cat bin.path); do basename $p; done) > input.tsv
 
-export GTDBTK_DATA_PATH=/refdata
+#EXTRACTED_DB="!{params.steps?.magAttributes?.gtdb?.database?.extractedDBPath}"
+
+# Check developer documentation
+GTDB=""
+if [ -z "!{EXTRACTED_DB}" ]
+then 
+  DATABASE=!{params.databases}/gtdb
+  LOCK_FILE=${DATABASE}/lock.txt
+#  DOWNLOAD_LINK=!{params?.steps?.magAttributes?.gtdb?.database?.download?.source}
+#  MD5SUM=!{params?.steps?.magAttributes?.gtdb?.database?.download?.md5sum}
+#  S5CMD_PARAMS="!{params.steps?.magAttributes?.gtdb?.database?.download?.s5cmd?.params}"
+
+  # Download plsdb database if necessary
+  mkdir -p ${DATABASE}
+  flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
+	--link=!{DOWNLOAD_LINK} \
+	--httpsCommand="wget -O gtdb.tar.gz !{DOWNLOAD_LINK} && tar xzvf gtdb.tar.gz && rm gtdb.tar.gz" \
+	--s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} gtdb.tar.gz  && tar xzvf gtdb.tar.gz && rm gtdb.tar.gz " \
+        --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} . " \
+	--s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
+	--localCommand="tar -xzvf !{DOWNLOAD_LINK} " \
+	--expectedMD5SUM=!{MD5SUM}
+
+  GTDB=$(readlink -f ${DATABASE}/out/*)
+else
+  GTDB=!{EXTRACTED_DB}
+fi
+
+export GTDBTK_DATA_PATH=${GTDB}
 gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus} \
 	--extension !{ending} !{params.steps.magAttributes.gtdb.additionalParams}
 

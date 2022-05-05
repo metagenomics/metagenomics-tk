@@ -2,6 +2,9 @@ nextflow.enable.dsl=2
 
 include { pDumpLogs } from '../utils/processes'
 
+import java.nio.file.Files
+import java.nio.file.Paths
+
 mode = 'mode_not_set'
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
@@ -12,23 +15,10 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
           '/' + TOOL + '/' + filename
 }
 
-/**
-* The "database_mode" is used to choose which database path is expected.
-* If the Diamond-databasepath starts with "https://" or "s3://" the object storage based mode is used.
-* All other paths are seen as "local" mode paths and offline stored copys are expected.
-**/
-def set_mode(pathString){
-    if(pathString != null){
-      if (pathString.startsWith("s3://")){
-        mode = "S3";
-      } else if (pathString.startsWith("https://")) {
-        mode = "S3";
-      } else {
-        mode = "local";
-      }
-    }
-}
 
+def constructParametersObject(){
+  return params?.steps?.annotation?.diamond.findAll().collect{ Utils.getDockerMount(it.value?.database, params)}.join(" ")
+}
 
 /**
 *
@@ -40,58 +30,64 @@ def set_mode(pathString){
 process pDiamond {
    
       container "${params.diamond_image}"
-      
+
       // Databases will be downloaded to a fixed place so that they can be used by future processes.
       // These fixed place has to be outside of the working-directory to be easy to find for every process.
       // Therefore this place has to be mounted to the docker container to be accessible during run time.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} \
-      --volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
+      containerOptions " --user 1000:1000 " + constructParametersObject()
  
-      tag "$sample"
+      tag "Sample: $sample, Database: $dbType"
 
       label 'large'
 
-      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "diamond", filename) }, \
+      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "diamond/${dbType}", filename) }, \
          pattern: "{**.diamond.out}"
       
       // UID mapping does not work for some reason. Every time a database directory is created while running docker,
       // the permissions are set to root. This leads to crashes later on.
       // beforeScript is one way to create a directory outside of Docker to tackle this problem. 
-      beforeScript "mkdir -p ${params.databases}"
+      beforeScript "mkdir -p ${params.polished.databases}"
 
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("diamond")
 
    input:
-      tuple val(sample), val(binID), file(fasta)
+      tuple val(sample), val(binID), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
-      tuple val("${sample}"), val("${binID}"), path("${binID}.diamond.out"), emit: results
+      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.diamond.out"), emit: results
       tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
 
    shell:
-      output = getOutput("${sample}", params.runid, "diamond", "")
-      if( mode == 'S3')
-         '''
-         # Download the database if there is a more recent one online, or if the size differs.
-         # The destination folder should be outside of the working directory to share the database with future processes.
-         DATABASE=!{params.databases}/diamond
+   output = getOutput("${sample}", params.runid, "diamond", "")
+   '''
+   DIAMOND_FILE=""
+   if [ -z "!{EXTRACTED_DB}" ] 
+   then
+         DATABASE=!{params.polished.databases}/diamond
+         LOCK_FILE=${DATABASE}/lock.txt
+
          mkdir -p ${DATABASE}
-         DIAMOND_PATH=$(readlink -f ${DATABASE}/*)
-         s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.diamond.database} ${DATABASE}
-         diamond !{params.steps.annotation.diamond.params} --threads !{task.cpus}  --out !{binID}.diamond.out \
-         --db ${DIAMOND_PATH} --query !{fasta}
-         '''
-      else if( mode == 'local')
-         '''
-         diamond !{params.steps.annotation.diamond.params} --threads !{task.cpus} --out !{binID}.diamond.out \
-         --db !{params.steps.annotation.diamond.database} --query !{fasta}
-         '''
-      else
-         error "Invalid annotation database mode: ${mode}"
+         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
+            --link=!{DOWNLOAD_LINK} \
+            --httpsCommand="wget -O db.dmnd.gz !{DOWNLOAD_LINK}  && gunzip db.dmnd.gz " \
+            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} db.dmnd.gz && gunzip db.dmnd.gz " \
+            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} db.dmnd.gz && gunzip db.dmnd.gz " \
+	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
+            --localCommand="gunzip -c !{DOWNLOAD_LINK} > ./db.dmnd" \
+            --expectedMD5SUM=!{MD5SUM}
+
+          DIAMOND_FILE="${DATABASE}/out/db.dmnd"
+    else
+          DIAMOND_FILE="!{EXTRACTED_DB}"
+    fi
+
+    diamond !{parameters} --threads !{task.cpus}  --out !{binID}.!{dbType}.diamond.out \
+      --db ${DIAMOND_FILE} --query !{fasta}
+   '''
 }
 
 
@@ -99,8 +95,7 @@ process pResistanceGeneIdentifier {
    
       container "${params.rgi_image}"
       
-      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} \
-                        --volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
+      containerOptions " --user 1000:1000 " + Utils.getDockerMount(params?.steps?.annotation?.rgi?.database, params) 
  
       tag "$sample $binID"
 
@@ -108,9 +103,8 @@ process pResistanceGeneIdentifier {
 
       publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "rgi", filename) }, \
          pattern: "{**.rgi.tsv}"
-
       
-      beforeScript "mkdir -p ${params.databases}"
+      beforeScript "mkdir -p ${params.polished.databases}"
 
       when params.steps.containsKey("annotation") && params?.steps.annotation.containsKey("rgi")
 
@@ -123,36 +117,90 @@ process pResistanceGeneIdentifier {
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
    shell:
-      output = getOutput("${sample}", params.runid, "rgi", "")
-      '''
-      DATABASE=!{params.databases}/rgi
-      LOCK_FILE=${DATABASE}/checksum.txt
-      DOWNLOAD_LINK=!{params.steps.annotation.rgi.source}
-      MD5SUM=!{params.steps.annotation.rgi.md5sum}
-      ADDITIONAL_RGI_PARAMS=!{params.steps.annotation.rgi.additionalParams}
+   EXTRACTED_DB=params.steps?.annotation?.rgi?.database?.extractedDBPath ?: ""
+   DOWNLOAD_LINK=params.steps?.annotation?.rgi?.database?.download?.source ?: ""
+   MD5SUM=params?.steps?.annotation?.rgi?.database?.download?.md5sum ?: ""
+   S5CMD_PARAMS=params.steps?.annotation?.rgi?.database?.download?.s5cmd?.params ?: ""
+   '''
+   ADDITIONAL_RGI_PARAMS=!{params.steps?.annotation?.rgi?.additionalParams}
 
-      # Download CARD database
-      mkdir -p ${DATABASE}
-      flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
-         --link=$DOWNLOAD_LINK \
-         --httpsCommand="wget -O data ${DOWNLOAD_LINK} && tar -xvf data ./card.json && rm data" \
-         --s3Command="s5cmd !{params.steps?.annotation?.s5cmd.params} cp ${DOWNLOAD_LINK} data && tar -xvf data ./card.json && rm data" \
-         --localCommand="tar -xvf ${DOWNLOAD_LINK} ./card.json" \
-         --expectedMD5SUM=${MD5SUM}
+   # Check developer documentation
+   CARD_JSON=""
+   if [ -z "!{EXTRACTED_DB}" ] 
+   then
+        DATABASE=!{params.polished.databases}/rgi
+        LOCK_FILE=${DATABASE}/lock.txt
 
-      # strip '*' sign from amino acid files
-      sed 's/*//g' !{fasta} > input.faa
+        # Download CARD database
+        mkdir -p ${DATABASE}
+        flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
+         --link=!{DOWNLOAD_LINK} \
+         --httpsCommand="wget -O data !{DOWNLOAD_LINK} && tar -xvf data && rm data" \
+         --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} . " \
+         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} data && tar -xvf data  && rm data" \
+	 --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
+         --localCommand="tar -xvf !{DOWNLOAD_LINK}" \
+         --expectedMD5SUM=!{MD5SUM}
 
-      RGI_OUTPUT=!{binID}.rgi
-      # load CARD database and run rgi
-      rgi load --card_json ${DATABASE}/out/card.json --local
-      rgi main --input_sequence input.faa \
-                  --output_file ${RGI_OUTPUT} --input_type protein --local \
-                  --alignment_tool DIAMOND --num_threads !{task.cpus} --clean ${ADDITIONAL_RGI_PARAMS}
+         CARD_JSON="$(readlink -f ${DATABASE}/out/card.json)"
+   else
+         CARD_JSON="!{EXTRACTED_DB}"
+   fi
 
-      #  add sample and binid information to rgi output
-      sed  '1 s/^/SAMPLE\tBIN_ID\t/g' ${RGI_OUTPUT}.txt | sed "2,$ s/^/!{sample}\t!{binID}\t/g" > !{sample}_!{binID}.rgi.tsv
-       '''
+   # strip '*' sign from amino acid files
+   sed 's/*//g' !{fasta} > input.faa
+
+   RGI_OUTPUT=!{binID}.rgi
+   # load CARD database and run rgi
+   rgi load --card_json ${CARD_JSON} --local
+   rgi main --input_sequence input.faa \
+               --output_file ${RGI_OUTPUT} --input_type protein --local \
+               --alignment_tool DIAMOND --num_threads !{task.cpus} --clean ${ADDITIONAL_RGI_PARAMS}
+
+   #  add sample and binid information to rgi output
+   sed  '1 s/^/SAMPLE\tBIN_ID\t/g' ${RGI_OUTPUT}.txt | sed "2,$ s/^/!{sample}\t!{binID}\t/g" > !{sample}_!{binID}.rgi.tsv
+   '''
+}
+
+
+process pGeneCoverage {
+
+   tag "$sample"
+
+   label 'small'
+
+   container "${params.ubuntu_image}"
+
+   publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "geneCoverage", filename) }
+
+   when params.steps.containsKey("annotation")
+
+   input:
+      tuple val(sample), file(defaultAbundances), file(metabatAbundances), val(binID), path(genes)
+
+   output:
+      tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}_default_abundances.tsv"), emit: metabatAbundances
+      tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}_metabat_abundances.tsv"), emit: defaultAbundances
+      tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+
+   shell:
+   output = getOutput("${sample}", params.runid, "geneCoverage", "")
+   '''
+   # Split in ContigIDs and GeneIDs
+   seqkit fx2tab -n -i !{genes} \
+	| tee gene_ids.tsv \
+	| rev | cut -d '_' -f 2- \
+	| rev > contig_ids.tsv
+
+   # Create Contig to gene mapping
+   echo -e "CONTIG\tGENE" > contig_gene_id.tsv
+   paste -d$'\t' contig_ids.tsv gene_ids.tsv >> contig_gene_id.tsv
+
+   # Add abundance values to genes
+   join --header -t$'\t' -1 2 -2 1 <(sort -t$'\t' -k 2,2 !{defaultAbundances}) <(sort -k 1,1 -t$'\t' contig_gene_id.tsv) > !{sample}_!{binID}_default_abundances.tsv
+   join --header -t$'\t' -1 2 -2 1 <(sort -t$'\t' -k 2,2 !{metabatAbundances}) <(sort -k 1,1 -t$'\t' contig_gene_id.tsv) > !{sample}_!{binID}_metabat_abundances.tsv
+   '''
 }
 
 /**
@@ -228,8 +276,7 @@ process pKEGGFromDiamond {
       // Therefore this place has to be mounted to the docker container to be accessible during runtime.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 --volume ${params.databases}:${params.databases} \
-      --volume ${params.steps.annotation.s5cmd.keyfile}:/.aws/credentials"
+      containerOptions " --user 1000:1000 " + Utils.getDockerMount(params.steps?.annotation?.keggFromDiamond?.database, params)
 
       publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromDiamond", filename) }, \
          pattern: "{**.tsv}"
@@ -237,7 +284,7 @@ process pKEGGFromDiamond {
       // UID mapping does not work for some reason. Every time a database directory is created while running docker,
       // the permissions are set to root. This leads to crashes later on.
       // beforeScript is one way to create a directory outside of Docker to tackle this problem.
-      beforeScript "mkdir -p ${params.databases}"
+      beforeScript "mkdir -p ${params.polished.databases}"
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("keggFromDiamond")
 
    input:
@@ -250,19 +297,36 @@ process pKEGGFromDiamond {
 
    shell:
       output = getOutput("${sample}", params.runid, "keggFromDiamond", "")
-      if( mode == 'S3')
-         '''
-         # Download the database if there is a more recent one online, or if the size differs.
-         # The destination folder should be outside of the working directory to share the database with future processes.
-         s5cmd !{params.steps.annotation.s5cmd.params} cp -u -s !{params.steps.annotation.kegg.database}/* !{params.databases}kegg
-         diamond2kegg.py !{diamond_result} !{params.databases}kegg !{sample}_!{binID}_kegg.tsv 
-         '''
-      else if(mode == 'local')
-         '''
-         diamond2kegg.py !{diamond_result} !{params.steps.annotation.kegg.database} !{sample}_!{binID}_kegg.tsv
-         '''
-      else 
-         error "Invalid annotation database mode: ${mode}"
+      DOWNLOAD_LINK=params.steps?.annotation?.keggFromDiamond?.database?.download?.source ?: ""
+      MD5SUM=params?.steps?.annotation?.keggFromDiamond?.database?.download?.md5sum ?: ""
+      S5CMD_PARAMS=params.steps?.annotation?.keggFromDiamond?.database?.download?.s5cmd?.params ?: ""
+      EXTRACTED_DB=params.steps?.annotation?.keggFromDiamond?.database?.extractedDBPath ?: ""
+      '''
+
+      # Check developer documentation
+      KEGG_DB=""
+      if [[ -z "!{EXTRACTED_DB}" ]] 
+      then
+        DATABASE=!{params.polished.databases}/kegg
+        LOCK_FILE=${DATABASE}/lock.txt
+
+        # Download CARD database
+        mkdir -p ${DATABASE}
+        flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
+         --link=!{DOWNLOAD_LINK} \
+         --httpsCommand="wget -O kegg.tar.gz !{DOWNLOAD_LINK} && tar -xzvf kegg.tar.gz && rm kegg.tar.gz " \
+         --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} . " \
+         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} kegg.tar.gz && tar -xzvf kegg.tar.gz && rm kegg.tar.gz " \
+	 --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
+         --localCommand="tar -xzvf !{DOWNLOAD_LINK} " \
+         --expectedMD5SUM=!{MD5SUM}
+
+         KEGG_DB="${DATABASE}/out/"
+      else
+         KEGG_DB="!{EXTRACTED_DB}"
+      fi
+      diamond2kegg.py !{diamond_result} ${KEGG_DB} !{sample}_!{binID}_kegg.tsv 
+      '''
 }
 
 /**
@@ -283,25 +347,12 @@ workflow wAnnotateFile {
    main:
       annotationTmpDir = params.tempdir + "/annotation"
       file(annotationTmpDir).mkdirs()
-      set_mode(params.steps.annotation.diamond.database)
       projectTableFile | splitCsv(sep: '\t', header: true) \
       | map{ [it.DATASET, it.BIN_ID, file(it.PATH)] } | set { input } 
-      _wAnnotation(Channel.value("param"), input)
+      _wAnnotation(Channel.value("param"), input, Channel.empty())
    emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }
-
-
-def flattenBins(binning){
-  def chunkList = [];
-  def SAMPLE_IDX = 0;
-  def BIN_PATHS_IDX = 1;
-  binning[BIN_PATHS_IDX].each {
-     chunkList.add([binning[SAMPLE_IDX], it]);
-  }
-  return chunkList;
-}
-
 
 /**
 *
@@ -312,11 +363,11 @@ workflow wAnnotateList {
    take:
       prodigalMode
       fasta
+      contigCoverage
    main:
       annotationTmpDir = params.tempdir + "/annotation"
       file(annotationTmpDir).mkdirs()
-      set_mode(params.steps?.annotation?.diamond?.database)
-      _wAnnotation(prodigalMode, fasta)
+      _wAnnotation(prodigalMode, fasta, contigCoverage)
     emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }
@@ -335,12 +386,34 @@ workflow _wAnnotation {
    take:
       prodigalMode
       fasta
+      contigCoverage
    main:
-      pProdigal(prodigalMode,fasta)
-      pDiamond(pProdigal.out.amino)
+      pProdigal(prodigalMode, fasta)
+
+      // Collect all databases
+      selectedDBs = params?.steps?.annotation?.diamond.findAll().collect({ 
+            [it.key, it.value?.params ?: "", \
+	     it.value?.database?.extractedDBPath ?: "", \
+             it.value.database?.download?.source ?: "", \
+             it.value.database?.download?.md5sum ?: "", \
+             it.value.database?.download?.s5cmd?.params ?: "" ]
+      })
+
+      // Run all amino acid outputs against all databases 
+      pProdigal.out.amino | combine(Channel.from(selectedDBs)) | pDiamond
+
+      DB_TYPE_IDX = 0
+      pDiamond.out.results | filter({ result -> result[DB_TYPE_IDX] == "kegg" }) \
+	| map({ result -> result.remove(0); result }) \
+	| set { diamondResults } 
+
       pProdigal.out.amino | pResistanceGeneIdentifier
-      pKEGGFromDiamond(pDiamond.out.results)
+      pKEGGFromDiamond(diamondResults)
       pKEGGFromDiamond.out.kegg_diamond | set { keggAnnotation }
+
+      // Compute gene coverage based on contig coverage
+      SAMPLE_IDX=0
+      contigCoverage | combine(pProdigal.out.nucleotide, by: SAMPLE_IDX) | pGeneCoverage
 
       pProdigal.out.logs | mix(pDiamond.out.logs) \
 	| mix(pResistanceGeneIdentifier.out.logs) \

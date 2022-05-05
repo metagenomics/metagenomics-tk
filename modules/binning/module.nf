@@ -1,12 +1,17 @@
 nextflow.enable.dsl=2
 
-include { pGetBinStatistics as pGetBinStatistics; pGetBinStatistics as pGetNotBinnedStatistics} from './processes'
+include { pGetBinStatistics as pGetBinStatistics; \
+	pGetBinStatistics as pGetNotBinnedStatistics; \
+	pCovermContigsCoverage; pBowtie2 } from './processes'
+
+def getModulePath(module){
+    return module.name + '/' + module.version.major + "." +
+          module.version.minor + "." +
+          module.version.patch
+}
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + params.modules.binning.name + '/' +
-          params.modules.binning.version.major + "." +
-          params.modules.binning.version.minor + "." +
-          params.modules.binning.version.patch +
+    return SAMPLE + '/' + RUNID + '/' + getModulePath(params.modules.binning)  +
           '/' + TOOL + '/' + filename
 }
 
@@ -32,49 +37,6 @@ process pGetMappingQuality {
     shell:
     template 'mapping_quality.sh'
 }
-
-
-process pBowtie {
-
-    container "${params.bowtie_image}"
-
-    label 'large'
-
-    tag "$sample"
-
-    when params.steps.containsKey("binning") 
-
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "contigMapping", filename) }
-
-    input:
-    tuple val(sample), path(contigs), path(pairedReads, stageAs: 'paired.fq.gz'), path(unpairedReads, stageAs: 'unpaired.fq.gz')
-
-    output:
-    tuple val("${sample}"), file("${sample}.bam"), optional: true, emit: mappedReads
-    tuple val("${sample}"), file("${sample}_unmapped.fq.gz"), optional: true, emit: unmappedReads
-    tuple val("${sample}"), file("${sample}_bowtie_stats.txt"), optional: true, emit: stats
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-
-    shell:
-    getUnmapped = params.steps.containsKey("fragmentRecruitment") ? "TRUE" : ""
-    '''
-    INDEX=!{sample}.index
-    # Build Bowtie Index
-    bowtie2-build --threads !{task.cpus} --quiet !{contigs} $INDEX 
-
-    # Run Bowtie
-    bowtie2 -p !{task.cpus} !{params.steps.binning.bowtie.additionalParams.bowtie} -x $INDEX \
-              --interleaved paired.fq.gz -U unpaired.fq.gz 2> !{sample}_bowtie_stats.txt \
-             | samtools view -F 3584 --threads !{task.cpus} -bS - \
-             | samtools sort -l 9 --threads !{task.cpus} - > !{sample}.bam
-
-    # If Fragment Recruitment is selected then reads that could not be mapped should be returned
-    if [[ "!{getUnmapped}" == "TRUE" ]]; then
-	samtools bam2fq -f 4 !{sample}.bam | pigz --best --processes !{task.cpus} > !{sample}_unmapped.fq.gz 
-    fi
-    '''
-}
-
 
 process pMetabat {
 
@@ -233,11 +195,15 @@ workflow wBinning {
    main:
      // Map reads against assembly and retrieve mapping quality
      SAMPLE_IDX=0
-     contigs | join(inputReads, by: SAMPLE_IDX) | pBowtie
-     pBowtie.out.mappedReads | pGetMappingQuality 
+     pBowtie2(Channel.value(params?.steps?.containsKey("binning")), Channel.value([getModulePath(params.modules.binning), \
+	"contigMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, params.steps.containsKey("fragmentRecruitment")]), contigs | join(inputReads, by: SAMPLE_IDX))
+
+     pBowtie2.out.mappedReads | (pGetMappingQuality)
+     pCovermContigsCoverage(Channel.value(params?.steps?.binning.find{ it.key == "contigsCoverage"}?.value), Channel.value([getModulePath(params.modules.binning), \
+	"contigCoverage", params?.steps?.binning?.contigsCoverage?.additionalParams]), pBowtie2.out.mappedReads)
 
      // Run binning tool
-     contigs | join(pBowtie.out.mappedReads, by: SAMPLE_IDX) | (pMetabinner & pMetabat )
+     contigs | join(pBowtie2.out.mappedReads, by: SAMPLE_IDX) | (pMetabinner & pMetabat )
      pMetabinner.out.bins | mix(pMetabat.out.bins) | set { bins }
 
      pMetabinner.out.notBinned | mix(pMetabat.out.notBinned) | set { notBinned }
@@ -250,10 +216,10 @@ workflow wBinning {
      binsList | map { it -> flattenBins(it) } | flatMap {it -> createMap(it)} | set {binMap}
 
      // Compute bin statistcs (e.g. N50, average coverage depth, etc. ...)
-     pMetabinner.out.binContigMapping | join(pBowtie.out.mappedReads, by: SAMPLE_IDX) \
+     pMetabinner.out.binContigMapping | join(pBowtie2.out.mappedReads, by: SAMPLE_IDX) \
 	| combine(Channel.from("metabinner")) | join(pMetabinner.out.bins, by: SAMPLE_IDX) \
 	| set { metabinnerBinStatisticsInput }  
-     pMetabat.out.binContigMapping | join(pBowtie.out.mappedReads, by: SAMPLE_IDX) \
+     pMetabat.out.binContigMapping | join(pBowtie2.out.mappedReads, by: SAMPLE_IDX) \
 	| combine(Channel.from("metabat")) | join(pMetabat.out.bins, by: SAMPLE_IDX) \
 	| set { metabatBinStatisticsInput }
 
@@ -289,7 +255,8 @@ workflow wBinning {
    emit:
      binsStats = binMap
      bins = binsList
-     mapping = pBowtie.out.mappedReads
+     mapping = pBowtie2.out.mappedReads
      notBinnedContigs = notBinned
-     unmappedReads = pBowtie.out.unmappedReads
+     unmappedReads = pBowtie2.out.unmappedReads
+     contigCoverage = pCovermContigsCoverage.out.coverage     
 }

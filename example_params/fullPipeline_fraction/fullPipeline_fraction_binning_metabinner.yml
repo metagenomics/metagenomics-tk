@@ -24,22 +24,27 @@ steps:
         bowtie: " --quiet --very-sensitive "
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
+    contigsCoverage:
+      additionalParams: ""
     metabinner:
       minContigLength: 500
       kmerSize: 4
   annotation:
     diamond:
-      database: '/mnt/databases/kegg-2021-01.dmnd'
+      kegg:
+        params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
+        database:
+          extractedDBPath: '/vol/spool/toolkit/kegg-2021-01.dmnd'
 resources:
   large:
     cpus: 28
-    memory: 250
+    memory: 246
   medium:
     cpus: 14
-    memory: 128
+    memory: 121
   small:
     cpus: 7
-    memory: 16
+    memory: 14
   tiny:
     cpus: 1
-    memory: 2
+    memory: 1

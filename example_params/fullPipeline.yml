@@ -7,7 +7,7 @@ input:
 output: "output"
 logDir: log
 runid: 1
-databases: "/mnt/databases/"
+databases: "/mnt/databases"
 logLevel: 1
 scratch: "/vol/scratch"
 steps:
@@ -25,15 +25,23 @@ steps:
         bowtie: " --quiet --very-sensitive "
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
+    contigsCoverage:
+      additionalParams: ""
     metabat:
       additionalParams: " --seed 234234  "
   magAttributes:
     gtdb:
       buffer: 1000
-      database: "/vol/spool/gtdb/release202"
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb.tar.gz
+          md5sum: f57c74e7b2d7ebf8b294ac25b913318f
       additionalParams: " --min_af 0.65 "
     checkm:
-      database: "/vol/spool/checkm"
+      database:
+        download:
+          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz"
+          md5sum: 0963b301dfe9345ea4be1246e32f6728
       buffer: 200
       additionalParams:
         tree: " --reduced_tree "
@@ -73,44 +81,85 @@ steps:
     additionalParams: " -t 0.1 -z 80 -o 'correlation' "
   plasmid:
     SCAPP:
+      additionalParams: 
+        SCAPP: "  "
+        bowtie: "  "
+        coverm: "  "
+    ViralVerifyPlasmid:
+      filter: true
+      filterString: "Uncertain - plasmid or chromosomal|Plasmid"
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/pfam.hmm.gz
+          md5sum: c80b75bd48ec41760bbca19c70616e36
+      additionalParams: " --thr 7 "
+    MobTyper:
+      filter: true
+      minLength: 5000
+      additionalParams: " --min_length 9000  "
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_suite.tar.gz
+          md5sum: ed67193666c95738123e696f40df6172
+    Platon:
+      filter: false
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/platon.tar.gz
+          md5sum: f6d1701704396182c6c9daca053eb9d6
       additionalParams: "   "
     PlasClass:
+      filter: true
       threshold: 0.5 
       additionalParams: "   "
+    Filter:
+      method: "AND"
+      minLength: 0 
     PLSDB:
-      database: 
-        source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip
-        md5sum: caa846fbb689deba0e35ef559793b521
       sharedKmerThreshold: 30
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip
+          md5sum: 52c65f4f1e8024a78743ac0972395c56
       additionalParams:
         mashSketch: " -S 42 -k 21 -s 1000 "
         mashDist: " -v 0.2 -d 0.2 "
   annotation:
-     s5cmd:
-        params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
-        keyfile: 'xxx'
-     diamond:
-        database: '/mnt/databases/kegg-2021-01.dmnd'
+    prodigal:
+      mode: 'meta'
+    diamond:
+      kegg:
         params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
-     kegg:
-        database: '/mnt/databases/kegg_2021-01/'
-     rgi: 
-        source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/data
-        md5sum: ddc655280ef838923d8d72e42833b33c
-        additionalParams: ""
-     prodigal:
-         mode: 'meta'
-     keggFromDiamond:
+        database:
+          extractedDBPath: '/vol/spool/toolkit/kegg-2021-01.dmnd'
+      vfdb:
+        params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
+        database:
+          extractedDBPath: '/vol/spool/toolkit/vfdb_out.dmnd'
+      bacmet:
+        params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
+        database:
+          extractedDBPath: '/vol/spool/toolkit/bacmet_out.dmnd'
+    rgi:
+      additionalParams: ""
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/data
+          md5sum: 2a1e01f01e904ed6e126b5ac162764c8
+    keggFromDiamond:
+      database:
+        extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 
+
 resources:
   large:
     cpus: 28
-    memory: 250
+    memory: 246
   medium:
     cpus: 14
-    memory: 128
+    memory: 121
   small:
     cpus: 7
-    memory: 16
+    memory: 14
   tiny:
     cpus: 1
-    memory: 2
+    memory: 1

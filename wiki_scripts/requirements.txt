@@ -5,3 +5,4 @@ html5lib
 requests
 htmlark
 pymdown-extensions
+mkdocs-mermaid2-plugin

@@ -117,7 +117,7 @@ process pSelectRepresentative {
 
     container "${params.python_env_image}"
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/species/selectedRepresentatives", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/selectedRepresentatives", filename) }
 
     label 'medium'
 
@@ -182,7 +182,7 @@ process pGetCluster {
 
     label 'tiny'
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/species/clusters", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/clusters", filename) }
 
     container "${params.python_env_image}"
 
@@ -211,7 +211,7 @@ process pFinalize {
     val finalized
     file cluster 
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/species/clusters", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/clusters", filename) }
 
     output:
     file 'clusters.tsv' 
@@ -248,7 +248,7 @@ process pSANS {
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
-    output = getOutput(params.runid, "pasolli/strain/sans", "") 
+    output = getOutput(params.runid, "pasolli/sans", "") 
     '''
     mkdir input
     # get ID from list of genomes
@@ -266,11 +266,11 @@ process pSANS {
 }
 
 
-process pGetStrainClusterRepresentatives {
+process pGetSansClusterRepresentatives {
 
     label 'tiny'
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/strains", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/sans", filename) }
 
     container "${params.python_env_image}"
 
@@ -282,12 +282,12 @@ process pGetStrainClusterRepresentatives {
     path genomeAttributes
 
     output:
-    path 'clusters.tsv', emit: strainRepresentatives
+    path 'clusters.tsv', emit: sansRepresentatives
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
-    select_strain_representative.py -i !{genomeAttributes} -c !{cluster} -o .
+    select_sans_representatives.py -i !{genomeAttributes} -c !{cluster} -o .
     '''
 }
 
@@ -335,7 +335,7 @@ workflow wDereplicateList {
 * The species clusters channel has the following format: [BIN_ID, PATH, CLUSTER].
 * The genome table file contains columns such as N50, COMPLETENESS and CONTAMINATION.
 */
-workflow _wStrainDereplication {
+workflow _wSansDereplication {
    take:
      speciesClusters
      genomesTableFile
@@ -385,12 +385,12 @@ workflow _wStrainDereplication {
      SINGLE_CLUSTER_ID=0
      clusterSize.single | map { it -> [it[CLUSTER_IDX][CLUSTER_IDX], *it[BIN_ID_LABEL_IDX], SINGLE_CLUSTER_ID] } \
 	| mix(SANSCluster) \
-	| collectFile(newLine:true, seed: "CLUSTER\tBIN_ID\tSTRAIN_CLUSTER"){ it -> ["strainCluster.tsv", it.join('\t')] } \
-	| set { strainRepresentatives }
+	| collectFile(newLine:true, seed: "CLUSTER\tBIN_ID\tSTRAIN_CLUSTER"){ it -> ["sansCluster.tsv", it.join('\t')] } \
+	| set { sansRepresentatives }
 
      pSANS.out.logs | pDumpLogs
      
-     pGetStrainClusterRepresentatives(strainRepresentatives, genomesTableFile)
+     pGetSansClusterRepresentatives(sansRepresentatives, genomesTableFile)
 }
 
 
@@ -460,7 +460,7 @@ workflow _wDereplicate {
      pGetCluster(representatives.clusters, aniComparisonsFinal, genomesTableFile)
      pFinalize(representativesToCompareC.finalize, representatives.clusters)
    
-     // Prepare genome files for strain dereplication
+     // Prepare genome files for cluster dereplication based on sans
      IS_REPRESENTATIVE = 1
      PATH_IDX = 1
      pGetCluster.out.finalClusters | mix(pFinalize.out) | splitCsv(sep: '\t', header: true) \
@@ -474,7 +474,7 @@ workflow _wDereplicate {
      genomesTable | map { bin -> [bin.PATH, bin.BIN_ID] } \
 	| join(clustersGenome, by: 1) |  set { clusterFiles  }
 
-     _wStrainDereplication(clusterFiles, genomesTableFile)
+     _wSansDereplication(clusterFiles, genomesTableFile)
 
      finalClusters | filter({ it.REPRESENTATIVE.toFloat() == IS_REPRESENTATIVE }) | map { it -> it['GENOME'] } \
        | join(genomesTable | map{ bin -> [bin.BIN_ID, bin.PATH] }) | map { bin -> bin[PATH_IDX] } \

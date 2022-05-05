@@ -41,14 +41,11 @@ process pFastpSplitDownload {
 
     label 'medium'
 
-    echo true
-
     tag "$sample"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
 
-    when:
-    params?.steps?.qc.containsKey("fastp")
+    when params?.steps?.qc.containsKey("fastp")
 
     container "${params.fastp_image}"
 

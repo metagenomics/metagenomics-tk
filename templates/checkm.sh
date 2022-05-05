@@ -1,9 +1,30 @@
 
 # Prepare checkm patch, output directory and output file name
-echo '{"dataRoot": "/.checkm", "remoteManifestURL": "https://data.ace.uq.edu.au/public/CheckM_databases/", "manifestType": "CheckM", "remoteManifestName": ".dmanifest", "localManifestName": ".dmanifest"}' > /tmp/DATA_CONFIG
 mkdir out
 FILE_ID=$(mktemp XXXXXXXX)
 FILE=!{sample}_checkm_${FILE_ID}.tsv
+
+# Check developer documentation
+if [ -z "!{EXTRACTED_DB}" ]
+then
+  DATABASE=!{params.databases}/checkm
+  LOCK_FILE=${DATABASE}/lock.txt
+
+  echo '{"dataRoot": "!{params.databases}/checkm/out", "remoteManifestURL": "https://data.ace.uq.edu.au/public/CheckM_databases/", "manifestType": "CheckM", "remoteManifestName": ".dmanifest", "localManifestName": ".dmanifest"}' > /tmp/DATA_CONFIG
+
+  # Download checkm database if necessary
+  mkdir -p ${DATABASE}
+  flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
+    --link=!{DOWNLOAD_LINK} \
+    --httpsCommand="wget -O checkm.tar.gz !{DOWNLOAD_LINK} && tar -xzvf checkm.tar.gz && rm checkm.tar.gz" \
+    --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} checkm.tar.gz && tar -xzvf checkm.tar.gz && rm checkm.tar.gz" \
+    --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} . " \
+    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
+    --localCommand="tar -xzvf !{DOWNLOAD_LINK}" \
+    --expectedMD5SUM=!{MD5SUM}
+else
+  echo '{"dataRoot": "!{EXTRACTED_DB}", "remoteManifestURL": "https://data.ace.uq.edu.au/public/CheckM_databases/", "manifestType": "CheckM", "remoteManifestName": ".dmanifest", "localManifestName": ".dmanifest"}' > /tmp/DATA_CONFIG
+fi
 
 # run suggested checkm commands
 checkm tree !{params.steps.magAttributes.checkm.additionalParams.tree} --pplacer_threads !{task.cpus}  -t !{task.cpus} -x !{ending} . out

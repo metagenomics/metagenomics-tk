@@ -10,10 +10,16 @@ steps:
     input: "test_data/magAttributes/input.tsv"
     gtdb:
       buffer: 1000
-      database: "/vol/spool/peter/gtdb/release202"
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb.tar.gz
+          md5sum: f57c74e7b2d7ebf8b294ac25b913318f
       additionalParams: " --min_af 0.65 "
     checkm:
-      database: "/vol/spool/peter/meta-omics-toolkit/checkm"
+      database:
+        download:
+          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz"
+          md5sum: 0963b301dfe9345ea4be1246e32f6728
       buffer: 200
       additionalParams:
         tree: " --reduced_tree "
@@ -22,17 +28,16 @@ steps:
     prokka:
       defaultKingdom: 'Bacteria'
       additionalParams: " --mincontiglen 200 "
-
 resources:
   large:
     cpus: 28
-    memory: 250
+    memory: 246
   medium:
     cpus: 14
-    memory: 128
+    memory: 121
   small:
     cpus: 7
-    memory: 16
+    memory: 14
   tiny:
     cpus: 1
-    memory: 2
+    memory: 1

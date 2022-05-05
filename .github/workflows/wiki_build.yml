@@ -1,0 +1,15 @@
+name: "Publish Documentation"
+on:
+  push:
+    branches: [ dev, master ]
+    paths-ignore:
+       - 'docker/**/VERSION'
+
+jobs:
+  build_job:
+    runs-on: [self-hosted, html]
+    steps:
+      - uses: actions/checkout@v2
+      - name: "Publish wiki"
+        run: |
+           make publish_wiki_html BRANCH=${{ github.base_ref }}

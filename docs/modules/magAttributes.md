@@ -22,6 +22,12 @@
     ```
     Must include at least `DATASET` identifier and mag specific `PATH` and `BIN_ID` column.
 
+## Databases
+
+Checkm and GTDB need their databases as input. See [database section](##-Database-input-configuration) for possibly download strategies.
+The GTDB and Checkm compressed databases must be tar.gz files. If you provide the extracted version of GTDB using the `extractedDBPath` parameter,
+please specify the path to the `releasesXXX` directory (e.g. "/vol/spool/gtdb/release202").
+
 ## Output
 
 ### Prokka
@@ -38,5 +44,4 @@ In addition, this module produces a file `SAMPLE_gtdbtk_CHUNK.tsv` that combines
 ### Checkm
 
 The Checkm output adheres to the magAttributes specification and adds a `BIN_ID` and `SAMPLE` column to the output file.
-
 

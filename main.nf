@@ -236,17 +236,17 @@ workflow wPipeline {
 	| map{ bin -> [bin.SAMPLE, bin.BIN_ID, bin.PATH]} \
 	| set { bins}
 
-    wPlasmidsList(bins | mix(notBinnedContigs), wAssemblyList.out.fastg | join(wBinning.out.mapping))
+    wPlasmidsList(bins | mix(notBinnedContigs), wAssemblyList.out.fastg | join(wBinning.out.mapping), qcReads)
 
     if(params?.steps?.fragmentRecruitment?.frhit){
        wFragmentRecruitmentList(wBinning.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
     }
 
-    wAnnotatePlasmidList(Channel.value("meta"), wPlasmidsList.out.newPlasmids)
+    wAnnotatePlasmidList(Channel.value("meta"), wPlasmidsList.out.newPlasmids, wPlasmidsList.out.newPlasmidsCoverage)
 
-    wAnnotateBinsList(Channel.value("single"), bins)
+    wAnnotateBinsList(Channel.value("single"), bins, wBinning.out.contigCoverage)
 
-    wAnnotateUnbinnedList(Channel.value("meta"), notBinnedContigs)
+    wAnnotateUnbinnedList(Channel.value("meta"), notBinnedContigs, wBinning.out.contigCoverage)
 
     wMagAttributesList(wBinning.out.bins)
     mapJoin(wMagAttributesList.out.checkm, wBinning.out.binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
