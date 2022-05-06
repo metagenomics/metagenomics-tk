@@ -457,7 +457,15 @@ workflow wAnnotateList {
 }
 
 
-
+/**
+*
+* The main annotation workflow. 
+* It is build to handle one big input fasta file.
+* On this file genes will be predicted and annotated using prokka, these will be diamond-blasted against kegg. 
+* gtdb results are optional to set the domain for annotation with prokka.
+* At the end kegg-infos of the results and prokka results be collected and presented.
+*
+**/ 
 workflow _wAnnotation {
    take:
       prodigalMode
