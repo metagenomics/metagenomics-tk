@@ -274,7 +274,6 @@ process pKEGGFromDiamond {
       else
          KEGG_DB="!{EXTRACTED_DB}"
       fi
-      echo ${KEGG_DB}
       diamond2kegg.py !{diamond_result} ${KEGG_DB} !{sample}_!{binID}_kegg.tsv 
       '''
 }
