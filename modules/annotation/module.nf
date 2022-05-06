@@ -351,8 +351,6 @@ process pProkka {
 
     container "${params.prokka_image}"
 
-    containerOptions " --user root:root "
-
     label 'small'
 
     time '5h'
@@ -389,9 +387,6 @@ process pProkka {
       BIN=!{fasta}
       BIN_PREFIX=$(echo "${BIN%.*}")
       BIN_ID="$(basename !{fasta})"
-
-      #remove -c option from prokka to allow gene predictions at contig borders
-      #sed -i 's/-c -m -g $gcode/-m -g $gcode/g' /usr/local/bin/prokka
 
       # Run Prokka
       if [[ !{fasta} == *.gz ]]; then
