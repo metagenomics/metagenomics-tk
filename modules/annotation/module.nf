@@ -377,8 +377,7 @@ process pProkka {
       tuple val("${sample}"), val("${binID}"), file("*.tbl.gz"), emit: tbl 
       tuple val("${sample}"), val("${binID}"), file("*.sqn.gz"), emit: sqn 
       tuple val("${sample}"), val("${binID}"), file("*.txt"), emit: txt 
-      //for tsv output in newer prokka version, include the following line:
-      //tuple val("${sample}"), val("${binID}"), file("*.tsv"), emit: tsv 
+      tuple val("${sample}"), val("${binID}"), file("*.tsv"), emit: tsv 
       tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -406,9 +405,8 @@ process pProkka {
 
       # Prepare output 
       for f in out/* ; do suffix=$(echo "${f##*.}"); mv $f ${BIN_PREFIX}.${suffix}; done
-      #for tsv output in newer prokka version, include those two lines:
-      #sed -i  -e "2,$ s/^/!{sample}\t${BIN_ID}\t/"  -e "1,1 s/^/SAMPLE\tBIN_ID\t/g" *.tsv
-      #mv *.tsv !{sample}_prokka_${BIN_ID}.tsv
+      sed -i  -e "2,$ s/^/!{sample}\t${BIN_ID}\t/"  -e "1,1 s/^/SAMPLE\tBIN_ID\t/g" *.tsv
+      mv *.tsv !{sample}_prokka_${BIN_ID}.tsv
       gzip --best *gff *.faa *.fna *.ffn *.fsa *.gbk *.sqn *tbl
       '''
 }
@@ -509,7 +507,6 @@ workflow _wAnnotation {
       prokka_gff = pProkka.out.gff
       prokka_sqn = pProkka.out.sqn
       prokka_tbl = pProkka.out.tbl
-      //for tsv output in newer prokka version, include the following line:
-      //prokka_tsv = pProkka.out.tsv
+      prokka_tsv = pProkka.out.tsv
       prokka_txt = pProkka.out.txt 
 }
