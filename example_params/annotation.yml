@@ -22,10 +22,10 @@ steps:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/data
             md5sum: 2a1e01f01e904ed6e126b5ac162764c8
         additionalParams: ""
-     prokka:
-       prodigalMode: "meta"
-       defaultKingdom: 'Bacteria'
-       additionalParams: " --mincontiglen 200 "
+      prokka:
+        prodigalMode: "meta"
+        defaultKingdom: 'Bacteria'
+        additionalParams: " --mincontiglen 200 "
 resources:
   large:
     cpus: 28
