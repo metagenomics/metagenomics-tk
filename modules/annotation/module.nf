@@ -339,7 +339,7 @@ workflow _wCreateProkkaInput {
 /**
 *
 * Prokka is a tool to annotate, bacterial, archael and viral genomes.
-* Input is a mode for the gene prediction tool prodigal included in prokak, which can be:
+* Input is a mode for the gene prediction tool prodigal included in prokka, which can be:
 * - "single" for larger contigs 
 * - "meta" for smaller contigs / metagenomes
 * - "param" sets prodigalMode to whatever is defined as params.steps.annotation.prokka.prodigalMode
@@ -392,7 +392,7 @@ process pProkka {
       if [[ !{fasta} == *.gz ]]; then
         zcat -f !{fasta} > input.fasta
         prokka !{params.steps.annotation.prokka.additionalParams} !{prodigalModeStr} --partialgenes --cpus !{task.cpus} --outdir out --kingdom !{domain} input.fasta
-        #rm input.fasta
+        rm input.fasta
       else 
         prokka !{params.steps.annotation.prokka.additionalParams} !{prodigalModeStr} --partialgenes --cpus !{task.cpus} --outdir out --kingdom !{domain} !{fasta}
       fi
