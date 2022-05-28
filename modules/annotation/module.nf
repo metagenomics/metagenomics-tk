@@ -231,7 +231,7 @@ process pKEGGFromDiamond {
          pattern: "{**.tsv}"
 
       // UID mapping does not work for some reason. Every time a database directory is created while running docker,
-      // the permissions are set to root. This leasds to crashes later on.
+      // the permissions are set to root. This leads to crashes later on.
       // beforeScript is one way to create a directory outside of Docker to tackle this problem.
       beforeScript "mkdir -p ${params.polished.databases}"
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("keggFromDiamond")
@@ -355,8 +355,7 @@ process pProkka {
 
     time '5h'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }, \
-      pattern: "{**.gff.gz,**.fna.gz,**.faa.gz,**.sqn.gz,**.txt,**.tsv,**.fsa.gz,**.ffn.gz,**.gbk.gz,**.tbl.gz}"
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }
 
     when params.steps.containsKey("annotation") && params.steps.annotation.containsKey("prokka")
 
@@ -401,7 +400,7 @@ process pProkka {
       for f in out/* ; do suffix=$(echo "${f##*.}"); mv $f ${BIN_PREFIX}.${suffix}; done
       sed -i  -e "2,$ s/^/!{sample}\t${BIN_ID}\t/"  -e "1,1 s/^/SAMPLE\tBIN_ID\t/g" *.tsv
       mv *.tsv !{sample}_prokka_${BIN_ID}.tsv
-      gzip --best *gff *.faa *.fna *.ffn *.fsa *.gbk *.sqn *tbl
+      pigz --best --processes !{task.cpus} *gff *.faa *.fna *.ffn *.fsa *.gbk *.sqn *tbl
       '''
 }
 
