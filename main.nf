@@ -59,7 +59,7 @@ workflow wPlasmids {
 }
 
 workflow wCMSeqWorfklowFile {
-   wCMSeqWorkflowFile(Channel.from(params?.steps?.matAttributes?.input?.genomes), Channel.from(params?.steps?.matAttributes?.input?.alignments))
+   wCMSeqWorkflowFile(Channel.fromPath(params?.steps?.magAttributes?.input?.genomes), Channel.fromPath(params?.steps?.magAttributes?.input?.alignments))
 }
 
 workflow wMagAttributes {
@@ -242,14 +242,14 @@ workflow wPipeline {
        wFragmentRecruitmentList(wBinning.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
     }
 
-    wAnnotatePlasmidList(Channel.value("meta"), wPlasmidsList.out.newPlasmids, wPlasmidsList.out.newPlasmidsCoverage)
-
-    wAnnotateBinsList(Channel.value("single"), bins, wBinning.out.contigCoverage)
-
-    wAnnotateUnbinnedList(Channel.value("meta"), notBinnedContigs, wBinning.out.contigCoverage)
-
     wMagAttributesList(wBinning.out.bins)
     mapJoin(wMagAttributesList.out.checkm, wBinning.out.binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
+
+    wAnnotatePlasmidList(Channel.value("meta"), wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage)
+
+    wAnnotateBinsList(Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, wBinning.out.contigCoverage)
+
+    wAnnotateUnbinnedList(Channel.value("meta"), notBinnedContigs, null, wBinning.out.contigCoverage)
 
     _wAggregate(wQualityControlList.out.readsPair, wQualityControlList.out.readsSingle, binsStats, wMagAttributesList.out.gtdb )
 }
