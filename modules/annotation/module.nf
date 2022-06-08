@@ -17,7 +17,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 
 
 def constructParametersObject(){
-  return params?.steps?.annotation?.diamond.findAll().collect{ Utils.getDockerMount(it.value?.database, params)}.join(" ")
+  return params?.steps?.annotation?.mmseqs2.findAll().collect{ Utils.getDockerMount(it.value?.database, params)}.join(" ")
 }
 
 /**
@@ -32,7 +32,7 @@ process pDiamond {
       container "${params.diamond_image}"
 
       // Databases will be downloaded to a fixed place so that they can be used by future processes.
-      // These fixed place has to be outside of the working-directory to be easy to find for every process.
+      // This fixed place has to be outside of the working-directory to be easy to find for every process.
       // Therefore this place has to be mounted to the docker container to be accessible during run time.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
@@ -90,6 +90,145 @@ process pDiamond {
    '''
 }
 
+
+/**
+*
+* MMseqs2 is used to search for big input queries in large databases.
+* Though not as precise as blast it is way faster if you handle large amounts of data. 
+*
+**/
+process pMMseqs2 {
+   
+      container "${params.mmseqs2_image}"
+
+      // Databases will be downloaded to a fixed place so that they can be used by future processes.
+      // This fixed place has to be outside of the working-directory to be easy to find for every process.
+      // Therefore this place has to be mounted to the docker container to be accessible during run time.
+      // Another mount flag is used to get a key file (aws format) into the docker-container. 
+      // This file is then used by s5cmd. 
+      containerOptions " --user 1000:1000 " + constructParametersObject()
+ 
+      tag "Sample: $sample, Database: $dbType"
+
+      label 'large'
+
+      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2/${dbType}", filename) }
+ 
+      // UID mapping does not work for some reason. Every time a database directory is created while running docker,
+      // the permissions are set to root. This leads to crashes later on.
+      // "beforeScript" is one way to create a directory outside of Docker to tackle this problem. 
+      beforeScript "mkdir -p ${params.polished.databases}"
+
+      when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2")
+
+   input:
+      tuple val(sample), val(binID), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
+   
+   output:
+      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.blast.tsv"), emit: results
+      tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+
+
+   shell:
+   output = getOutput("${sample}", params.runid, "mmseqs2", "")
+   '''
+   MMSEQS2_FILE=""
+   if [ -z "!{EXTRACTED_DB}" ] 
+   then
+         DATABASE=!{params.polished.databases}/mmseqs2
+         LOCK_FILE=${DATABASE}/lock.txt
+
+         mkdir -p ${DATABASE}
+         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
+            --link=!{DOWNLOAD_LINK} \
+            --httpsCommand="wget -O mmseqs.db.gz !{DOWNLOAD_LINK}  && gunzip mmseqs.db.gz " \
+            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mmseqs.db.gz && mmseqs.db.gz " \
+            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mmseqs.db.gz && gunzip mmseqs.db.gz " \
+	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
+            --localCommand="gunzip -c !{DOWNLOAD_LINK} > ./mmseqs.db" \
+            --expectedMD5SUM=!{MD5SUM}
+
+          MMSEQS2_DATABASE_DIR="${DATABASE}/out/mmseqs.db"
+    else
+          MMSEQS2_DATABASE_DIR="!{EXTRACTED_DB}"
+    fi
+
+    mkdir tmp
+    mmseqs createdb !{fasta} queryDB
+    mmseqs search queryDB ${MMSEQS2_DATABASE_DIR}/sequenceDB !{binID}.!{dbType}.results.database tmp !{parameters} --threads !{task.cpus}
+    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR}/sequenceDB !{binID}.!{dbType}.results.database !{binID}.!{dbType}.blast.tsv --threads !{task.cpus}
+   '''
+}
+
+
+process pMMseqs2_taxonomy {
+   
+      container "${params.mmseqs2_image}"
+
+      // Databases will be downloaded to a fixed place so that they can be used by future processes.
+      // This fixed place has to be outside of the working-directory to be easy to find for every process.
+      // Therefore this place has to be mounted to the docker container to be accessible during run time.
+      // Another mount flag is used to get a key file (aws format) into the docker-container. 
+      // This file is then used by s5cmd. 
+      containerOptions " --user 1000:1000 " + constructParametersObject()
+ 
+      tag "Sample: $sample, Database_taxonomy: $dbType"
+
+      label 'large'
+
+      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", filename) }
+ 
+      // UID mapping does not work for some reason. Every time a database directory is created while running docker,
+      // the permissions are set to root. This leads to crashes later on.
+      // "beforeScript" is one way to create a directory outside of Docker to tackle this problem. 
+      beforeScript "mkdir -p ${params.polished.databases}"
+
+      when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy")
+
+   input:
+      tuple val(sample), val(binID), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
+   
+   output:
+      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.taxonomy.tsv"), emit: results
+      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.krakenStyleTaxonomy.out"), emit: krakenStyle
+      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.krona.html"), emit: kronaHtml
+      tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+
+
+   shell:
+   // Needed?
+   output = getOutput("${sample}", params.runid, "mmseqs2_taxonomy", "")
+   '''
+   MMSEQS2_FILE=""
+   if [ -z "!{EXTRACTED_DB}" ] 
+   then
+         DATABASE=!{params.polished.databases}/mmseqs2
+         LOCK_FILE=${DATABASE}/lock.txt
+
+         mkdir -p ${DATABASE}
+         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
+            --link=!{DOWNLOAD_LINK} \
+            --httpsCommand="wget -O mmseqs.db.gz !{DOWNLOAD_LINK}  && gunzip mmseqs.db.gz " \
+            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mmseqs.db.gz && mmseqs.db.gz " \
+            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mmseqs.db.gz && gunzip mmseqs.db.gz " \
+	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
+            --localCommand="gunzip -c !{DOWNLOAD_LINK} > ./mmseqs.db" \
+            --expectedMD5SUM=!{MD5SUM}
+
+          MMSEQS2_DATABASE_DIR="${DATABASE}/out/mmseqs.db"
+    else
+          MMSEQS2_DATABASE_DIR="!{EXTRACTED_DB}"
+    fi
+
+    mkdir tmp
+    mmseqs taxonomy queryDB ${MMSEQS2_DATABASE_DIR}/sequenceDB !{binID}.!{dbType}.taxresults.database tmp !{parameters} --threads !{task.cpus}
+    mmseqs createtsv queryDB !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.taxonomy.tsv --threads !{task.cpus}
+    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR}/sequenceDB !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.krakenStyleTax.out
+    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR}/sequenceDB !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.krona.html --report-mode 1
+   '''
+}
 
 process pResistanceGeneIdentifier {
    
@@ -471,7 +610,7 @@ workflow _wAnnotation {
       pProkka(prodigalMode, _wCreateProkkaInput.out.prokkaInput)
       
       // Collect all databases
-      selectedDBs = params?.steps?.annotation?.diamond.findAll().collect({ 
+      selectedDBs = params?.steps?.annotation?.mmseqs2.findAll().collect({ 
             [it.key, it.value?.params ?: "", \
 	     it.value?.database?.extractedDBPath ?: "", \
              it.value.database?.download?.source ?: "", \
@@ -480,22 +619,22 @@ workflow _wAnnotation {
       })
 
       // Run all amino acid outputs against all databases 
-      pProkka.out.faa | combine(Channel.from(selectedDBs)) | pDiamond
+      pProkka.out.faa | combine(Channel.from(selectedDBs)) | pMMseqs2
       DB_TYPE_IDX = 0
-      pDiamond.out.results | filter({ result -> result[DB_TYPE_IDX] == "kegg" }) \
+      pMMseqs2.out.results | filter({ result -> result[DB_TYPE_IDX] == "kegg" }) \
 	| map({ result -> result.remove(0); result }) \
-	| set { diamondResults } 
+	| set { mmseqs2Results } 
 
       // Run Resistance Gene Identifier with amino acid outputs
       pProkka.out.faa | pResistanceGeneIdentifier
-      pKEGGFromDiamond(diamondResults)
+      pKEGGFromDiamond(mmseqs2Results)
       pKEGGFromDiamond.out.kegg_diamond | set { keggAnnotation }
 
       // Compute gene coverage based on contig coverage
       SAMPLE_IDX=0
       contigCoverage | combine(pProkka.out.ffn, by: SAMPLE_IDX) | pGeneCoverage
 
-      pProkka.out.logs | mix(pDiamond.out.logs) \
+      pProkka.out.logs | mix(pMMseqs2.out.logs) \
 	| mix(pResistanceGeneIdentifier.out.logs) \
 	| mix(pKEGGFromDiamond.out.logs) | pDumpLogs
    emit:
