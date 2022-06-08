@@ -54,7 +54,7 @@ runDatabaseTest: ## Run database tests
 		${MODULE_DB_TEST_YML} ${MODULE_DB_TEST_YML_PATH} ${MODULE_DB_TEST_YML_SCRIPT} ${MODULE_DB_TEST_GENERATED_YML_DIR} \
 		${MODULE_DB_TEST_SKIP_TESTS}
 
-.PHONY: list clean test_clean run_small_full_test check changelog
+.PHONY: list clean test_clean run_small_full_test check changelog python_version_check
 clean : ## Removes all files that are produced during runs are not necessary
 	- rm .nextflow.log*
 	- rm report.html*
@@ -72,8 +72,10 @@ nextflow: ## Downloads Nextflow binary
 check: ## Checks if processes did failed in the current nextflow returns exit code 1. (Useful in github actions context)
 	! grep -q "FAILED" log/trace.tsv || (echo "$?"; exit 1)
 
+python_version_check:
+	./scripts/pythonVersionCheck.sh
 
-wiki_venv: ## Install virtual environment for wiki
+wiki_venv: python_version_check ## Install virtual environment for wiki
 	python3 -m venv wiki_venv
 	. wiki_venv/bin/activate && pip install -r wiki_scripts/requirements.txt
 
