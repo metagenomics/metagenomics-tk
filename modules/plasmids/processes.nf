@@ -11,31 +11,6 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 }
 
 
-process pSCAPP {
-
-    label 'medium'
-
-    tag "Sample: $sample, BinID: $binID"
-
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "SCAPP", filename) }
-
-    when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("SCAPP")
-
-    container "${params.SCAPP_image}"
-
-    input:
-    tuple val(sample), path(assemblyGraph), val(maxKmer), path(bam)
-
-    output:
-    tuple val("${sample}"), path("${sample}_plasmids.fasta.gz"), emit: plasmids, optional: true
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-    tuple val("${sample}"), path("${sample}_plasmids_stats.tsv"), emit: plasmidsStats, optional: true
-
-    shell:
-    template("scapp.sh")
-}
-
-
 process pViralVerifyPlasmid {
 
     label 'medium'
@@ -43,7 +18,7 @@ process pViralVerifyPlasmid {
     tag "Sample: $sample, BinID: $binID"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "ViralVerifyPlasmid", filename) }, \
-        pattern: "{**.tsv, **.out, **.err, **.log}"
+        pattern: "{**.tsv}"
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("ViralVerifyPlasmid")
 
@@ -111,7 +86,7 @@ process pMobTyper {
     tag "Sample: $sample, BinID: $binID"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "MobTyper", filename) }, \
-        pattern: "{**.tsv, **.out, **.err, **.log}"
+        pattern: "{**.tsv}"
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("MobTyper")
 
@@ -147,7 +122,7 @@ process pPlasClass {
     tag "$sample $binID"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "PlasClass", filename) }, \
-        pattern: "{**.tsv, **.out, **.err, **.log}"
+        pattern: "{**.tsv}"
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("PlasClass")
 
@@ -177,7 +152,7 @@ process pPlaton {
     containerOptions " --user root:root " + Utils.getDockerMount(params.steps?.plasmid?.Platon?.database, params)
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "Platon", filename) }, \
-        pattern: "{**.tsv, **.out, **.err, **.log}"
+        pattern: "{**.tsv}"
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("Platon")
 
@@ -243,7 +218,7 @@ process pFilter {
     container "${params.ubuntu_image}"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "filtered", filename) }, \
-        pattern: "{**.tsv,**.fasta.gz, **.out, **.err, **.log}"
+        pattern: "{**.tsv,**.fasta.gz}"
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid.containsKey("Filter")
 
