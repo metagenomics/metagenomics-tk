@@ -15,9 +15,18 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
           '/' + TOOL + '/' + filename
 }
 
-
+// Input variabel gestallten und nicht an einem mmseqs festmachen
 def constructParametersObject(){
-  return params?.steps?.annotation?.mmseqs2.findAll().collect{ Utils.getDockerMount(it.value?.database, params)}.join(" ")
+  return params?.steps?.annotation?.mmseqs2.findAll().collect{ Utils.getDockerMountMMseqs(it.value?.database, params)}.join(" ")
+}
+
+
+def constructParametersObjectTax(){
+  return params?.steps?.annotation?.mmseqs2_taxonomy.findAll().collect{ Utils.getDockerMountMMseqs(it.value?.database, params)}.join(" ")
+}
+
+def constructParametersObjectDiamond(){
+  return params?.steps?.annotation?.diamond.findAll().collect{ Utils.getDockerMount(it.value?.database, params)}.join(" ")
 }
 
 /**
@@ -36,7 +45,7 @@ process pDiamond {
       // Therefore this place has to be mounted to the docker container to be accessible during run time.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 " + constructParametersObject()
+      containerOptions " --user 1000:1000 " + constructParametersObjectDiamond()
  
       tag "Sample: $sample, Database: $dbType"
 
@@ -112,7 +121,8 @@ process pMMseqs2 {
 
       label 'large'
 
-      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2/${dbType}", filename) }
+      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2/${dbType}", filename) }, \
+         pattern: "{**.blast.tsv}"
  
       // UID mapping does not work for some reason. Every time a database directory is created while running docker,
       // the permissions are set to root. This leads to crashes later on.
@@ -156,8 +166,8 @@ process pMMseqs2 {
 
     mkdir tmp
     mmseqs createdb !{fasta} queryDB
-    mmseqs search queryDB ${MMSEQS2_DATABASE_DIR}/sequenceDB !{binID}.!{dbType}.results.database tmp !{parameters} --threads !{task.cpus}
-    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR}/sequenceDB !{binID}.!{dbType}.results.database !{binID}.!{dbType}.blast.tsv --threads !{task.cpus}
+    mmseqs search queryDB ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.results.database tmp !{parameters} --threads !{task.cpus}
+    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.results.database !{binID}.!{dbType}.blast.tsv --threads !{task.cpus}
    '''
 }
 
@@ -171,13 +181,14 @@ process pMMseqs2_taxonomy {
       // Therefore this place has to be mounted to the docker container to be accessible during run time.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 " + constructParametersObject()
+      containerOptions " --user 1000:1000 " + constructParametersObjectTax()
  
       tag "Sample: $sample, Database_taxonomy: $dbType"
 
       label 'large'
 
-      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", filename) }
+      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", filename) }, \
+         pattern: "{**.krakenStyleTaxonomy.out, **.krona.html, **.taxonomy.tsv}"
  
       // UID mapping does not work for some reason. Every time a database directory is created while running docker,
       // the permissions are set to root. This leads to crashes later on.
@@ -223,10 +234,11 @@ process pMMseqs2_taxonomy {
     fi
 
     mkdir tmp
-    mmseqs taxonomy queryDB ${MMSEQS2_DATABASE_DIR}/sequenceDB !{binID}.!{dbType}.taxresults.database tmp !{parameters} --threads !{task.cpus}
+    mmseqs createdb !{fasta} queryDB
+    mmseqs taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.taxresults.database tmp !{parameters} --threads !{task.cpus}
     mmseqs createtsv queryDB !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.taxonomy.tsv --threads !{task.cpus}
-    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR}/sequenceDB !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.krakenStyleTax.out
-    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR}/sequenceDB !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.krona.html --report-mode 1
+    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.krakenStyleTax.out
+    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.krona.html --report-mode 1
    '''
 }
 
@@ -618,8 +630,17 @@ workflow _wAnnotation {
              it.value.database?.download?.s5cmd?.params ?: "" ]
       })
 
+      selectedTaxDBs = params?.steps?.annotation?.mmseqs2_taxonomy.findAll().collect({
+            [it.key, it.value?.params ?: "", \
+             it.value?.database?.extractedDBPath ?: "", \
+             it.value.database?.download?.source ?: "", \
+             it.value.database?.download?.md5sum ?: "", \
+             it.value.database?.download?.s5cmd?.params ?: "" ]
+      })
+
       // Run all amino acid outputs against all databases 
       pProkka.out.faa | combine(Channel.from(selectedDBs)) | pMMseqs2
+      pProkka.out.faa | combine(Channel.from(selectedTaxDBs)) | pMMseqs2_taxonomy
       DB_TYPE_IDX = 0
       pMMseqs2.out.results | filter({ result -> result[DB_TYPE_IDX] == "kegg" }) \
 	| map({ result -> result.remove(0); result }) \
@@ -635,6 +656,7 @@ workflow _wAnnotation {
       contigCoverage | combine(pProkka.out.ffn, by: SAMPLE_IDX) | pGeneCoverage
 
       pProkka.out.logs | mix(pMMseqs2.out.logs) \
+        | mix(pMMseqs2_taxonomy.out.logs) \
 	| mix(pResistanceGeneIdentifier.out.logs) \
 	| mix(pKEGGFromDiamond.out.logs) | pDumpLogs
    emit:
