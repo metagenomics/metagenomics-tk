@@ -237,7 +237,7 @@ process pMMseqs2_taxonomy {
     mmseqs createdb !{fasta} queryDB
     mmseqs taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.taxresults.database tmp !{parameters} --threads !{task.cpus}
     mmseqs createtsv queryDB !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.taxonomy.tsv --threads !{task.cpus}
-    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.krakenStyleTax.out
+    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.krakenStyleTaxonomy.out
     mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.krona.html --report-mode 1
    '''
 }
