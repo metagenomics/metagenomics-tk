@@ -15,19 +15,11 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
           '/' + TOOL + '/' + filename
 }
 
-// Input variabel gestallten und nicht an einem mmseqs festmachen
-def constructParametersObject(){
-  return params?.steps?.annotation?.mmseqs2.findAll().collect{ Utils.getDockerMountMMseqs(it.value?.database, params)}.join(" ")
+
+def constructParametersObject(String tool){ 
+  return params?.steps?.annotation?."$tool".findAll().collect{ Utils.getDockerMountMMseqs(it.value?.database, params)}.join(" ")
 }
 
-
-def constructParametersObjectTax(){
-  return params?.steps?.annotation?.mmseqs2_taxonomy.findAll().collect{ Utils.getDockerMountMMseqs(it.value?.database, params)}.join(" ")
-}
-
-def constructParametersObjectDiamond(){
-  return params?.steps?.annotation?.diamond.findAll().collect{ Utils.getDockerMount(it.value?.database, params)}.join(" ")
-}
 
 /**
 *
@@ -45,7 +37,7 @@ process pDiamond {
       // Therefore this place has to be mounted to the docker container to be accessible during run time.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 " + constructParametersObjectDiamond()
+      containerOptions " --user 1000:1000 " + constructParametersObject("diamond")
  
       tag "Sample: $sample, Database: $dbType"
 
@@ -115,7 +107,7 @@ process pMMseqs2 {
       // Therefore this place has to be mounted to the docker container to be accessible during run time.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 " + constructParametersObject()
+      containerOptions " --user 1000:1000 " + constructParametersObject("mmseqs2")
  
       tag "Sample: $sample, Database: $dbType"
 
@@ -181,7 +173,7 @@ process pMMseqs2_taxonomy {
       // Therefore this place has to be mounted to the docker container to be accessible during run time.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 " + constructParametersObjectTax()
+      containerOptions " --user 1000:1000 " + constructParametersObject("mmseqs2_taxonomy")
  
       tag "Sample: $sample, Database_taxonomy: $dbType"
 
