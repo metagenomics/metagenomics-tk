@@ -180,7 +180,7 @@ process pMMseqs2_taxonomy {
       label 'large'
 
       publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", filename) }, \
-         pattern: "{**.krakenStyleTaxonomy.out, **.krona.html, **.taxonomy.tsv}"
+         pattern: "{*.out,*.html,*.tsv}"
  
       // UID mapping does not work for some reason. Every time a database directory is created while running docker,
       // the permissions are set to root. This leads to crashes later on.
@@ -227,6 +227,7 @@ process pMMseqs2_taxonomy {
 
     mkdir tmp
     mmseqs createdb !{fasta} queryDB
+    echo "Test"
     mmseqs taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.taxresults.database tmp !{parameters} --threads !{task.cpus}
     mmseqs createtsv queryDB !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.taxonomy.tsv --threads !{task.cpus}
     mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.krakenStyleTaxonomy.out
