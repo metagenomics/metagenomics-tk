@@ -141,17 +141,17 @@ process pMMseqs2 {
          DATABASE=!{params.polished.databases}/mmseqs2
          LOCK_FILE=${DATABASE}/lock.txt
 
-         mkdir -p ${DATABASE}
-         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
+         mkdir -p ${DATABASE}/!{dbType}
+         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE}/!{dbType} \
             --link=!{DOWNLOAD_LINK} \
-            --httpsCommand="wget -O mmseqs.db.tar.zst !{DOWNLOAD_LINK}  && zstd --rm -T!{task.cpus} -d mmseqs.db.tar.zst && tar -xzf mmseqs.db.tar -C ${DATABASE} " \
-            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mmseqs.db.gz && mmseqs.db.gz " \
-            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mmseqs.db.gz && gunzip mmseqs.db.gz " \
+            --httpsCommand="wget -O mmseqs.!{dbType}.tar.zst !{DOWNLOAD_LINK}  && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar -C ${DATABASE}/!{dbType} " \
+            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && mmseqs.!{dbType}.tar.zst " \
+            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar -C ${DATABASE}/!{dbType} " \
 	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
             --localCommand="gunzip -c !{DOWNLOAD_LINK} > ./mmseqs.db" \
             --expectedMD5SUM=!{MD5SUM}
 
-          MMSEQS2_DATABASE_DIR="${DATABASE}/out/mmseqs.db"
+          MMSEQS2_DATABASE_DIR="${DATABASE}/!{dbType}/!{dbType}"
     else
           MMSEQS2_DATABASE_DIR="!{EXTRACTED_DB}"
     fi
