@@ -6,9 +6,16 @@ circular plasmids out of raw reads. All plasmid detection tools are executed on 
 Just the filtered sequences are used for downstream analysis. 
 
 The identification of plasmids is based on the combined result of tools which have a `filter` property assigned. Results of all tools that
-have the `filter` property set to true are combined either by a logical `OR` or by a logical `AND`. It is also possible to simply run a tool without
+have the `filter` property set to true are combined either by a logical `OR` or by a logical `AND`. 
+
+Example for the `OR` and `AND` operations: 
+Let's assume that we have three plasmid detection tools (t1, t2, t3) that have four contigs (c1, c2, c3, c4) as input. Lets further assume that c1 and c2 are detected by all tools as contigs and
+c3 and c4 are only detected by t1 and t2. By using an `AND` only c1 and c2 are finally reported by the module as plasmids. By using an `OR` all contigs would be annotated as plasmids. 
+
+It is also possible to simply run a tool without
 using its result as filter by setting `filter` to `false`. If a tool should not be executed then the tool section should be removed.
 Only the detected plasmids will be used for downstream analysis.
+
 
 For running a plasmid assembly we suggest running the full pipeline mode with the enabled plasmids module. See input example configuration files.
 
