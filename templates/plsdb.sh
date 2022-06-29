@@ -34,7 +34,7 @@ mash sketch -i !{params.steps.plasmid.PLSDB.additionalParams.mashSketch} -o quer
 mash dist ${PLSDB}/plsdb.msh query.msh -p !{task.cpus} !{params.steps.plasmid.PLSDB.additionalParams.mashDist} > !{sample}_!{binID}.tsv
 
 # filter matches by user defined threshold
-sort -rgk 5,5 !{binID}.tsv | sed 's/\/.*$//g' \
+sort -rgk 5,5 !{sample}_!{binID}.tsv | sed 's/\/.*$//g' \
      | awk -v threshold=!{params.steps.plasmid.PLSDB.sharedKmerThreshold} '($5+0 > threshold) {print $0}' > matches.tsv
 
 OUTPUT=!{sample}_!{binID}_kmerThreshold_!{params.steps.plasmid.PLSDB.sharedKmerThreshold}.tsv
