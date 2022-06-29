@@ -277,21 +277,35 @@ workflow wInputFile {
     
     if("SRA" in inputTypes ){
         SRA_MODE=params.input.SRA.keySet()
+        datasetsS3Fastqs = Channel.empty()
+        datasetsNCBIFastqs = Channel.empty()
+        datasetsS3IncorrectAccessions = Channel.empty()
+        datasetsS3FailedSRAFastqFiles = Channel.empty()
+        datasetsNCBIIncorrectAccessions = Channel.empty()
+        datasetsNCBIFailedSRAFastqFiles = Channel.empty()
+
         if("S3" in SRA_MODE){
            _wSRAS3() | set { datasetsS3 }
+           datasetsS3.fastqs | set { datasetsS3Fastqs }
+           datasetsS3.incorrectAccessions | set { datasetsS3IncorrectAccessions }
+           datasetsS3.failedSRAFastqFiles | set { datasetsS3FailedSRAFastqFiles }
         } 
 
         if ("NCBI" in SRA_MODE){
            _wSRANCBI() | set { datasetsNCBI }
+           datasetsNCBI.fastqs | set { datasetsNCBIFastqs }
+           datasetsNCBI.incorrectAccessions | set { datasetsNCBIIncorrectAccessions }
+           datasetsNCBI.failedSRAFastqFiles | set { datasetsNCBIFailedSRAFastqFiles }
         }
 
-        datasetsS3.fastqs | mix(datasetsNCBI.fastqs) | set { sraFastqs }
+        datasetsS3Fastqs | mix(datasetsNCBIFastqs) | set { sraFastqs }
 
         fastqs | mix(sraFastqs) | set { fastqs }
 
-        datasetsS3.incorrectAccessions | mix(datasetsNCBI.incorrectAccessions) | set {incorrectAccessions}
 
-        datasetsS3.failedSRAFastqFiles | mix(datasetsNCBI.failedSRAFastqFiles) | set {failedSRAFastqFiles}
+        datasetsS3IncorrectAccessions | mix(datasetsNCBIIncorrectAccessions) | set {incorrectAccessions}
+
+        datasetsS3FailedSRAFastqFiles | mix(datasetsNCBIFailedSRAFastqFiles) | set {failedSRAFastqFiles}
 
         incorrectAccessions \
          | collectFile(newLine: true, seed: "RUN_ID", name: 'incorrectAccessions.tsv', storeDir: params.logDir)

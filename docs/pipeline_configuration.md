@@ -45,7 +45,7 @@ aws {
 
 ## Configuration of input parameters of the full pipeline mode
 
-### Generic Input
+### Paired End Input
 
 The input can be a path to a tsv file containing sample id, path to left and right read.
 
@@ -54,6 +54,16 @@ Example:
 input:
   paired:
     path: "test_data/fullPipeline/reads_split.tsv"
+```
+
+### Nanopore Input
+
+For Nanopore data a seperate input file should be specified.
+
+```
+input:
+  ont:
+    path: "test_data/fullPipeline/ont.tsv"
 ```
 
 ### Generic SRA
@@ -78,9 +88,10 @@ where:
   * `prefix` is the path to the actual SRA datasets.
 
   * `watch` if true, the file specified with the `path` attribute is watched and every time a new SRA run id is
-     appended, the pipeline is triggered. The pipeline will never finish in this mode.
+     appended, the pipeline is triggered. The pipeline will never finish in this mode. Please note that watch currently only works
+     if only one input type is specified (e.g "ont" or "paired" ...)
 
-#### NCBI SRA
+### NCBI SRA
 
 With the following mode SRA datasets can directly be fetched from SRA.
 

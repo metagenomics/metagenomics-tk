@@ -12,11 +12,11 @@ process pFastpSplit {
 
     label 'medium'
 
-    tag "$sample"
+    tag "Sample: $sample"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
 
-    when params?.steps?.qc.containsKey("fastp")
+    when params?.steps.containsKey("qc") && params?.steps?.qc.containsKey("fastp")
 
     container "${params.fastp_image}"
 
@@ -41,11 +41,11 @@ process pFastpSplitDownload {
 
     label 'medium'
 
-    tag "$sample"
+    tag "Sample: $sample"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
 
-    when params?.steps?.qc.containsKey("fastp")
+    when params?.steps.containsKey("qc") && params?.steps?.qc.containsKey("fastp")
 
     container "${params.fastp_image}"
 
@@ -113,7 +113,7 @@ workflow _wFastqSplit {
  * Interleaved fastq files.
  * 
  */
-workflow wQualityControlList {
+workflow wShortReadQualityControlList {
   take:
     reads
   main:
@@ -135,7 +135,7 @@ workflow wQualityControlList {
  * Interleaved fastq files.
  * 
  */
-workflow wQualityControlFile {
+workflow wShortReadQualityControlFile {
      take:
        readsTable
      main:
