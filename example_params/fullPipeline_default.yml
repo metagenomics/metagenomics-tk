@@ -71,8 +71,9 @@ steps:
         coverm: " --min-covered-fraction 0 "
   dereplication:
     pasolli:
-      minimumCompleteness: 0
-      maximumContamination: 5000
+      # stricter MIMAG medium quality
+      minimumCompleteness: 50
+      maximumContamination: 5
       ANIBuffer: 20
       mashBuffer: 2000
       method: 'ANI'
@@ -88,17 +89,19 @@ steps:
       additionalParams:
         bwa_index: ""
         bwa_mem: ""
+        # Even low coverage values should be reported
         coverm: " --min-covered-fraction 0 "
   cooccurrence:
     additionalParams: " -t 0.1 -z 80 -o 'correlation' "
   plasmid:
     SCAPP:
-      additionalParams: 
+      additionalParams:
+        bowtie: " --quiet --very-sensitive "
         SCAPP: "  "
-        bowtie: "  "
         coverm: "  "
     ViralVerifyPlasmid:
       filter: true
+      # Select sequences that are labeled as uncertain or plasmid id ViralVerifies output
       filterString: "Uncertain - plasmid or chromosomal|Plasmid"
       database:
         download:
@@ -107,8 +110,8 @@ steps:
       additionalParams: " --thr 7 "
     MobTyper:
       filter: true
-      minLength: 5000
-      additionalParams: " --min_length 9000  "
+      minLength: 1000
+      additionalParams: " --min_length 1000  "
       database:
         download:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_suite.tar.gz
@@ -122,11 +125,12 @@ steps:
       additionalParams: "   "
     PlasClass:
       filter: true
-      threshold: 0.5 
+      # A cutoff of 0.9 for longer (> 2 kb) sequences should pretty much yield only plasmids.
+      threshold: 0.9
       additionalParams: "   "
     Filter:
       method: "AND"
-      minLength: 0 
+      minLength: 1000 
     PLSDB:
       sharedKmerThreshold: 30
       database:
@@ -134,13 +138,19 @@ steps:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip
           md5sum: 52c65f4f1e8024a78743ac0972395c56
       additionalParams:
+     # Parameters according to plsdb paper
+     # -s: Sketch size
+     # -k: k-mer size
+     # -S: Seed to provide to the hash function
+     # -d: Maximum distance to report
+     # -v: Maximum p-value to report
         mashSketch: " -S 42 -k 21 -s 1000 "
-        mashDist: " -v 0.2 -d 0.2 "
+        mashDist: " -v 0.1 -d 0.1 "
   annotation:
     prokka:
       prodigalMode: "meta"
       defaultKingdom: 'Bacteria'
-      additionalParams: " --mincontiglen 200 "
+      additionalParams: " --mincontiglen 500 "
     mmseqs2:
       kegg:
         # -s 6 with 2 iterations
@@ -164,7 +174,6 @@ steps:
     keggFromMMseqs2:
       database:
         extractedDBPath: "/vol/spool/biogas/databases/kegg_2021-01/" 
-
 resources:
   large:
     cpus: 28
