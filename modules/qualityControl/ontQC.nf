@@ -16,7 +16,7 @@ process pPorechop {
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "porechop", filename) }
 
-    when params?.steps?.qcONT.containsKey("porechop")
+    when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("porechop")
 
     container "${params.porechop_image}"
 
@@ -43,7 +43,7 @@ process pPorechopDownload {
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "porechop", filename) }
 
-    when params?.steps?.qcONT.containsKey("porechop")
+    when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("porechop")
 
     container "${params.porechop_image}"
 
@@ -72,7 +72,7 @@ process pNanoPlot {
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "nanoplot", filename) }
 
-    when params?.steps?.qcONT.containsKey("nanoplot")
+    when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("nanoplot")
 
     container "${params.nanoplot_image}"
 

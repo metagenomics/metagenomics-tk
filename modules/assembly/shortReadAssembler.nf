@@ -95,7 +95,7 @@ workflow wShortReadAssemblyFile {
     main:
        Channel.from(file(params.steps.assembly.input)) | splitCsv(sep: '\t', header: true) \
              | map { it -> [ it.SAMPLE, it.READS, file("NOT_SET")]} \
-             | _wAssembly
+             | _wShortReadAssembly
     emit:
       contigs = _wShortReadAssembly.out.contigs
 }
