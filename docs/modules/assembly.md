@@ -2,10 +2,16 @@
 
 ## Input
 
-=== "Command"
+=== "Command for short read data"
 
     ```
-    -entry wAssembly -params-file example_params/assembly.yml
+    -entry wShortReadAssembly -params-file example_params/assembly.yml
+    ```
+
+=== "Command for long read data"
+
+    ```
+    -entry wOntAssembly -params-file example_params/assemblyONT.yml
     ```
 
 === "Megahit Configuration File"

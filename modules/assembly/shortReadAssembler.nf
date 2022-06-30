@@ -75,10 +75,10 @@ workflow wShortReadAssemblyList {
      take:
        readsList
      main:
-       readsList | _wAssembly
+       readsList | _wShortReadAssembly
     emit:
-      contigs = _wAssembly.out.contigs
-      fastg = _wAssembly.out.fastg
+      contigs = _wShortReadAssembly.out.contigs
+      fastg = _wShortReadAssembly.out.fastg
 }
 
 
@@ -97,7 +97,7 @@ workflow wShortReadAssemblyFile {
              | map { it -> [ it.SAMPLE, it.READS, file("NOT_SET")]} \
              | _wAssembly
     emit:
-      contigs = _wAssembly.out.contigs
+      contigs = _wShortReadAssembly.out.contigs
 }
 
 
