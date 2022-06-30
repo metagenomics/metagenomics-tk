@@ -2,7 +2,7 @@ nextflow.enable.dsl=2
 
 include { pGetBinStatistics as pGetBinStatistics; \
 	pGetBinStatistics as pGetNotBinnedStatistics; \
-	pCovermContigsCoverage; pBowtie2 } from './processes'
+	pCovermContigsCoverage; pBowtie2; pMinimap2 } from './processes'
 
 def getModulePath(module){
     return module.name + '/' + module.version.major + "." +
@@ -183,6 +183,52 @@ def createMap(binning){
   return chunkList;
 }
 
+
+workflow wShortReadBinning {
+  take:
+    contigs
+    inputReads     
+  main:
+    SAMPLE_IDX=0
+
+    pBowtie2(Channel.value(params?.steps?.containsKey("binning")), Channel.value([getModulePath(params.modules.binning), \
+      "contigMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, params.steps.containsKey("fragmentRecruitment")]), \
+      contigs | join(inputReads, by: SAMPLE_IDX))
+
+    wBinning(contigs, pBowtie2.out.mappedReads, pBowtie2.out.unmappedReads)   
+  emit:
+     binsStats = wBinning.out.binsStats
+     bins = wBinning.out.bins
+     mapping = wBinning.out.mapping
+     notBinnedContigs = wBinning.out.notBinnedContigs
+     unmappedReads = wBinning.out.unmappedReads
+     contigCoverage = wBinning.out.contigCoverage
+}
+
+
+workflow wLongReadBinning {
+  take:
+    contigs
+    inputReads
+  main:
+    SAMPLE_IDX=0
+
+    pMinimap2(Channel.value(params?.steps?.containsKey("binning")), Channel.value([getModulePath(params.modules.binning), \
+      "contigMapping", params.steps?.binning?.minimap2?.additionalParams?.minimap2, params.steps.containsKey("fragmentRecruitment")]), \
+      contigs | join(inputReads, by: SAMPLE_IDX))
+
+    wBinning(contigs, pMinimap2.out.mappedReads, pMinimap2.out.unmappedReads)
+  emit:
+     binsStats = wBinning.out.binsStats
+     bins = wBinning.out.bins
+     mapping = wBinning.out.mapping
+     notBinnedContigs = wBinning.out.notBinnedContigs
+     unmappedReads = wBinning.out.unmappedReads
+     contigCoverage = wBinning.out.contigCoverage    
+}
+
+
+
 /*
 *
 * This workflow takes an input_reads channel as input with the following format [SAMPLE, READS PAIRED, READS UNPAIRED]
@@ -191,19 +237,19 @@ def createMap(binning){
 workflow wBinning {
    take: 
      contigs
-     inputReads
+     mappedReads
+     unmappedReads
    main:
      // Map reads against assembly and retrieve mapping quality
      SAMPLE_IDX=0
-     pBowtie2(Channel.value(params?.steps?.containsKey("binning")), Channel.value([getModulePath(params.modules.binning), \
-	"contigMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, params.steps.containsKey("fragmentRecruitment")]), contigs | join(inputReads, by: SAMPLE_IDX))
 
-     pBowtie2.out.mappedReads | (pGetMappingQuality)
+     mappedReads | (pGetMappingQuality)
      pCovermContigsCoverage(Channel.value(params?.steps?.binning.find{ it.key == "contigsCoverage"}?.value), Channel.value([getModulePath(params.modules.binning), \
-	"contigCoverage", params?.steps?.binning?.contigsCoverage?.additionalParams]), pBowtie2.out.mappedReads)
+	"contigCoverage", params?.steps?.binning?.contigsCoverage?.additionalParams]), mappedReads)
+
 
      // Run binning tool
-     contigs | join(pBowtie2.out.mappedReads, by: SAMPLE_IDX) | (pMetabinner & pMetabat )
+     contigs | join(mappedReads, by: SAMPLE_IDX) | (pMetabinner & pMetabat )
      pMetabinner.out.bins | mix(pMetabat.out.bins) | set { bins }
 
      pMetabinner.out.notBinned | mix(pMetabat.out.notBinned) | set { notBinned }
@@ -216,10 +262,10 @@ workflow wBinning {
      binsList | map { it -> flattenBins(it) } | flatMap {it -> createMap(it)} | set {binMap}
 
      // Compute bin statistcs (e.g. N50, average coverage depth, etc. ...)
-     pMetabinner.out.binContigMapping | join(pBowtie2.out.mappedReads, by: SAMPLE_IDX) \
+     pMetabinner.out.binContigMapping | join(mappedReads, by: SAMPLE_IDX) \
 	| combine(Channel.from("metabinner")) | join(pMetabinner.out.bins, by: SAMPLE_IDX) \
 	| set { metabinnerBinStatisticsInput }  
-     pMetabat.out.binContigMapping | join(pBowtie2.out.mappedReads, by: SAMPLE_IDX) \
+     pMetabat.out.binContigMapping | join(mappedReads, by: SAMPLE_IDX) \
 	| combine(Channel.from("metabat")) | join(pMetabat.out.bins, by: SAMPLE_IDX) \
 	| set { metabatBinStatisticsInput }
 
@@ -255,8 +301,8 @@ workflow wBinning {
    emit:
      binsStats = binMap
      bins = binsList
-     mapping = pBowtie2.out.mappedReads
+     mapping = mappedReads
      notBinnedContigs = notBinned
-     unmappedReads = pBowtie2.out.unmappedReads
+     unmappedReads = unmappedReads
      contigCoverage = pCovermContigsCoverage.out.coverage     
 }
