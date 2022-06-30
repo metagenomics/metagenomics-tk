@@ -11,9 +11,10 @@ if [ -s *.confident_cycs.fasta ]; then
   transform.sh "$(ls -1 *.confident_cycs.fasta)" ${PLASMIDS_OUTPUT} !{sample} !{task.cpus}
 
   PLASMID_STATS=!{sample}_plasmids_stats.tsv
+  PLASMID_SUMMARY_STATS=!{sample}_plasmids_summary_stats.tsv
   # get basic contig stats
   csvtk concat --out-tabs -H <(csvtk transpose <(echo -e "SAMPLE\n!{sample}") ) <(csvtk transpose  <(seqkit stat -Ta ${PLASMIDS_OUTPUT}) ) \
-	        | csvtk --tabs transpose | sed 's/"//g' > ${PLASMID_STATS}
+	        | csvtk --tabs transpose | sed 's/"//g' > ${PLASMID_SUMMARY_STATS}
 
   echo -e "SAMPLE\tID\tLENGTH\tGC" > ${PLASMID_STATS}
   seqkit fx2tab -l -g -n -i  ${PLASMIDS_OUTPUT} \

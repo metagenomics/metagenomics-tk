@@ -43,10 +43,11 @@ process pSCAPP {
 
     output:
     tuple val("${sample}"), path("${sample}_plasmids.fasta.gz"), emit: plasmids, optional: true
+    tuple val("${sample}"), path("${sample}_plasmids_summary_stats.tsv"), emit: plasmidsSummaryStats, optional: true
+    tuple val("${sample}"), path("${sample}_plasmids_stats.tsv"), emit: plasmidsStats, optional: true
     tuple val("${sample}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    tuple val("${sample}"), path("${sample}_plasmids_stats.tsv"), emit: plasmidsStats, optional: true
 
     shell:
     output = getOutput("${sample}", params.runid, "SCAPP", "")

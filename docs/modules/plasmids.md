@@ -116,8 +116,8 @@ The compressed database must be a zip file.
 ### SCAPP
 
 SCAPP detects plasmid sequences out of the samples assembly graph.
-It reports sequences as gzipped fasta files (`*_plasmids.fasta.gz`). A basic statistic (`*_plasmids_stats.tsv`)
-is also generated. Coverm coverage metrics are generated for all plasmids. Gene coverage values are generated as part of the annotation module output.
+It reports sequences as gzipped fasta files (`*_plasmids.fasta.gz`). A basic statistic (`*_plasmids_stats.tsv`) per plasmid and a summary satistic (`*_plasmids_summary_stats.tsv`) over all
+plasmids is also generated. Coverm coverage metrics are generated for all plasmids. Gene coverage values are generated as part of the annotation module output.
 
 ### PlasClass
 
