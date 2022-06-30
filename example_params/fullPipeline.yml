@@ -160,7 +160,7 @@ steps:
 #          md5sum: 2a1e01f01e904ed6e126b5ac162764c8
     mmseqs2_taxonomy:
       ncbi_nr:
-        params: ''
+        params: '-s 1 --orf-filter-s 1 -e 1e-15'
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
