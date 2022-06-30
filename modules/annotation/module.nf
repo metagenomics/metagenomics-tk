@@ -67,15 +67,15 @@ process pDiamond {
    DIAMOND_FILE=""
    if [ -z "!{EXTRACTED_DB}" ] 
    then
-         DATABASE=!{params.polished.databases}/diamond
+         DATABASE=!{params.polished.databases}/!{dbType}
          LOCK_FILE=${DATABASE}/lock.txt
 
          mkdir -p ${DATABASE}
          flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
             --link=!{DOWNLOAD_LINK} \
-            --httpsCommand="wget -O db.dmnd.gz !{DOWNLOAD_LINK}  && gunzip db.dmnd.gz " \
-            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} db.dmnd.gz && gunzip db.dmnd.gz " \
-            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} db.dmnd.gz && gunzip db.dmnd.gz " \
+            --httpsCommand="wget -O db.dmnd.gz !{DOWNLOAD_LINK}  && gunzip -c db.dmnd.gz > db.dmnd && rm db.dmnd.gz " \
+            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} db.dmnd.gz && gunzip -c db.dmnd.gz > db.dmnd && rm db.dmnd.gz " \
+            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} db.dmnd.gz && gunzip -c db.dmnd.gz > db.dmnd && rm db.dmnd.gz " \
 	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
             --localCommand="gunzip -c !{DOWNLOAD_LINK} > ./db.dmnd" \
             --expectedMD5SUM=!{MD5SUM}
