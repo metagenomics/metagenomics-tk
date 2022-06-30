@@ -17,8 +17,8 @@
  * `steps`: Steps allows to specify multiple pipeline modules for running the toolkit. We distinguish between two modes. You can either run one tool of
    the pipeline or the whole pipeline with different configurations.
 
- * `databases`: This parameter specifies a place where files are downloaded to. If the `slurm` profile is used and databases should be downloaded, the path **must** point to a folder 
-    which is not shared between the worker nodes. If the `standard` profile is used, it **must** be a folder which is shared between all nodes. 
+ * `databases`: This parameter specifies a place where files are downloaded to. If the `slurm` profile is used and databases should be downloaded, the path **should** point to a folder 
+    which is not shared between the worker nodes (to reduce I/O on the shared folder resulting in a better performance). 
 
 ## S3 Configuration
 
@@ -95,7 +95,9 @@ input:
 
 Whenever a database field can be specified as part of the tool configuration (such as in gtdb or checkm), you are able to provide different methods to
 fetch the database. In all settings, please make sure that the file has the same ending (e.g. .zip, .tar.gz) as specified in the corresponding tool section.
-With the exception of the `extractedDBPath` parameter, all other input types (https, s3,...) will download the database to the folder specified in the `database` parameter.
+In addition, as database names are used to name results with which they were created, said database names should contain the respective database number or date of creation.
+With this every result can be linked to one exact database version to clarify results. 
+Except for the `extractedDBPath` parameter, all other input types (https, s3,...) will download the database to the folder specified in the `database` parameter.
 
 ### Extracted Database Path
 
@@ -110,7 +112,7 @@ database:
 
 ### HTTPS Download
 
-The toolkit is able to download and extract the database, as long as the file ending equals the one specified in the corresponding tool section (.zip, tar.gz)
+The toolkit is able to download and extract the database, as long as the file ending equals the one specified in the corresponding tool section (.zip, tar.gz, tar.zst)
 This setting is available in standard and slurm mode. 
 
 
@@ -165,7 +167,7 @@ database:
       keyfile: /vol/spool/credentials
 ```
 
-Your credentials file should follow the AWS credentials pattern:
+Your credentials file should follow the AWS credentials pattern and in case you want to use the slurm mode, be placed in a shared directory as all nodes need access:
 
 ```
 [default]

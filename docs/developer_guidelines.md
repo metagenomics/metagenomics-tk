@@ -227,7 +227,7 @@ We do not want to duplicate code and thats why we should store methods in the li
 
 ## Database Download
 
-This section explains how a developer is able to implement the database download strategy as explained in the [user documentation](##-Database-input-configuration). 
+This section explains how a developer is able to implement the database download strategy as explained in the [user documentation](pipeline_configuration.md##-Database-input-configuration). 
 Example implementations can be found in the gtdb, checkm or rgi scripts.
 
 The first step is to check if the user provides an already extracted database: 
