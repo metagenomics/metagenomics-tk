@@ -23,8 +23,38 @@ process pBwaIndex {
       """
 }
 
-process pMapBwa {
 
+process pMinimap2Index {
+    container "${params.ubuntu_image}"
+    label 'large'
+    when params.steps.containsKey("readMapping")
+    input:
+      path(representatives)
+    output:
+      path('ont.mmi')
+    shell:
+      """
+      minimap2 !{params.steps.readMapping.minimap2.additionalParams.minimap2_index} -x map-ont -d ont.mmi !{representatives}
+      """
+}
+
+
+process pMapMinimap2 {
+    label 'large'
+    container "${params.samtools_bwa_image}"
+    when params.steps.containsKey("readMapping")
+    publishDir params.output, saveAs: { filename -> getOutput("${sampleID}", params.runid ,"minimap2", filename) }
+    input:
+      tuple val(sampleID), path(sample), val(mode), path(representatives_fasta), path(x, stageAs: "*") 
+    output:
+      tuple val("${sampleID}"), path("*bam"), emit: alignment
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+    shell:
+    template('minimap2.sh')
+}
+
+
+process pMapBwa {
     label 'large'
     container "${params.samtools_bwa_image}"
     when params.steps.containsKey("readMapping")
@@ -113,11 +143,12 @@ workflow wFileReadMappingBwa {
 */
 workflow wListReadMappingBwa {
    take:
+     samplesONT
      samplesPaired
      samplesSingle
      genomes
    main:
-     _wReadMappingBwa(samplesPaired, samplesSingle, genomes)
+     _wReadMappingBwa(samplesONT, samplesPaired, samplesSingle, genomes)
    emit:
      trimmedMean = _wReadMappingBwa.out.trimmedMean
 }
@@ -125,6 +156,7 @@ workflow wListReadMappingBwa {
 
 workflow _wReadMappingBwa {
    take:
+     samplesONT
      samplesPaired
      samplesSingle
      genomes
@@ -137,10 +169,12 @@ workflow _wReadMappingBwa {
      genomes | collectFile(tempDir: genomesTempDir){ item -> [ "mergedGenomes.fasta", item.text ] } \
       | set { genomesMerged }
 
-     // Create BWA index of all genomes
+     // Create BWA and Minimap index of all genomes
      BWA_INDEX_IDX=0
      GENOMES_IDX=1
      genomesMerged | pBwaIndex | set {index} 
+
+     genomesMerged | pMinimap2Index | set { ontIndex }
 
      // combine index with every sample
      index | map{ bwaIndex -> [bwaIndex]} \
@@ -155,16 +189,26 @@ workflow _wReadMappingBwa {
       | set {singleIndex}
      samplesSingle | combine(singleIndex) | set {single}
 
+     ontIndex | map{ bwaIndex -> [bwaIndex]} \
+      | combine(genomesMerged)  \
+      | map{ it -> ["ONT", it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
+      | set {ontLongReadIndex}
+     samplesONT | combine(ontLongReadIndex) | set {ont}
+
      // Paired and single reads should be mapped back
      pMapBwa(paired | mix(single))
+
+     // Map ONT data
+     pMapMinimap2(ont)
  
      // The resulting alignments (bam files) should merged
      SAMPLE_NAME_IDX=0
-     pMapBwa.out.alignment | groupTuple(by: SAMPLE_NAME_IDX) | pMergeAlignment
-   
+     pMapBwa.out.alignment | mix(pMapMinimap2.out.alignment) | groupTuple(by: SAMPLE_NAME_IDX) | pMergeAlignment
+
      // Map all samples against all genomes using bwa 
      pMergeAlignment.out.alignmentIndex | combine(genomes | map {it -> file(it)} \
       | toList() | map { it -> [it]}) | pCovermCount
+
    emit:
      trimmedMean = pCovermCount.out.trimmedMean
 }
