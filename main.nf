@@ -3,7 +3,6 @@ nextflow.enable.dsl=2
 include { wSaveSettingsList } from './modules/config/module'
 include { wShortReadQualityControlFile; wShortReadQualityControlList} from './modules/qualityControl/shortReadQC'
 include { wOntQualityControlFile; wOntQualityControlList} from './modules/qualityControl/ontQC'
-
 include { wShortReadAssemblyFile; wShortReadAssemblyList } from './modules/assembly/shortReadAssembler'
 include { wOntAssemblyFile; wOntAssemblyList } from './modules/assembly/ontAssembler'
 include { wShortReadBinning; wLongReadBinning } from './modules/binning/module.nf'
@@ -39,6 +38,14 @@ workflow wShortReadAssembly {
 
 workflow wOntAssembly {
    wOntAssemblyFile()
+}
+
+workflow wOntQualityControl {
+   wOntQualityControlFile()
+}
+
+workflow wShortReadQualityControl {
+   wShortReadQualityControlFile()
 }
 
 workflow wReadMapping {
@@ -229,12 +236,12 @@ workflow _wProcessIllumina {
       wShortReadQualityControlList.out.readsPair \
  	| join(wShortReadQualityControlList.out.readsSingle) | set { qcReads }
       wShortReadAssemblyList(qcReads)
-      wShortReadBinning(wAssemblyList.out.contigs, qcReads)
+      wShortReadBinning(wShortReadAssemblyList.out.contigs, qcReads)
     emit:
       notBinnedContigs = wShortReadBinning.out.notBinnedContigs 
       bins = wShortReadBinning.out.bins 
       binsStats = wShortReadBinning.out.binsStats
-      fastg = wAssemblyList.out.fastg
+      fastg = wShortReadAssemblyList.out.fastg
       mapping = wShortReadBinning.out.mapping
       unmappedReads = wShortReadBinning.out.unmappedReads
       contigCoverage = wShortReadBinning.out.contigCoverage
