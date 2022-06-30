@@ -12,7 +12,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 process pBwaIndex {
     container "${params.bwa_image}"
     label 'large'
-    when params.steps.containsKey("readMapping")
+    when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa")
     input:
       path(representatives)
     output:
@@ -27,7 +27,7 @@ process pBwaIndex {
 process pMinimap2Index {
     container "${params.ubuntu_image}"
     label 'large'
-    when params.steps.containsKey("readMapping")
+    when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("minimap2")
     input:
       path(representatives)
     output:
@@ -42,7 +42,7 @@ process pMinimap2Index {
 process pMapMinimap2 {
     label 'large'
     container "${params.samtools_bwa_image}"
-    when params.steps.containsKey("readMapping")
+    when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("minimap2")
     publishDir params.output, saveAs: { filename -> getOutput("${sampleID}", params.runid ,"minimap2", filename) }
     input:
       tuple val(sampleID), path(sample), val(mode), path(representatives_fasta), path(x, stageAs: "*") 
