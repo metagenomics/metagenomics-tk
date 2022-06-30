@@ -1,12 +1,15 @@
 nextflow.enable.dsl=2
 
 include { wSaveSettingsList } from './modules/config/module'
-include { wQualityControlFile; wQualityControlList} from './modules/qualityControl/module'
-include { wAssemblyFile; wAssemblyList } from './modules/assembly/module'
-include { wBinning } from './modules/binning/module.nf'
+include { wShortReadQualityControlFile; wShortReadQualityControlList} from './modules/qualityControl/shortReadQC'
+include { wOntQualityControlFile; wOntQualityControlList} from './modules/qualityControl/ontQC'
+
+include { wShortReadAssemblyFile; wShortReadAssemblyList } from './modules/assembly/shortReadAssembler'
+include { wOntAssemblyFile; wOntAssemblyList } from './modules/assembly/ontAssembler'
+include { wShortReadBinning; wLongReadBinning } from './modules/binning/module.nf'
 include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
 include { wDereplicateFile; wDereplicateList} from './modules/dereplication/pasolli/module'
-include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/bwa/module'
+include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/mapping.nf'
 include { wAnalyseMetabolites } from './modules/metabolomics/module'
 include { wUnmappedReadsList; wUnmappedReadsFile } from './modules/sampleAnalysis/module'
 include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './modules/fragmentRecruitment/frhit/module'
@@ -30,8 +33,12 @@ workflow wDereplication {
    wDereplicateFile(Channel.from(file(params?.steps?.dereplication?.pasolli?.input)))
 }
 
-workflow wAssembly {
-   wAssemblyFile()
+workflow wShortReadAssembly {
+   wShortReadAssemblyFile()
+}
+
+workflow wOntAssembly {
+   wOntAssemblyFile()
 }
 
 workflow wReadMapping {
@@ -40,13 +47,26 @@ workflow wReadMapping {
 
 workflow wSRATable {
    SAMPLE_IDX = 0
-   FASTQ_FILE_LEFT_IDX = 1 
-   FASTQ_FILE_RIGHT_IDX = 2 
-   wInputFile() \
-	| map { sample ->  [ sample.SAMPLE, sample.READS1, sample.READS2 ] } \
-	| collectFile(newLine: true, seed: "SAMPLE\tREADS1\tREADS2"){ it -> [ "samples", it[SAMPLE_IDX] \
+   FASTQ_FILE_LEFT_IDX = 2 
+   FASTQ_FILE_RIGHT_IDX = 3 
+   INSTRUMENT_IDX = 1
+
+   wInputFile() | branch {  
+        ONT: it.TYPE == "OXFORD_NANOPORE"
+        ILLUMINA: it.TYPE == "ILLUMINA"
+   } | set { input }
+     
+   input.ILLUMINA | map { sample ->  [ sample.SAMPLE, sample.TYPE, sample.READS1, sample.READS2 ] } \
+	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tREADS1\tREADS2"){ it -> [ "samplesILLUMINA", it[INSTRUMENT_IDX] \
+        + "\t" + it[SAMPLE_IDX] \
 	+ "\t" + it[FASTQ_FILE_LEFT_IDX].toString() \
 	+ "\t" + it[FASTQ_FILE_RIGHT_IDX].toString()] } \
+	| view({ it -> it.text })
+
+   input.ONT | map { sample ->  [ sample.SAMPLE, sample.TYPE, sample.READS ] } \
+	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tREADS"){ it -> [ "samplesONT", it[INSTRUMENT_IDX] \
+        + "\t" + it[SAMPLE_IDX] \
+	+ "\t" + it[FASTQ_FILE_LEFT_IDX].toString() ]} \
 	| view({ it -> it.text })
 }
 
@@ -147,6 +167,7 @@ workflow wAggregatePipeline {
 
 workflow _wAggregate {
    take:
+     samplesONT
      samplesPaired
      samplesSingle
      binsStats
@@ -165,7 +186,7 @@ workflow _wAggregate {
         | map { it -> file(it[REPRESENTATIVES_PATH_IDX]) }\
         | set { representativesList }
 
-     wListReadMappingBwa(samplesPaired, samplesSingle, representativesList)
+     wListReadMappingBwa(samplesONT, samplesPaired, samplesSingle, representativesList)
 
      binsStats | wAnalyseMetabolites
 
@@ -179,7 +200,6 @@ workflow _wAggregate {
 *
 */
 workflow _wConfigurePipeline {
-
     // For plasmid detection we need the assembly graph of the assembler
     if(params.steps.containsKey("plasmid")){
        def fastg = [ fastg: true]
@@ -201,6 +221,46 @@ def flattenBins(binning){
 }
 
 
+workflow _wProcessIllumina {
+    take:
+      reads
+    main:
+      wShortReadQualityControlList(reads)
+      wShortReadQualityControlList.out.readsPair \
+ 	| join(wShortReadQualityControlList.out.readsSingle) | set { qcReads }
+      wShortReadAssemblyList(qcReads)
+      wShortReadBinning(wAssemblyList.out.contigs, qcReads)
+    emit:
+      notBinnedContigs = wShortReadBinning.out.notBinnedContigs 
+      bins = wShortReadBinning.out.bins 
+      binsStats = wShortReadBinning.out.binsStats
+      fastg = wAssemblyList.out.fastg
+      mapping = wShortReadBinning.out.mapping
+      unmappedReads = wShortReadBinning.out.unmappedReads
+      contigCoverage = wShortReadBinning.out.contigCoverage
+      readsPair = wShortReadQualityControlList.out.readsPair
+      readsSingle = wShortReadQualityControlList.out.readsSingle
+      readsPairSingle = qcReads
+}
+
+workflow _wProcessOnt {
+    take:
+      reads
+    main:
+      wOntQualityControlList(reads)
+      wOntQualityControlList.out.reads | set { ontQCReads }
+      wOntAssemblyList(ontQCReads)
+      wLongReadBinning(wOntAssemblyList.out.contigs, ontQCReads)
+    emit:
+      notBinnedContigs = wLongReadBinning.out.notBinnedContigs 
+      bins = wLongReadBinning.out.bins 
+      binsStats = wLongReadBinning.out.binsStats
+      mapping = wLongReadBinning.out.mapping
+      unmappedReads = wLongReadBinning.out.unmappedReads
+      contigCoverage = wLongReadBinning.out.contigCoverage
+      reads = ontQCReads
+}
+
 /*
 * 
 * Main workflow entrypoint. Takes list of files containing reads as input and produces assembly, binning, dereplication and metabolomics 
@@ -217,39 +277,45 @@ workflow wPipeline {
 
     inputSamples = wInputFile()
 
+    illumina = _wProcessIllumina(inputSamples | filter({ sample -> sample.TYPE == 'ILLUMINA' }) | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} )
+
+    ont = _wProcessOnt(inputSamples | filter({ sample -> sample.TYPE == 'OXFORD_NANOPORE' }) | map { it -> [ it.SAMPLE, it.READS ]} )
+
+    ont.binsStats | mix(illumina.binsStats) | set { binsStats }
+
+    ont.notBinnedContigs | mix(illumina.notBinnedContigs) 
+       | map { notBinned -> [ notBinned[0], "notBinned", notBinned[1]]} \
+       | set { notBinnedContigs }
+
+    ont.binsStats | mix(illumina.binsStats) 
+	| map{ bin -> [bin.SAMPLE, bin.BIN_ID, bin.PATH]} \
+        | set { bins }
+
+    illumina.fastg | set { fastg } 
+
+    ont.mapping | mix(illumina.mapping) | set { mapping } 
+
+    ont.unmappedReads | mix(illumina.unmappedReads) | set { unmappedReads } 
+
+    ont.contigCoverage | mix(illumina.contigCoverage) | set { contigCoverage } 
+
     wSaveSettingsList(inputSamples | map { it -> it.SAMPLE })
 
-    wQualityControlList(inputSamples | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} )
-
-    wQualityControlList.out.readsPair \
-	| join(wQualityControlList.out.readsSingle) | set { qcReads }
-
-    wAssemblyList(qcReads)
-
-    wBinning(wAssemblyList.out.contigs, qcReads)
-
-    wBinning.out.notBinnedContigs \
-	| map { notBinned -> [ notBinned[0], "notBinned", notBinned[1]]} \
-	| set {notBinnedContigs}
-
-    wBinning.out.binsStats  \
-	| map{ bin -> [bin.SAMPLE, bin.BIN_ID, bin.PATH]} \
-	| set { bins}
-
-    wPlasmidsList(bins | mix(notBinnedContigs), wAssemblyList.out.fastg | join(wBinning.out.mapping), qcReads)
+    wPlasmidsList(bins | mix(notBinnedContigs), fastg | join(mapping), illumina.readsPairSingle)
 
     if(params?.steps?.fragmentRecruitment?.frhit){
-       wFragmentRecruitmentList(wBinning.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
+       wFragmentRecruitmentList(illumina.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
     }
 
-    wMagAttributesList(wBinning.out.bins)
-    mapJoin(wMagAttributesList.out.checkm, wBinning.out.binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
+    wMagAttributesList(ont.bins | mix(illumina.bins))
+
+    mapJoin(wMagAttributesList.out.checkm, binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
 
     wAnnotatePlasmidList(Channel.value("meta"), wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage)
 
-    wAnnotateBinsList(Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, wBinning.out.contigCoverage)
+    wAnnotateBinsList(Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, contigCoverage)
 
-    wAnnotateUnbinnedList(Channel.value("meta"), notBinnedContigs, null, wBinning.out.contigCoverage)
+    wAnnotateUnbinnedList(Channel.value("meta"), notBinnedContigs, null, contigCoverage)
 
-    _wAggregate(wQualityControlList.out.readsPair, wQualityControlList.out.readsSingle, binsStats, wMagAttributesList.out.gtdb )
+    _wAggregate(ont.reads, illumina.readsPair, illumina.readsSingle, binsStats, wMagAttributesList.out.gtdb )
 }
