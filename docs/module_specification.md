@@ -25,6 +25,7 @@ where
 
    * `SEQUENCEHASH` are the last 5 characters of an md5sum hash of the fasta entry without the header and newline character. 
      (eg. echo -n "ACGT" | md5sum | cut -d ' ' -f 1 | cut -c -5 )
+
 ## Binning
 
 * Version: 0.2.0
@@ -83,6 +84,6 @@ where
 ### Output:
 
 ```
-SAMPLE_interleaved.fq.gz
+SAMPLE_interleaved.qc.fq.gz
 ```
 

@@ -1,0 +1,30 @@
+tempdir: "tmp"
+summary: false
+output: "output"
+logDir: log
+runid: 1
+databases: "/mnt/databases"
+logLevel: 1
+scratch: "/vol/scratch"
+steps:
+  qcONT:
+    input: "test_data/qcONT/ont.tsv"
+    porechop:
+      additionalParams:
+        porechop: ""
+        filtlong: " --min_length 1000 --keep_percent 90  "
+    nanoplot:
+      additionalParams: ""
+resources:
+  large:
+    cpus: 28
+    memory: 246
+  medium:
+    cpus: 14
+    memory: 121
+  small:
+    cpus: 7
+    memory: 14
+  tiny:
+    cpus: 1
+    memory: 1

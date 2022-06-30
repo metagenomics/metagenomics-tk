@@ -127,7 +127,7 @@ workflow wShortReadQualityControlList {
  * Takes a tab separated file of files containing reads as input and applies 
  * read trimming, adapter removal and other quality control tasks.   
  * Input file with columns seperated by tabs:
- * Dataset_ID Left_Read Right_Read
+ * SAMPLE Left_Read Right_Read
  *
  * Left and right read could be https, s3 links or file path.
  * 
@@ -136,11 +136,10 @@ workflow wShortReadQualityControlList {
  * 
  */
 workflow wShortReadQualityControlFile {
-     take:
-       readsTable
      main:
        if(!params.steps.qc.interleaved){
-         readsTable | splitCsv(sep: '\t', header: true) \
+         Channel.from(file(params.steps.qc.input)) | \
+            | splitCsv(sep: '\t', header: true) \
             | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} \
 	    | _wFastqSplit | set { results }
        }

@@ -136,7 +136,7 @@ workflow wOntQualityControlList {
  * Takes a tab separated file of files containing reads as input and applies 
  * read trimming, adapter removal and other quality control tasks.   
  * Input file with columns seperated by tabs:
- * Dataset_ID Reads
+ * SAMPLE Reads
  *
  * Reads could be provided as https, s3 links or file path.
  * 
@@ -148,11 +148,10 @@ workflow wOntQualityControlFile {
      take:
        readsTable
      main:
-       if(!params.steps.qc.interleaved){
-         readsTable | splitCsv(sep: '\t', header: true) \
+        Channel.from(file(params.steps.qcONT.input)) 
+            | splitCsv(sep: '\t', header: true) \
             | map { it -> [ it.SAMPLE, it.READS ]} \
 	    | _wONTFastq | set { results }
-       }
     emit:
       reads = results.reads
 }

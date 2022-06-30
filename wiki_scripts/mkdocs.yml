@@ -34,6 +34,7 @@ nav:
   - "Home": README.md
   - "Global Pipeline Configuration Settings": pipeline_configuration.md
   - "Modules":
+    - modules/qualityControl.md
     - modules/annotation.md
     - modules/assembly.md
     - modules/cooccurrence.md
