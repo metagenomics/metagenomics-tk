@@ -403,16 +403,16 @@ process pKEGGFromBlast {
       // Therefore this place has to be mounted to the docker container to be accessible during runtime.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 " + Utils.getDockerMount(params.steps?.annotation?.keggFromDiamond?.database, params)
+      containerOptions " --user 1000:1000 " + Utils.getDockerMount(params.steps?.annotation?.keggFromBlast?.database, params)
 
-      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromDiamond", filename) }, \
+      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromBlast", filename) }, \
          pattern: "{**.tsv}"
 
       // UID mapping does not work for some reason. Every time a database directory is created while running docker,
       // the permissions are set to root. This leads to crashes later on.
       // beforeScript is one way to create a directory outside of Docker to tackle this problem.
       beforeScript "mkdir -p ${params.polished.databases}"
-      when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("keggFromDiamond")
+      when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("keggFromBlast")
 
    input:
       tuple val(sample), val(binID), file(diamond_result)
@@ -423,11 +423,11 @@ process pKEGGFromBlast {
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
    shell:
-      output = getOutput("${sample}", params.runid, "keggFromDiamond", "")
-      DOWNLOAD_LINK=params.steps?.annotation?.keggFromDiamond?.database?.download?.source ?: ""
-      MD5SUM=params?.steps?.annotation?.keggFromDiamond?.database?.download?.md5sum ?: ""
-      S5CMD_PARAMS=params.steps?.annotation?.keggFromDiamond?.database?.download?.s5cmd?.params ?: ""
-      EXTRACTED_DB=params.steps?.annotation?.keggFromDiamond?.database?.extractedDBPath ?: ""
+      output = getOutput("${sample}", params.runid, "keggFromBlast", "")
+      DOWNLOAD_LINK=params.steps?.annotation?.keggFromBlast?.database?.download?.source ?: ""
+      MD5SUM=params?.steps?.annotation?.keggFromBlast?.database?.download?.md5sum ?: ""
+      S5CMD_PARAMS=params.steps?.annotation?.keggFromBlast?.database?.download?.s5cmd?.params ?: ""
+      EXTRACTED_DB=params.steps?.annotation?.keggFromBlast?.database?.extractedDBPath ?: ""
       '''
 
       # Check developer documentation

@@ -165,7 +165,7 @@ steps:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
             md5sum: a6dfce8f30d7214ba09c9b07cbb6f96b
-    keggFromDiamond:
+    keggFromBlast:
       database:
         extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 
 

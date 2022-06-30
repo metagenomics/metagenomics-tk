@@ -30,7 +30,7 @@ steps:
             download:
               source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
               md5sum: ec00b6c2638031dfcfdbe17b0bf0d1dc
-      keggFromDiamond:
+      keggFromBlast:
          database:
            extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/"
       rgi: 
