@@ -138,7 +138,7 @@ workflow wShortReadQualityControlList {
 workflow wShortReadQualityControlFile {
      main:
        if(!params.steps.qc.interleaved){
-         Channel.from(file(params.steps.qc.input)) | \
+         Channel.from(file(params.steps.qc.input)) \
             | splitCsv(sep: '\t', header: true) \
             | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} \
 	    | _wFastqSplit | set { results }
