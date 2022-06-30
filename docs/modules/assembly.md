@@ -20,11 +20,24 @@
     ---8<--- "../example_params/assemblyMetaspades.yml"
     ```
 
-=== "TSV Table"
+=== "MetaFlye Configuration File"
+
+    ```YAML
+    ---8<--- "../example_params/assemblyONT.yml"
+    ```
+
+=== "TSV Table Short Read"
 
     ```TSV
     ---8<--- "../test_data/assembly/samples.tsv"
     ```
+
+=== "TSV Table Nanopore"
+
+    ```TSV
+    ---8<--- "../test_data/assembly/samplesONT.tsv"
+    ```
+ 
  
 ## Output
 

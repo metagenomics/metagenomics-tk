@@ -138,6 +138,10 @@ jobs:
         run: |
           bash ./scripts/test_assembly.sh "" example_params/assemblyMetaspades.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
 
+      - name: Test Metaflye Assembly
+        run: |
+          bash ./scripts/test_assemblyONT.sh "" example_params/assemblyONT.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+
   cooccurrence:
     timeout-minutes: 700
     needs: [assembly]
