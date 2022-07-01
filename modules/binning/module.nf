@@ -21,7 +21,7 @@ process pGetMappingQuality {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "contigMappingQuality", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "readMappingQuality", filename) }
 
     label 'tiny'
 
@@ -196,7 +196,7 @@ workflow wBinning {
      // Map reads against assembly and retrieve mapping quality
      SAMPLE_IDX=0
      pBowtie2(Channel.value(params?.steps?.containsKey("binning")), Channel.value([getModulePath(params.modules.binning), \
-	"contigMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, params.steps.containsKey("fragmentRecruitment")]), contigs | join(inputReads, by: SAMPLE_IDX))
+	"readMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, params.steps.containsKey("fragmentRecruitment")]), contigs | join(inputReads, by: SAMPLE_IDX))
 
      pBowtie2.out.mappedReads | (pGetMappingQuality)
      pCovermContigsCoverage(Channel.value(params?.steps?.binning.find{ it.key == "contigsCoverage"}?.value), Channel.value([getModulePath(params.modules.binning), \
