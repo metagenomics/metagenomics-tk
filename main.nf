@@ -257,7 +257,8 @@ workflow _wProcessOnt {
       wOntQualityControlList(reads)
       wOntQualityControlList.out.reads | set { ontQCReads }
       wOntAssemblyList(ontQCReads)
-      wLongReadBinning(wOntAssemblyList.out.contigs, ontQCReads)
+      wLongReadBinning(wOntAssemblyList.out.contigs, ontQCReads, wOntAssemblyList.out.graph, \
+	 wOntAssemblyList.out.headerMapping, wOntAssemblyList.out.info)
     emit:
       notBinnedContigs = wLongReadBinning.out.notBinnedContigs 
       bins = wLongReadBinning.out.bins 

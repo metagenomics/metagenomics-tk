@@ -64,11 +64,39 @@ process pMetabat {
     template 'metabat.sh'
 }
 
+
+process pMetaCoAG {
+
+    container "${params.metacoag_image}"
+
+    containerOptions "  --user 0:0 "
+
+    tag "Sample: $sample"
+
+    label 'large'
+
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "metacoag", filename) }
+
+    when params.steps.containsKey("binning") && params.steps.binning.containsKey("metacoag")
+
+    input:
+    tuple val(sample), path(graph), path(contigs), path(bam), path(headerMapping), path(flyeAssemblyInfo)
+
+    output:
+    tuple val("${sample}"), file("${sample}_bin.*.fa"), optional: true, emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    shell:
+    template "metacoag.sh"
+}
+
 process pMetabinner {
 
     container "${params.metabinner_image}"
 
-    tag "$sample"
+    tag "Sample: $sample"
 
     label 'large'
 
@@ -195,7 +223,7 @@ workflow wShortReadBinning {
       "contigMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, params.steps.containsKey("fragmentRecruitment")]), \
       contigs | join(inputReads, by: SAMPLE_IDX))
 
-    wBinning(contigs, pBowtie2.out.mappedReads, pBowtie2.out.unmappedReads)   
+    wBinning(contigs, pBowtie2.out.mappedReads, pBowtie2.out.unmappedReads, Channel.empty(), Channel.empty(), Channel.empty())   
   emit:
      binsStats = wBinning.out.binsStats
      bins = wBinning.out.bins
@@ -210,6 +238,9 @@ workflow wLongReadBinning {
   take:
     contigs
     inputReads
+    inputGraph
+    headerMapping
+    assemblyInfo
   main:
     SAMPLE_IDX=0
 
@@ -217,7 +248,7 @@ workflow wLongReadBinning {
       "contigMapping", params.steps?.binning?.minimap2?.additionalParams?.minimap2, params.steps.containsKey("fragmentRecruitment")]), \
       contigs | join(inputReads, by: SAMPLE_IDX))
 
-    wBinning(contigs, pMinimap2.out.mappedReads, pMinimap2.out.unmappedReads)
+    wBinning(contigs, pMinimap2.out.mappedReads, pMinimap2.out.unmappedReads, inputGraph, headerMapping, assemblyInfo)
   emit:
      binsStats = wBinning.out.binsStats
      bins = wBinning.out.bins
@@ -239,6 +270,9 @@ workflow wBinning {
      contigs
      mappedReads
      unmappedReads
+     inputGraph
+     headerMapping
+     assemblyInfo
    main:
      // Map reads against assembly and retrieve mapping quality
      SAMPLE_IDX=0
@@ -247,12 +281,14 @@ workflow wBinning {
      pCovermContigsCoverage(Channel.value(params?.steps?.binning.find{ it.key == "contigsCoverage"}?.value), Channel.value([getModulePath(params.modules.binning), \
 	"contigCoverage", params?.steps?.binning?.contigsCoverage?.additionalParams]), mappedReads)
 
+     inputGraph | join(contigs, by: SAMPLE_IDX) | join(mappedReads, by: SAMPLE_IDX) \
+      | join(headerMapping, by: SAMPLE_IDX)  | join(assemblyInfo, by: SAMPLE_IDX) | pMetaCoAG 
 
      // Run binning tool
      contigs | join(mappedReads, by: SAMPLE_IDX) | (pMetabinner & pMetabat )
-     pMetabinner.out.bins | mix(pMetabat.out.bins) | set { bins }
+     pMetabinner.out.bins | mix(pMetabat.out.bins, pMetaCoAG.out.bins) | set { bins }
 
-     pMetabinner.out.notBinned | mix(pMetabat.out.notBinned) | set { notBinned }
+     pMetabinner.out.notBinned | mix(pMetabat.out.notBinned, pMetaCoAG.out.notBinned) | set { notBinned }
 
      // Ensure that in case just one bin is produced that it still is a list
      bins | map({ it -> it[1] = aslist(it[1]); it  }) | set{ binsList }
@@ -268,8 +304,11 @@ workflow wBinning {
      pMetabat.out.binContigMapping | join(mappedReads, by: SAMPLE_IDX) \
 	| combine(Channel.from("metabat")) | join(pMetabat.out.bins, by: SAMPLE_IDX) \
 	| set { metabatBinStatisticsInput }
+     pMetaCoAG.out.binContigMapping | join(mappedReads, by: SAMPLE_IDX) \
+	| combine(Channel.from("metacoag")) | join(pMetaCoAG.out.bins, by: SAMPLE_IDX) \
+	| set { metacoagBinStatisticsInput }  
 
-     metabatBinStatisticsInput | mix(metabinnerBinStatisticsInput) | pGetBinStatistics 
+     metabatBinStatisticsInput | mix(metabinnerBinStatisticsInput, metacoagBinStatisticsInput) | pGetBinStatistics 
 
      // Add bin statistics 
      pGetBinStatistics.out.binsStats | map { it -> file(it[1]) } \

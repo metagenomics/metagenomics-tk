@@ -27,16 +27,24 @@ process pMetaflye {
 
     output:
     tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs
+    tuple val("${sample}"), path("${sample}_assembly_info.txt"), emit: info
+    tuple val("${sample}"), path("${sample}_contigs_header_mapping.tsv"), emit: headerMapping
+    tuple val("${sample}"), path("${sample}_assembly_graph.gfa"), emit: graph
     tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigsStats
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
     ASSEMBLY_OUTPUT="!{sample}_contigs.fa.gz"
+    HEADER_MAPPING_OUTPUT="!{sample}_contigs_header_mapping.tsv"
     flye --nano-raw reads.fq.gz -o out --meta -t !{task.cpus} !{params.steps.assemblyONT.metaflye.additionalParams}
 
     # The following function modifies the assembly fasta headers according to the pattern: SAMPLEID_SEQUENCECOUNTER_SEQUENCEHASH
-    transform.sh out/assembly.fasta ${ASSEMBLY_OUTPUT} !{sample} !{task.cpus}
+    transform.sh out/assembly.fasta ${ASSEMBLY_OUTPUT} ${HEADER_MAPPING_OUTPUT} !{sample} !{task.cpus}
+
+    mv out/assembly_graph.gfa !{sample}_assembly_graph.gfa
+
+    mv out/assembly_info.txt !{sample}_assembly_info.txt
 
     # get basic contig stats 
     paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") <(seqkit stat -Ta ${ASSEMBLY_OUTPUT}) > !{sample}_contigs_stats.tsv
@@ -56,6 +64,10 @@ workflow wOntAssemblyList {
        readsList | _wOntAssembly
     emit:
       contigs = _wOntAssembly.out.contigs
+      graph = _wOntAssembly.out.graph
+      mapping = _wOntAssembly.out.mapping
+      headerMapping = _wOntAssembly.out.mapping
+      info = _wOntAssembly.out.info
 }
 
 
@@ -99,4 +111,7 @@ workflow _wOntAssembly {
             
      emit:
        contigs = pMetaflye.out.contigs
+       graph = pMetaflye.out.graph
+       mapping = pMetaflye.out.headerMapping
+       info = pMetaflye.out.info
 }
