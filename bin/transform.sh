@@ -2,8 +2,9 @@
 
 SEQS_INPUT=$1 
 SEQS_OUTPUT=$2
-HEADER_PREFIX=$3
-CORES=$4
+HEADER_MAPPING_OUTPUT=$3
+HEADER_PREFIX=$4
+CORES=$5
 
 # The following function modifies the assembly fasta headers according to the pattern: SAMPLEID_SEQUENCECOUNTER_SEQUENCEHASH
 	 
@@ -27,10 +28,9 @@ cat ${SEQUENCE_HASHES} \
 	| sed "s/^/${HEADER_PREFIX}_/g" > ${NEW_FASTA_HEADERS}
 
 # Concatenate SAMPLEID_SEQUENCECOUNTER with SEQUENCEHASH strings
-FASTA_HEADERS_MAPPING=${TEMP_DIR}/header_mapping.tsv
 csvtk concat --out-tabs -H <(csvtk transpose ${OLD_FASTA_HEADERS}) <(csvtk transpose ${NEW_FASTA_HEADERS}) \
-	| csvtk --tabs transpose > ${FASTA_HEADERS_MAPPING}
+	| csvtk --tabs transpose > ${HEADER_MAPPING_OUTPUT}
 
 # Replace old with new fasta header
-seqkit replace -p '(.*)'  -r '{kv}' -k ${FASTA_HEADERS_MAPPING} ${SEQS_INPUT} \
+seqkit replace -p '(.*)'  -r '{kv}' -k ${HEADER_MAPPING_OUTPUT} ${SEQS_INPUT} \
 		| pigz --best --processes $CORES > ${SEQS_OUTPUT} 

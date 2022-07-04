@@ -1,4 +1,5 @@
 PLASMIDS_OUTPUT=!{sample}_plasmids.fasta.gz
+HEADER_MAPPING_OUTPUT=!{sample}_plasmids_header_mapping.tsv
 
 # Make sure that exit code 1 is also accepted due to known SCAPP bug:
 # https://github.com/Shamir-Lab/SCAPP/issues/26
@@ -8,7 +9,7 @@ scapp -g !{assemblyGraph} -k !{maxKmer} -p !{task.cpus} !{params.steps.plasmid.S
 
 if [ -s *.confident_cycs.fasta ]; then
   # The following function modifies the assembly fasta headers according to the pattern: SAMPLEID_SEQUENCECOUNTER_SEQUENCEHASH
-  transform.sh "$(ls -1 *.confident_cycs.fasta)" ${PLASMIDS_OUTPUT} !{sample} !{task.cpus}
+  transform.sh "$(ls -1 *.confident_cycs.fasta)" ${PLASMIDS_OUTPUT} ${HEADER_MAPPING_OUTPUT} !{sample} !{task.cpus}
 
   PLASMID_STATS=!{sample}_plasmids_stats.tsv
   PLASMID_SUMMARY_STATS=!{sample}_plasmids_summary_stats.tsv
