@@ -56,9 +56,21 @@ process pPorechopDownload {
 
     shell:
     '''
-    s5cmd !{params.steps.qcONT.porechop.download.s5cmdParams} cat ${readUrl} > reads.fq.gz 
+    set -o pipefail
+    
+    s5cmd !{params.steps.qcONT.porechop.download.s5cmdParams} cat ${readUrl} > reads.fq.gz 2> error.log
+
+    # This if statement solves issue https://github.com/pbelmann/meta-omics-toolkit/issues/166
+    if grep -q "reset by peer" error.log; then
+       echo "Network issue found. Exiting with exit code 1";
+       exit 1 ;
+    else
+       echo "No network issue found";
+    fi
+
     porechop -i reads.fq.gz -o reads.porechoped.fq.gz --threads !{task.cpus} !{params.steps.qcONT.porechop.additionalParams.porechop}
-    filtlong !{params.steps.qcONT.porechop.additionalParams.filtlong} reads.porechoped.fq.gz | pigz --processes !{task.cpus} > !{sample}_qc.fq.gz
+    filtlong !{params.steps.qcONT.porechop.additionalParams.filtlong} reads.porechoped.fq.gz \
+	| pigz --processes !{task.cpus} > !{sample}_qc.fq.gz
     '''
 }
 
