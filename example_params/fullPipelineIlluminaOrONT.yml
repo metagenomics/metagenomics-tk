@@ -31,7 +31,7 @@ steps:
       fastg: false
   assemblyONT:
     metaflye:
-      additionalParams: " -i 3 "
+      additionalParams: " -i 1 "
   binning:
     bowtie:
       additionalParams: 

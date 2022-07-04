@@ -9,7 +9,7 @@ steps:
   assemblyONT:
     input: test_data/assembly/samplesONT.tsv 
     metaflye:
-      additionalParams: " -i 3 "
+      additionalParams: " -i 1 "
 
 resources:
   large:

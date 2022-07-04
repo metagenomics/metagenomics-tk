@@ -20,7 +20,7 @@ steps:
       additionalParams: ""
   assemblyONT:
     metaflye:
-      additionalParams: " -i 3 "
+      additionalParams: " -i 1 "
   binning:
     minimap2:
       additionalParams: 
