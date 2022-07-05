@@ -13,7 +13,8 @@ steps:
       additionalParams:
         bwa_index: ""
         bwa_mem: ""
-        coverm: " --min-covered-fraction 0 "
+    coverm:
+      additionalParams: " --min-covered-fraction 0 "
 resources:
   large:
     cpus: 28

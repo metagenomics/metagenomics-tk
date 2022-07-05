@@ -73,7 +73,8 @@ steps:
       additionalParams:
         bwa_index: ""
         bwa_mem: ""
-        coverm: " --min-covered-fraction 0 "
+    coverm:
+      additionalParams: " --min-covered-fraction 0 "
   cooccurrence:
     additionalParams: " -t 0.1 -z 80 -o 'correlation' "
   plasmid:
