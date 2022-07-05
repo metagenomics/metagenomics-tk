@@ -21,7 +21,7 @@ process pGetMappingQuality {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "contigMappingQuality", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "readMappingQuality", filename) }
 
     label 'tiny'
 

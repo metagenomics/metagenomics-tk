@@ -7,7 +7,7 @@ runMetaBat.sh !{params.steps.binning.metabat.additionalParams} !{contigs} !{bam}
 TEMP_DIR=$(mktemp -d -p .)
 
 BIN_CONTIG_MAPPING=!{sample}_bin_contig_mapping.tsv
-for bin in $(basename !{contigs})*/bin* ; do
+for bin in $(find $(basename !{contigs})* -name "bin*.fa"); do
 	BIN_NAME="!{sample}_$(basename ${bin})"
 
 	# Get id of the bin (e.g get 2 of the bin SAMPLEID_bin.2.fa)
