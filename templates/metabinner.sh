@@ -47,14 +47,19 @@ for binId in $(cut -f 2 $METABINNER_RESULT | sort | uniq); do
 		| sed "s/^/${BIN_NAME}\t/g" >> ${BIN_CONTIG_MAPPING}
 done
 
-# return not binned contigs
+
+# return not binned fasta files
 BINNED_IDS=binned.tsv
+NOT_BINNED=!{sample}_notBinned.fa
 grep -h ">" *.fa | tr -d ">" > ${BINNED_IDS}
 if [ -s ${BINNED_IDS} ]; then
-        NOT_BINNED=!{sample}_notBinned.fa
+       # Get all not binned Ids
         seqkit grep -vf ${BINNED_IDS} !{contigs} \
-	 | seqkit replace  -p '(.*)' -r "\${1} MAG=NotBinned" > ${NOT_BINNED}
+         | seqkit replace  -p '(.*)' -r "\${1} MAG=NotBinned" > ${NOT_BINNED}
+else
+        seqkit replace  -p '(.*)' -r "\${1} MAG=NotBinned" !{contigs} > ${NOT_BINNED}
 fi
+
 
 # Quickfix
 # Explanation: the metabinner biocontainer does contain perl scripts that use a hardcoded path to
