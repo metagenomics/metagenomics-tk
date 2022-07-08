@@ -26,7 +26,7 @@ process pFrHit {
 
     stageInMode 'copy'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "frhit",  filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "frhit",  filename) }
 
     container "${params.samtools_bwa_image}"
 
@@ -89,7 +89,7 @@ process pCombinedAlignmentAnalysis {
 
     when params.steps.containsKey("fragmentRecruitment")
 
-    publishDir params.output, saveAs: { filename -> getAggregatedOutput(params.runid, "frhit",  filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getAggregatedOutput(params.runid, "frhit",  filename) }
 
     container "${params.samtools_bwa_image}"
 

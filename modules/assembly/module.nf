@@ -16,7 +16,7 @@ process pMegahit {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "megahit", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "megahit", filename) }
 
     when params?.steps.containsKey("assembly") && params?.steps?.assembly.containsKey("megahit")
 
@@ -44,7 +44,7 @@ process pMetaspades {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "metaspades", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaspades", filename) }
 
     when params?.steps.containsKey("assembly") && params?.steps?.assembly.containsKey("metaspades")
 

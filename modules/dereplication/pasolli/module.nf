@@ -45,7 +45,7 @@ process pMashPaste {
 
     label 'large'
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/mash/paste", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "pasolli/mash/paste", filename) }
 
     input:
     path sketches, stageAs: 'sketch*.msh'
@@ -69,7 +69,7 @@ process pMashDist {
 
     when params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli")
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/mash/dist", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "pasolli/mash/dist", filename) }
 
     input:
     path sketches, stageAs: 'sketch*.msh'
@@ -93,7 +93,7 @@ process pClusterDistances {
 
     container "${params.python_env_image}"
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/clusterMashDist", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "pasolli/clusterMashDist", filename) }
 
     label 'medium'
 
@@ -117,7 +117,7 @@ process pSelectRepresentative {
 
     container "${params.python_env_image}"
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/selectedRepresentatives", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "pasolli/selectedRepresentatives", filename) }
 
     label 'medium'
 
@@ -182,7 +182,7 @@ process pGetCluster {
 
     label 'tiny'
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/clusters", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "pasolli/clusters", filename) }
 
     container "${params.python_env_image}"
 
@@ -211,7 +211,7 @@ process pFinalize {
     val finalized
     file cluster 
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/clusters", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "pasolli/clusters", filename) }
 
     output:
     file 'clusters.tsv' 
@@ -270,7 +270,7 @@ process pGetSansClusterRepresentatives {
 
     label 'tiny'
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/sans", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "pasolli/sans", filename) }
 
     container "${params.python_env_image}"
 
