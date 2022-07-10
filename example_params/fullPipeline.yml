@@ -148,7 +148,25 @@ steps:
     keggFromDiamond:
       database:
         extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 
-
+  metabolomics:
+     beforeProcessScript: ""
+     input:
+       bins: "test_data/metabolomics/input.tsv" 
+     filter:
+       minCompleteness: 49
+       maxContamination: 5
+     gapseq:
+       additionalParams: ""
+     smetana:
+       global: true
+       detailed: true
+       additionalParams:
+         detailed: ""
+         global: ""
+     memote:
+       additionalParams:
+         run: ""
+         report: ""
 resources:
   large:
     cpus: 28
@@ -162,3 +180,4 @@ resources:
   tiny:
     cpus: 1
     memory: 1
+

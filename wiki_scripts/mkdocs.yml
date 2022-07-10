@@ -41,6 +41,7 @@ nav:
     - modules/fragment_recruitment.md
     - modules/magAttributes.md
     - modules/plasmids.md
+    - modules/metabolomics.md
     - modules/readMapping.md
   - "Developer":
     - developer_guidelines.md

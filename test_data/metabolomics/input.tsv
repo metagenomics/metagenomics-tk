@@ -1,0 +1,5 @@
+SAMPLE	BIN_ID	PATH
+test1	bin.1	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.1.fa
+test1	bin.2	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.2.fa
+test2	bin.9	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.9.fasta
+test2	bin.32	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.32.fa
