@@ -217,7 +217,7 @@ jobs:
       - name: Metabolomics
         run: |
           bash ./scripts/test_metabolomics.sh "   -c  test_data/assets/aws.config \
-                                               --carveme_image=pbelmann/metabolomics:0.1.0 --params.steps.metabolomics.beforeProcessScript=/vol/spool/dockerPull.sh \
+                                               --carveme_image=pbelmann/metabolomics:0.1.0 --steps.metabolomics.beforeProcessScript=/vol/spool/dockerPull.sh \
                                                --smetana_image=pbelmann/metabolomics:0.1.0 --gapseq_image=pbelmann/metabolomics:0.1.0 " "" "${WORK_DIR}/${{ github.head_ref }} " "slurm"
   plasmid:
     timeout-minutes: 700
