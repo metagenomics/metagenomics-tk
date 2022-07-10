@@ -447,6 +447,7 @@ workflow wAnnotateList {
       _wAnnotation(prodigalMode, fasta, gtdb, contigCoverage)
     emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
+      proteins = _wAnnotation.out.prokka_faa
 }
 
 
