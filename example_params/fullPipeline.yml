@@ -158,8 +158,8 @@ steps:
      gapseq:
        additionalParams: ""
      smetana:
-       global: true
-       detailed: true
+       global: false
+       detailed: false
        additionalParams:
          detailed: ""
          global: ""
