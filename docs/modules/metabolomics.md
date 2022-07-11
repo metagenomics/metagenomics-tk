@@ -28,11 +28,12 @@ Just copy your cplex binary to the cplex docker folder and build your own docker
 
 In the following example your the image name is metabolomics:0.1.0:
 
-* `--gapseq_image=metabolomics:0.1.0`  
-* `--smetana_image=metabolomics:0.1.0`
-* `--carveme_image=metabolomics:0.1.0`
-* `--memote_image=metabolomics:0.1.0` (Memote is not able to detect the solver automatically. Please specify `--solver` in the configuration file)
+* `--gapseq_image=metabolomics:0.1.0` (Optional)
+* `--smetana_image=metabolomics:0.1.0` (Required)
+* `--carveme_image=metabolomics:0.1.0` (Required)
+* `--memote_image=metabolomics:0.1.0` (Optional. Memote is not able to detect the solver automatically. Please specify `--solver` in the configuration file if you are not using the glpk solver.)
 
+For gapseq and memote we are using a publicly available docker image that uses the freely available glkp solver which means that you don't have to provide this parameter.
 If you want to build your own image, please use the `beforeProcessScript` parameter. This parameter expects a bash script that accepts the docker image name as a parameter.
 The script is executed right before the actual docker image is started. 
 You could for example provide a script that builds the actual image right before running the tool on the VM. 
