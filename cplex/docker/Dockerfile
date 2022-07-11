@@ -39,15 +39,21 @@ RUN  chmod u+x /tmp/installer && apt-get update && apt-get install -y default-jr
 
 ENV CPX_PYVERSION ${CPX_PYVERSION}
 
+ENV GAPSEQ_VERSION v1.2
+ENV CARVEME_VERSION 1.5.1
+ENV SMETANA_VERSION 1.1.0
+ENV MEMOTE_VERSION 0.13.0
+ENV DIAMOND_VERSION v2.0.13
+
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y locales \
     && echo "LC_ALL=en_US.UTF-8" >> /etc/environment \
     && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
     && echo "LANG=en_US.UTF-8" > /etc/locale.conf \
     && locale-gen en_US.UTF-8 \
-  && DEBIAN_FRONTEND=noninteractive dpkg-reconfigure locales && git clone https://github.com/jotech/gapseq \
-  && wget http://github.com/bbuchfink/diamond/releases/download/v2.0.13/diamond-linux64.tar.gz  \
-  && tar xzf diamond-linux64.tar.gz \
-  && pip install smetana carveme memote
+  && DEBIAN_FRONTEND=noninteractive dpkg-reconfigure locales && git clone  --depth 1 --branch  ${GAPSEQ_VERSION} https://github.com/jotech/gapseq \
+  && wget http://github.com/bbuchfink/diamond/releases/download/${DIAMOND_VERSION}/diamond-linux64.tar.gz  \
+  && tar xzf diamond-linux64.tar.gz && rm diamond-linux64.tar.gz \
+  && pip install smetana==${SMETANA_VERSION} carveme==${CARVEME_VERSION} memote==${MEMOTE_VERSION}
 
 
-ENV PATH="${PATH}:/gapseq"
+ENV PATH="${PATH}:/:/gapseq"
