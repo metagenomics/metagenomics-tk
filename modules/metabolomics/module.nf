@@ -1,7 +1,7 @@
 include { pDumpLogs } from '../utils/processes'
 
 include { pCarveMe as pCarveProteins;  \
-	 pCarveMe as pCarveGenomes } from './processes'
+	 pCarveMe as pCarveGenomes; } from './processes'
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.metabolomics.name + '/' +
@@ -17,21 +17,28 @@ process pGapSeq {
 
     tag "Sample: $sample, Bin: $id"
 
-    beforeScript "${params?.steps?.metabolomics?.beforeProcessScript} ${params.gapseq_image}"
+    beforeScript params?.steps.containsKey("metabolomics") \
+	? Utils.getBeforeScript(params?.steps?.metabolomics?.beforeProcessScript.trim(), params.gapseq_image) \
+	: ""
 
-    containerOptions " --user 0:0 "
-
-    when params.steps.containsKey("metabolomics") && params.steps.metabolomics.containsKey("gapseq") && !params.steps.metabolomics.containsKey("carveme")
+    when params.steps.containsKey("metabolomics") \
+	&& params.steps.metabolomics.containsKey("gapseq") \
+	&& !params.steps.metabolomics.containsKey("carveme")
 
     container "${params.gapseq_image}"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "gapseq", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "gapseq", filename) }, \
+      pattern: "{**.xml,**.tbl,**.RDS,**.csv}"
 
     input:
       tuple val(sample), val(id), path(mag)
 
     output:
-      tuple val("${sample}"), val("${id}"), path("${id}.xml"), emit: model
+      tuple val("${sample}"), val("${id}"), path("*-draft.xml"), optional: true, emit: draft
+      tuple val("${sample}"), val("${id}"), path("${id}.model.xml"), optional: true, emit: model
+      tuple val("${sample}"), val("${id}"), path("*.tbl"), optional: true, emit: tables
+      tuple val("${sample}"), val("${id}"), path("*.RDS"), optional: true, emit: rds
+      tuple val("${sample}"), val("${id}"), path("*.csv"), optional: true, emit: csv
       tuple val("${id}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -39,7 +46,7 @@ process pGapSeq {
     output = getOutput("${sample}", params.runid, "gapseq", "")
     '''
     gapseq doall !{mag} !{params.steps.metabolomics.gapseq.additionalParams}
-    mv $(ls -1 *.xml | grep -v -- "-draft.xml") !{id}.xml
+    mv $(ls -1 *.xml | grep -v -- "-draft.xml") !{id}.model.xml
     '''
 }
 
@@ -52,19 +59,22 @@ process pMemote {
 
     container "${params.memote_image}"
 
-    beforeScript "${params?.steps?.metabolomics?.beforeProcessScript} ${params.memote_image}"
-   
+    beforeScript params?.steps.containsKey("metabolomics") \
+	? Utils.getBeforeScript(params?.steps?.metabolomics?.beforeProcessScript.trim(), params.memote_image) \
+	: ""
+
     when params.steps.containsKey("metabolomics") && params.steps.metabolomics.containsKey("memote")
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "memote", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "memote", filename) }, \
+      pattern: "{**.json.gz,**.html,**.tsv}"
 
     input:
       tuple val(sample), val(id), path(model)
 
     output:
-      tuple val("${sample}"), val("${id}"), path("${sample}_${id}_report.json.gz"), emit: report_json
-      tuple val("${sample}"), val("${id}"), path("${sample}_${id}_report.html"), emit: report_html
-      tuple val("${sample}"), val("${id}"), path("${sample}_${id}_metrics.tsv"), emit: report_tsv
+      tuple val("${sample}"), val("${id}"), path("${sample}_${id}_report.json.gz"), optional: true, emit: reportJson
+      tuple val("${sample}"), val("${id}"), path("${sample}_${id}_report.html"), optional: true, emit: reportHtml
+      tuple val("${sample}"), val("${id}"), path("${sample}_${id}_metrics.tsv"), optional: true, emit: reportTsv
       tuple val("${id}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -96,9 +106,12 @@ process pSmetanaDetailed {
 
     container "${params.smetana_image}"
 
-    beforeScript "${params?.steps?.metabolomics?.beforeProcessScript} ${params.smetana_image}"
+    beforeScript params?.steps.containsKey("metabolomics") \
+	? Utils.getBeforeScript(params?.steps?.metabolomics?.beforeProcessScript.trim(), params.smetana_image) \
+	: ""
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid , "smetana/detailed/", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid , "smetana/detailed/", filename) }, \
+      pattern: "{**.tsv}"
 
     when params?.steps.containsKey("metabolomics") && params?.steps?.metabolomics?.containsKey("smetana") \
        && params?.steps?.metabolomics?.smetana.containsKey("detailed") \
@@ -122,7 +135,9 @@ process pSmetanaGlobal {
 
     tag "Sample: $sample"
 
-    beforeScript "${params?.steps?.metabolomics?.beforeProcessScript} ${params.smetana_image}"
+    beforeScript params?.steps.containsKey("metabolomics") \
+	? Utils.getBeforeScript(params?.steps?.metabolomics?.beforeProcessScript.trim(), params.smetana_image) \
+	: ""
 
     container "${params.smetana_image}"
 
@@ -130,7 +145,8 @@ process pSmetanaGlobal {
        && params?.steps?.metabolomics?.smetana.containsKey("detailed") \
        && params?.steps?.metabolomics?.smetana?.global
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "smetana/global/", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "smetana/global/", filename) }, \
+      pattern: "{**.tsv}"
 
     input:
       tuple val(sample), path(xmls) 
@@ -152,7 +168,8 @@ process pAnalyse {
 
     container "${params.ubuntu_image}"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmTsv", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmTsv", filename) }, \
+      pattern: "{**.tsv}"
 
     input:
       tuple val(sample), val(id), path(magJson)  
@@ -194,10 +211,11 @@ process pBuildJson {
 
     containerOptions " --user 0:0"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmJson", filename) }
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmJson", filename) }, \
+      pattern: "{**.json}"
 
     input:
-      tuple val(sample), val(id), path(mag_xml)
+      tuple val(sample), val(id), path(magXml)
 
     output:
       tuple val("${sample}"), val("${id}"), path("${id}.json"), emit: model
@@ -207,7 +225,7 @@ process pBuildJson {
     shell:
     output = getOutput("${sample}", params.runid, "gsmmJson", "")
     '''
-    sbml_to_json.py !{mag_xml} !{id}.json
+    sbml_to_json.py !{magXml} !{id}.json
     '''
 }
 

@@ -36,4 +36,11 @@ class Utils {
           module.version.patch
   }
 
+  static String getBeforeScript(script, image){
+    if(script.isEmpty()){
+      return "echo 'No BeforeScript'";
+    } else {
+      return "bash " + script + " " + image ; 
+    }
+  }
 }

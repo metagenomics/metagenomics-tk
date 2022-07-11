@@ -14,11 +14,16 @@ process pCarveMe {
 
     container "${params.carveme_image}"
 
-    when params.steps.containsKey("metabolomics") && params.steps.metabolomics.containsKey("carveme") && !params.steps.metabolomics.containsKey("gapseq")
+    containerOptions " --user 0:0 "
 
-    beforeScript "${params?.steps?.metabolomics?.beforeProcessScript} ${params.carveme_image}"
+    when params.steps.containsKey("metabolomics") && params.steps.metabolomics.containsKey("carveme")
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "carveme", filename) }
+    beforeScript  params?.steps.containsKey("metabolomics") \
+	? Utils.getBeforeScript(params?.steps?.metabolomics?.beforeProcessScript.trim(), params.carveme_image) \
+	: ""
+  
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "carveme", filename) }, \
+        pattern: "{**.xml}"
 
     input:
       tuple val(sample), val(id), path(mag)
@@ -34,11 +39,11 @@ process pCarveMe {
 
     if(mode == "proteins")
        '''
-       carve !{mag} -o !{id}.xml !{params.steps.metabolomics.carveme.additionalParams}
+       carve !{mag} -o !{id}.model.xml !{params.steps.metabolomics.carveme.additionalParams}
        '''
     else if(mode == "genome")
        '''
-       carve --dna !{mag} -o !{id}.xml !{params.steps.metabolomics.carveme.additionalParams}
+       carve --dna !{mag} -o !{id}.model.xml !{params.steps.metabolomics.carveme.additionalParams}
        '''
      else
         error "Invalid mode: ${mode}"
