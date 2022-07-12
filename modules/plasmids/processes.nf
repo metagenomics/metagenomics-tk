@@ -26,6 +26,8 @@ process pViralVerifyPlasmid {
 
     container "${params.viralVerify_image}"
 
+    beforeScript "mkdir -p ${params.polished.databases}"
+
     input:
     tuple val(sample), val(binID), path(plasmids)
 
@@ -91,6 +93,8 @@ process pMobTyper {
     when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("MobTyper")
 
     container "${params.mobSuite_image}"
+
+    beforeScript "mkdir -p ${params.polished.databases}"
 
     containerOptions Utils.getDockerMount(params.steps?.plasmid?.MobTyper?.database, params)
 
@@ -158,6 +162,8 @@ process pPlaton {
 
     container "${params.platon_image}"
 
+    beforeScript "mkdir -p ${params.polished.databases}"
+
     input:
     tuple val(sample), val(binID), path(assembly)
 
@@ -181,7 +187,7 @@ process pPlaton {
     PLATON_DB=""
     if [ -z "!{EXTRACTED_DB}" ]
     then 
-      DATABASE=!{params.databases}/platon
+      DATABASE=!{params.polished.databases}/platon
       LOCK_FILE=${DATABASE}/checksum.txt
 
       # Download plsdb database if necessary
