@@ -253,7 +253,7 @@ process pFilter {
        '''
        break;
       case "AND":
-       template("filter_and.sh")
+       template("filterAnd.sh")
        break;
     }
 }
