@@ -210,7 +210,7 @@ process pPlaton {
     platon assembly.fasta !{ADDITIONAL_PARAMS} --db ${PLATON_DB} --mode sensitivity -t !{task.cpus}
 
     # Add Sample and BinId
-    sed -e '1 s/^/SAMPLE\tBIN_ID\t/g' -e "2,$ s/^/!{sample}\t!{binID}\t/g" *.tsv > !{sample}_!{binID}_platon.tsv
+    sed -e '1 s/^/SAMPLE\tBIN_ID\t/g' -e "1 s/\tID\t/\tCONTIG\t/"  -e "2,$ s/^/!{sample}\t!{binID}\t/g" *.tsv > !{sample}_!{binID}_platon.tsv
     '''
 }
 
@@ -245,9 +245,11 @@ process pFilter {
        for file in !{contigHeaderFiles}; do 
     	 csvtk cut -f CONTIG --tabs ${file} | tail -n +2 >> filtered_header.tsv
        done
-       sort filtered_header.tsv | uniq > filtered_sorted_header.tsv
-       seqkit grep -f filtered_sorted_header.tsv !{contigs} | seqkit seq --min-len !{MIN_LENGTH} \
-	| pigz -c > !{sample}_!{binID}_plasmids_filtered.fasta.gz
+       if [ -s filtered_header.tsv ]; then
+         sort filtered_header.tsv | uniq > filtered_sorted_header.tsv
+         seqkit grep -f filtered_sorted_header.tsv !{contigs} | seqkit seq --min-len !{MIN_LENGTH} \
+         | pigz -c > !{sample}_!{binID}_plasmids_filtered.fasta.gz
+       fi
        '''
        break;
       case "AND":
