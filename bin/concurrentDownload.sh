@@ -32,25 +32,26 @@ DATABASE_OUT=${OUTPUT_PATH}/out
 MD5SUM_FILE=${OUTPUT_PATH}/md5sum.txt
 # In case a docker container has a specific root home directory s3 credentials need to be placed there.
 # If the home aws directory is missing it will be created, credentials are linked from their mount-point.
-S5CMD_CREDENTIAL_FIX=' && [ ! -d ~/.aws ] && mkdir -p ~/.aws && ln -s /.aws/credentials ~/.aws/credentials'
+S5CMD_CREDENTIAL_FIX='[ ! -d ~/.aws ] && mkdir -p ~/.aws && ln -s /.aws/credentials ~/.aws/credentials;'
 
 mkdir -p ${DATABASE_OUT}
 
 function getCommand() {
-    if [[ $LINK == s3://* ]]
-    then
-	if [[ $(s5cmd ${S5CMD_ADDITIONAL_PARAMS}  ls ${LINK} | wc -l) == 1 ]]; then
-		echo "$S3_FILE_COMMAND$S5CMD_CREDENTIAL_FIX"
-	else
-		echo "$S3_DIRECTORY_COMMAND$S5CMD_CREDENTIAL_FIX"
-	fi
-    elif [[ $LINK == https://* ]]
-    then
-    	echo "$HTTPS_COMMAND";
-    elif [[ $LINK == /* ]]
-    then
-    	echo "$LOCAL_COMMAND";
-    fi
+  if [[ $LINK == s3://* ]]
+  then
+    eval "$S5CMD_CREDENTIAL_FIX"
+	  if [[ $(s5cmd ${S5CMD_ADDITIONAL_PARAMS}  ls ${LINK} | wc -l) == 1 ]]; then
+		  echo "$S3_FILE_COMMAND"
+	  else
+		  echo "$S3_DIRECTORY_COMMAND"
+	  fi
+  elif [[ $LINK == https://* ]]
+  then
+    echo "$HTTPS_COMMAND";
+  elif [[ $LINK == /* ]]
+  then
+    echo "$LOCAL_COMMAND";
+  fi
 }
 
 # Compares the expected MD5SUM to the one saved in checkpoint file.
