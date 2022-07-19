@@ -1,5 +1,6 @@
 nextflow.enable.dsl=2
 
+include { wInputFile } from '../../input/module'
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.readMapping.name + '/' + 
@@ -26,6 +27,7 @@ process pBwaIndex {
 process pMapBwa {
 
     label 'large'
+    tag "$sampleID"
     container "${params.samtools_bwa_image}"
     when params.steps.containsKey("readMapping")
     publishDir params.output, saveAs: { filename -> getOutput("${sampleID}", params.runid ,"bwa", filename) }
@@ -42,7 +44,7 @@ process pMapBwa {
 
 process pMergeAlignment {
     when params.steps.containsKey("readMapping")
-    label 'tiny'
+    label 'large'
     container 'quay.io/biocontainers/samtools:1.12--h9aed4be_1'
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
     input:
@@ -60,8 +62,9 @@ process pMergeAlignment {
 
 process pCovermCount {
     when params.steps.containsKey("readMapping")
-    label 'small'
+    label 'large'
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
+    scratch false
     input:
       tuple val(sample), file(mapping), file(index), file(list_of_representatives)
     output:
@@ -70,9 +73,50 @@ process pCovermCount {
       tuple val("${sample}"), path("${sample}_out/count.tsv"), emit: count
       tuple val("${sample}"), path("${sample}_out/rpkm.tsv"), emit: rpkm
       tuple val("${sample}"), path("${sample}_out/tpm.tsv"), emit: tpm
+      tuple val("${sample}"), path("${sample}_out/coveredBases.tsv"), emit: coveredBases
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     shell:
     template('coverm.sh')
+}
+
+process pCreateInterleaved {
+    when params.steps.containsKey("readMapping")
+    label 'large'
+    scratch false
+    container 'quay.io/biocontainers/samtools:1.12--h9aed4be_1'
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "interleaved", filename) }
+    input:
+      tuple val(sample), path("read1.fq.gz"), path("read2.fq.gz")
+    output:
+      tuple val("${sample}"), path("${sample}_interleaved.fq.gz"), emit: interleaved
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+    shell:
+    template("interleaved.sh")
+}
+
+
+/*
+*
+* wListReadMappingBwa maps a set of fastq samples against a set of genomes.
+* Input Parameters
+*
+*  * Columns of the mags file must be SAMPLE for sample identifier and READS for the path to the fastq files.
+*
+*/
+workflow wSRAReadMappingBwa {
+   main:
+     wInputFile() | pCreateInterleaved 
+     pCreateInterleaved.out.interleaved | set { interleaved }
+     GENOMES_PATH_IDX = 0
+     Channel.from(file(params?.steps?.readMapping?.mags)) \
+       | splitCsv(sep: '\t', header: false, skip: 1) \
+       | map { it -> file(it[GENOMES_PATH_IDX]) } \
+       | set {genomesList}
+
+     _wReadMappingBwa(interleaved, Channel.empty(), genomesList)
+   emit:
+     trimmedMean = _wReadMappingBwa.out.trimmedMean
+
 }
 
 
@@ -121,6 +165,8 @@ workflow wListReadMappingBwa {
    emit:
      trimmedMean = _wReadMappingBwa.out.trimmedMean
 }
+
+
 
 
 workflow _wReadMappingBwa {

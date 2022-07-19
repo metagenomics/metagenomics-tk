@@ -13,4 +13,9 @@ coverm genome -t !{task.cpus} !{params.steps.readMapping.bwa.additionalParams.co
 	--genome-fasta-list  list.txt  --methods rpkm  --output-file $OUT/rpkm.tsv  && sed -i '1 s| RPKM$||' $OUT/rpkm.tsv || true
 coverm genome -t !{task.cpus} !{params.steps.readMapping.bwa.additionalParams.coverm} -b !{mapping} \
 	--genome-fasta-list list.txt --methods tpm --output-file $OUT/tpm.tsv && sed -i '1 s| TPM$||' $OUT/tpm.tsv || true
+coverm genome -t !{task.cpus} !{params.steps.readMapping.bwa.additionalParams.coverm} -b !{mapping} \
+	--genome-fasta-list list.txt --methods covered_bases length --output-file covTmpContent.tsv \
+		&& sed -i  -e '1 s/^.*$/SAMPLE\tGENOME\tCOVERED_BASES\tLENGTH/' -e "2,$ s/^/!{sample}\t/g" covTmpContent.tsv  \
+                && echo "COVERED_FRACTION" > covTmp.tsv && awk '(NR>1){ tmp=($3/($4/100)) ; printf"\t%0.2f\n", tmp }' covTmpContent.tsv >> covTmp.tsv \
+		&& paste -d$'\t' covTmpContent.tsv covTmp.tsv > $OUT/coveredBases.tsv || true
 

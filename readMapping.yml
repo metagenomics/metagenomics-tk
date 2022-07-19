@@ -1,0 +1,35 @@
+tempdir: "tmp"
+summary: false
+output: "s3://testbucket"
+logDir: log
+runid: 1
+logLevel: 1
+scratch: "/vol/scratch"
+input:
+   SRA:
+     S3:
+       path: sra.ids.tsv 
+       bucket: "s3://ftp.era.ebi.ac.uk" 
+       prefix: "/vol1/fastq/"
+       watch: false
+steps:
+  readMapping:
+    mags: bins.tsv
+    bwa:
+      additionalParams:
+        bwa_index: ""
+        bwa_mem: ""
+        coverm: " --min-covered-fraction 0 "
+resources:
+  large:
+    cpus: 28
+    memory: 240
+  medium:
+    cpus: 14
+    memory: 128
+  small:
+    cpus: 7
+    memory: 16
+  tiny:
+    cpus: 1
+    memory: 2

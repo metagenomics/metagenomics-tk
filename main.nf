@@ -6,7 +6,7 @@ include { wAssemblyFile; wAssemblyList } from './modules/assembly/module'
 include { wBinning } from './modules/binning/module.nf'
 include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
 include { wDereplicateFile; wDereplicateList} from './modules/dereplication/pasolli/module'
-include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/bwa/module'
+include { wListReadMappingBwa; wFileReadMappingBwa; wSRAReadMappingBwa; } from './modules/readMapping/bwa/module'
 include { wAnalyseMetabolites } from './modules/metabolomics/module'
 include { wUnmappedReadsList; wUnmappedReadsFile } from './modules/sampleAnalysis/module'
 include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './modules/fragmentRecruitment/frhit/module'
@@ -49,6 +49,12 @@ workflow wSRATable {
 	+ "\t" + it[FASTQ_FILE_RIGHT_IDX].toString()] } \
 	| view({ it -> it.text })
 }
+
+
+workflow wReadMappingSRAFile {
+   wSRAReadMappingBwa()
+}
+
 
 workflow wDereplicationPath {
    wDereplicatePath()
