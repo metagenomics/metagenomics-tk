@@ -21,7 +21,7 @@ process pGetMappingQuality {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "contigMappingQuality", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "contigMappingQuality", filename) }
 
     label 'tiny'
 
@@ -46,7 +46,7 @@ process pMetabat {
 
     label 'large'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "metabat", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metabat", filename) }
 
     when params.steps.containsKey("binning") && params.steps.binning.containsKey("metabat")
 
@@ -72,7 +72,7 @@ process pMetabinner {
 
     label 'large'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "metabinner", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metabinner", filename) }
 
     when params.steps.containsKey("binning") && params.steps.binning.containsKey("metabinner")
 

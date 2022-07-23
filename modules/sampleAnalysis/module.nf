@@ -24,7 +24,7 @@ process pBowtie {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid , "bowtie", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid , "bowtie", filename) }
 
     when params?.steps?.sampleAnalysis !== null 
 

@@ -14,7 +14,7 @@ process pFastpSplit {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
 
     when params?.steps?.qc.containsKey("fastp")
 
@@ -43,7 +43,7 @@ process pFastpSplitDownload {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
 
     when params?.steps?.qc.containsKey("fastp")
 

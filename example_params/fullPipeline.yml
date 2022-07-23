@@ -145,26 +145,26 @@ steps:
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_experimental.tar.zst
-            md5sum: 552b40bdc6df361cd2a7bfc9a729b760
+            md5sum: 57a6d328486f0acd63f7e984f739e8fe
       bacmet20_predicted:
         params: ' -s 2 --exact-kmer-matching 1 '
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
-            md5sum: ec00b6c2638031dfcfdbe17b0bf0d1dc
-#      rgi:
-#      additionalParams: ""
-#      database:
-#        download:
-#          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/data
-#          md5sum: 2a1e01f01e904ed6e126b5ac162764c8
+            md5sum: 55902401a765fc460c09994d839d9b64
+    rgi:
+      additionalParams: ""
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/data
+          md5sum: 2a1e01f01e904ed6e126b5ac162764c8
     mmseqs2_taxonomy:
       ncbi_nr:
         params: '-s 1 --orf-filter-s 1 -e 1e-15'
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
-            md5sum: a6dfce8f30d7214ba09c9b07cbb6f96b
+            md5sum: 184bb8207ee1575cae7756137cde076b
     keggFromBlast:
       database:
         extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 

@@ -22,7 +22,7 @@ process pGetBinStatistics {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "", "${binner}", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "", "${binner}", filename) }
 
     label 'tiny'
 
@@ -45,7 +45,7 @@ process pCovermContigsCoverage {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "${module}" , "${outputToolDir}", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "${module}" , "${outputToolDir}", filename) }, \
         pattern: "{**.tsv,**.fasta.gz}"
 
 
@@ -88,7 +88,7 @@ process pBowtie2 {
 
     tag "Sample: $sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
 
     input:
     val(run)

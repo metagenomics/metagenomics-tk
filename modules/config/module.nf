@@ -18,7 +18,7 @@ process pConfigUpload {
 
   tag "$sample"
 
-  publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "parameters", filename) }
+  publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "parameters", filename) }
 
   input:
   tuple val(sample), val(config), val(manifest)
