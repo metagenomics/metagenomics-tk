@@ -1,8 +1,17 @@
 # run fastp
-fastp   --stdin -i <(s5cmd !{params.steps.qc.fastp.download.s5cmdParams} cat ${read1Url} | zcat) \
-      -I <(s5cmd !{params.steps.qc.fastp.download.s5cmdParams} cat ${read2Url} | zcat) \
+
+fastp   --stdin -i <(s5cmd !{params.steps.qc.fastp.download.s5cmdParams} cat ${read1Url} 2> error1.log | zcat) \
+      -I <(s5cmd !{params.steps.qc.fastp.download.s5cmdParams} cat ${read2Url} 2> error2.log | zcat) \
       -o read1.fastp.fq.gz -O read2.fastp.fq.gz -w !{task.cpus} -h !{sample}_report.html \
       --unpaired1 !{sample}_unpaired.fastp.fq.gz --unpaired2 !{sample}_unpaired.qc.fq.gz !{params.steps.qc.fastp.additionalParams}
+
+# This if statement solves issue https://github.com/pbelmann/meta-omics-toolkit/issues/166
+if grep -q "reset by peer" error1.log error2.log; then
+       echo "Network issue found. Exiting with exit code 1";
+       exit 1 ;
+else
+       echo "No network issue found";
+fi
 
 # fix 'unexpected end of file' of unpaired reads gzip file
 touch empty.txt
