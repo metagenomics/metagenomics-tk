@@ -23,13 +23,13 @@ steps:
           database:
             download:
               source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_experimental.tar.zst
-              md5sum: 552b40bdc6df361cd2a7bfc9a729b760
+              md5sum: 57a6d328486f0acd63f7e984f739e8fe
         bacmet20_predicted:
           params: ' -s 2 --exact-kmer-matching 1 '
           database:
             download:
               source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
-              md5sum: ec00b6c2638031dfcfdbe17b0bf0d1dc
+              md5sum: 55902401a765fc460c09994d839d9b64
       keggFromBlast:
          database:
            extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/"
