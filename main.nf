@@ -187,6 +187,19 @@ workflow _wConfigurePipeline {
 	 assembler, parameter -> params.steps.assembly.get(assembler).putAll(fastg)
        }
     }
+
+    // If memory resources should be predicted by megahit then nonpareil and jellyfish
+    // must be enabled
+    if(params.steps?.assembly?.megahit?.resources?.RAM?.mode == "PREDICT"){
+	if(!params.steps?.qc.containsKey("nonpareil")){
+          def nonpareil = [ nonpareil: [additionalParams: " -v 10 -r 1234 "]]
+          params.steps.qc.putAll(nonpareil) 
+        }
+	if(!params.steps?.qc.containsKey("jellyfish")){
+          def jellyfish = [ jellyfish: [additionalParams: [ count: " -m 21 -s 100M ", histo: " "]]]
+          params.steps.qc.putAll(jellyfish) 
+        }
+    }
 }
 
 
@@ -224,7 +237,7 @@ workflow wPipeline {
     wQualityControlList.out.readsPair \
 	| join(wQualityControlList.out.readsSingle) | set { qcReads }
 
-    wAssemblyList(qcReads)
+    wAssemblyList(qcReads, wQualityControlList.out.nonpareil, wQualityControlList.out.kmerFrequencies)
 
     wBinning(wAssemblyList.out.contigs, qcReads)
 
