@@ -19,6 +19,10 @@ steps:
     megahit:
       fastg: false
       additionalParams: " --min-contig-len 200 "
+      resources:
+         RAM: 
+            mode: 'DEFAULT'
+            predictMinLabel: 'AUTO' 
   binning:
     bowtie:
       additionalParams: 
