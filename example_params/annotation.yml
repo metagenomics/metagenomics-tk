@@ -8,11 +8,11 @@ databases: "/mnt/databases"
 steps:
    annotation:
       input: "test_data/annotation/input_small.tsv"
-#      diamond:
-#        kegg:
-#          params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
-#          database:
-#             extractedDBPath: '/vol/spool/toolkit/kegg-2021-01.dmnd'
+      diamond:
+        kegg:
+          params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
+          database:
+             extractedDBPath: '/vol/spool/toolkit/kegg-2021-01.dmnd'
       mmseqs2:
         kegg:
           params: ' -s 2 --exact-kmer-matching 1 '
@@ -30,6 +30,12 @@ steps:
             download:
               source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
               md5sum: 55902401a765fc460c09994d839d9b64
+        vfdb:
+          params: ' -s 2 --exact-kmer-matching 1 '
+          database:
+            download:
+              source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_2022_07_29.tar.zst
+              md5sum: 7e32aaed112d6e056fb8764b637bf49e
       keggFromBlast:
          database:
            extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/"

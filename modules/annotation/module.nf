@@ -135,7 +135,7 @@ process pMMseqs2 {
       tuple val(sample), val(binID), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
-      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.blast.tsv"), emit: results
+      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.blast.tsv"), emit: blast
       tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -218,8 +218,8 @@ process pMMseqs2_taxonomy {
       tuple val(sample), val(binID), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
-      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.taxonomy.tsv"), emit: results
-      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.krakenStyleTaxonomy.out"), emit: krakenStyle
+      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.taxonomy.tsv"), emit: taxonomy
+      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.krakenStyleTaxonomy.out"), emit: krakenStyleTaxonomy
       tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.krona.html"), emit: kronaHtml
       tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
@@ -415,10 +415,10 @@ process pKEGGFromBlast {
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("keggFromBlast")
 
    input:
-      tuple val(sample), val(binID), file(diamond_result)
+      tuple val(sample), val(binID), file(blast_result)
 
    output:
-      tuple val("${sample}"), path("${sample}_${binID}_kegg.tsv"), emit: kegg_diamond
+      tuple val("${sample}"), path("${sample}_${binID}_kegg.tsv"), emit: kegg_blast
       tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -452,7 +452,7 @@ process pKEGGFromBlast {
       else
          KEGG_DB="!{EXTRACTED_DB}"
       fi
-      blast2kegg.py !{diamond_result} ${KEGG_DB} !{sample}_!{binID}_kegg.tsv 
+      blast2kegg.py !{blast_result} ${KEGG_DB} !{sample}_!{binID}_kegg.tsv
       '''
 }
 
@@ -669,14 +669,13 @@ workflow _wAnnotation {
       pProkka.out.faa | combine(Channel.from(selectedDBs)) | pMMseqs2
       pProkka.out.faa | combine(Channel.from(selectedTaxDBs)) | pMMseqs2_taxonomy
       DB_TYPE_IDX = 0
-      pMMseqs2.out.results | filter({ result -> result[DB_TYPE_IDX] == "kegg" }) \
+      pMMseqs2.out.blast | filter({ result -> result[DB_TYPE_IDX] == "kegg" }) \
 	| map({ result -> result.remove(0); result }) \
 	| set { mmseqs2Results } 
 
       // Run Resistance Gene Identifier with amino acid outputs
       pProkka.out.faa | pResistanceGeneIdentifier
       pKEGGFromBlast(mmseqs2Results)
-      pKEGGFromBlast.out.kegg_diamond | set { keggAnnotation }
 
       // Compute gene coverage based on contig coverage
       SAMPLE_IDX=0
@@ -687,7 +686,11 @@ workflow _wAnnotation {
 	| mix(pResistanceGeneIdentifier.out.logs) \
 	| mix(pKEGGFromBlast.out.logs) | pDumpLogs
    emit:
-      keggAnnotation
+      keggAnnotation = pKEGGFromBlast.out.kegg_blast
+      mmseqs2_kronaHtml = pMMseqs2_taxonomy.out.kronaHtml
+      mmseqs2_krakenTaxonomy = pMMseqs2_taxonomy.out.krakenStyleTaxonomy
+      mmseqs2_taxonomy = pMMseqs2_taxonomy.out.taxonomy
+      mmseqs2_blast = pMMseqs2.out.blast
       prokka_faa = pProkka.out.faa
       prokka_ffn = pProkka.out.ffn
       prokka_fna = pProkka.out.fna
