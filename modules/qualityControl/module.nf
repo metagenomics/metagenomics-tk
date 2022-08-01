@@ -8,17 +8,20 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
            '/' + TOOL + '/' + filename
 }
 
+
 process pFastpSplit {
 
     label 'medium'
 
-    tag "$sample"
+    tag "Sample: $sample"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
 
     when params?.steps?.qc.containsKey("fastp")
 
     container "${params.fastp_image}"
+
+    time Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastp.defaults, params.resources.medium)
 
     input:
     tuple val(sample), path(read1, stageAs: "read1.fq.gz"), path(read2, stageAs: "read2.fq.gz")
@@ -97,9 +100,11 @@ process pFastpSplitDownload {
 
     label 'medium'
 
-    tag "$sample"
+    tag "Sample: $sample"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
+
+    time Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastpDownload.defaults, params.resources.medium)
 
     when params?.steps?.qc.containsKey("fastp")
 
