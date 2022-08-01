@@ -15,6 +15,7 @@ steps:
     fastp:
        # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
        additionalParams: "  "
+       timeLimit: "AUTO"
   assembly:
     megahit:
       additionalParams: " --min-contig-len 200 "

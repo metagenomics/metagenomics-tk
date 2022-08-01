@@ -15,13 +15,13 @@ steps:
     fastp:
        # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
        additionalParams: "  "
+       timeLimit: "AUTO"
     nonpareil:
        additionalParams: " -v 10 -r 1234 "
     jellyfish:
        additionalParams: 
          count: " -m 21 -s 100M "
          histo: " "
-
   assembly:
     megahit:
       additionalParams: " --min-contig-len 200 "
