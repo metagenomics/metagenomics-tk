@@ -155,7 +155,7 @@ jobs:
           bash ./scripts/test_fragmentRecruitment.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
 
   annotation:
-    timeout-minutes: 700
+    timeout-minutes: 900
     needs: [fragment_recruitment]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -193,20 +193,20 @@ jobs:
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/kegg_yaml_database_tests" \
                                MODULE_DB_TEST_SKIP_TESTS="https"
 
-      - name: Test diamond against different database configurations
+      - name: Test mmseqs2 against different database configurations
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-2021-01.dmnd" \
-                               MODULE_DB_TEST_MD5SUM="3826557e100dfdc3584f3e7acb62396a" \
-                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/bene-test/databases/kegg-2021-01.dmnd.gz" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg-2021-01.dmnd.gz" MODULE_DB_TEST_S3PATH="s3://bene-test/databases/kegg-2021-01.dmnd.gz" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://bene-test/databases/kegg-2021-01.dmnd.gz" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB" \
+                               MODULE_DB_TEST_MD5SUM="0d20db97b3e7ee6571ca1fd5ad3a87f1" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB" MODULE_DB_TEST_S3PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
-                               MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/diamond \
+                               MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/mmseqs2 \
                                MODULE_DB_TEST_YML=example_params/annotation.yml \
-                               MODULE_DB_TEST_YML_PATH="'.steps.annotation.diamond.kegg.database=env(database),del(.steps.annotation.rgi,.steps.annotation.keggFromBlast)'" \
+                               MODULE_DB_TEST_YML_PATH="'.steps.annotation.mmseqs2.kegg.database=env(database),del(.steps.annotation.rgi,.steps.annotation.keggFromBlast)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" \
-                               MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/diamond_yaml_database_tests" \
+                               MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/mmseqs2_yaml_database_tests" \
                                MODULE_DB_TEST_SKIP_TESTS="https"
 
   plasmid:

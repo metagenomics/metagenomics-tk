@@ -8,11 +8,6 @@ databases: "/mnt/databases"
 steps:
    annotation:
       input: "test_data/annotation/input_small.tsv"
-      diamond:
-        kegg:
-          params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
-          database:
-             extractedDBPath: '/vol/spool/toolkit/kegg-2021-01.dmnd'
       mmseqs2:
         kegg:
           params: ' -s 2 --exact-kmer-matching 1 '

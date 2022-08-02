@@ -50,11 +50,10 @@ steps:
       defaultKingdom: 'Bacteria'
       additionalParams: " --mincontiglen 200 "
   annotation:
-    diamond:
-      kegg:
-        params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
-        database:
-          extractedDBPath: '/vol/spool/toolkit/kegg-2021-01.dmnd'
+    kegg:
+      params: ' -s 2 --exact-kmer-matching 1 '
+      database:
+        extractedDBPath: '/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB'
 resources:
   large:
     cpus: 28

@@ -29,78 +29,6 @@ def constructParametersObject(String tool){
 
 /**
 *
-* Diamond is used to search for big input queries in large databases.
-* Though not as precise as blast it is way faster if you handle large amounts of data.
-* You need to call (and fill out) the aws credential file with -c to use this module! 
-*
-**/
-process pDiamond {
-   
-      container "${params.diamond_image}"
-
-      // Databases will be downloaded to a fixed place so that they can be used by future processes.
-      // This fixed place has to be outside of the working-directory to be easy to find for every process.
-      // Therefore this place has to be mounted to the docker container to be accessible during run time.
-      // Another mount flag is used to get a key file (aws format) into the docker-container. 
-      // This file is then used by s5cmd. 
-      containerOptions constructParametersObject("diamond")
- 
-      tag "Sample: $sample, Database: $dbType"
-
-      label 'large'
-
-      publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "diamond/${dbType}", filename) }, \
-         pattern: "{**.diamond.out}"
-      
-      // UID mapping does not work for some reason. Every time a database directory is created while running docker,
-      // the permissions are set to root. This leads to crashes later on.
-      // beforeScript is one way to create a directory outside of Docker to tackle this problem. 
-      beforeScript "mkdir -p ${params.polished.databases}"
-
-      when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("diamond")
-
-   input:
-      tuple val(sample), val(binID), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
-   
-   output:
-      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.diamond.out"), emit: results
-      tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
-        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
-
-
-   shell:
-   output = getOutput("${sample}", params.runid, "diamond", "")
-   // TODO: insert variable database selection like mmseqs
-   '''
-   DIAMOND_FILE=""
-   if [ -z "!{EXTRACTED_DB}" ] 
-   then
-         DATABASE=!{params.polished.databases}/diamond
-         LOCK_FILE=${DATABASE}/lock.txt
-
-         mkdir -p ${DATABASE}
-         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
-            --link=!{DOWNLOAD_LINK} \
-            --httpsCommand="wget -O db.dmnd.gz !{DOWNLOAD_LINK}  && gunzip db.dmnd.gz " \
-            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} db.dmnd.gz && gunzip db.dmnd.gz " \
-            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} db.dmnd.gz && gunzip db.dmnd.gz " \
-	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
-            --localCommand="gunzip -c !{DOWNLOAD_LINK} > ./db.dmnd" \
-            --expectedMD5SUM=!{MD5SUM}
-
-          DIAMOND_FILE="${DATABASE}/out/db.dmnd"
-    else
-          DIAMOND_FILE="!{EXTRACTED_DB}"
-    fi
-
-    diamond !{parameters} --threads !{task.cpus}  --out !{binID}.!{dbType}.diamond.out \
-      --db ${DIAMOND_FILE} --query !{fasta}
-   '''
-}
-
-
-/**
-*
 * MMseqs2 is used to search for big input queries in large databases. 
 * Multiple databases can be searched at the same time.
 * Outputs will be saved in separate directorys.
@@ -590,7 +518,7 @@ process pProkka {
 * The .tsv file has to have: DATASET, BIN_ID and PATH entries.
 * 
 * The "database_mode" is used to choose which database path is expected.
-* If the Diamond-databasepath starts with "https://" or "s3://" the object storage based mode is used.
+* If the databasepath starts with "https://" or "s3://" the object storage based mode is used.
 * All other paths are seen as "local" mode paths and offline stored copys are expected.
 *
 **/
@@ -632,9 +560,9 @@ workflow wAnnotateList {
 *
 * The main annotation workflow. 
 * It is build to handle one big input fasta file.
-* On this file genes will be predicted and annotated using prokka, these will be diamond-blasted against kegg. 
-* gtdb results are optional to set the domain for annotation with prokka.
-* At the end kegg-infos of the results and prokka results be collected and presented.
+* Based on this file genes will be predicted and annotated using Prokka, these genes will be blasted against KEGG.
+* Gtdb results are optional to set the domain for annotation with Prokka.
+* At the end kegg- and prokka-infos of the results will be collected and presented.
 *
 **/ 
 workflow _wAnnotation {
