@@ -33,10 +33,6 @@ See [database section](../pipeline_configuration.md##-Database-input-configurati
 
 ## Output
 
-### Diamond
-
-Calculated significant matches of a nucleotide/protein query which was compared against a user provided set of databases.
-
 ### MMseqs2
 
 Calculated significant matches of a nucleotide/protein query which was compared against a user provided set of databases.
