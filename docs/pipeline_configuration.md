@@ -243,3 +243,5 @@ resources:
     cpus: 1
     memory: 2
 ```
+
+The full pipeline mode is able to predict the memory consumption of some assemblers (see assembly module section).
