@@ -60,6 +60,11 @@ class Utils {
           module.version.patch
   }
 
+  static String getPathWithoutFile(String filePath) {
+    int dotIndex = filePath.lastIndexOf('/');
+    return (dotIndex == -1) ? filePath : filePath.substring(0, dotIndex);
+  }
+
   /*
    * This function sets a time limit based on a user provided mode and the resource defaults
    * that are usually consumed by the process.
