@@ -4,6 +4,7 @@ output: "output"
 runid: 1
 logDir: log
 scratch: "/vol/scratch"
+publishDirMode: "symlink"
 input:
   SRA:
     S3:

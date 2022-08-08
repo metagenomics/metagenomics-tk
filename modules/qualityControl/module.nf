@@ -8,17 +8,20 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
            '/' + TOOL + '/' + filename
 }
 
+
 process pFastpSplit {
 
     label 'medium'
 
-    tag "$sample"
+    tag "Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
 
     when params?.steps?.qc.containsKey("fastp")
 
     container "${params.fastp_image}"
+
+    time Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastp.defaults, params.resources.medium)
 
     input:
     tuple val(sample), path(read1, stageAs: "read1.fq.gz"), path(read2, stageAs: "read2.fq.gz")
@@ -37,13 +40,71 @@ process pFastpSplit {
 }
 
 
+process pNonpareil {
+
+    label 'medium'
+
+    tag "Sample: $sample"
+
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "nonpareil", filename) }
+
+    when params?.steps?.qc.containsKey("nonpareil")
+
+    container "${params.nonpareil_image}"
+
+    input:
+    tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz'), path(unpairedReads)
+
+    output:
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), path("*.npl"), emit: log
+    tuple val("${sample}"), path("*.npa"), emit: redundancyValues
+    tuple val("${sample}"), path("*.npc"), emit: matesDistribution
+    tuple val("${sample}"), path("*.npc"), emit: redundancySummary
+    tuple val("${sample}"), path("*_nonpareil_curves.pdf"), emit: nonpareilCurves
+    tuple val("${sample}"), path("*_nonpareil_index.tsv"), emit: nonpareilIndex
+
+    shell:
+    template 'nonpareil.sh'
+}
+
+
+
+process pJellyFish {
+
+    label 'medium'
+
+    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "jellyfish", filename) }
+
+    container "${params.jellyfish_image}"
+
+    when params?.steps?.qc.containsKey("jellyfish")
+
+    input:
+    tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz'), path(unpairedReads)
+
+    output:
+    tuple val("${sample}"), path("*.histo.tsv"), emit: histogram
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
+
+    shell:
+    '''
+    jellyfish count !{params.steps.qc.jellyfish.additionalParams.count}   -t !{task.cpus} <(zcat !{interleavedReads} !{unpairedReads}) -o !{sample}.jf
+    echo -e "FREQUENCY\tCOUNT\tSAMPLE" > !{sample}.histo.tsv
+    jellyfish histo !{params.steps.qc.jellyfish.additionalParams.histo}  !{sample}.jf | sed -e 's/ /\t/g' -e "s/$/\t!{sample}/g" >> !{sample}.histo.tsv
+    '''
+}
+
+
+
 process pFastpSplitDownload {
 
     label 'medium'
 
-    tag "$sample"
+    tag "Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
+
+    time Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastpDownload.defaults, params.resources.medium)
 
     when params?.steps?.qc.containsKey("fastp")
 
@@ -77,7 +138,7 @@ workflow _wFastqSplit {
               noDownload: !params?.steps?.qc.fastp.containsKey("download")
              } | set { samples }
 
-             samples.noDownload | pFastpSplit
+             samples.noDownload | pFastpSplit 
              samples.download | pFastpSplitDownload
 
              // Create summary files
@@ -99,7 +160,11 @@ workflow _wFastqSplit {
              }
              pFastpSplit.out.readsPair | mix(pFastpSplitDownload.out.readsPair) | set {readsPair}
              pFastpSplit.out.readsSingle | mix(pFastpSplitDownload.out.readsSingle) | set {readsSingle}
+
+             readsPair | join(readsSingle) | (pNonpareil & pJellyFish)
       emit:
+        nonpareilIndex = pNonpareil.out.nonpareilIndex
+        kmerFrequencies =  pJellyFish.out.histogram 
         readsPair = readsPair
         readsSingle = readsSingle
 }
@@ -110,7 +175,9 @@ workflow _wFastqSplit {
  * This module does read trimming, adapter removal and other quality control tasks.   
  * 
  * Output:
- * Interleaved fastq files.
+ * - Interleaved fastq files
+ * - Nonpareil coverage and diversity estimation
+ * - kmer frequencies
  * 
  */
 workflow wQualityControlList {
@@ -121,6 +188,8 @@ workflow wQualityControlList {
   emit:
     readsPair = results.readsPair
     readsSingle = results.readsSingle
+    nonpareil = results.nonpareilIndex
+    kmerFrequencies =  results.kmerFrequencies
 }
 
 /*
@@ -132,8 +201,9 @@ workflow wQualityControlList {
  * Left and right read could be https, s3 links or file path.
  * 
  * Output:
- * Interleaved fastq files.
- * 
+ * - Interleaved fastq files
+ * - Nonpareil coverage and diversity estimation
+ * - kmer frequencies
  */
 workflow wQualityControlFile {
      take:
