@@ -141,7 +141,7 @@ workflow _wCheckSRAFiles {
      //samples | filter({sample -> sample[FASTQ_FILES_IDX].size() >= 2 }) 
          // Ensure that paired end files are included
      samples | branch {
-            passed: it[FASTQ_FILES_IDX].size() >= 2 && it[FASTQ_FILES_IDX].stream().allMatch { sraFile -> sraFile ==~ /.+(_1|_2).+$/ }
+            passed: it[FASTQ_FILES_IDX].stream().filter({ sraFile -> sraFile ==~ /.+(_1|_2).+$/ }).count() == 2
                     return it
             other: true
                     return it

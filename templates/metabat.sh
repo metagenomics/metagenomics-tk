@@ -30,3 +30,16 @@ if [ -s ${BINNED_IDS} ]; then
 	seqkit grep -vf ${BINNED_IDS} !{contigs} \
 	 | seqkit replace  -p '(.*)' -r "\${1} MAG=NotBinned" > ${NOT_BINNED}
 fi
+
+# return not binned fasta files
+BINNED_IDS=binned.tsv
+NOT_BINNED=!{sample}_notBinned.fa
+grep -h ">" $(basename !{contigs})*/bin* | tr -d ">" > ${BINNED_IDS}
+if [ -s ${BINNED_IDS} ]; then
+	# Get all not binned Ids
+	seqkit grep -vf ${BINNED_IDS} !{contigs} \
+		| seqkit replace  -p '(.*)' -r "\${1} MAG=NotBinned" > ${NOT_BINNED}
+else
+	seqkit replace  -p '(.*)' -r "\${1} MAG=NotBinned" !{contigs} > ${NOT_BINNED}
+fi
+
