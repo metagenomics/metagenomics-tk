@@ -43,10 +43,11 @@ process pSCAPP {
 
     output:
     tuple val("${sample}"), path("${sample}_plasmids.fasta.gz"), emit: plasmids, optional: true
+    tuple val("${sample}"), path("${sample}_plasmids_summary_stats.tsv"), emit: plasmidsSummaryStats, optional: true
+    tuple val("${sample}"), path("${sample}_plasmids_stats.tsv"), emit: plasmidsStats, optional: true
     tuple val("${sample}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    tuple val("${sample}"), path("${sample}_plasmids_stats.tsv"), emit: plasmidsStats, optional: true
 
     shell:
     output = getOutput("${sample}", params.runid, "SCAPP", "")
@@ -166,13 +167,13 @@ workflow _runCircularAnalysis {
        BIN_IDX = 1
 
        pSCAPP.out.plasmids \
-	| map { plasmids -> [plasmids[SAMPLE_IDX], "assembly", plasmids[BIN_IDX]] } \
+	| map { plasmids -> [plasmids[SAMPLE_IDX], "plasmid_assembly", plasmids[BIN_IDX]] } \
 	| set { newPlasmids }
 
        newPlasmids | (pPlasClassCircular & pMobTyperCircular & pViralVerifyPlasmidCircular & pPlatonCircular)
 
        pBowtie2(Channel.value(params.steps.plasmid?.containsKey("SCAPP")), Channel.value([Utils.getModulePath(params.modules.plasmids), \
-	"SCAPP/contigMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, false]), pSCAPP.out.plasmids | join(samplesReads))
+	"SCAPP/readMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, false]), pSCAPP.out.plasmids | join(samplesReads))
 
        pCovermContigsCoverage(Channel.value(true), Channel.value([Utils.getModulePath(params?.modules?.plasmids) \
 	,"SCAPP/coverage", params?.steps?.plasmid?.SCAPP?.additionalParams?.coverm]), pBowtie2.out.mappedReads) 

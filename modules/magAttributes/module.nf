@@ -1,6 +1,7 @@
 nextflow.enable.dsl=2
 
 include { pDumpLogs } from '../utils/processes'
+include { pProkka; _wCreateProkkaInput } from '../annotation/module'
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.magAttributes.name + '/' + 
@@ -21,14 +22,15 @@ process pCmseq {
     when params.steps.magAttributes.containsKey("cmseq")
 
     input:
-    tuple val(sample), file(gff), file(bam), file(bai)
+    tuple val(sample), val(bin), file(gff), file(bam), file(bai)
 
     output:
     file("${sample}_${bin}.txt")
 
     shell:
     '''
-    polymut.py --mincov 10 --gff_file !{gff} !{bam} > !{sample}_!{gff}.txt
+    zcat -f !{gff} > input.gff
+    polymut.py --mincov 10 --gff_file input.gff !{bam} > !{sample}_!{bin}.txt
     '''
 }
 
@@ -102,57 +104,6 @@ process pGtdbtk {
 }
 
 
-process pProkka {
-
-    container "${params.prokka_image}"
-
-    label 'small'
-
-    time '5h'
-
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }, \
-      pattern: "{**.gff.gz,**.fna.gz,**.faa.gz,**.sqn.gz,**.txt,**.tsv,**.fsa.gz,**.ffn.gz,**.gbk.gz,**.tbl.gz}"
-
-    when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("prokka")
-
-    input:
-    tuple val(sample), file(bin), val(domain)
-
-    output:
-    tuple file("*.gff.gz"), env(BIN_ID), val("${sample}"), emit: gff 
-    tuple file("*.faa.gz"), env(BIN_ID), val("${sample}"), emit: faa 
-    tuple file("*.fna.gz"), env(BIN_ID), val("${sample}"), emit: fna 
-    tuple file("*.ffn.gz"), env(BIN_ID), val("${sample}"), emit: ffn 
-    tuple file("*.fsa.gz"), env(BIN_ID), val("${sample}"), emit: fsa 
-    tuple file("*.gbk.gz"), env(BIN_ID), val("${sample}"), emit: gbk
-    tuple file("*.tbl.gz"), env(BIN_ID), val("${sample}"), emit: tbl
-    tuple file("*.sqn.gz"), env(BIN_ID), val("${sample}"), emit: sqn
-    tuple file("*.txt"), env(BIN_ID), val("${sample}"), emit: txt
-    tuple file("*.tsv"), env(BIN_ID), val("${sample}"), emit: tsv
-    tuple env(BIN_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
-	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
-
-    shell:
-    output = getOutput("${sample}", params.runid, "prokka", "")
-    '''
-    # Prepare Input Variables
-    BIN=!{bin}
-    BIN_PREFIX=$(echo "${BIN%.*}")
-    BIN_ID="$(basename !{bin})"
-
-    # Run Prokka
-    prokka !{params.steps.magAttributes.prokka.additionalParams}  --cpus !{task.cpus} !{bin}   --outdir out --kingdom !{domain}
-
-    # Prepare output according to magAttributes specification
-    for f in out/* ; do suffix=$(echo "${f##*.}"); mv $f ${BIN_PREFIX}.${suffix}; done
-    sed -i  -e "2,$ s/^/!{sample}\t${BIN_ID}\t/"  -e "1,1 s/^/SAMPLE\tBIN_ID\t/g" *.tsv
-    mv *.tsv !{sample}_prokka_${BIN_ID}.tsv
-    gzip --best *gff *.faa *.fna *.ffn *.fsa *.gbk *.sqn *tbl
-    '''
-
-}
-
-
 /*
 * The CMSeq workflow should estimate the heterogenety of a MAG in a given sample.
 * Input:
@@ -163,8 +114,8 @@ process pProkka {
 * 
 *     * alignments - A table with read alignment against genomes. 
 *           Example:
-*           PATH    DATASET
-*           /vol/spool/fragmentRecruitment_20210607/work/3d/9a45b85c15b22a6bb8ed4635391a40/ERR2019981.bam   ERR2019981.bam
+*           BAM	PATH    BAI
+*           SAMPLE /vol/spool/fragmentRecruitment_20210607/work/3d/9a45b85c15b22a6bb8ed4635391a40/ERR2019981.bam   /vol/spool/fragmentRecruitment_20210607/work/3d/9a45b85c15b22a6bb8ed4635391a40/ERR2019981.bam.bai
 *
 */
 workflow wCMSeqWorkflowFile {
@@ -173,17 +124,29 @@ workflow wCMSeqWorkflowFile {
       alignments
    main:
       wMagAttributesFile(genomes)
-      Channel.fromPath(alignments) | splitCsv(sep: '\t', header: true) \
-       | map { sample -> [sample.BAM, file(sample.PATH), sample.BAI] } | set {alignments}
+      
+      //prepare alignment inputs for CMSeq:
+      alignments | splitCsv(sep: '\t', header: true)  \
+       | map { sample -> [sample.BAM, file(sample.PATH), file(sample.BAI)] } | set {alignments}
 
-      SAMPLE_BINID_IDX = [1,2] 
-      SAMPLE_ID_IDX = 1
+      //prepare genome inputs for prokka:
+      genomes | splitCsv(sep: '\t', header: true) \
+       | map { sample -> [sample.DATASET, file(sample.PATH).getName(), file(sample.PATH)] } \
+       | set { genomesForProkka }
+
+      _wCreateProkkaInput(genomesForProkka, wMagAttributesFile.out.gtdb)
+
+      pProkka(Channel.value("meta"), _wCreateProkkaInput.out.prokkaInput)
+
+      SAMPLE_IDX = 0
+      SAMPLE_BIN_IDX = 1
       GFF_IDX = 2
-      ALIGNMENT_IDX = 5
-      ALIGNMENT_INDEX_IDX = 5
-      wMagAttributesFile.out.prokka_gff \
-         | join(wMagAttributesFile.out.prokka_fna, by: SAMPLE_BINID_IDX, remainder: true) \
-         | combine(alignments) | map { it -> [it[SAMPLE_ID_IDX],it[GFF_IDX],it[ALIGNMENT_IDX], it[ALIGNMENT_INDEX_IDX] ] } |  pCmseq
+      ALIGNMENT_IDX = 3
+      ALIGNMENT_INDEX_IDX = 4
+
+      pProkka.out.gff \
+         | join(alignments, by: SAMPLE_IDX, remainder: true)   \
+         | map { it -> [it[SAMPLE_IDX], it[SAMPLE_BIN_IDX], it[GFF_IDX], it[ALIGNMENT_IDX], it[ALIGNMENT_INDEX_IDX]] } |  pCmseq
 
 }
 
@@ -207,18 +170,7 @@ workflow wMagAttributesFile {
        | groupTuple(by: DATASET_IDX) | _wMagAttributes
    emit:
      checkm = _wMagAttributes.out.checkm
-     prokka_faa = _wMagAttributes.out.prokka_faa
-     prokka_ffn = _wMagAttributes.out.prokka_ffn
-     prokka_fna = _wMagAttributes.out.prokka_fna
-     prokka_fsa = _wMagAttributes.out.prokka_fsa
-     prokka_gbk = _wMagAttributes.out.prokka_gbk
-     prokka_gff = _wMagAttributes.out.prokka_gff
-     prokka_sqn = _wMagAttributes.out.prokka_sqn
-     prokka_tbl = _wMagAttributes.out.prokka_tbl
-     prokka_tsv = _wMagAttributes.out.prokka_tsv
-     prokka_txt = _wMagAttributes.out.prokka_txt
-
-
+     gtdb = _wMagAttributes.out.gtdb
 }
 
 
@@ -236,9 +188,6 @@ workflow wMagAttributesFile {
 *     BIN_ID:bin.1, Marker lineage:k__Bacteria (UID203), # genomes:5449, # markers:103, # marker sets:57,
 *     0:97, 1:6, 2:0, 3:0, 4:0, 5+:0, COMPLETENESS:7.72, CONTAMINATION:0.00, HETEROGENEITY:0.00] 
 *
-*  * Prokka channels for every possible output file err,faa,ffn,fna,fsa,gbk,gff,log,sqn,tbl,tsv,txt,
-*    Every prokka channel has the following output format [SAMPLE_NAME, FILE]
-*
 */
 workflow wMagAttributesList {
    take: 
@@ -248,16 +197,6 @@ workflow wMagAttributesList {
    emit:
      checkm = _wMagAttributes.out.checkm
      gtdb = _wMagAttributes.out.gtdb
-     prokka_faa = _wMagAttributes.out.prokka_faa
-     prokka_ffn = _wMagAttributes.out.prokka_ffn
-     prokka_fna = _wMagAttributes.out.prokka_fna
-     prokka_fsa = _wMagAttributes.out.prokka_fsa
-     prokka_gbk = _wMagAttributes.out.prokka_gbk
-     prokka_gff = _wMagAttributes.out.prokka_gff
-     prokka_sqn = _wMagAttributes.out.prokka_sqn
-     prokka_tbl = _wMagAttributes.out.prokka_tbl
-     prokka_tsv = _wMagAttributes.out.prokka_tsv
-     prokka_txt = _wMagAttributes.out.prokka_txt
 }
 
 
@@ -316,39 +255,10 @@ workflow _wMagAttributes {
      DATASET_OUTPUT_IDX = 1
 
      // get file ending of bin files (.fa, .fasta, ...) and group by file ending and dataset
-     bins | flatMap({n -> flattenBins(n)}) | set {binFlattenedList}
      bins | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.checkm?.buffer ?: CHECKM_DEFAULT_BUFFER)}) \
        | pCheckM | set {checkm}
      bins | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.gtdb?.buffer ?: GTDB_DEFAULT_BUFFER )}) \
        | pGtdbtk | set {gtdb}
-
-     GTDB_FILE_IDX = 0
-     CLASSIFICATION_IDX = 0
-     DOMAIN_IDX = 0
-     GTDB_OUTPUT_DATASET_IDX = 1
-     BIN_FILE_IDX = 1
-     BIN_FILE_PROKKA_INPUT_IDX = 2
-     DOMAIN_PROKKA_INPUT_IDX = 3
-
-     // if GTDB is enabled then get domain classification for prokka, otherwise just use the user provided default
-     if(params?.steps?.magAttributes?.gtdb){
-
-       gtdb.combined | filter(it -> file(it[GTDB_FILE_IDX]).text?.trim()) \
-         | splitCsv(sep: '\t', header: true) \
-         | map { it ->  def command = it[GTDB_FILE_IDX].classification.split(';')[DOMAIN_IDX].minus('d__'); [it[GTDB_FILE_IDX].SAMPLE, it[GTDB_FILE_IDX].BIN_ID, command] } \
-         | set { gtdbDomain }
-
-       binFlattenedList  |  map {it -> [it[DATASET_IDX], file(it[BIN_FILE_IDX]).name, it[BIN_FILE_IDX]]} \
-           | join(gtdbDomain, by:[DATASET_IDX, BIN_FILE_IDX], remainder: true) \
-           | map { it -> [it[DATASET_IDX], it[BIN_FILE_PROKKA_INPUT_IDX], it[DOMAIN_PROKKA_INPUT_IDX]?:params?.steps?.magAttributes?.prokka?.defaultKingdom  ]} \
-           | set { prokkaInput }
-
-     } else {
-       binFlattenedList | map { bin  -> [ bin[DATASET_IDX], bin[BIN_FILE_IDX], params?.steps?.magAttributes?.prokka?.defaultKingdom ] } \
-           | set { prokkaInput }
-     }
-
-     prokkaInput  | pProkka
 
      // Prepare checkm output file
      checkm.checkm | groupTuple(by: DATASET_OUTPUT_IDX, remainder: true) | map { it -> it[BIN_FILES_OUTPUT_GROUP_IDX] }  | flatten | map { bin -> file(bin) } \
@@ -373,19 +283,9 @@ workflow _wMagAttributes {
        }
      }
 
-     pGtdbtk.out.logs | mix(pCheckM.out.logs) | mix(pProkka.out.logs) | pDumpLogs 
+     pGtdbtk.out.logs | mix(pCheckM.out.logs) | pDumpLogs 
 
    emit:
      checkm = checkm_list
      gtdb = gtdb.combined
-     prokka_faa = pProkka.out.faa
-     prokka_ffn = pProkka.out.ffn
-     prokka_fna = pProkka.out.fna
-     prokka_fsa = pProkka.out.fsa
-     prokka_gbk = pProkka.out.gbk
-     prokka_gff = pProkka.out.gff
-     prokka_sqn = pProkka.out.sqn
-     prokka_tbl = pProkka.out.tbl
-     prokka_tsv = pProkka.out.tsv
-     prokka_txt = pProkka.out.txt
 }

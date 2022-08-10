@@ -15,10 +15,22 @@ steps:
     fastp:
        # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
        additionalParams: "  "
+       timeLimit: "AUTO"
+    nonpareil:
+       additionalParams: " -v 10 -r 1234 "
+    jellyfish:
+       additionalParams: 
+         count: " -m 21 -s 100M "
+         histo: " "
   assembly:
     megahit:
       additionalParams: " --min-contig-len 200 "
       fastg: true
+      resources:
+        RAM: 
+          mode: 'PREDICT'
+          predictMinLabel: 'medium' 
+
   binning:
     bowtie:
       additionalParams: 
@@ -47,9 +59,6 @@ steps:
         tree: " --reduced_tree "
         lineage_set: " " 
         qa: "  "
-    prokka:
-      defaultKingdom: 'Bacteria'
-      additionalParams: " --mincontiglen 200 "
   fragmentRecruitment:
     frhit:
       genomes: "/vol/spool/meta/test/data/bin.*.fa"
@@ -125,8 +134,10 @@ steps:
         mashSketch: " -S 42 -k 21 -s 1000 "
         mashDist: " -v 0.2 -d 0.2 "
   annotation:
-    prodigal:
-      mode: 'meta'
+    prokka:
+      prodigalMode: "meta"
+      defaultKingdom: 'Bacteria'
+      additionalParams: " --mincontiglen 200 "
     diamond:
       kegg:
         params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'

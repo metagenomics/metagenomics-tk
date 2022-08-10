@@ -7,7 +7,7 @@ runMetaBat.sh !{params.steps.binning.metabat.additionalParams} !{contigs} !{bam}
 TEMP_DIR=$(mktemp -d -p .)
 
 BIN_CONTIG_MAPPING=!{sample}_bin_contig_mapping.tsv
-for bin in $(basename !{contigs})*/bin* ; do
+for bin in $(find $(basename !{contigs})* -name "bin*.fa"); do
 	BIN_NAME="!{sample}_$(basename ${bin})"
 
 	# Get id of the bin (e.g get 2 of the bin SAMPLEID_bin.2.fa)
@@ -30,3 +30,16 @@ if [ -s ${BINNED_IDS} ]; then
 	seqkit grep -vf ${BINNED_IDS} !{contigs} \
 	 | seqkit replace  -p '(.*)' -r "\${1} MAG=NotBinned" > ${NOT_BINNED}
 fi
+
+# return not binned fasta files
+BINNED_IDS=binned.tsv
+NOT_BINNED=!{sample}_notBinned.fa
+grep -h ">" $(basename !{contigs})*/bin* | tr -d ">" > ${BINNED_IDS}
+if [ -s ${BINNED_IDS} ]; then
+	# Get all not binned Ids
+	seqkit grep -vf ${BINNED_IDS} !{contigs} \
+		| seqkit replace  -p '(.*)' -r "\${1} MAG=NotBinned" > ${NOT_BINNED}
+else
+	seqkit replace  -p '(.*)' -r "\${1} MAG=NotBinned" !{contigs} > ${NOT_BINNED}
+fi
+

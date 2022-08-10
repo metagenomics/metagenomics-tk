@@ -36,4 +36,34 @@ class Utils {
           module.version.patch
   }
 
+  /*
+   * This function sets a time limit based on a user provided mode and the resource defaults
+   * that are usually consumed by the process.
+   * 
+   * Input:
+   * process: Defines the user provided timeLimit mode.
+   * processDefaults: Defines default resource values (cpus, RAM, etc.).
+   * flavor: Defines the user provided flavor for the process. 
+  */
+  static String setTimeLimit(process, processDefaults, flavor){
+    def timeUnit = "h"
+    switch(process.timeLimit){
+      case "DISABLED":
+        return "";
+      case "AUTO":
+        def defaultCPUs = processDefaults.flavor.cpus
+        if(defaultCPUs > flavor.cpus){
+          def timeLimit = defaultCPUs/flavor.cpus * processDefaults.time;
+          return timeLimit + timeUnit;
+        } else {
+          return processDefaults.time + timeUnit;
+        }
+      default:
+        if(process.timeLimit instanceof Number){
+          return process.timeLimit + timeUnit;
+        } else {
+          System.out.println("WARNING: unknown time limit parameter specified!");
+        }
+    }
+  }
 }
