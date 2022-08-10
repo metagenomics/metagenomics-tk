@@ -9,6 +9,7 @@ logDir: log
 runid: 1
 logLevel: 1
 scratch: "/vol/scratch"
+publishDirMode: "symlink"
 steps:
   qc:
     interleaved: false

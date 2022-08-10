@@ -5,6 +5,7 @@ runid: 1
 logLevel: 1
 logDir: log
 scratch: "/vol/scratch"
+publishDirMode: "symlink"
 steps:
   magAttributes:
     input: 
