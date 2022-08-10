@@ -36,7 +36,7 @@ process pDiamond {
       // Therefore this place has to be mounted to the docker container to be accessible during run time.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 " + constructParametersObject()
+      containerOptions constructParametersObject()
  
       tag "Sample: $sample, Database: $dbType"
 
@@ -95,7 +95,7 @@ process pResistanceGeneIdentifier {
    
       container "${params.rgi_image}"
       
-      containerOptions " --user 1000:1000 " + Utils.getDockerMount(params?.steps?.annotation?.rgi?.database, params) 
+      containerOptions Utils.getDockerMount(params?.steps?.annotation?.rgi?.database, params)
  
       tag "$sample $binID"
 
@@ -225,7 +225,7 @@ process pKEGGFromDiamond {
       // Therefore this place has to be mounted to the docker container to be accessible during runtime.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 " + Utils.getDockerMount(params.steps?.annotation?.keggFromDiamond?.database, params)
+      containerOptions Utils.getDockerMount(params.steps?.annotation?.keggFromDiamond?.database, params)
 
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromDiamond", filename) }, \
          pattern: "{**.tsv}"

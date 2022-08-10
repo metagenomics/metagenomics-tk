@@ -44,7 +44,7 @@ process pCheckM {
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm")
 
-    containerOptions " --user 1000:1000 " + Utils.getDockerMount(params.steps?.magAttributes?.checkm?.database, params) 
+    containerOptions Utils.getDockerMount(params.steps?.magAttributes?.checkm?.database, params)
 
     beforeScript "mkdir -p ${params.polished.databases}"
 
@@ -80,7 +80,7 @@ process pGtdbtk {
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("gtdb")
 
-    containerOptions " --user 1000:1000 " + Utils.getDockerMount(params?.steps?.magAttributes?.gtdb?.database, params) 
+    containerOptions Utils.getDockerMount(params?.steps?.magAttributes?.gtdb?.database, params)
 
     beforeScript "mkdir -p ${params.polished.databases}"
 

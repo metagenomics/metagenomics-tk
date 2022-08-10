@@ -66,7 +66,7 @@ process pPLSDB {
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "PLSDB", filename) }, \
             pattern: "{**.tsv}"
 
-    containerOptions " --user 1000:1000 " +  Utils.getDockerMount(params.steps?.plasmid?.PLSDB?.database, params)
+    containerOptions Utils.getDockerMount(params.steps?.plasmid?.PLSDB?.database, params)
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid.containsKey("PLSDB")
 
