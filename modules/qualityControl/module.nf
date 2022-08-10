@@ -15,7 +15,7 @@ process pFastpSplit {
 
     tag "Sample: $sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
 
     when params?.steps?.qc.containsKey("fastp")
 
@@ -102,7 +102,7 @@ process pFastpSplitDownload {
 
     tag "Sample: $sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
 
     time Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastpDownload.defaults, params.resources.medium)
 

@@ -15,7 +15,7 @@ process pCarveMe {
     time '10h'
     when params.steps.containsKey("metabolomics")
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "carveme", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "carveme", filename) }
 
     input:
       tuple val(sample), val(id), path(mag_faa)
@@ -33,7 +33,7 @@ process pMemote {
 
     tag "$sample $id"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "memote", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "memote", filename) }
 
     input:
       tuple val(sample), val(id), path(model)
@@ -70,7 +70,7 @@ process pSmetanaDetailed {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid , "smetana/detailed/", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid , "smetana/detailed/", filename) }
 
     when params?.steps?.metabolomics?.smetana?.contains("detailed")
 
@@ -93,7 +93,7 @@ process pSmetanaGlobal {
     tag "$sample"
     when params?.steps?.metabolomics?.smetana?.contains("global")
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "smetana/global/", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "smetana/global/", filename) }
 
     input:
       tuple val(sample), path(xmls) 
@@ -113,7 +113,7 @@ process pAnalyse {
     label 'tiny'
     tag "$sample $id"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmTsv", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmTsv", filename) }
 
     input:
       tuple val(sample), val(id), path(mag_json)  
@@ -134,7 +134,7 @@ process pAnalyse {
 process pBuildJson {
     tag "$sample $id"
     label 'tiny'
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmJson", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmJson", filename) }
     input:
       tuple val(sample), val(id), path(mag_xml)
     output:
@@ -153,7 +153,7 @@ process pProdigal {
     tag "$sample $id"
     label 'tiny'
     when params?.steps?.metabolomics !== null
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "prodigal", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "prodigal", filename) }
     input:
       tuple val(sample), val(id), path(mag)
     output:

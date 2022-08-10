@@ -1,7 +1,7 @@
 
 process pDumpLogs {
 
-    publishDir params.output, saveAs: { filename -> "${outputDir}/" + filename }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> "${outputDir}/" + filename }, \
         pattern: "{**.out,**.err,**.sh,**.log}"
 
     input:

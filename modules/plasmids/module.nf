@@ -32,7 +32,7 @@ process pSCAPP {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "SCAPP", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "SCAPP", filename) }
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("SCAPP")
 
@@ -63,7 +63,7 @@ process pPLSDB {
 
     beforeScript "mkdir -p ${params.polished.databases}"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "PLSDB", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "PLSDB", filename) }, \
             pattern: "{**.tsv}"
 
     containerOptions " --user 1000:1000 " +  Utils.getDockerMount(params.steps?.plasmid?.PLSDB?.database, params)

@@ -39,7 +39,7 @@ process pCheckM {
 
     container "${params.checkm_image}"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }, \
       pattern: "{**.tsv}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm")
@@ -75,7 +75,7 @@ process pGtdbtk {
 
     label 'large'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }, \
       pattern: "{**.tsv}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("gtdb")
