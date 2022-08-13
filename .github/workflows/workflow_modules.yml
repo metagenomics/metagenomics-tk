@@ -18,7 +18,7 @@ env:
   PROFILE: "slurm"
 jobs:
   full_pipeline:
-    timeout-minutes: 900
+    timeout-minutes: 1500
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
@@ -155,7 +155,7 @@ jobs:
           bash ./scripts/test_fragmentRecruitment.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
 
   annotation:
-    timeout-minutes: 900
+    timeout-minutes: 1200
     needs: [fragment_recruitment]
     runs-on: [ self-hosted, slurm]
     steps:
