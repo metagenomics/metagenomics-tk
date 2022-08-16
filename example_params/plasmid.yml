@@ -6,6 +6,7 @@ runid: 1
 databases: "/vol/scratch/databases/"
 logLevel: 1
 scratch: "/vol/scratch"
+publishDirMode: "symlink"
 steps:
   plasmid:
     input: "test_data/plasmid/input_contigs.tsv"

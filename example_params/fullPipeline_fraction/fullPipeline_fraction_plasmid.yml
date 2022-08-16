@@ -9,6 +9,7 @@ runid: 1
 scratch: "/vol/scratch"
 databases: "/mnt/databases/"
 logDir: log
+publishDirMode: "symlink"
 steps:
   qc:
     interleaved: false

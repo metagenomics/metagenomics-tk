@@ -18,7 +18,10 @@
    the pipeline or the whole pipeline with different configurations.
 
  * `databases`: This parameter specifies a place where files are downloaded to. If the `slurm` profile is used and databases should be downloaded, the path **should** point to a folder 
-    which is not shared between the worker nodes (to reduce I/O on the shared folder resulting in a better performance). 
+    which is not shared between the worker nodes (to reduce I/O on the shared folder resulting in a better performance).
+
+ * `publishDirMode`: (optional) Per default results are symlinked to the chosen `output` directory. This default mode can be changed with this parameter.
+    A useful mode is "copy", to copy results instead of just linking them. Other modes to choose from [here](https://www.nextflow.io/docs/latest/process.html#publishdir).  
 
 ## S3 Configuration
 

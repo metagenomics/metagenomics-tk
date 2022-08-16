@@ -5,6 +5,7 @@ logDir: log
 tempdir: "tmp"
 scratch: "/vol/scratch"
 databases: "/mnt/databases"
+publishDirMode: "symlink"
 steps:
    annotation:
       input: "test_data/annotation/input_small.tsv"
