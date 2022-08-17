@@ -18,7 +18,7 @@ env:
   PROFILE: "slurm"
 jobs:
   full_pipeline:
-    timeout-minutes: 1500
+    timeout-minutes: 2500
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
@@ -55,7 +55,7 @@ jobs:
 
 
   mag_attributes:
-    timeout-minutes: 700
+    timeout-minutes: 800
     needs: [full_pipeline]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -99,7 +99,7 @@ jobs:
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/gtdb_yaml_database_tests" 
 
   dereplication:
-    timeout-minutes: 700
+    timeout-minutes: 800
     runs-on: [ self-hosted, slurm]
     needs: [mag_attributes]
     steps:
@@ -112,7 +112,7 @@ jobs:
           bash ./scripts/test_dereplication.sh "" example_params/dereplication_fraction/dereplication.yml \
                                                  "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
   readmapping:
-    timeout-minutes: 700
+    timeout-minutes: 800
     needs: [dereplication]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -122,7 +122,7 @@ jobs:
           bash ./scripts/test_readMapping.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
 
   assembly:
-    timeout-minutes: 700
+    timeout-minutes: 800
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
@@ -135,7 +135,7 @@ jobs:
           bash ./scripts/test_assembly.sh "" example_params/assemblyMetaspades.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
 
   cooccurrence:
-    timeout-minutes: 700
+    timeout-minutes: 800
     needs: [assembly]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -145,7 +145,7 @@ jobs:
           bash ./scripts/test_cooccurrence.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
 
   fragment_recruitment:
-    timeout-minutes: 700
+    timeout-minutes: 800
     needs: [cooccurrence]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -155,7 +155,7 @@ jobs:
           bash ./scripts/test_fragmentRecruitment.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
 
   annotation:
-    timeout-minutes: 1200
+    timeout-minutes: 2200
     needs: [fragment_recruitment]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -196,7 +196,7 @@ jobs:
       - name: Test mmseqs2 against different database configurations
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB" \
-                               MODULE_DB_TEST_MD5SUM="0d20db97b3e7ee6571ca1fd5ad3a87f1" \
+                               MODULE_DB_TEST_MD5SUM="d41d8cd98f00b204e9800998ecf8427e" \
                                MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs.tar.zst" MODULE_DB_TEST_S3PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
@@ -210,7 +210,7 @@ jobs:
                                MODULE_DB_TEST_SKIP_TESTS="https"
 
   plasmid:
-    timeout-minutes: 700
+    timeout-minutes: 800
     needs: [annotation]
     runs-on: [ self-hosted, slurm]
     steps:
