@@ -61,6 +61,7 @@ process pMashScreen {
     output:
     tuple val("${sample}"), file("mash_screen.tsv"), emit: mashScreenOutput
     tuple val("${sample}"), file("selected_genomes.tsv"), emit: mashScreenFilteredOutput
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     template "mashScreen.sh"
