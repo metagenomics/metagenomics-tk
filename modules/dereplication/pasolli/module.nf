@@ -360,7 +360,7 @@ workflow _wDereplicate {
        | map { line -> [line.BIN_ID, file(line.PATH)] } | set { mashSketchInput } 
 
     pMashSketchGenome(params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli"), \
-	Channel.value(params.steps.dereplication.pasolli.additionalParams.mash_sketch) , mashSketchInput)
+	Channel.value(params?.steps?.dereplication?.pasolli?.additionalParams?.mash_sketch) , mashSketchInput)
 
      // concatenate (paste) multiple sketches in parallel and compute distance
      pMashSketchGenome.out.sketch | buffer(size: defaultMashBuffer, remainder: true) | set { mashPasteInput }

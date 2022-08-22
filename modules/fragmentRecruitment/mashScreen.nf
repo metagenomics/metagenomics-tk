@@ -105,11 +105,14 @@ process pGenomeContigMapping {
 */
 workflow wMashScreenFile {
    main:
-     Channel.from(file(params.steps.fragmentRecruitment.mashScreen.samples.paired)) | splitCsv(sep: '\t', header: true) \
+     pairedReads = Channel.empty()
+     if(params.steps.fragmentRecruitment.containsKey("mashScreen")){
+        Channel.from(file(params.steps.fragmentRecruitment.mashScreen.samples.paired)) | splitCsv(sep: '\t', header: true) \
              | map { line -> [ line.SAMPLE, file(line.READS)]} | set { pairedReads  }
-     singleReads = Channel.empty()
+     }
 
-     if(params.steps.fragmentRecruitment.mashScreen.samples.containsKey("single")){
+     singleReads = Channel.empty()
+     if(params.steps.fragmentRecruitment.containsKey("mashScreen") && params.steps.fragmentRecruitment.mashScreen.samples.containsKey("single")){
      	Channel.from(file(params.steps.fragmentRecruitment.mashScreen.samples.single)) | splitCsv(sep: '\t', header: true) \
              | map { line -> [ line.SAMPLE, file(line.READS)]} | set { singleReads  }
      }
@@ -311,7 +314,7 @@ workflow _wGetStatistics {
      mashScreenFilteredOutput | splitCsv(sep: '\t', header: false) \
 	| map { line -> [line[GENOMES_IDX][FIRST_GENOME_IDX], line[SAMPLE_IDX]] } \
 	| combine(genomesMap, by: SAMPLE_IDX) | map { sample -> [sample[SAMPLE_2_IDX], sample[PATH_2_IDX]] }  \
-	| groupTuple(by: SAMPLE_IDX)  |  set { covermInput }
+	| groupTuple(by: SAMPLE_IDX) | set { covermInput }
 
      bowtieMappedReads \
 	| join(covermInput, by: SAMPLE_IDX) | pCovermCount
@@ -355,11 +358,13 @@ process pUnzip {
   path x
 
   output:
-  path("${x.baseName}")
+  path("${x.baseName}${concatEnding}")
 
   script:
+  ending = file(x).name.substring(file(x).name.lastIndexOf(".")) 
+  concatEnding =  ending == ".gz" ? "" : ending 
   """
-  < $x zcat --force > ${x.baseName}
+  < $x zcat --force > ${x.baseName}${concatEnding}
   """
 }
 
