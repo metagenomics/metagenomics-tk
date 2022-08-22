@@ -41,6 +41,8 @@ process pMashSketchGenome {
 
     label 'tiny'
 
+    tag "Bin: ${binid}"
+
     when:
     run
 

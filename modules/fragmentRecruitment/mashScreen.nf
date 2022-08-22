@@ -1,7 +1,9 @@
 nextflow.enable.dsl=2
 
 include { pBowtie2; pCovermContigsCoverage; } from  '../binning/processes'
-include { pMashSketchGenome; pMashPaste } from  '../dereplication/pasolli/processes'
+include { pMashSketchGenome; \
+	  pMashPaste as pMashPasteChunk; \
+	  pMashPaste as pMashPasteFinal; } from  '../dereplication/pasolli/processes'
 
 
 
@@ -24,7 +26,7 @@ process pGetBinStatistics {
 
     container "${params.samtools_image}"
 
-    tag "$sample"
+    tag "Sample: $sample"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "stats", filename) }
 
@@ -47,7 +49,7 @@ process pMashScreen {
 
     label 'medium'
 
-    tag "Sample $sample"
+    tag "Sample: $sample"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "mashScreen",  filename) }
 
@@ -71,6 +73,8 @@ process pMashScreen {
 process pGenomeContigMapping {
 
     container "${params.ubuntu_image}"
+
+    tag "Sample: $sample"
 
     label 'tiny'
 
@@ -216,21 +220,24 @@ workflow _wRunMash {
      singleReads
      genomesMap
    main:
-     BUFFER_SKETCH = 50
+     BUFFER_SKETCH = 1000
      PATH_IDX = 0
 
      pMashSketchGenome(params?.steps.containsKey("fragmentRecruitment") &&  params?.steps.fragmentRecruitment.containsKey("mashScreen"), \
 	Channel.value(params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.mashSketch), genomesMap)
 
      // Combine sketches
-     pMashSketchGenome.out.sketch  | buffer(size: BUFFER_SKETCH, remainder: true) | set { mashPasteInput }
+     pMashSketchGenome.out.sketch  | toSortedList | flatten | buffer(size: BUFFER_SKETCH, remainder: true) | set { mashPasteInput }
 
-     pMashPaste(params?.steps.containsKey("fragmentRecruitment") &&  params?.steps.fragmentRecruitment.containsKey("mashScreen"), \
+     pMashPasteChunk(params?.steps.containsKey("fragmentRecruitment") &&  params?.steps.fragmentRecruitment.containsKey("mashScreen"), \
 	Channel.value([getModulePath(params.modules.fragmentRecruitment), "mash/paste"]),  mashPasteInput)
+
+     pMashPasteFinal(params?.steps.containsKey("fragmentRecruitment") &&  params?.steps.fragmentRecruitment.containsKey("mashScreen"), \
+	Channel.value([getModulePath(params.modules.fragmentRecruitment), "mash/paste"]),  pMashPasteChunk.out.sketch | toList)
 
      // Screen reads for genomes
      SAMPLE_IDX = 0
-     sampleReads | join(singleReads, by: SAMPLE_IDX, remainder: true) | combine(pMashPaste.out.sketch) \
+     sampleReads | join(singleReads, by: SAMPLE_IDX, remainder: true) | combine(pMashPasteFinal.out.sketch) \
     	| pMashScreen
    emit:
      mashScreenFilteredOutput = pMashScreen.out.mashScreenFilteredOutput 
@@ -338,6 +345,23 @@ workflow _wGetStatistics {
      foundGenomes = foundGenomes
 }
 
+process pUnzip {
+
+  label 'tiny'
+
+  container "${params.ubuntu_image}"
+
+  input:
+  path x
+
+  output:
+  path("${x.baseName}")
+
+  script:
+  """
+  < $x zcat --force > ${x.baseName}
+  """
+}
 
 workflow _wMashScreen {
    take: 
@@ -351,14 +375,14 @@ workflow _wMashScreen {
      STATS_PATH = 1
 
      Channel.from(file(params?.steps?.fragmentRecruitment?.mashScreen?.genomes)) | splitCsv(sep: '\t', header: true) \
-             | map { line -> [ file(line.PATH)]} | set { genomes  }
+             | map { line -> file(line.PATH)} | pUnzip | set { genomes }
 
      UNIQUE_IDX=0
      ALL_IDX=0
      genomes | map { genome -> genome.name } | unique | count | combine(genomes | count) \
 	| filter { count -> count[UNIQUE_IDX]!=count[ALL_IDX] } | view { error "Genome file names must be unique!" } 
 
-     genomes | map { genome -> [file(genome[PATH_IDX]).name, genome[PATH_IDX]] } | set { genomesMap}
+     genomes | map { genome -> [file(genome).name, genome] } | set { genomesMap }
 
      // Run mash and return matched genomes per sample
      _wRunMash(sampleReads, singleReads, genomesMap)

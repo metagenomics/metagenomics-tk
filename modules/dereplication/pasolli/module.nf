@@ -357,7 +357,7 @@ workflow _wDereplicate {
      // filter genomes by contamination and completeness
      genomesTable | filter({ it.COMPLETENESS.toFloat() >= params?.steps?.dereplication?.pasolli?.minimumCompleteness }) \
        | filter({ it.CONTAMINATION.toFloat() <= params?.steps?.dereplication?.pasolli?.maximumContamination }) \
-       | map { line -> [line.BIN_ID, file(line.PATH)] } | set { mashSketchInput  } 
+       | map { line -> [line.BIN_ID, file(line.PATH)] } | set { mashSketchInput } 
 
     pMashSketchGenome(params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli"), \
 	Channel.value(params.steps.dereplication.pasolli.additionalParams.mash_sketch) , mashSketchInput)
@@ -366,7 +366,7 @@ workflow _wDereplicate {
      pMashSketchGenome.out.sketch | buffer(size: defaultMashBuffer, remainder: true) | set { mashPasteInput }
 
     pMashPaste(params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli"), \
-	Channel.value([getModulePath(params.modules.dereplication), "pasolli/mash/paste"]),  mashPasteInput)
+	Channel.value([Utils.getModulePath(params.modules.dereplication), "pasolli/mash/paste"]),  mashPasteInput)
   
      pMashPaste.out.sketch | toList() | pMashDist
 
