@@ -28,7 +28,7 @@ process pMapBwa {
     label 'large'
     container "${params.samtools_bwa_image}"
     when params.steps.containsKey("readMapping")
-    publishDir params.output, saveAs: { filename -> getOutput("${sampleID}", params.runid ,"bwa", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sampleID}", params.runid ,"bwa", filename) }
     input:
       tuple val(sampleID), path(sample), val(mode), path(representatives_fasta), path(x, stageAs: "*") 
     output:
@@ -44,7 +44,7 @@ process pMergeAlignment {
     when params.steps.containsKey("readMapping")
     label 'tiny'
     container 'quay.io/biocontainers/samtools:1.12--h9aed4be_1'
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
     input:
       tuple val(sample), file("alignment?.bam")
     output:
@@ -61,7 +61,7 @@ process pMergeAlignment {
 process pCovermCount {
     when params.steps.containsKey("readMapping")
     label 'small'
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
     input:
       tuple val(sample), file(mapping), file(index), file(list_of_representatives)
     output:

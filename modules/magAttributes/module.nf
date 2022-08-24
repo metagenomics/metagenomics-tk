@@ -39,12 +39,12 @@ process pCheckM {
 
     container "${params.checkm_image}"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }, \
       pattern: "{**.tsv}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm")
 
-    containerOptions " --user 1000:1000 " + Utils.getDockerMount(params.steps?.magAttributes?.checkm?.database, params) 
+    containerOptions Utils.getDockerMount(params.steps?.magAttributes?.checkm?.database, params)
 
     beforeScript "mkdir -p ${params.polished.databases}"
 
@@ -75,12 +75,12 @@ process pGtdbtk {
 
     label 'large'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }, \
       pattern: "{**.tsv}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("gtdb")
 
-    containerOptions " --user 1000:1000 " + Utils.getDockerMount(params?.steps?.magAttributes?.gtdb?.database, params) 
+    containerOptions Utils.getDockerMount(params?.steps?.magAttributes?.gtdb?.database, params)
 
     beforeScript "mkdir -p ${params.polished.databases}"
 

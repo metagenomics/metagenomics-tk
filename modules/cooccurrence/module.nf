@@ -33,7 +33,7 @@ process pBuildNetwork {
    
     container "${params.cooccurrence_image}"
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "matrix", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "matrix", filename) }
 
     when params.steps.containsKey("cooccurrence")
 
@@ -55,7 +55,7 @@ process pVerticalConcatFinal {
 
     label 'tiny'
 
-    publishDir params.output, saveAs: { filename -> getOutput(params.runid, "matrix", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "matrix", filename) }
 
     when params.steps.containsKey("cooccurrence")
 

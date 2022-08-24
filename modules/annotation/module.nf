@@ -36,13 +36,13 @@ process pDiamond {
       // Therefore this place has to be mounted to the docker container to be accessible during run time.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 " + constructParametersObject()
+      containerOptions constructParametersObject()
  
       tag "Sample: $sample, Database: $dbType"
 
       label 'large'
 
-      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "diamond/${dbType}", filename) }, \
+      publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "diamond/${dbType}", filename) }, \
          pattern: "{**.diamond.out}"
       
       // UID mapping does not work for some reason. Every time a database directory is created while running docker,
@@ -95,13 +95,13 @@ process pResistanceGeneIdentifier {
    
       container "${params.rgi_image}"
       
-      containerOptions " --user 1000:1000 " + Utils.getDockerMount(params?.steps?.annotation?.rgi?.database, params) 
+      containerOptions Utils.getDockerMount(params?.steps?.annotation?.rgi?.database, params)
  
       tag "$sample $binID"
 
       label 'large'
 
-      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "rgi", filename) }, \
+      publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "rgi", filename) }, \
          pattern: "{**.rgi.tsv}"
       
       beforeScript "mkdir -p ${params.polished.databases}"
@@ -171,7 +171,7 @@ process pGeneCoverage {
 
    container "${params.ubuntu_image}"
 
-   publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "geneCoverage", filename) }
+   publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "geneCoverage", filename) }
 
    when params.steps.containsKey("annotation")
 
@@ -225,9 +225,9 @@ process pKEGGFromDiamond {
       // Therefore this place has to be mounted to the docker container to be accessible during runtime.
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
-      containerOptions " --user 1000:1000 " + Utils.getDockerMount(params.steps?.annotation?.keggFromDiamond?.database, params)
+      containerOptions Utils.getDockerMount(params.steps?.annotation?.keggFromDiamond?.database, params)
 
-      publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromDiamond", filename) }, \
+      publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromDiamond", filename) }, \
          pattern: "{**.tsv}"
 
       // UID mapping does not work for some reason. Every time a database directory is created while running docker,
@@ -355,7 +355,7 @@ process pProkka {
 
     time '5h'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }
 
     when params.steps.containsKey("annotation") && params.steps.annotation.containsKey("prokka")
 

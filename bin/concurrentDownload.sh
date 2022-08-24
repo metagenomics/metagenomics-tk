@@ -30,23 +30,24 @@ done
 
 DATABASE_OUT=${OUTPUT_PATH}/out
 MD5SUM_FILE=${OUTPUT_PATH}/md5sum.txt
+
 mkdir -p ${DATABASE_OUT}
 
 function getCommand() {
-    if [[ $LINK == s3://* ]]
-    then
-	if [[ $(s5cmd ${S5CMD_ADDITIONAL_PARAMS}  ls ${LINK} | wc -l) == 1 ]]; then
-		echo "$S3_FILE_COMMAND"
-	else
-		echo "$S3_DIRECTORY_COMMAND"
-	fi
-    elif [[ $LINK == https://* ]]
-    then
-    	echo "$HTTPS_COMMAND";
-    elif [[ $LINK == /* ]]
-    then
-    	echo "$LOCAL_COMMAND";
-    fi
+  if [[ $LINK == s3://* ]]
+  then
+	  if [[ $(s5cmd ${S5CMD_ADDITIONAL_PARAMS}  ls ${LINK} | wc -l) == 1 ]]; then
+		  echo "$S3_FILE_COMMAND"
+	  else
+		  echo "$S3_DIRECTORY_COMMAND"
+	  fi
+  elif [[ $LINK == https://* ]]
+  then
+    echo "$HTTPS_COMMAND";
+  elif [[ $LINK == /* ]]
+  then
+    echo "$LOCAL_COMMAND";
+  fi
 }
 
 # Compares the expected MD5SUM to the one saved in checkpoint file.
