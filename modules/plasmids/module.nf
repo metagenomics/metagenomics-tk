@@ -203,8 +203,10 @@ workflow _wRunMobTyper {
 
       // Collect all chunks of a specific sample and bin id
       STATS_IDX = 3 
+      tmpDir = params.tempdir + "/plasmids"
+      file(tmpDir).mkdirs()
       pMobTyperLinear.out.plasmidsStats \
-	| collectFile(tempDir: params.tempdir + "/plasmids", keepHeader: true){ sample -> \
+	| collectFile(tempDir: tmpDir, keepHeader: true){ sample -> \
 	[ getSampleToolKey(sample)[UNIQUE_SAMPLE_KEY_IDX], file(sample[STATS_IDX]).text] } \
 	| map { f -> [file(f).name, f] } | set { mobTyperStatsCombined}
 
