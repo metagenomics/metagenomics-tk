@@ -353,7 +353,7 @@ process pProkka {
 
     label 'small'
 
-    time '5h'
+    tag "Sample: $sample, BinID: $binID"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}",params.runid ,"prokka", filename) }
 
