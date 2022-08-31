@@ -185,7 +185,6 @@ def getSampleToolKey(sample){
   return ["${sample[SAMPLE_IDX]}_ttt_${sample[BIN_ID_IDX]}_ttt_${sample[FILE_IDX]}", sample[SAMPLE_IDX], sample[BIN_ID_IDX], sample[FILE_IDX]]
 }
 
-
 /*
 * This method tries to adjust the size of the input file for mobtyper in way that it does not run out of memory.
 */
@@ -203,10 +202,8 @@ workflow _wRunMobTyper {
 
       // Collect all chunks of a specific sample and bin id
       STATS_IDX = 3 
-      tmpDir = params.tempdir + "/plasmids"
-      file(tmpDir).mkdirs()
       pMobTyperLinear.out.plasmidsStats \
-	| collectFile(tempDir: tmpDir, keepHeader: true){ sample -> \
+	| collectFile(keepHeader: true){ sample -> \
 	[ getSampleToolKey(sample)[UNIQUE_SAMPLE_KEY_IDX], file(sample[STATS_IDX]).text] } \
 	| map { f -> [file(f).name, f] } | set { mobTyperStatsCombined}
 
