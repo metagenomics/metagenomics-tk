@@ -38,7 +38,7 @@ process pDiamond {
       // This file is then used by s5cmd. 
       containerOptions constructParametersObject()
  
-      tag "Sample: $sample, Database: $dbType"
+      tag "JobID: ${params.jobId}, Sample: $sample, Database: $dbType"
 
       label 'large'
 
@@ -97,7 +97,7 @@ process pResistanceGeneIdentifier {
       
       containerOptions Utils.getDockerMount(params?.steps?.annotation?.rgi?.database, params)
  
-      tag "$sample $binID"
+      tag "JobID: ${params.jobId}, $sample $binID"
 
       label 'large'
 
@@ -165,7 +165,7 @@ process pResistanceGeneIdentifier {
 
 process pGeneCoverage {
 
-   tag "$sample"
+   tag "JobID: ${params.jobId}, $sample"
 
    label 'small'
 
@@ -214,7 +214,7 @@ process pGeneCoverage {
 **/
 process pKEGGFromDiamond {
 
-      tag "$sample"
+      tag "JobID: ${params.jobId}, $sample"
 
       label 'small'
 

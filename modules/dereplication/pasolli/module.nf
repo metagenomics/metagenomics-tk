@@ -229,7 +229,7 @@ process pSANS {
 
     label 'small'
 
-    tag "Cluster ${clusterID}"
+    tag "JobID: ${params.jobId}, Cluster ${clusterID}"
 
     when:
     params.steps.containsKey("dereplication") && \

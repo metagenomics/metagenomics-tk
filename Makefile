@@ -1,5 +1,6 @@
 CURRENT_DIR = $(shell pwd)
 
+RANDOM := $(shell bash -c 'echo $$RANDOM')
 
 ifndef PROFILE
 	override PROFILE = "standard,conda"
@@ -29,6 +30,9 @@ ifndef BRANCH
 	override BRANCH = "dev"
 endif
 
+ifndef PID_PATH
+	override PID_PATH = $(shell bash -c 'mktemp -d -t')
+endif
 
 ifndef MODULE_DB_TEST_EXTRACTED
 	override MODULE_DB_TEST_EXTRACTED = "/vol/spool/peter/plsdb"
@@ -102,7 +106,7 @@ build_publish_docker:
 
 	
 run_small_full_test: nextflow ## Prepares input files like downloading bins and reads and executes Nextflow. The default configuration it runs the full pipeline locally.
-	./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR}_${ENTRY} -profile ${PROFILE} -resume -entry ${ENTRY} -params-file ${PARAMS_FILE}; exit $$?
+	bash -c "echo ${RANDOM} > ${PID_PATH}/$$$$; exec ./nextflow run main.nf ${OPTIONS} --jobId ${RANDOM} -work-dir ${WORK_DIR}_${ENTRY} -profile ${PROFILE} -resume -entry ${ENTRY} -params-file ${PARAMS_FILE}; exit $$? "
 
 
 help: ## Lists available Makefile commands

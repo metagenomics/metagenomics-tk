@@ -16,7 +16,7 @@ process pConfigUpload {
 
   label 'tiny'
 
-  tag "$sample"
+  tag "JobID: ${params.jobId}, $sample"
 
   publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "parameters", filename) }
 

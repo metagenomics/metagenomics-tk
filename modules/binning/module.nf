@@ -19,7 +19,7 @@ process pGetMappingQuality {
 
     container "${params.samtools_image}"
 
-    tag "$sample"
+    tag "JobID: ${params.jobId}, $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "readMappingQuality", filename) }
 
@@ -42,7 +42,7 @@ process pMetabat {
 
     container "${params.metabat_image}"
 
-    tag "$sample"
+    tag "JobID: ${params.jobId}, $sample"
 
     label 'large'
 
@@ -68,7 +68,7 @@ process pMetabinner {
 
     container "${params.metabinner_image}"
 
-    tag "$sample"
+    tag "JobID: ${params.jobId}, $sample"
 
     label 'large'
 
@@ -99,7 +99,7 @@ process pMaxBin {
 
     label 'large'
 
-    tag "$sample"
+    tag "JobID: ${params.jobId}, $sample"
 
     when params.maxbin
 

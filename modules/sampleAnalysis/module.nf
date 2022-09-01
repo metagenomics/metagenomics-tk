@@ -22,7 +22,7 @@ process pBowtie {
 
     label 'large'
 
-    tag "$sample"
+    tag "JobID: ${params.jobId}, $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid , "bowtie", filename) }
 

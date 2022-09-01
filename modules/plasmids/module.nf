@@ -30,7 +30,7 @@ process pSCAPP {
 
     label 'medium'
 
-    tag "$sample"
+    tag "JobID: ${params.jobId}, $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "SCAPP", filename) }
 
@@ -59,7 +59,7 @@ process pPLSDB {
 
     label 'medium'
 
-    tag "$sample $binID"
+    tag "JobID: ${params.jobId}, $sample $binID"
 
     beforeScript "mkdir -p ${params.polished.databases}"
 

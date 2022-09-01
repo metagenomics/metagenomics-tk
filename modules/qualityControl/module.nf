@@ -13,7 +13,7 @@ process pFastpSplit {
 
     label 'medium'
 
-    tag "Sample: $sample"
+    tag "JobID: ${params.jobId}, Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
 
@@ -44,7 +44,7 @@ process pNonpareil {
 
     label 'medium'
 
-    tag "Sample: $sample"
+    tag "JobID: ${params.jobId}, Sample: $sample"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "nonpareil", filename) }
 
@@ -100,7 +100,7 @@ process pFastpSplitDownload {
 
     label 'medium'
 
-    tag "Sample: $sample"
+    tag "JobID: ${params.jobId}, Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
 
