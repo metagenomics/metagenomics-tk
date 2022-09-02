@@ -105,9 +105,15 @@ process pMMseqs2 {
     mkdir tmp
     # Only mmseqs2 databases can be used for every kind of search. Inputs have to be converted first.
     mmseqs createdb !{fasta} queryDB
+    # Load all indices into memory and start a daemon to lock them there
+    vmtouch -tldw *.index ${MMSEQS2_DATABASE_DIR}/*.index
     mmseqs search queryDB ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.results.database tmp !{parameters} --threads !{task.cpus}
     # mmseqs2 searches produce output databases. These have to be converted to a more useful format. The blast -outfmt 6 in this case.
     mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.results.database !{binID}.!{dbType}.blast.tsv --threads !{task.cpus}
+    # Get the daemon PID and kill it to stop it locking the indices. Then release the files.
+    PID=$(ps -ef | grep -v grep | grep "vmtouch -tldw" | awk '{print $2}')
+    kill $PID
+    vmtouch -e *.index ${MMSEQS2_DATABASE_DIR}/*.index
    '''
 }
 
@@ -594,7 +600,8 @@ workflow _wAnnotation {
              it.value.database?.download?.s5cmd?.params ?: "" ]
       })
 
-      // Run all amino acid outputs against all databases 
+      // Run all amino acid outputs against all databases
+
       pProkka.out.faa | combine(Channel.from(selectedDBs)) | pMMseqs2
       pProkka.out.faa | combine(Channel.from(selectedTaxDBs)) | pMMseqs2_taxonomy
       DB_TYPE_IDX = 0
