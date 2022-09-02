@@ -31,7 +31,7 @@ def constructParametersObject(String tool){
 *
 * MMseqs2 is used to search for big input queries in large databases. 
 * Multiple databases can be searched at the same time.
-* Outputs will be saved in separate directorys.
+* Outputs will be saved in separate directories.
 *
 **/
 process pMMseqs2 {
@@ -53,11 +53,6 @@ process pMMseqs2 {
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2/${dbType}", filename) }, \
          pattern: "{**.blast.tsv}"
 
-      // UID mapping does not work for some reason. Every time a database directory is created while running docker,
-      // the permissions are set to root. This leads to crashes later on.
-      // "beforeScript" is one way to create a directory outside of Docker to tackle this problem. 
-      beforeScript "mkdir -p ${params.polished.databases}"
-
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2")
 
    input:
@@ -70,6 +65,7 @@ process pMMseqs2 {
 
 
    shell:
+   mkdir -p ${params.polished.databases}
    '''
    # if no local database is referenced, start download part 
    if [ -z "!{EXTRACTED_DB}" ] 
@@ -115,7 +111,7 @@ process pMMseqs2 {
 *
 * The MMseqs2 module taxonomy calls an internal module lca that implements an lowest common ancestor assignment for sequences by querying them against a seqTaxDB.
 * Multiple databases can be searched at the same time.
-* Outputs will be saved in separate directorys.
+* Outputs will be saved in separate directories.
 *
 **/
 process pMMseqs2_taxonomy {
@@ -136,10 +132,6 @@ process pMMseqs2_taxonomy {
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", filename) }, \
          pattern: "{*.out,*.html,*.tsv}"
  
-      // UID mapping does not work for some reason. Every time a database directory is created while running docker,
-      // the permissions are set to root. This leads to crashes later on.
-      // "beforeScript" is one way to create a directory outside of Docker to tackle this problem. 
-      beforeScript "mkdir -p ${params.polished.databases}"
 
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy")
 
@@ -155,6 +147,7 @@ process pMMseqs2_taxonomy {
 
 
    shell:
+   mkdir -p ${params.polished.databases}
    '''
    # if no local database is referenced, start download part
       if [ -z "!{EXTRACTED_DB}" ]
@@ -210,8 +203,6 @@ process pResistanceGeneIdentifier {
 
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "rgi", filename) }, \
          pattern: "{**.rgi.tsv}"
-      
-      beforeScript "mkdir -p ${params.polished.databases}"
 
       when params.steps.containsKey("annotation") && params?.steps.annotation.containsKey("rgi")
 
@@ -228,6 +219,7 @@ process pResistanceGeneIdentifier {
    DOWNLOAD_LINK=params.steps?.annotation?.rgi?.database?.download?.source ?: ""
    MD5SUM=params?.steps?.annotation?.rgi?.database?.download?.md5sum ?: ""
    S5CMD_PARAMS=params.steps?.annotation?.rgi?.database?.download?.s5cmd?.params ?: ""
+   mkdir -p ${params.polished.databases}
    '''
    ADDITIONAL_RGI_PARAMS=!{params.steps?.annotation?.rgi?.additionalParams}
 
@@ -337,10 +329,6 @@ process pKEGGFromBlast {
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromBlast", filename) }, \
          pattern: "{**.tsv}"
 
-      // UID mapping does not work for some reason. Every time a database directory is created while running docker,
-      // the permissions are set to root. This leads to crashes later on.
-      // beforeScript is one way to create a directory outside of Docker to tackle this problem.
-      beforeScript "mkdir -p ${params.polished.databases}"
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("keggFromBlast")
 
    input:
@@ -357,6 +345,7 @@ process pKEGGFromBlast {
       MD5SUM=params?.steps?.annotation?.keggFromBlast?.database?.download?.md5sum ?: ""
       S5CMD_PARAMS=params.steps?.annotation?.keggFromBlast?.database?.download?.s5cmd?.params ?: ""
       EXTRACTED_DB=params.steps?.annotation?.keggFromBlast?.database?.extractedDBPath ?: ""
+      mkdir -p ${params.polished.databases}
       '''
 
       # Check developer documentation
