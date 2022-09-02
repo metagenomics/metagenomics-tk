@@ -358,13 +358,14 @@ process pUnzip {
   path x
 
   output:
-  path("${x.baseName}${concatEnding}")
+  path("out/${x.baseName}${concatEnding}")
 
   script:
   ending = file(x).name.substring(file(x).name.lastIndexOf(".")) 
   concatEnding =  ending == ".gz" ? "" : ending 
   """
-  < $x zcat --force > ${x.baseName}${concatEnding}
+  mkdir out
+  < $x zcat --force > out/${x.baseName}${concatEnding}
   """
 }
 
