@@ -11,7 +11,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 process pCarveMe {
 
     label 'tiny'
-    tag "$sample $id"
+    tag "JobID: ${params.jobId}, $sample $id"
     time '10h'
     when params.steps.containsKey("metabolomics")
 
@@ -31,7 +31,7 @@ process pCarveMe {
 process pMemote {
     label 'tiny'
 
-    tag "$sample $id"
+    tag "JobID: ${params.jobId}, $sample $id"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "memote", filename) }
 
@@ -68,7 +68,7 @@ process pSmetanaDetailed {
 
     label 'large'
 
-    tag "$sample"
+    tag "JobID: ${params.jobId}, $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid , "smetana/detailed/", filename) }
 
@@ -90,7 +90,7 @@ process pSmetanaDetailed {
 process pSmetanaGlobal {
 
     label 'large'
-    tag "$sample"
+    tag "JobID: ${params.jobId}, $sample"
     when params?.steps?.metabolomics?.smetana?.contains("global")
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "smetana/global/", filename) }
@@ -111,7 +111,7 @@ process pSmetanaGlobal {
 process pAnalyse {
 
     label 'tiny'
-    tag "$sample $id"
+    tag "JobID: ${params.jobId}, $sample $id"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmTsv", filename) }
 
@@ -132,7 +132,7 @@ process pAnalyse {
 
 
 process pBuildJson {
-    tag "$sample $id"
+    tag "JobID: ${params.jobId}, $sample $id"
     label 'tiny'
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmJson", filename) }
     input:
@@ -150,7 +150,7 @@ process pBuildJson {
 
 
 process pProdigal {
-    tag "$sample $id"
+    tag "JobID: ${params.jobId}, $sample $id"
     label 'tiny'
     when params?.steps?.metabolomics !== null
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "prodigal", filename) }

@@ -15,7 +15,7 @@ process pViralVerifyPlasmid {
 
     label 'medium'
 
-    tag "Sample: $sample, BinID: $binID"
+    tag "JobID: ${params.jobId}, Sample: $sample, BinID: $binID"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "ViralVerifyPlasmid", filename) }, \
         pattern: "{**.tsv}"
@@ -89,7 +89,7 @@ process pMobTyper {
 
     label 'medium'
 
-    tag "Sample: $sample, BinID: $binID"
+    tag "JobID: ${params.jobId}, Sample: $sample, BinID: $binID"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "MobTyper", filename) }, \
         pattern: "{**.tsv}"
@@ -127,7 +127,7 @@ process pPlasClass {
 
     label 'medium'
 
-    tag "$sample $binID"
+    tag "JobID: ${params.jobId}, $sample $binID"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "PlasClass", filename) }, \
         pattern: "{**.tsv}"
@@ -155,7 +155,7 @@ process pPlaton {
 
     label 'medium'
 
-    tag "Sample: $sample, BinId: $binID"
+    tag "JobID: ${params.jobId}, Sample: $sample, BinId: $binID"
 
     containerOptions " --user root:root " + Utils.getDockerMount(params.steps?.plasmid?.Platon?.database, params)
 
@@ -228,7 +228,7 @@ process pFilter {
 
     label 'small'
 
-    tag "$sample $binID"
+    tag "JobID: ${params.jobId}, $sample $binID"
 
     container "${params.ubuntu_image}"
 

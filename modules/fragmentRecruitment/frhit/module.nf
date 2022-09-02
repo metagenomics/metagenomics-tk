@@ -22,7 +22,7 @@ process pFrHit {
 
     label 'large'
 
-    tag "$sample"
+    tag "JobID: ${params.jobId}, $sample"
 
     stageInMode 'copy'
 

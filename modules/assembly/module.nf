@@ -21,7 +21,7 @@ process pPredictFlavor {
 
     label 'tiny'
 
-    tag "Sample: $sample"
+    tag "JobID: ${params.jobId}, Sample: $sample"
 
     publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "predictFlavor", filename) }
 
@@ -86,7 +86,7 @@ def getNextHigherResource = { exitCodes, exitStatus, resourceType, attempt, memo
 
 process pMegahit {
 
-    tag "Sample: $sample"
+    tag "JobID: ${params.jobId}, Sample: $sample"
 
     cpus { getNextHigherResource([-9, 137], task.exitStatus, "cpus", task.attempt, \
 	"${memory}", params.steps.assembly.megahit, \
@@ -122,7 +122,7 @@ process pMetaspades {
 
     label 'large'
 
-    tag "$sample"
+    tag "JobID: ${params.jobId}, $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaspades", filename) }
 

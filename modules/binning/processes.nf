@@ -20,7 +20,7 @@ process pGetBinStatistics {
 
     container "${params.samtools_image}"
 
-    tag "$sample"
+    tag "JobID: ${params.jobId}, $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "", "${binner}", filename) }
 
@@ -43,7 +43,7 @@ process pCovermContigsCoverage {
 
     label 'medium'
 
-    tag "$sample"
+    tag "JobID: ${params.jobId}, $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "${module}" , "${outputToolDir}", filename) }, \
         pattern: "{**.tsv,**.fasta.gz}"
@@ -86,7 +86,7 @@ process pBowtie2 {
 
     label 'large'
 
-    tag "Sample: $sample"
+    tag "JobID: ${params.jobId}, Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
 
