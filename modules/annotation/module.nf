@@ -63,10 +63,9 @@ process pMMseqs2 {
       tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-
    shell:
-   mkdir -p ${params.polished.databases}
    '''
+   mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part 
    if [ -z "!{EXTRACTED_DB}" ] 
    then
@@ -147,8 +146,8 @@ process pMMseqs2_taxonomy {
 
 
    shell:
-   mkdir -p ${params.polished.databases}
    '''
+   mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part
       if [ -z "!{EXTRACTED_DB}" ]
       then
@@ -219,8 +218,8 @@ process pResistanceGeneIdentifier {
    DOWNLOAD_LINK=params.steps?.annotation?.rgi?.database?.download?.source ?: ""
    MD5SUM=params?.steps?.annotation?.rgi?.database?.download?.md5sum ?: ""
    S5CMD_PARAMS=params.steps?.annotation?.rgi?.database?.download?.s5cmd?.params ?: ""
-   mkdir -p ${params.polished.databases}
    '''
+   mkdir -p !{params.polished.databases}
    ADDITIONAL_RGI_PARAMS=!{params.steps?.annotation?.rgi?.additionalParams}
 
    # Check developer documentation
@@ -345,9 +344,8 @@ process pKEGGFromBlast {
       MD5SUM=params?.steps?.annotation?.keggFromBlast?.database?.download?.md5sum ?: ""
       S5CMD_PARAMS=params.steps?.annotation?.keggFromBlast?.database?.download?.s5cmd?.params ?: ""
       EXTRACTED_DB=params.steps?.annotation?.keggFromBlast?.database?.extractedDBPath ?: ""
-      mkdir -p ${params.polished.databases}
       '''
-
+      mkdir -p !{params.polished.databases}
       # Check developer documentation
       KEGG_DB=""
       if [[ -z "!{EXTRACTED_DB}" ]] 
