@@ -381,7 +381,9 @@ workflow _wMashScreen {
      STATS_PATH = 1
 
      genomes = Channel.empty()
-     if(params?.steps.containsKey("fragmentRecruitment") &&  params?.steps.fragmentRecruitment.mashScreen.containsKey("genomes")){
+     if(params?.steps.containsKey("fragmentRecruitment") \
+	&& params?.steps.fragmentRecruitment.containsKey("mashScreen") \
+	&& params?.steps.fragmentRecruitment.mashScreen.containsKey("genomes")){
        Channel.fromPath(params?.steps.fragmentRecruitment?.mashScreen?.genomes) | splitCsv(sep: '\t', header: true) \
          | map { line -> file(line.PATH)} | pUnzip | set { genomes }
      }
