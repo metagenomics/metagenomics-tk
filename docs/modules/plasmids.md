@@ -9,7 +9,7 @@ The identification of plasmids is based on the combined result of tools which ha
 have the `filter` property set to true are combined either by a logical `OR` or by a logical `AND`. 
 
 Example for the `OR` and `AND` operations: 
-Let's assume that we have three plasmid detection tools (t1, t2, t3) that have four contigs (c1, c2, c3, c4) as input. Lets further assume that c1 and c2 are detected by all tools as contigs and
+Let's assume that we have three plasmid detection tools (t1, t2, t3) that have four contigs (c1, c2, c3, c4) as input. Let's further assume that c1 and c2 are detected by all tools as contigs and
 c3 and c4 are only detected by t1 and t2. By using an `AND` only c1 and c2 are finally reported by the module as plasmids. By using an `OR` all contigs would be annotated as plasmids. 
 
 It is also possible to simply run a tool without
@@ -104,11 +104,11 @@ The plasmid module needs the following compressed database file formats:
 
 * PLSDB: plsdb.zip
 
-See [database section](##-Database-input-configuration) for possible download strategies.
+See [database section](../pipeline_configuration.md#Database-input-configuration) for possible download strategies.
 
 #### PLSDB
 
-PLSDB needs a plasmid database as input. See [database section](##-Database-input-configuration) for possible download strategies.
+PLSDB needs a plasmid database as input. See [database section](../pipeline_configuration.md#Database-input-configuration) for possible download strategies.
 The compressed database must be a zip file. 
 
 ## Output
@@ -116,7 +116,7 @@ The compressed database must be a zip file.
 ### SCAPP
 
 SCAPP detects plasmid sequences out of the samples assembly graph.
-It reports sequences as gzipped fasta files (`*_plasmids.fasta.gz`). A basic statistic (`*_plasmids_stats.tsv`) per plasmid and a summary satistic (`*_plasmids_summary_stats.tsv`) over all
+It reports sequences as gzipped fasta files (`*_plasmids.fasta.gz`). A basic statistic (`*_plasmids_stats.tsv`) per plasmid and a summary statistic (`*_plasmids_summary_stats.tsv`) over all
 plasmids is also generated. Coverm coverage metrics are generated for all plasmids. Gene coverage values are generated as part of the annotation module output.
 
 ### PlasClass

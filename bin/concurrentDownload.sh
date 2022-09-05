@@ -36,6 +36,7 @@ mkdir -p ${DATABASE_OUT}
 function getCommand() {
   if [[ $LINK == s3://* ]]
   then
+
 	  if [[ $(s5cmd ${S5CMD_ADDITIONAL_PARAMS}  ls ${LINK} | wc -l) == 1 ]]; then
 		  echo "$S3_FILE_COMMAND"
 	  else
@@ -65,8 +66,7 @@ function getMD5SUM() {
    MD5SUM=$(find . -type f -exec md5sum {} \; | sort | cut -d ' ' -f 1 | md5sum | cut -d ' ' -f 1)
    echo ${MD5SUM}
 }
-
-if [ -f "$MD5SUM_FILE" ] && compareExpectedToCheckpoint $MODE ; then
+if [ -f "$MD5SUM_FILE" ] && compareExpectedToCheckpoint ; then
     echo "Database already exists!"
 else 
     echo "Database will be downloaded!"

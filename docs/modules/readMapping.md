@@ -29,6 +29,6 @@
 ## Output
 
 The produced output files are the following: count.tsv, mean.tsv, mean_mincov10.tsv, rpkm.tsv, tpm.tsv, trimmed_mean.tsv.
-The content of the files are produced by coverm. All metrics are explained on the coverm github page: https://github.com/wwood/CoverM .
+The content of the files are produced by coverm. All metrics are explained on the coverm GitHub page: https://github.com/wwood/CoverM .
 
 
