@@ -95,4 +95,14 @@ class Utils {
         }
     }
   }
+  static Object[] flattenTuple(tupl){
+  	def chunkList = [];
+  	def SAMPLE_IDX = 0;
+  	def PATHS_IDX = 1;
+  	tupl[PATHS_IDX].each {
+     		chunkList.add([tupl[SAMPLE_IDX], it]);
+  	}
+  	return chunkList;
+  }
+
 }

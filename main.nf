@@ -8,8 +8,7 @@ include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './
 include { wDereplicateFile; wDereplicateList} from './modules/dereplication/pasolli/module'
 include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/bwa/module'
 include { wAnalyseMetabolites } from './modules/metabolomics/module'
-include { wUnmappedReadsList; wUnmappedReadsFile } from './modules/sampleAnalysis/module'
-include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './modules/fragmentRecruitment/frhit/module'
+include { wFragmentRecruitmentFile; wFragmentRecruitmentList;} from './modules/fragmentRecruitment/module'
 
 include { wAnnotateFile; wAnnotateList as wAnnotateBinsList; \
 	  wAnnotateList as wAnnotateUnbinnedList; wAnnotateList as wAnnotatePlasmidList } from './modules/annotation/module'
@@ -66,12 +65,8 @@ workflow wMagAttributes {
    wMagAttributesFile(Channel.fromPath(params?.steps?.magAttributes?.input))
 }
 
-workflow wUnmappedReads {
-   wUnmappedReadsFile(Channel.fromPath(params?.steps?.sampleAnalysis?.reads), Channel.fromPath(params?.steps?.sampleAnalysis?.bins))
-}
-
 workflow wFragmentRecruitment {
-   wFragmentRecruitmentFile(Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.samples), Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
+   wFragmentRecruitmentFile()
 }
 
 workflow wAnnotate {
@@ -172,6 +167,7 @@ workflow _wAggregate {
      wCooccurrenceList(wListReadMappingBwa.out.trimmedMean, gtdb)
 }
 
+
 /*
 *
 * This workflow configures the pipeline and sets additional parameters that are
@@ -241,22 +237,23 @@ workflow wPipeline {
 
     wBinning(wAssemblyList.out.contigs, qcReads)
 
+    wFragmentRecruitmentList(wBinning.out.unmappedReads)
+
     wBinning.out.notBinnedContigs \
 	| map { notBinned -> [ notBinned[0], "notBinned", notBinned[1]]} \
 	| set {notBinnedContigs}
 
     wBinning.out.binsStats  \
+        | mix(wFragmentRecruitmentList.out.binsStats) \
 	| map{ bin -> [bin.SAMPLE, bin.BIN_ID, bin.PATH]} \
-	| set { bins}
+	| set { bins }
 
     wPlasmidsList(bins | mix(notBinnedContigs), wAssemblyList.out.fastg | join(wBinning.out.mapping), qcReads)
 
-    if(params?.steps?.fragmentRecruitment?.frhit){
-       wFragmentRecruitmentList(wBinning.out.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
-    }
+    wMagAttributesList(wBinning.out.bins | mix(wFragmentRecruitmentList.out.genomes))
 
-    wMagAttributesList(wBinning.out.bins)
-    mapJoin(wMagAttributesList.out.checkm, wBinning.out.binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
+    mapJoin(wMagAttributesList.out.checkm, wBinning.out.binsStats \
+	| mix(wFragmentRecruitmentList.out.binsStats), "BIN_ID", "BIN_ID") | set { binsStats  }
 
     wAnnotatePlasmidList(Channel.value("meta"), wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage)
 
