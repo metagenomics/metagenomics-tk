@@ -242,12 +242,12 @@ We do not want to duplicate code and thats why we should store methods in the li
 
 ## Database Download
 
-This section explains how a developer is able to implement the database download strategy as explained in the [user documentation](pipeline_configuration.md##-Database-input-configuration). 
+This section explains how a developer is able to implement the database download strategy as explained in the [user documentation](pipeline_configuration.md#Database-input-configuration). 
 Example implementations can be found in the gtdb, checkm or rgi scripts.
 
 The first step is to check if the user provides an already extracted database: 
 
-```
+```BASH
 DB_PATH=""
 if [ -z "!{EXTRACTED_DB}" ]
 then
@@ -262,7 +262,7 @@ Since the download is not directly handled by nextflow and paths to the files ne
 mounted first to the container. For this reason you have to add the `setDockerMount` function with the database config as input to 
 the `containerOptions` parameter:
 
-```
+```BASH
 containerOptions " other container options " + setDockerMount(params.steps?.magAttributes?.checkm?.database)
 ```
 
