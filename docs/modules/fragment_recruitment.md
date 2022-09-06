@@ -1,6 +1,6 @@
 # Run Fragment Recruitment
 
-The fragment recruitment module can be used find the genomes in a set of read datasets.
+The fragment recruitment module can be used to find genomes in a set of read datasets.
 
 ## Input
 
@@ -40,7 +40,7 @@ The fragment recruitment module can be used find the genomes in a set of read da
     ---8<--- "../../test_data/fragmentRecruitment/single.tsv"
     ```
 
-**NOTE!** The file names of all provided genomes must be uniq.
+**NOTE!** The file names of all provided genomes must be unique.
 
 The following parameters can be configured:
 

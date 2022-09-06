@@ -33,7 +33,7 @@ checkm lineage_set !{params.steps.magAttributes.checkm.additionalParams.lineage_
 checkm analyze -x !{ending} -t !{task.cpus} out/marker . out > >(tee -a checkm_stdout.log) 2> >(tee -a checkm_stderr.log >&2)
 checkm qa !{params.steps.magAttributes.checkm.additionalParams.qa} --tab_table -t !{task.cpus} -f checkm.txt out/marker out > >(tee -a checkm_stdout.log) 2> >(tee -a checkm_stderr.log >&2)
 
-# If there is not enough disk space on the host available, checkm exits with exit code 0
+# If there is not enough disk space available, checkm exits with exit code 0
 # The only solution is to check the stdout for errors.
 if grep -q "Error" checkm_stdout.log checkm_stderr.log; then
 	echo "Error found in CheckM log.";
