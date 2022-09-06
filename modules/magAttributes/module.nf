@@ -203,23 +203,6 @@ workflow wMagAttributesList {
 /*
 *
 * Method takes a list of the form [SAMPLE, [BIN1 path, BIN2 path]] as input
-* and produces a flattend list of the form [SAMPLE, BIN 1 path, BIN 2 path]
-*
-*/
-def flattenBins(binning){
-  def chunkList = [];
-  def SAMPLE_IDX = 0;
-  def BIN_PATHS_IDX = 1;
-  binning[BIN_PATHS_IDX].each {
-     chunkList.add([binning[SAMPLE_IDX], it]);
-  }
-  return chunkList;
-}
-
-
-/*
-*
-* Method takes a list of the form [SAMPLE, [BIN1 path, BIN2 path]] as input
 * and produces a flattend list which is grouped by dataset and sample.
 * The output has the form [SAMPLE, file ending (e.g. .fa), [BIN 1 path, BIN 2 path]]
 *
