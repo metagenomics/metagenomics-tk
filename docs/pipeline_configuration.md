@@ -251,6 +251,7 @@ The full pipeline mode is able to predict the memory consumption of some assembl
 
 ## Fragment Recruitment for unmapped reads Configuration
 
-Reads that could not be mapped backed to a mag can be used for fragment recruitment.
+Reads that could not be mapped back to a MAG can be used for fragment recruitment.
 A list of genomes can be provided in the fragmentRecruitment part. 
-Matches are included in all other parts of the remaining pipeline.
+Matched reference genomes are included in all other parts of the remaining pipeline.
+Look out for their specific headers to differentiate results based on real assembled genomes and the reference genomes.

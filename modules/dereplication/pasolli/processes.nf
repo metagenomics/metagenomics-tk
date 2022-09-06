@@ -1,6 +1,3 @@
-nextflow.enable.dsl=2
-
-include { pDumpLogs } from '../../utils/processes'
 
 String getOutput(SAMPLE, RUNID, MODULE , TOOL, filename){
 
