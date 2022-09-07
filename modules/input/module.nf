@@ -1,5 +1,6 @@
 nextflow.enable.dsl=2
 import nextflow.splitter.CsvSplitter
+import java.util.regex.*;
 
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
@@ -174,28 +175,34 @@ workflow _wCheckSRAFiles {
      } | set { samplesType }
 
      // Ensure that paired end files are included
+     Pattern illuminaPattern = Pattern.compile(params.input?.SRA?.S3?.patternIllumina);
      samplesType.ILLUMINA | branch {
-            passed: it[FASTQ_FILES_IDX].size() >= 2 && it[FASTQ_FILES_IDX].stream().allMatch { sraFile -> sraFile ==~ /.+(_1|_2).+$/ }
+            passed: it[FASTQ_FILES_IDX].size() >= 2 && it[FASTQ_FILES_IDX].stream().allMatch { sraFile -> illuminaPattern.matcher(sraFile).matches() }
                     return it
             other: true
                     return it
      } | set { sraFilesIllumina  }
 
+     Pattern ontPattern = Pattern.compile(params.input?.SRA?.S3?.patternONT);
      samplesType.ONT | branch {
-            passed: it[FASTQ_FILES_IDX].size() >= 1 && it[FASTQ_FILES_IDX].stream().allMatch { sraFile -> sraFile ==~ /.+(_1).+$/ }
+            passed: it[FASTQ_FILES_IDX].size() >= 1 && it[FASTQ_FILES_IDX].stream().allMatch { sraFile -> ontPattern.matcher(sraFile).matches() }
                     return it
             other: true
                     return it
      } | set { sraFilesOnt  }
 
      // Ignore _3.fastq.gz files 
-     sraFilesIllumina.passed | map({ sample ->  [sample[SAMPLE_IDX], sample[INSTRUMENT_IDX], sample[FASTQ_FILES_IDX].findAll { it ==~ /.+(_1|_2).+$/} ].flatten()} ) \
+     sraFilesIllumina.passed | map({ sample ->  [sample[SAMPLE_IDX], sample[INSTRUMENT_IDX], \
+	sample[FASTQ_FILES_IDX].findAll { sraFile -> illuminaPattern.matcher(sraFile).matches() } ].flatten()} ) \
+
      //Set map entries
      | map({ sample -> [SAMPLE:sample[SAMPLE_IDX], TYPE:sample[INSTRUMENT_IDX], READS1:sample[FASTQ_LEFT_IDX], READS2:sample[FASTQ_RIGHT_IDX]]}) \
      | set {illuminaFastqs}
 
       // Ignore _3.fastq.gz and _2.fastq.gz files 
-      sraFilesOnt.passed | map({ sample ->  [sample[SAMPLE_IDX], sample[INSTRUMENT_IDX], sample[FASTQ_FILES_IDX].findAll { it ==~ /.+(_1).+$/} ].flatten()} ) \
+      sraFilesOnt.passed | map({ sample ->  [sample[SAMPLE_IDX], sample[INSTRUMENT_IDX], \
+	sample[FASTQ_FILES_IDX].findAll { sraFile -> ontPattern.matcher(sraFile).matches() } ].flatten()} ) \
+
      //Set map entries
      | map({ sample -> [SAMPLE:sample[SAMPLE_IDX], TYPE:sample[INSTRUMENT_IDX], READS:sample[ONT_FASTQ_FILE_IDX]]}) \
      | set {ontFastqs}
@@ -207,7 +214,7 @@ workflow _wCheckSRAFiles {
 
      // report failed SRA ids
      failedSRAIDs \
-     | view { id -> "The following sample does not have two fastq files that match the patter '/.+(_1|_2).+\$/': $id " }
+     | view { id -> "The following sample does not have two fastq files that match the user provided SRA file pattern." }
 
     emit:
       passedSamples = fastqs
