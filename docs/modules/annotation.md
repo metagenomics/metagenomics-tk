@@ -2,7 +2,7 @@
 
 The annotation module is able to predict genes and annotate those based on a set of user provided databases.
 A user can add additional formatted databases as part of the configuration by adding a key (Example: `kegg` ) with 
-a possible download strategy. See [database section](../pipeline_configuration.md#Database-input-configuration) for possible download strategies.
+a possible download strategy. See [database section](../pipeline_configuration.md#database-input-configuration) for possible download strategies.
 In addition, the resistance gene identifier is executed by default.
 
 ## Input  
@@ -38,7 +38,7 @@ Multiple databases per one archive are not supported, one archive, one database.
 #### KEGGFromBlast
 KeGGFromBlast is only executed if genes are searched against a KEGG database. There must be a `kegg` identifier (see example configuration file) in the annotation section.
 KeGGFromBlast needs a kegg database as input which must be a tar.gz file.
-See [database section](../pipeline_configuration.md#Database-input-configuration) for possible download strategies.
+See [database section](../pipeline_configuration.md#database-input-configuration) for possible download strategies.
 
 ## Output
 

@@ -87,7 +87,7 @@ process pViralVerifyPlasmid {
 
 process pMobTyper {
 
-    label 'large'
+    label 'medium'
 
     tag "Sample: $sample, BinID: $binID"
 
@@ -103,13 +103,13 @@ process pMobTyper {
     containerOptions Utils.getDockerMount(params.steps?.plasmid?.MobTyper?.database, params)
 
     input:
-    tuple val(sample), val(binID), path(plasmids)
+    tuple val(sample), val(binID), path(plasmids), val(start), val(stop)
 
     output:
-    tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+    tuple val("${sample}_${binID}_chunk_${start}_${stop}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
       file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
     tuple val("${sample}"), val("${binID}"), val("MobTyper"), \
-	path("${sample}_${binID}_mobtyper.tsv"), emit: plasmidsStats, optional: true
+	path("${sample}_${binID}_chunk_${start}_${stop}_mobtyper.tsv"), emit: plasmidsStats, optional: true
 
     shell:
     EXTRACTED_DB=params.steps?.plasmid?.MobTyper?.database?.extractedDBPath ?: ""

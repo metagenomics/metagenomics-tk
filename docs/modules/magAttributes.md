@@ -24,7 +24,7 @@
 
 ## Databases
 
-Checkm and GTDB need their databases as input. See [database section](../pipeline_configuration.md#Database-input-configuration) for possibly download strategies.
+Checkm and GTDB need their databases as input. See [database section](../pipeline_configuration.md#database-input-configuration) for possibly download strategies.
 The GTDB and Checkm compressed databases must be tar.gz files. If you provide the extracted version of GTDB using the `extractedDBPath` parameter,
 please specify the path to the `releasesXXX` directory (e.g. "/vol/spool/gtdb/release202").
 

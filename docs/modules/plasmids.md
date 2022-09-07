@@ -104,11 +104,11 @@ The plasmid module needs the following compressed database file formats:
 
 * PLSDB: plsdb.zip
 
-See [database section](../pipeline_configuration.md#Database-input-configuration) for possible download strategies.
+See [database section](../pipeline_configuration.md#database-input-configuration) for possible download strategies.
 
 #### PLSDB
 
-PLSDB needs a plasmid database as input. See [database section](../pipeline_configuration.md#Database-input-configuration) for possible download strategies.
+PLSDB needs a plasmid database as input. See [database section](../pipeline_configuration.md#database-input-configuration) for possible download strategies.
 The compressed database must be a zip file. 
 
 ## Output
