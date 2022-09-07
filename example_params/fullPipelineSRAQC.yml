@@ -4,6 +4,7 @@ output: "output"
 logDir: log
 runid: 1
 scratch: "/vol/scratch"
+publishDirMode: "symlink"
 input:
   SRA:
     S3:
@@ -19,4 +20,5 @@ steps:
       download:
         s5cmdParams: " --retry-count 30 --no-verify-ssl --no-sign-request --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "
       additionalParams: " "
+      timeLimit: "AUTO"
 

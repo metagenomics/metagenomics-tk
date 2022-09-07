@@ -11,8 +11,7 @@ include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './
 include { wDereplicateFile; wDereplicateList} from './modules/dereplication/pasolli/module'
 include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/mapping.nf'
 include { wAnalyseMetabolites } from './modules/metabolomics/module'
-include { wUnmappedReadsList; wUnmappedReadsFile } from './modules/sampleAnalysis/module'
-include { wFragmentRecruitmentList; wFragmentRecruitmentFile } from './modules/fragmentRecruitment/frhit/module'
+include { wFragmentRecruitmentFile; wFragmentRecruitmentList;} from './modules/fragmentRecruitment/module'
 
 include { wAnnotateFile; wAnnotateList as wAnnotateBinsList; \
 	  wAnnotateList as wAnnotateUnbinnedList; wAnnotateList as wAnnotatePlasmidList } from './modules/annotation/module'
@@ -94,12 +93,8 @@ workflow wMagAttributes {
    wMagAttributesFile(Channel.fromPath(params?.steps?.magAttributes?.input))
 }
 
-workflow wUnmappedReads {
-   wUnmappedReadsFile(Channel.fromPath(params?.steps?.sampleAnalysis?.reads), Channel.fromPath(params?.steps?.sampleAnalysis?.bins))
-}
-
 workflow wFragmentRecruitment {
-   wFragmentRecruitmentFile(Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.samples), Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
+   wFragmentRecruitmentFile()
 }
 
 workflow wAnnotate {
@@ -201,6 +196,7 @@ workflow _wAggregate {
      wCooccurrenceList(wListReadMappingBwa.out.trimmedMean, gtdb)
 }
 
+
 /*
 *
 * This workflow configures the pipeline and sets additional parameters that are
@@ -214,6 +210,19 @@ workflow _wConfigurePipeline {
        params.steps.assembly.each { 
 	 assembler, parameter -> params.steps.assembly.get(assembler).putAll(fastg)
        }
+    }
+
+    // If memory resources should be predicted by megahit then nonpareil and jellyfish
+    // must be enabled
+    if(params.steps?.assembly?.megahit?.resources?.RAM?.mode == "PREDICT"){
+	if(!params.steps?.qc.containsKey("nonpareil")){
+          def nonpareil = [ nonpareil: [additionalParams: " -v 10 -r 1234 "]]
+          params.steps.qc.putAll(nonpareil) 
+        }
+	if(!params.steps?.qc.containsKey("jellyfish")){
+          def jellyfish = [ jellyfish: [additionalParams: [ count: " -m 21 -s 100M ", histo: " "]]]
+          params.steps.qc.putAll(jellyfish) 
+        }
     }
 }
 
@@ -236,7 +245,7 @@ workflow _wProcessIllumina {
       wShortReadQualityControlList(reads)
       wShortReadQualityControlList.out.readsPair \
  	| join(wShortReadQualityControlList.out.readsSingle) | set { qcReads }
-      wShortReadAssemblyList(qcReads)
+      wShortReadAssemblyList(qcReads, wShortReadQualityControlList.out.nonpareil, wShortReadQualityControlList.out.kmerFrequencies)
       wShortReadBinningList(wShortReadAssemblyList.out.contigs, qcReads)
     emit:
       notBinnedContigs = wShortReadBinningList.out.notBinnedContigs 
@@ -305,6 +314,8 @@ workflow wPipeline {
 
     ont.mapping | mix(illumina.mapping) | set { mapping } 
 
+    wFragmentRecruitmentList(illumina.out.unmappedReads)
+
     ont.unmappedReads | mix(illumina.unmappedReads) | set { unmappedReads } 
 
     ont.contigCoverage | mix(illumina.contigCoverage) | set { contigCoverage } 
@@ -313,13 +324,10 @@ workflow wPipeline {
 
     wPlasmidsList(bins | mix(notBinnedContigs), fastg | join(mapping), illumina.readsPairSingle)
 
-    if(params?.steps?.fragmentRecruitment?.frhit){
-       wFragmentRecruitmentList(illumina.unmappedReads, Channel.fromPath(params?.steps?.fragmentRecruitment?.frhit?.genomes))
-    }
+    wMagAttributesList(ont.bins | mix(illumina.bins, wFragmentRecruitmentList.out.genomes))
 
-    wMagAttributesList(ont.bins | mix(illumina.bins))
-
-    mapJoin(wMagAttributesList.out.checkm, binsStats, "BIN_ID", "BIN_ID") | set { binsStats  }
+    mapJoin(wMagAttributesList.out.checkm, binsStats | mix(wFragmentRecruitmentList.out.binsStats), "BIN_ID", "BIN_ID") \
+	| set { binsStats  }
 
     wAnnotatePlasmidList(Channel.value("meta"), wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage)
 

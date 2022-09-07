@@ -21,7 +21,7 @@ process pGetMappingQuality {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "readMappingQuality", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "readMappingQuality", filename) }
 
     label 'tiny'
 
@@ -74,7 +74,7 @@ process pMetabinner {
 
     label 'large'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "metabinner", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metabinner", filename) }
 
     when params.steps.containsKey("binning") && params.steps.binning.containsKey("metabinner")
 
@@ -176,23 +176,6 @@ def aslist(element){
 
 /*
 *
-* Method takes a list of the form [SAMPLE, [BIN1 path, BIN2 path]] as input
-* and produces a flattend list of the form [SAMPLE, BIN 1 path, BIN 2 path]
-*
-*/
-def flattenBins(binning){
-  def chunkList = [];
-  def SAMPLE_IDX = 0;
-  def BIN_PATHS_IDX = 1;
-  binning[BIN_PATHS_IDX].each {
-     chunkList.add([binning[SAMPLE_IDX], it]);
-  }
-  return chunkList;
-}
-
-
-/*
-*
 * Method takes two channels with map entries and two keys as input.
 * Channels are joined by the keys provided.
 * Resulting channel is returned as output.
@@ -283,7 +266,7 @@ workflow _wBinning {
 
      // Flatten metabat outputs per sample and create a map with the 
      // following entries [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
-     binsList | map { it -> flattenBins(it) } | flatMap {it -> createMap(it)} | set {binMap}
+     binsList | map { it -> Utils.flattenTuple(it) } | flatMap {it -> createMap(it)} | set {binMap}
 
      // Compute bin statistcs (e.g. N50, average coverage depth, etc. ...)
      pMetabinner.out.binContigMapping | join(mappedReads, by: SAMPLE_IDX) \

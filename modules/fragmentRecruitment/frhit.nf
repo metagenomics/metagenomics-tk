@@ -1,5 +1,4 @@
 nextflow.enable.dsl=2
-include { wUnmappedReadsFile } from '../../sampleAnalysis/module'
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.fragmentRecruitment.name + '/' + 
@@ -26,7 +25,7 @@ process pFrHit {
 
     stageInMode 'copy'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "frhit",  filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "frhit",  filename) }
 
     container "${params.samtools_bwa_image}"
 
@@ -89,7 +88,7 @@ process pCombinedAlignmentAnalysis {
 
     when params.steps.containsKey("fragmentRecruitment")
 
-    publishDir params.output, saveAs: { filename -> getAggregatedOutput(params.runid, "frhit",  filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getAggregatedOutput(params.runid, "frhit",  filename) }
 
     container "${params.samtools_bwa_image}"
 
@@ -127,7 +126,7 @@ workflow wFragmentRecruitmentFile {
        | map { sample -> [sample.SAMPLE, file(sample.READS)] } | set {sampleReadsList}
 
      genomes | splitCsv(sep: '\t', header: true) \
-       | map { genome -> file(genome.BINS) } | set {magsList}
+       | map { genome -> file(genome.PATH) } | set {magsList}
 
      _wFragmentRecruitment(sampleReadsList, magsList)
 }

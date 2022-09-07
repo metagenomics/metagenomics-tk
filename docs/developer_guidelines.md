@@ -73,11 +73,12 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 ## Process
 
-1. Process names should start `p`.
+Process names should start `p`. The in- and output of processes should contain a sample and/or a bin and contig id.
+Custom error strategies that do not follow the strategy defined in nextflow.config, should be documented (see Megahit example).
 
-2. The input and output of processes should contain a sample and/or bin and contig id.
+### Processes should publish process specific files
 
-3. Pocesses should publish `.command.sh`, `.command.out`, `.command.log` and `.command.err` files but never `.command.run`.
+Processes should publish `.command.sh`, `.command.out`, `.command.log` and `.command.err` files but never `.command.run`.
 In cases where processes process different data but publish it to the same folder these files would be overwritten on every run.
 For example when Prokka publishes log files of every genome to the same sample directory.
 For that reason these files need to be renamed, so that their names include a unique id (e.g. bin id). 
@@ -95,11 +96,11 @@ tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".comman
 
 Examples can be viewed in the Checkm and Prokka process.
 
-## Logs
+#### Logs
 
 Log files should be stored in the user provided `logDir` directory.
 
-### Log Level
+##### Log Level
 
 Every configuration file must have a `logLevel` attribute that can have the following values:
 
@@ -124,7 +125,19 @@ tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".comman
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 ```
 
-4. Custom error strategies that do not follow the strategy defined in nextflow.config, should be documented (see Megahit example).
+### Time Limit
+
+Every process must define a time limit which will never be reached on "normal" execution. This limit is only useful for errors in the execution environment  
+which could lead to an endless execution of the process.
+
+You can use the setTimeLimit helper method to add a user configurable time limit.
+
+Example:
+
+```
+time Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastp.defaults, params.mediumDefault)
+```
+
 
 ## Databases
 
@@ -145,8 +158,10 @@ steps:
     parameter: 42
     processName:
       additionalParams: " --super-flag "
+      timeLimit: "AUTO"
 ```
 
+Please check the process chapter regarding possible values for the time limit attribute.
 Additional params can have a string value (like the example above) that is provided to the tool:
 
 ```JAVA
@@ -227,12 +242,12 @@ We do not want to duplicate code and thats why we should store methods in the li
 
 ## Database Download
 
-This section explains how a developer is able to implement the database download strategy as explained in the [user documentation](##-Database-input-configuration). 
+This section explains how a developer is able to implement the database download strategy as explained in the [user documentation](pipeline_configuration.md#database-input-configuration). 
 Example implementations can be found in the gtdb, checkm or rgi scripts.
 
 The first step is to check if the user provides an already extracted database: 
 
-```
+```BASH
 DB_PATH=""
 if [ -z "!{EXTRACTED_DB}" ]
 then
@@ -247,7 +262,7 @@ Since the download is not directly handled by nextflow and paths to the files ne
 mounted first to the container. For this reason you have to add the `setDockerMount` function with the database config as input to 
 the `containerOptions` parameter:
 
-```
+```BASH
 containerOptions " other container options " + setDockerMount(params.steps?.magAttributes?.checkm?.database)
 ```
 

@@ -39,12 +39,12 @@ process pCheckM {
 
     container "${params.checkm_image}"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }, \
       pattern: "{**.tsv}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm")
 
-    containerOptions " --user 1000:1000 " + Utils.getDockerMount(params.steps?.magAttributes?.checkm?.database, params) 
+    containerOptions Utils.getDockerMount(params.steps?.magAttributes?.checkm?.database, params)
 
     beforeScript "mkdir -p ${params.polished.databases}"
 
@@ -75,12 +75,12 @@ process pGtdbtk {
 
     label 'large'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }, \
       pattern: "{**.tsv}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("gtdb")
 
-    containerOptions " --user 1000:1000 " + Utils.getDockerMount(params?.steps?.magAttributes?.gtdb?.database, params) 
+    containerOptions Utils.getDockerMount(params?.steps?.magAttributes?.gtdb?.database, params)
 
     beforeScript "mkdir -p ${params.polished.databases}"
 
@@ -197,23 +197,6 @@ workflow wMagAttributesList {
    emit:
      checkm = _wMagAttributes.out.checkm
      gtdb = _wMagAttributes.out.gtdb
-}
-
-
-/*
-*
-* Method takes a list of the form [SAMPLE, [BIN1 path, BIN2 path]] as input
-* and produces a flattend list of the form [SAMPLE, BIN 1 path, BIN 2 path]
-*
-*/
-def flattenBins(binning){
-  def chunkList = [];
-  def SAMPLE_IDX = 0;
-  def BIN_PATHS_IDX = 1;
-  binning[BIN_PATHS_IDX].each {
-     chunkList.add([binning[SAMPLE_IDX], it]);
-  }
-  return chunkList;
 }
 
 

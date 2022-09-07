@@ -17,7 +17,7 @@ process pViralVerifyPlasmid {
 
     tag "Sample: $sample, BinID: $binID"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "ViralVerifyPlasmid", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "ViralVerifyPlasmid", filename) }, \
         pattern: "{**.tsv}"
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("ViralVerifyPlasmid")
@@ -25,6 +25,8 @@ process pViralVerifyPlasmid {
     containerOptions Utils.getDockerMount(params?.steps?.plasmid?.ViralVerifyPlasmid?.database, params)
 
     container "${params.viralVerify_image}"
+
+    beforeScript "mkdir -p ${params.polished.databases}"
 
     input:
     tuple val(sample), val(binID), path(plasmids)
@@ -48,7 +50,7 @@ process pViralVerifyPlasmid {
     pigz -p !{task.cpus} -fdc !{plasmids} > unzipped.fasta
 
     PFAM_FILE=""
-    if [ -z "!{EXTRACTED_DB}" ] 
+    if [ -z "!{EXTRACTED_DB}" ]
     then
          DATABASE=!{params.polished.databases}/pfam
          LOCK_FILE=${DATABASE}/lock.txt
@@ -68,40 +70,46 @@ process pViralVerifyPlasmid {
           PFAM_FILE="!{EXTRACTED_DB}"
     fi
 
+    # ViralVerify should exit gracefully if the query sequence is too short for hmmsearch
+    trap 'if [[ $? == 1 && -s unzipped*proteins_circ.fa ]]; then echo "hmmsearch could not detect any protein"; exit 0; fi' EXIT
     viralverify !{ADDITIONAL_PARAMS}  --hmm ${PFAM_FILE} -p -t !{task.cpus} -f unzipped.fasta -o .
 
-    # Filter viral verify output by user provided strings 
-    # and add Sample and BinID
-    sed  's/,/\t/g' *.csv \
+    if [ -n "$(find . -name '*.csv')" ]; then
+      # Filter viral verify output by user provided strings 
+      # and add Sample and BinID
+      sed  's/,/\t/g' *.csv \
 	| sed -E -n "1p;/${FILTER_STRING}/p" \
         | sed -e '1 s/^[^\t]*\t/CONTIG\t/' -e '1 s/^/SAMPLE\tBIN_ID\t/g' -e "2,$ s/^/!{sample}\t!{binID}\t/g"  > !{sample}_!{binID}_viralverifyplasmid.tsv
+    fi
     '''
 }
 
 
 process pMobTyper {
 
-    label 'large'
+    label 'medium'
 
     tag "Sample: $sample, BinID: $binID"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "MobTyper", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "MobTyper", filename) }, \
         pattern: "{**.tsv}"
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("MobTyper")
 
     container "${params.mobSuite_image}"
 
+    beforeScript "mkdir -p ${params.polished.databases}"
+
     containerOptions Utils.getDockerMount(params.steps?.plasmid?.MobTyper?.database, params)
 
     input:
-    tuple val(sample), val(binID), path(plasmids)
+    tuple val(sample), val(binID), path(plasmids), val(start), val(stop)
 
     output:
-    tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+    tuple val("${sample}_${binID}_chunk_${start}_${stop}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
       file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
     tuple val("${sample}"), val("${binID}"), val("MobTyper"), \
-	path("${sample}_${binID}_mobtyper.tsv"), emit: plasmidsStats, optional: true
+	path("${sample}_${binID}_chunk_${start}_${stop}_mobtyper.tsv"), emit: plasmidsStats, optional: true
 
     shell:
     EXTRACTED_DB=params.steps?.plasmid?.MobTyper?.database?.extractedDBPath ?: ""
@@ -121,7 +129,7 @@ process pPlasClass {
 
     tag "$sample $binID"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "PlasClass", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "PlasClass", filename) }, \
         pattern: "{**.tsv}"
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("PlasClass")
@@ -151,18 +159,20 @@ process pPlaton {
 
     containerOptions " --user root:root " + Utils.getDockerMount(params.steps?.plasmid?.Platon?.database, params)
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "Platon", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "Platon", filename) }, \
         pattern: "{**.tsv}"
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("Platon")
 
     container "${params.platon_image}"
 
+    beforeScript "mkdir -p ${params.polished.databases}"
+
     input:
     tuple val(sample), val(binID), path(assembly)
 
     output:
-    tuple val("${sample}"), val("${binID}"), val("Platon"), path("${sample}_${binID}_platon.tsv"), emit: plasmidsStats
+    tuple val("${sample}"), val("${binID}"), val("Platon"), path("${sample}_${binID}_platon.tsv"), optional: true, emit: plasmidsStats
     tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
       file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -181,7 +191,7 @@ process pPlaton {
     PLATON_DB=""
     if [ -z "!{EXTRACTED_DB}" ]
     then 
-      DATABASE=!{params.databases}/platon
+      DATABASE=!{params.polished.databases}/platon
       LOCK_FILE=${DATABASE}/checksum.txt
 
       # Download plsdb database if necessary
@@ -201,10 +211,15 @@ process pPlaton {
     fi
 
     pigz -p !{task.cpus} -fdc !{assembly} > assembly.fasta
+
+    # In some cases prodigal fails because of a too short query sequence. In such cases the process should end with exit code 0.
+    trap 'if [[ $? == 1 && $(grep -q "ORFs failed" assembly.log) == 0 ]]; then echo "Protein Prediction Failed"; exit 0; fi' EXIT
     platon assembly.fasta !{ADDITIONAL_PARAMS} --db ${PLATON_DB} --mode sensitivity -t !{task.cpus}
 
-    # Add Sample and BinId
-    sed -e '1 s/^/SAMPLE\tBIN_ID\t/g' -e "2,$ s/^/!{sample}\t!{binID}\t/g" *.tsv > !{sample}_!{binID}_platon.tsv
+    if [ -n "$(find . -name '*.tsv')" ]; then
+      # Add Sample and BinId
+      sed -e '1 s/^/SAMPLE\tBIN_ID\t/g' -e "1 s/\tID\t/\tCONTIG\t/"  -e "2,$ s/^/!{sample}\t!{binID}\t/g" *.tsv > !{sample}_!{binID}_platon.tsv
+    fi
     '''
 }
 
@@ -217,7 +232,7 @@ process pFilter {
 
     container "${params.ubuntu_image}"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "filtered", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "filtered", filename) }, \
         pattern: "{**.tsv,**.fasta.gz}"
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid.containsKey("Filter")
@@ -239,13 +254,15 @@ process pFilter {
        for file in !{contigHeaderFiles}; do 
     	 csvtk cut -f CONTIG --tabs ${file} | tail -n +2 >> filtered_header.tsv
        done
-       sort filtered_header.tsv | uniq > filtered_sorted_header.tsv
-       seqkit grep -f filtered_sorted_header.tsv !{contigs} | seqkit seq --min-len !{MIN_LENGTH} \
-	| pigz -c > !{sample}_!{binID}_plasmids_filtered.fasta.gz
+       if [ -s filtered_header.tsv ]; then
+         sort filtered_header.tsv | uniq > filtered_sorted_header.tsv
+         seqkit grep -f filtered_sorted_header.tsv !{contigs} | seqkit seq --min-len !{MIN_LENGTH} \
+         | pigz -c > !{sample}_!{binID}_plasmids_filtered.fasta.gz
+       fi
        '''
        break;
       case "AND":
-       template("filter_and.sh")
+       template("filterAnd.sh")
        break;
     }
 }
