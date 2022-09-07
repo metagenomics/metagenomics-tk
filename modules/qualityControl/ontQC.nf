@@ -95,12 +95,14 @@ process pNanoPlot {
     tuple val("${sample}"), path("*.html"), emit: html
     tuple val("${sample}"), path("*.png"), emit: png
     tuple val("${sample}"), path("*.tsv"), emit: tsv
+    tuple val("${sample}"), env(MEDIAN_QUALITY), emit: medianQuality
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
     NanoPlot --threads !{task.cpus} --tsv_stats  --fastq reads.fq.gz
     csvtk -tT transpose  <(tail -n +2 NanoStats.txt) > NanoStats.tsv
+    MEDIAN_QUALITY=$(cut -f 8 NanoStats.tsv | tail -n 1)
     '''
 }
 
@@ -124,6 +126,7 @@ workflow _wONTFastq {
              reads | pNanoPlot
       emit:
         reads = reads
+        medianQuality = pNanoPlot.out.medianQuality
 }
 
 
@@ -142,6 +145,7 @@ workflow wOntQualityControlList {
     reads | _wONTFastq | set { results } 
   emit:
     reads = results.reads
+    medianQuality = results.medianQuality
 }
 
 /*

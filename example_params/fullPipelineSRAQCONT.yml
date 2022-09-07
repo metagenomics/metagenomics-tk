@@ -11,6 +11,8 @@ input:
       bucket: "s3://meta_test" 
       prefix: "/vol1/fastq/"
       watch: false
+      patternONT: ".+[^(_1|_2)].+$"
+      patternIllumina: ".+(_1|_2).+$"
 steps:
   qcONT:
     porechop:

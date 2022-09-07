@@ -10,6 +10,17 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 }
 
 
+def getMetaflyeQualityParam(medianQuality) {
+   if(medianQuality > 20){
+     return [ quality: " --nano-hq ", error: " --read-error 0.03 "]
+   }
+   if(medianQuality > 13){
+     return [ quality: " --nano-hq ", error: ""]
+   } else {
+     return [ quality: " --nano-raw ", error: ""]
+   }
+}
+
 process pMetaflye {
 
     label 'large'
@@ -23,7 +34,7 @@ process pMetaflye {
     container "${params.metaflye_image}"
 
     input:
-    tuple val(sample), path(reads, stageAs: 'reads.fq.gz')
+    tuple val(sample), path(reads, stageAs: 'reads.fq.gz'), val(medianQuality)
 
     output:
     tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs
@@ -32,12 +43,17 @@ process pMetaflye {
     tuple val("${sample}"), path("${sample}_assembly_graph.gfa"), emit: graph
     tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigsStats
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-
+    
     shell:
+    metaFlyeQualityParameter = params.steps?.assemblyONT?.metaflye.quality == "AUTO" ? \
+	getMetaflyeQualityParam(Double.parseDouble(medianQuality)) : [quality: params.steps?.assemblyONT?.metaflye.quality, error: " "]
+    quality = metaFlyeQualityParameter.quality
+    error = metaFlyeQualityParameter.error
     '''
     ASSEMBLY_OUTPUT="!{sample}_contigs.fa.gz"
     HEADER_MAPPING_OUTPUT="!{sample}_contigs_header_mapping.tsv"
-    flye --nano-raw reads.fq.gz -o out --meta -t !{task.cpus} !{params.steps.assemblyONT.metaflye.additionalParams}
+
+    flye !{quality} reads.fq.gz -o out --meta -t !{task.cpus} !{params.steps.assemblyONT.metaflye.additionalParams} !{error}
 
     # The following function modifies the assembly fasta headers according to the pattern: SAMPLEID_SEQUENCECOUNTER_SEQUENCEHASH
     transform.sh out/assembly.fasta ${ASSEMBLY_OUTPUT} ${HEADER_MAPPING_OUTPUT} !{sample} !{task.cpus}

@@ -14,7 +14,7 @@ seqkit replace -p '(.*)' -r '{kv}' \
 
 # Run MetaCoAG
 metacoag --assembler flye --graph !{graph}  --nthreads !{task.cpus} --contigs contigs.fa.gz \
-	--paths !{flyeAssemblyInfo} !{params.steps.binning.metacoag.additionalParams} --abundance assembly_depth_final.tsv --output .
+	--paths !{flyeAssemblyInfo} !{params.steps.binningONT.metacoag.additionalParams} --abundance assembly_depth_final.tsv --output .
 
 # Rename contig and file names according to toolkit specification
 BIN_CONTIG_MAPPING=!{sample}_bin_contig_mapping.tsv

@@ -32,12 +32,18 @@ steps:
   assemblyONT:
     metaflye:
       additionalParams: " -i 1 "
+      quality: "AUTO"
   binning:
     bowtie:
       additionalParams: 
         bowtie: " --quiet --very-sensitive "
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
+    contigsCoverage:
+      additionalParams: ""
+    metabat:
+      additionalParams: " --seed 234234  "
+  binningONT:
     minimap2:
       additionalParams: 
         minimap2: " "

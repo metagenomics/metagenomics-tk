@@ -5,7 +5,8 @@ include { wShortReadQualityControlFile; wShortReadQualityControlList} from './mo
 include { wOntQualityControlFile; wOntQualityControlList} from './modules/qualityControl/ontQC'
 include { wShortReadAssemblyFile; wShortReadAssemblyList } from './modules/assembly/shortReadAssembler'
 include { wOntAssemblyFile; wOntAssemblyList } from './modules/assembly/ontAssembler'
-include { wShortReadBinning; wLongReadBinning } from './modules/binning/module.nf'
+include { wShortReadBinningList } from './modules/binning/shortReadBinning'
+include { wLongReadBinningList } from './modules/binning/ontBinning'
 include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
 include { wDereplicateFile; wDereplicateList} from './modules/dereplication/pasolli/module'
 include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/mapping.nf'
@@ -236,15 +237,15 @@ workflow _wProcessIllumina {
       wShortReadQualityControlList.out.readsPair \
  	| join(wShortReadQualityControlList.out.readsSingle) | set { qcReads }
       wShortReadAssemblyList(qcReads)
-      wShortReadBinning(wShortReadAssemblyList.out.contigs, qcReads)
+      wShortReadBinningList(wShortReadAssemblyList.out.contigs, qcReads)
     emit:
-      notBinnedContigs = wShortReadBinning.out.notBinnedContigs 
-      bins = wShortReadBinning.out.bins 
-      binsStats = wShortReadBinning.out.binsStats
+      notBinnedContigs = wShortReadBinningList.out.notBinnedContigs 
+      bins = wShortReadBinningList.out.bins 
+      binsStats = wShortReadBinningList.out.binsStats
       fastg = wShortReadAssemblyList.out.fastg
-      mapping = wShortReadBinning.out.mapping
-      unmappedReads = wShortReadBinning.out.unmappedReads
-      contigCoverage = wShortReadBinning.out.contigCoverage
+      mapping = wShortReadBinningList.out.mapping
+      unmappedReads = wShortReadBinningList.out.unmappedReads
+      contigCoverage = wShortReadBinningList.out.contigCoverage
       readsPair = wShortReadQualityControlList.out.readsPair
       readsSingle = wShortReadQualityControlList.out.readsSingle
       readsPairSingle = qcReads
@@ -256,16 +257,17 @@ workflow _wProcessOnt {
     main:
       wOntQualityControlList(reads)
       wOntQualityControlList.out.reads | set { ontQCReads }
-      wOntAssemblyList(ontQCReads)
-      wLongReadBinning(wOntAssemblyList.out.contigs, ontQCReads, wOntAssemblyList.out.graph, \
-	 wOntAssemblyList.out.headerMapping, wOntAssemblyList.out.info)
+      wOntQualityControlList.out.medianQuality | set { medianQuality }
+      wOntAssemblyList(ontQCReads | join(medianQuality))
+      wLongReadBinningList(wOntAssemblyList.out.contigs, ontQCReads, wOntAssemblyList.out.graph, \
+	 wOntAssemblyList.out.headerMapping, wOntAssemblyList.out.info, medianQuality)
     emit:
-      notBinnedContigs = wLongReadBinning.out.notBinnedContigs 
-      bins = wLongReadBinning.out.bins 
-      binsStats = wLongReadBinning.out.binsStats
-      mapping = wLongReadBinning.out.mapping
-      unmappedReads = wLongReadBinning.out.unmappedReads
-      contigCoverage = wLongReadBinning.out.contigCoverage
+      notBinnedContigs = wLongReadBinningList.out.notBinnedContigs 
+      bins = wLongReadBinningList.out.bins 
+      binsStats = wLongReadBinningList.out.binsStats
+      mapping = wLongReadBinningList.out.mapping
+      unmappedReads = wLongReadBinningList.out.unmappedReads
+      contigCoverage = wLongReadBinningList.out.contigCoverage
       reads = ontQCReads
 }
 
