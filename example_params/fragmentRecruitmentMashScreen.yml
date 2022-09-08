@@ -11,11 +11,13 @@ steps:
       samples:
         paired: test_data/fragmentRecruitment/paired.tsv
         single: test_data/fragmentRecruitment/single.tsv
+        ont: test_data/fragmentRecruitment/ont.tsv
       genomes: test_data/fragmentRecruitment/mags.tsv
       additionalParams:
         mashSketch: " "
         mashScreen: " "
         bowtie: " "
+        minimap: " "
         coverm: "  --min-covered-fraction 0  "
       mashDistCutoff: 0.70
       coveredBasesCutoff: 0.2

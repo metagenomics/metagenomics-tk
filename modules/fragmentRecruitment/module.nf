@@ -14,8 +14,10 @@ workflow wFragmentRecruitmentFile {
 workflow wFragmentRecruitmentList {
    take:
      pairedReads
+     ontReads
+     medianQuality
    main:
-     wMashScreenList(pairedReads)
+     wMashScreenList(pairedReads, ontReads, medianQuality)
    emit:
      binsStats = wMashScreenList.out.binsStats
      genomes = wMashScreenList.out.genomes

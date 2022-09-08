@@ -21,7 +21,7 @@ process pGetMappingQuality {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "readMappingQuality", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "readMappingQuality", filename) }
 
     label 'tiny'
 
@@ -49,7 +49,7 @@ process pMetaCoAG {
 
     label 'large'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "metacoag", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metacoag", filename) }
 
     when params.steps.containsKey("binningONT") && params.steps.binningONT.containsKey("metacoag")
 
@@ -177,7 +177,7 @@ workflow _wBinning {
      mappedReads | pGetMappingQuality
 
      pCovermContigsCoverage(Channel.value(params?.steps?.binningONT.find{ it.key == "contigsCoverage"}?.value), Channel.value([getModulePath(params.modules.binningONT), \
-	"contigCoverage", params?.steps?.binningONT?.contigsCoverage?.additionalParams]), mappedReads)
+	"contigCoverage", params?.steps?.binningONT?.contigsCoverage?.additionalParams]), mappedReads | join(medianQuality, by: SAMPLE_IDX))
 
      inputGraph | join(contigs, by: SAMPLE_IDX) | join(mappedReads, by: SAMPLE_IDX) \
       | join(headerMapping, by: SAMPLE_IDX)  | join(assemblyInfo, by: SAMPLE_IDX) | pMetaCoAG 

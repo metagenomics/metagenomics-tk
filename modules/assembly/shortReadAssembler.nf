@@ -23,7 +23,7 @@ process pPredictFlavor {
 
     tag "Sample: $sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "predictFlavor", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "predictFlavor", filename) }
 
     when params?.steps.containsKey("assembly") && params?.steps?.assembly.containsKey("megahit")
 
@@ -163,8 +163,8 @@ workflow wShortReadAssemblyList {
     main:
        _wAssembly(readsList, nonpareil, kmerFrequencies)
     emit:
-      contigs = _wShortReadAssembly.out.contigs
-      fastg = _wShortReadAssembly.out.fastg
+      contigs = _wAssembly.out.contigs
+      fastg = _wAssembly.out.fastg
 }
 
 
@@ -184,7 +184,7 @@ workflow wShortReadAssemblyFile {
 
        _wAssembly(reads, Channel.empty(), Channel.empty())
     emit:
-      contigs = _wShortReadAssembly.out.contigs
+      contigs = _wAssembly.out.contigs
 }
 
 /*
@@ -306,7 +306,7 @@ workflow _wCalculateMegahitResources {
 *  - Channel containing the values [SAMPLE, nonpareil tsv file]
 *  - Channel containing kmer frequency file and sample identifier [SAMPLE, kmer frequency]
 */
-workflow _wShortReadAssembly {
+workflow _wAssembly {
      take:
        readsList
        nonpareil

@@ -39,33 +39,6 @@ process pGetMappingQuality {
 }
 
 
-process pMetaCoAG {
-
-    container "${params.metacoag_image}"
-
-    containerOptions "  --user 0:0 "
-
-    tag "Sample: $sample"
-
-    label 'large'
-
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "metacoag", filename) }
-
-    when params.steps.containsKey("binning") && params.steps.binning.containsKey("metacoag")
-
-    input:
-    tuple val(sample), path(graph), path(contigs), path(bam), path(headerMapping), path(flyeAssemblyInfo)
-
-    output:
-    tuple val("${sample}"), file("${sample}_bin.*.fa"), optional: true, emit: bins
-    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
-    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-
-    shell:
-    template "metacoag.sh"
-}
-
 process pMetabinner {
 
     container "${params.metabinner_image}"
@@ -105,8 +78,6 @@ process pMaxBin {
 
     when params.maxbin
 
-    publishDir "${params.output}/${sample}/binning/maxbin/${params.maxbin_tag}" 
-
     input:
     tuple val(sample), val(TYPE), path(contigs), path(reads)
 
@@ -134,7 +105,7 @@ process pGraphMB {
 
     label 'large'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "graphmb", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "graphmb", filename) }
 
     when params.steps.containsKey("binning") && params.steps.binning.containsKey("metacoag")
 
@@ -235,7 +206,7 @@ workflow _wBinning {
    main:
      // Map reads against assembly and retrieve mapping quality
      SAMPLE_IDX=0
-     DO_NOT_ESTIMATE_IDENTITY = -1 
+     DO_NOT_ESTIMATE_IDENTITY = "-1" 
 
      pBowtie2(Channel.value(params?.steps?.containsKey("binning")), Channel.value([getModulePath(params.modules.binning), \
       "contigMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, params.steps.containsKey("fragmentRecruitment")]), \
@@ -246,7 +217,7 @@ workflow _wBinning {
      mappedReads | pGetMappingQuality
 
      pCovermContigsCoverage(Channel.value(params?.steps?.binning.find{ it.key == "contigsCoverage"}?.value), Channel.value([getModulePath(params.modules.binning), \
-	"contigCoverage", params?.steps?.binning?.contigsCoverage?.additionalParams]), mappedReads)
+	"contigCoverage", params?.steps?.binning?.contigsCoverage?.additionalParams]), mappedReads | join(Channel.value(DO_NOT_ESTIMATE_IDENTITY), by: SAMPLE_IDX))
 
      contigs | join(mappedReads, by: SAMPLE_IDX) | join(Channel.value(DO_NOT_ESTIMATE_IDENTITY), by: SAMPLE_IDX) | set { binningInput }
 

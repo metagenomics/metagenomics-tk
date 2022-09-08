@@ -2,7 +2,7 @@
 TEMP_DIR=$(mktemp -d -p .)
 
 DEPTH=!{sample}.depth.tsv
-jgi_summarize_bam_contig_depths !{bam} --outputDepth $DEPTH
+jgi_summarize_bam_contig_depths !{percentIdentity} !{bam} --outputDepth $DEPTH
 
 # Add sample and bin information to every contig in depth file
 BIN_CONTIG_MAPPING=!{binContigMapping}

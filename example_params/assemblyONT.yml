@@ -10,7 +10,7 @@ steps:
     input: test_data/assembly/samplesONT.tsv 
     metaflye:
       additionalParams: " -i 1 "
-      quality: "AUTO"
+      quality: " --nano-raw "
 
 resources:
   large:

@@ -105,4 +105,15 @@ class Utils {
   	return chunkList;
   }
 
+  static getMappingIdentityParam(medianQuality) {
+    if(medianQuality > 17){
+      return 97
+    }
+    if(medianQuality > 13){
+      return 95
+    } else {
+      return 90
+    }
+  }
+
 }

@@ -21,7 +21,7 @@ process pFastpSplit {
 
     container "${params.fastp_image}"
 
-    time Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastp.defaults, params.resources.medium)
+    time params.steps.containsKey("qc") ? Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastp.defaults, params.resources.medium) : ""
 
     input:
     tuple val(sample), path(read1, stageAs: "read1.fq.gz"), path(read2, stageAs: "read2.fq.gz")
@@ -46,9 +46,9 @@ process pNonpareil {
 
     tag "Sample: $sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "nonpareil", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "nonpareil", filename) }
 
-    when params?.steps?.qc.containsKey("nonpareil")
+    when params.steps.containsKey("qc") && params?.steps?.qc.containsKey("nonpareil")
 
     container "${params.nonpareil_image}"
 
@@ -73,11 +73,11 @@ process pJellyFish {
 
     label 'medium'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "jellyfish", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "jellyfish", filename) }
 
     container "${params.jellyfish_image}"
 
-    when params?.steps?.qc.containsKey("jellyfish")
+    when params.steps.containsKey("qc") && params?.steps?.qc.containsKey("jellyfish")
 
     input:
     tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz'), path(unpairedReads)
@@ -104,7 +104,7 @@ process pFastpSplitDownload {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
 
-    time Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastpDownload.defaults, params.resources.medium)
+    time params.steps.containsKey("qc") ? Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastpDownload.defaults, params.resources.medium) : ""
 
     when params?.steps.containsKey("qc") && params?.steps?.qc.containsKey("fastp")
 

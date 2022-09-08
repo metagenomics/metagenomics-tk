@@ -27,7 +27,7 @@ process pMetaflye {
 
     tag "Sample: $sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "metaflye", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaflye", filename) }
 
     when params?.steps.containsKey("assemblyONT") && params?.steps?.assemblyONT.containsKey("metaflye")
 

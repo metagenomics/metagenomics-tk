@@ -278,6 +278,8 @@ workflow _wProcessOnt {
       unmappedReads = wLongReadBinningList.out.unmappedReads
       contigCoverage = wLongReadBinningList.out.contigCoverage
       reads = ontQCReads
+      gfa = wOntAssemblyList.out.graph
+      medianQuality = medianQuality
 }
 
 /*
@@ -312,9 +314,11 @@ workflow wPipeline {
 
     illumina.fastg | set { fastg } 
 
+    ont.gfa | set { gfa } 
+
     ont.mapping | mix(illumina.mapping) | set { mapping } 
 
-    wFragmentRecruitmentList(illumina.out.unmappedReads)
+    wFragmentRecruitmentList(illumina.unmappedReads, ont.unmappedReads, ont.medianQuality)
 
     ont.unmappedReads | mix(illumina.unmappedReads) | set { unmappedReads } 
 
@@ -322,7 +326,9 @@ workflow wPipeline {
 
     wSaveSettingsList(inputSamples | map { it -> it.SAMPLE })
 
-    wPlasmidsList(bins | mix(notBinnedContigs), fastg | join(mapping), illumina.readsPairSingle)
+    MAX_KMER = 0
+    wPlasmidsList(bins | mix(notBinnedContigs), fastg | mix(gfa | combine(Channel.value(MAX_KMER))) | join(mapping)\
+	, illumina.readsPairSingle, ont.reads, ont.medianQuality)
 
     wMagAttributesList(ont.bins | mix(illumina.bins, wFragmentRecruitmentList.out.genomes))
 

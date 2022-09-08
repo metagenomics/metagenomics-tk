@@ -14,7 +14,7 @@ process pPorechop {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "porechop", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "porechop", filename) }
 
     when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("porechop")
 
@@ -41,7 +41,7 @@ process pPorechopDownload {
 
     tag "Sample: $sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "porechop", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "porechop", filename) }
 
     when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("porechop")
 
@@ -82,7 +82,7 @@ process pNanoPlot {
 
     tag "Sample: $sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "nanoplot", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "nanoplot", filename) }
 
     when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("nanoplot")
 

@@ -16,18 +16,21 @@ String getOutput(SAMPLE, RUNID, MODULE , TOOL, filename){
           '/' + TOOL + '/' + filename
 }
 
+
+
 process pGetBinStatistics {
 
     container "${params.samtools_image}"
 
-    tag "$sample"
+    tag "Sample: $sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "", "${binner}", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${binner}", filename) }
 
     label 'tiny'
 
     input:
-    tuple val(sample), path(binContigMapping), path(bam), val(binner), path(bins)
+    val(module)
+    tuple val(sample), path(binContigMapping), path(bam), val(binner), path(bins), val(medianQuality)
 
     output:
     tuple val("${sample}"), file("${sample}_contigs_depth.tsv"), optional: true, emit: contigsDepth
@@ -35,6 +38,11 @@ process pGetBinStatistics {
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
+    DO_NOT_ESTIMATE_QUALITY = -1 
+    MEDIAN_QUALITY=Double.parseDouble(medianQuality)
+    percentIdentity = MEDIAN_QUALITY != DO_NOT_ESTIMATE_QUALITY ? \
+	" --percentIdentity="+Utils.getMappingIdentityParam(MEDIAN_QUALITY) : " "
+
     template 'binStats.sh'
 }
 
@@ -43,16 +51,15 @@ process pCovermContigsCoverage {
 
     label 'medium'
 
-    tag "$sample"
+    tag "Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "${module}" , "${outputToolDir}", filename) }, \
         pattern: "{**.tsv,**.fasta.gz}"
 
-
     input:
     val(run)
     tuple val(module), val(outputToolDir), val(covermParams)
-    tuple val(sample), path(bamFile)
+    tuple val(sample), path(bamFile), val(medianQuality)
 
     when:
     run
@@ -64,15 +71,19 @@ process pCovermContigsCoverage {
     tuple file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    DO_NOT_ESTIMATE_QUALITY = -1 
+    MEDIAN_QUALITY=Double.parseDouble(medianQuality)
+    percentIdentity = MEDIAN_QUALITY != DO_NOT_ESTIMATE_QUALITY ? \
+	" --min-read-percent-identity "+Utils.getMappingIdentityParam(MEDIAN_QUALITY) : " "
     '''
     coverm contig --threads !{task.cpus} \
-	--bam-files !{bamFile} !{covermParams} \
+	--bam-files !{bamFile} !{covermParams} !{percentIdentity} \
 	--methods mean trimmed_mean variance length count reads_per_base rpkm tpm \
 	| sed '1 s/^/SAMPLE\t/' \
 	| sed "2,$ s/^/!{sample}\t/g" > !{sample}_default_coverm_coverage.tsv
 
     coverm contig --threads !{task.cpus} \
-	--bam-files !{bamFile} !{covermParams} \
+	--bam-files !{bamFile} !{covermParams} !{percentIdentity} \
         --methods metabat \
 	| sed '1 s/^/SAMPLE\t/' \
 	| sed "2,$ s/^/!{sample}\t/g" > !{sample}_metabat_coverm_coverage.tsv
@@ -87,7 +98,7 @@ process pMinimap2 {
 
     tag "Sample: $sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
 
     input:
     val(run)
@@ -162,4 +173,40 @@ process pBowtie2 {
     fi
     '''
 }
+
+
+process pMetabat {
+
+    container "${params.metabat_image}"
+
+    tag "$sample"
+
+    label 'large'
+
+    publishDir params.output, mode: "${params.publishDirMode}", \
+	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
+
+    when:
+    run
+
+    input:
+    val(run)
+    tuple val(module), val(outputToolDir), val(metabatParams)
+    tuple val(sample), path(contigs), path(bam), val(medianQuality)
+
+    output:
+    tuple val("${sample}"), file("${sample}_bin.*.fa"), optional: true, emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+
+    shell:
+    DO_NOT_ESTIMATE_QUALITY = -1 
+    MEDIAN_QUALITY=Double.parseDouble(medianQuality)
+    percentIdentity = MEDIAN_QUALITY != DO_NOT_ESTIMATE_QUALITY ? \
+	" PCTID="+Utils.getMappingIdentityParam(MEDIAN_QUALITY) : " "
+    template 'metabat.sh'
+}
+
 
