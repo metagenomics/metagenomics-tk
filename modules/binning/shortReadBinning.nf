@@ -216,17 +216,19 @@ workflow _wBinning {
 
      mappedReads | pGetMappingQuality
 
-     pCovermContigsCoverage(Channel.value(params?.steps?.binning.find{ it.key == "contigsCoverage"}?.value), Channel.value([getModulePath(params.modules.binning), \
-	"contigCoverage", params?.steps?.binning?.contigsCoverage?.additionalParams]), mappedReads | join(Channel.value(DO_NOT_ESTIMATE_IDENTITY), by: SAMPLE_IDX))
+     pCovermContigsCoverage(Channel.value(params?.steps?.binning.find{ it.key == "contigsCoverage"}?.value), \
+	Channel.value([getModulePath(params.modules.binning), \
+	"contigCoverage", params?.steps?.binning?.contigsCoverage?.additionalParams]), \
+	mappedReads | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)))
 
-     contigs | join(mappedReads, by: SAMPLE_IDX) | join(Channel.value(DO_NOT_ESTIMATE_IDENTITY), by: SAMPLE_IDX) | set { binningInput }
+     contigs | join(mappedReads, by: SAMPLE_IDX) | set { binningInput }
 
      pMetabinner(binningInput)
 
      pMetabat(Channel.value(params?.steps?.containsKey("binning") && params?.steps?.binning.containsKey("metabat")), \
       Channel.value([getModulePath(params.modules.binning), \
       "metabat", params.steps?.binning?.metabat?.additionalParams]), \
-      binningInput)
+      binningInput | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)))
 
      pMetabinner.out.bins | mix(pMetabat.out.bins) | set { bins }
 
@@ -248,7 +250,7 @@ workflow _wBinning {
 	| set { metabatBinStatisticsInput }
 
      metabatBinStatisticsInput | mix(metabinnerBinStatisticsInput) \
-	| join(Channel.value(DO_NOT_ESTIMATE_IDENTITY), by: SAMPLE_IDX) | set {binStatsInput}
+	| combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) | set {binStatsInput}
 
      pGetBinStatistics(Channel.value(getModulePath(params.modules.binning)), binStatsInput)
 

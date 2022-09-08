@@ -294,7 +294,7 @@ workflow _runCircularAnalysis {
        pSCAPP.out.plasmids | join(ontReads))
 
        pBowtie2.out.mappedReads \
-	| join(Channel.value(DO_NOT_ESTIMATE_IDENTITY), by: SAMPLE_IDX) \
+	| combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) \
 	| mix(pMinimap2.out.mappedReads | join(Channel.value(ontMedianQuality), by: SAMPLE_IDX)) \
 	| set { covermInput  }
 

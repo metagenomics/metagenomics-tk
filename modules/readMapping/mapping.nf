@@ -214,7 +214,7 @@ workflow _wReadMappingBwa {
      DO_NOT_ESTIMATE_IDENTITY = "-1"
      pMergeAlignment.out.alignmentIndex | combine(genomes | map {it -> file(it)} \
       | toList() | map { it -> [it]})  \
-      | join(Channel.value(DO_NOT_ESTIMATE_IDENTITY), by: SAMPLE_NAME_IDX) \
+      | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) \
       | set { covermBWAInput }
 
      pMapMinimap2.out.alignment | combine(genomes | map {it -> file(it)} \
