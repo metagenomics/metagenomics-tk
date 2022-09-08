@@ -6,7 +6,7 @@ GRAPH_FILE_PATH=$(readlink -f !{assemblyGraph})
 if [[ $GRAPH_FILE_PATH == *.gfa ]]
 then
 	GRAPH=out.fastg
-        metaflye_gfa2fastg.py $GRAPH_FILE_PATH $GRAPH
+	python3 $(which metaflye_gfa2fastg.py) $GRAPH_FILE_PATH $GRAPH
 else
 	GRAPH=!{assemblyGraph}
 fi

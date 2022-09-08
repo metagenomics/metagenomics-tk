@@ -81,6 +81,9 @@ input:
       bucket: "s3://ftp.era.ebi.ac.uk" 
       prefix: "/vol1/fastq/"
       watch: false
+      patternONT: ".+[^(_1|_2)].+$"
+      patternIllumina: ".+(_1|_2).+$"
+
 ```
 
 where:
@@ -93,6 +96,8 @@ where:
   * `watch` if true, the file specified with the `path` attribute is watched and every time a new SRA run id is
      appended, the pipeline is triggered. The pipeline will never finish in this mode. Please note that watch currently only works
      if only one input type is specified (e.g "ont" or "paired" ...)
+
+  *  `patternONT` and `patternIllumina` are patterns that are applied on the specified mirror in order to select the correct input files.
 
 ### NCBI SRA
 

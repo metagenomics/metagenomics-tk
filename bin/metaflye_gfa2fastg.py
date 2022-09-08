@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # convert simple gfa format to fastg
 # the format has S lines: S\t<seq name>\tdp:i:<int>
 # and L lines: L\t<seq 1>\t<-/+>\t<seq 2>\t<-/+>\t0M
