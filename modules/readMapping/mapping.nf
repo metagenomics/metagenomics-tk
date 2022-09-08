@@ -210,13 +210,12 @@ workflow _wReadMappingBwa {
      // The resulting alignments (bam files) should merged if single and paired read alignments exist
      SAMPLE_NAME_IDX=0
      pMapBwa.out.alignment | groupTuple(by: SAMPLE_NAME_IDX) | pMergeAlignment
-     pMapMinimap2.out.alignment 
 
      DO_NOT_ESTIMATE_IDENTITY = "-1"
      pMergeAlignment.out.alignmentIndex | combine(genomes | map {it -> file(it)} \
-      | toList() | map { it -> [it]}) } \
-      | join(Channel.value(DO_NOT_ESTIMATE_IDENTITY), by: SAMPLE_IDX) \
-      | set { covermBWAInput }  
+      | toList() | map { it -> [it]})  \
+      | join(Channel.value(DO_NOT_ESTIMATE_IDENTITY), by: SAMPLE_NAME_IDX) \
+      | set { covermBWAInput }
 
      pMapMinimap2.out.alignment | combine(genomes | map {it -> file(it)} \
       | toList() | map { it -> [it]}) \

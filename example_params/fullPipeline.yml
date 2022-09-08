@@ -68,6 +68,7 @@ steps:
         mashScreen: " "
         bowtie: " "
         coverm: "  --min-covered-fraction 5  "
+        minimap: "  "
       mashDistCutoff: 0.95
       coveredBasesCutoff: 0.2
       mashHashCutoff: 800
