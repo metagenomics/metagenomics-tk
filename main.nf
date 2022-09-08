@@ -171,6 +171,7 @@ workflow wAggregatePipeline {
 workflow _wAggregate {
    take:
      samplesONT
+     ontMedianQuality
      samplesPaired
      samplesSingle
      binsStats
@@ -189,7 +190,7 @@ workflow _wAggregate {
         | map { it -> file(it[REPRESENTATIVES_PATH_IDX]) }\
         | set { representativesList }
 
-     wListReadMappingBwa(samplesONT, samplesPaired, samplesSingle, representativesList)
+     wListReadMappingBwa(samplesONT, ontMedianQuality, samplesPaired, samplesSingle, representativesList)
 
      binsStats | wAnalyseMetabolites
 
@@ -341,5 +342,5 @@ workflow wPipeline {
 
     wAnnotateUnbinnedList(Channel.value("meta"), notBinnedContigs, null, contigCoverage)
 
-    _wAggregate(ont.reads, illumina.readsPair, illumina.readsSingle, binsStats, wMagAttributesList.out.gtdb )
+    _wAggregate(ont.reads, ont.medianQuality, illumina.readsPair, illumina.readsSingle, binsStats, wMagAttributesList.out.gtdb )
 }

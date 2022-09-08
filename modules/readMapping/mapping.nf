@@ -148,11 +148,12 @@ workflow wFileReadMappingBwa {
 workflow wListReadMappingBwa {
    take:
      samplesONT
+     ontMedianQuality
      samplesPaired
      samplesSingle
      genomes
    main:
-     _wReadMappingBwa(samplesONT, samplesPaired, samplesSingle, genomes)
+     _wReadMappingBwa(samplesONT, ontMedianQuality, samplesPaired, samplesSingle, genomes)
    emit:
      trimmedMean = _wReadMappingBwa.out.trimmedMean
 }
@@ -161,6 +162,7 @@ workflow wListReadMappingBwa {
 workflow _wReadMappingBwa {
    take:
      samplesONT
+     ontMedianQuality
      samplesPaired
      samplesSingle
      genomes
@@ -210,11 +212,15 @@ workflow _wReadMappingBwa {
      pMapBwa.out.alignment | groupTuple(by: SAMPLE_NAME_IDX) | pMergeAlignment
      pMapMinimap2.out.alignment 
 
+     DO_NOT_ESTIMATE_IDENTITY = "-1"
      pMergeAlignment.out.alignmentIndex | combine(genomes | map {it -> file(it)} \
-      | toList() | map { it -> [it]}) | set { covermBWAInput }  
+      | toList() | map { it -> [it]}) } \
+      | join(Channel.value(DO_NOT_ESTIMATE_IDENTITY), by: SAMPLE_IDX) \
+      | set { covermBWAInput }  
 
      pMapMinimap2.out.alignment | combine(genomes | map {it -> file(it)} \
-      | toList() | map { it -> [it]}) | set { covermMinimapInput }
+      | toList() | map { it -> [it]}) \
+      | join(ontMedianQuality, by: SAMPLE_NAME_IDX) | set { covermMinimapInput }
 
      covermBWAInput | mix(covermMinimapInput) | pCovermCount
    emit:
