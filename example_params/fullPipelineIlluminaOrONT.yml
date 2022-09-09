@@ -71,13 +71,6 @@ steps:
         tree: " --reduced_tree "
         lineage_set: " " 
         qa: "  "
-  fragmentRecruitment:
-    frhit:
-      genomes: "/vol/spool/meta/test/data/bin.*.fa"
-      sort: true
-      additionalParams: 
-        frhit: " -c 95 "
-        coverm: " --min-covered-fraction 0 "
   dereplication:
     pasolli:
       minimumCompleteness: 0
@@ -151,34 +144,6 @@ steps:
       additionalParams:
           mashSketch: " -S 42 -k 21 -s 1000 "
           mashDist: " -v 0.2 -d 0.2 "
-  annotation:
-    prokka:
-      prodigalMode: "meta"
-      defaultKingdom: 'Bacteria'
-      additionalParams: " --mincontiglen 200 "
-    diamond:
-      kegg:
-        params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
-        database:
-          extractedDBPath: '/vol/spool/toolkit/kegg-2021-01.dmnd'
-      vfdb:
-        params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
-        database:
-          extractedDBPath: '/vol/spool/toolkit/vfdb_out.dmnd'
-      bacmet:
-        params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
-        database:
-          extractedDBPath: '/vol/spool/toolkit/bacmet_out.dmnd'
-    rgi:
-      additionalParams: ""
-      database:
-        download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/data
-          md5sum: 2a1e01f01e904ed6e126b5ac162764c8
-    keggFromDiamond:
-      database:
-        extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 
-
 resources:
   large:
     cpus: 28
