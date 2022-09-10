@@ -3,7 +3,7 @@ mkdir $OUT
 
 readlink -f !{list_of_representatives} > list.txt 
 
-additionalParams = " !{percentIdentity} !{params.steps.readMapping.coverm.additionalParams} " 
+additionalParams=" !{percentIdentity} !{params.steps.readMapping.coverm.additionalParams} " 
 
 coverm genome -t !{task.cpus} ${additionalParams} -b !{mapping} \
 	--genome-fasta-list list.txt --methods mean --output-file $OUT/mean.tsv && sed -i '1 s| Mean$||' $OUT/mean.tsv  || true
