@@ -56,11 +56,11 @@ process pMMseqs2 {
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2")
 
    input:
-      tuple val(sample), val(binID), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
+      tuple val(sample), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
-      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.blast.tsv"), emit: blast
-      tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+      tuple val("${dbType}"), val("${sample}"), path("${sample}.${dbType}.blast.tsv"), emit: blast
+      tuple val("${sample}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
    shell:
@@ -101,15 +101,12 @@ process pMMseqs2 {
     mkdir tmp
     # Only mmseqs2 databases can be used for every kind of search. Inputs have to be converted first.
     mmseqs createdb !{fasta} queryDB
-    # Load all indices into memory and start a daemon to lock them there
-    vmtouch -tldw *.index ${MMSEQS2_DATABASE_DIR}/*.index
-    mmseqs search queryDB ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.results.database tmp !{parameters} --threads !{task.cpus}
+    # Load all indices into memory
+    mmseqs touchdb --threads !{task.cpus} queryDB
+    mmseqs touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
+    mmseqs search queryDB ${MMSEQS2_DATABASE_DIR} !{sample}.!{dbType}.results.database tmp !{parameters} --threads !{task.cpus}
     # mmseqs2 searches produce output databases. These have to be converted to a more useful format. The blast -outfmt 6 in this case.
-    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.results.database !{binID}.!{dbType}.blast.tsv --threads !{task.cpus}
-    # Get the daemon PID and kill it to stop it locking the indices. Then release the files.
-    PID=$(ps -ef | grep -v grep | grep "vmtouch -tldw" | awk '{print $2}')
-    kill $PID
-    vmtouch -e *.index ${MMSEQS2_DATABASE_DIR}/*.index
+    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{sample}.!{dbType}.results.database !{sample}.!{dbType}.blast.tsv --threads !{task.cpus}
    '''
 }
 
@@ -188,6 +185,9 @@ process pMMseqs2_taxonomy {
     mkdir tmp
     # Only mmseqs2 databases can be used for every kind of search. Inputs have to be converted first.
     mmseqs createdb !{fasta} queryDB
+    # Load all indices into memory
+    mmseqs touchdb --threads !{task.cpus} queryDB
+    mmseqs touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
     mmseqs taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.taxresults.database tmp !{parameters} --threads !{task.cpus}
     # mmseqs2 searches produce output databases. These have to be converted to more useful formats.
     mmseqs createtsv queryDB !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.taxonomy.tsv --threads !{task.cpus}
@@ -573,7 +573,7 @@ workflow _wAnnotation {
       // Collect all databases
       selectedDBs = params?.steps?.annotation?.mmseqs2.findAll().collect({ 
             [it.key, it.value?.params ?: "", \
-	     it.value?.database?.extractedDBPath ?: "", \
+	         it.value?.database?.extractedDBPath ?: "", \
              it.value.database?.download?.source ?: "", \
              it.value.database?.download?.md5sum ?: "", \
              it.value.database?.download?.s5cmd?.params ?: "" ]
@@ -589,8 +589,8 @@ workflow _wAnnotation {
 
       // Run all amino acid outputs against all databases
 
-      pProkka.out.faa | map{ [it[0], it[2]} |
-      pProkka.out.faa | combine(Channel.from(selectedDBs)) | pMMseqs2
+      pProkka.out.faa | map{ [it[0], it[2]] }| groupTuple() | combine(Channel.from(selectedDBs)) | view()
+      // pProkka.out.faa | combine(Channel.from(selectedDBs)) | pMMseqs2
       pProkka.out.faa | combine(Channel.from(selectedTaxDBs)) | pMMseqs2_taxonomy
       DB_TYPE_IDX = 0
       pMMseqs2.out.blast | filter({ result -> result[DB_TYPE_IDX] == "kegg" }) \
