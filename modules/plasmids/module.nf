@@ -286,10 +286,12 @@ workflow _runCircularAnalysis {
 
        newPlasmids | (pPlasClassCircular & _wRunMobTyper & pViralVerifyPlasmidCircular & pPlatonCircular)
 
-       pBowtie2(Channel.value(params.steps.plasmid?.containsKey("SCAPP")), Channel.value([Utils.getModulePath(params.modules.plasmids), \
+       pBowtie2(Channel.value(params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("SCAPP")), \
+	Channel.value([Utils.getModulePath(params.modules.plasmids), \
 	"SCAPP/readMapping/bowtie", params.steps?.plasmid?.SCAPP?.additionalParams?.bowtie, false]), pSCAPP.out.plasmids | join(illuminaReads))
 
-       pMinimap2(Channel.value(params?.steps?.plasmid.containsKey("SCAPP")), Channel.value([Utils.getModulePath(params.modules.plasmids), \
+       pMinimap2(Channel.value(params.steps.containsKey("plasmid") && params?.steps?.plasmid.containsKey("SCAPP")), \
+	Channel.value([Utils.getModulePath(params.modules.plasmids), \
        "SCAPP/readMapping/minimap", params.steps?.plasmid?.SCAPP?.additionalParams?.minimap, false]), \
        pSCAPP.out.plasmids | join(ontReads))
 
