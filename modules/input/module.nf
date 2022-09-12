@@ -176,8 +176,8 @@ workflow _wCheckSRAFiles {
 
      // Ensure that paired end files are included
      Pattern illuminaPattern = Pattern.compile(params.input?.SRA?.S3?.patternIllumina);
-     samplesType.ILLUMINA | branch {
-            passed: it[FASTQ_FILES_IDX].size() >= 2 && it[FASTQ_FILES_IDX].stream().allMatch { sraFile -> illuminaPattern.matcher(sraFile).matches() }
+     samplesType.ILLUMINA | view | branch {
+            passed: it[FASTQ_FILES_IDX].size() >= 2 && it[FASTQ_FILES_IDX].stream().allMatch { sraFile -> illuminaPattern.matcher(sraFile.normalize().toString()).matches() }
                     return it
             other: true
                     return it
@@ -193,7 +193,7 @@ workflow _wCheckSRAFiles {
 
      // Ignore _3.fastq.gz files 
      sraFilesIllumina.passed | map({ sample ->  [sample[SAMPLE_IDX], sample[INSTRUMENT_IDX], \
-	sample[FASTQ_FILES_IDX].findAll { sraFile -> illuminaPattern.matcher(sraFile).matches() } ].flatten()} ) \
+	sample[FASTQ_FILES_IDX].findAll { sraFile -> illuminaPattern.matcher(sraFile.normalize().toString()).matches() } ].flatten()} ) \
 
      //Set map entries
      | map({ sample -> [SAMPLE:sample[SAMPLE_IDX], TYPE:sample[INSTRUMENT_IDX], READS1:sample[FASTQ_LEFT_IDX], READS2:sample[FASTQ_RIGHT_IDX]]}) \

@@ -64,8 +64,8 @@ workflow wSRATable {
    } | set { input }
      
    input.ILLUMINA | map { sample ->  [ sample.SAMPLE, sample.TYPE, sample.READS1, sample.READS2 ] } \
-	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tREADS1\tREADS2"){ it -> [ "samplesILLUMINA", it[INSTRUMENT_IDX] \
-        + "\t" + it[SAMPLE_IDX] \
+	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tREADS1\tREADS2"){ it -> [ "samplesILLUMINA", it[SAMPLE_IDX] \
+        + "\t" + it[INSTRUMENT_IDX] \
 	+ "\t" + it[FASTQ_FILE_LEFT_IDX].toString() \
 	+ "\t" + it[FASTQ_FILE_RIGHT_IDX].toString()] } \
 	| view({ it -> it.text })
