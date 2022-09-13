@@ -59,13 +59,20 @@ process pMMseqs2 {
       tuple val(sample), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
-      tuple val("${dbType}"), val("${sample}"), path("${sample}.${dbType}.blast.tsv"), emit: blast
+      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.blast.tsv"), emit: blast
       tuple val("${sample}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
    shell:
+   // Check if input comprises of binned or unbinned fasta files and label them again.
+   // If not labeled, they would override each other.
+   binType = '';
+   binType = fasta[0].getName().contains('notBinned') ? 'notBinned' : binType;
+   binType = fasta[0].getName().contains('bin') ? 'bin' : binType;
+    // A warning to notice if bin naming is changed at some point in time.
+   if (!fasta[0].getName().contains('notBinned') && !fasta[0].getName().contains('bin'))
+   {println("WARNING: No BIN type discovered. Multiple type files will override each other.")};
    '''
-
    mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part
    if [ -z "!{EXTRACTED_DB}" ] 
@@ -101,12 +108,12 @@ process pMMseqs2 {
     mkdir tmp
     # Only mmseqs2 databases can be used for every kind of search. Inputs have to be converted first.
     mmseqs createdb !{fasta} queryDB
-    # Load all indices into memory
+    # Load all indices into memory to increase searching speed
     mmseqs touchdb --threads !{task.cpus} queryDB
     mmseqs touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
-    mmseqs search queryDB ${MMSEQS2_DATABASE_DIR} !{sample}.!{dbType}.results.database tmp !{parameters} --threads !{task.cpus}
+    mmseqs search queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database tmp !{parameters} --threads !{task.cpus}
     # mmseqs2 searches produce output databases. These have to be converted to a more useful format. The blast -outfmt 6 in this case.
-    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{sample}.!{dbType}.results.database !{sample}.!{dbType}.blast.tsv --threads !{task.cpus}
+    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database !{sample}_!{binType}.!{dbType}.blast.tsv --threads !{task.cpus}
    '''
 }
 
@@ -138,17 +145,25 @@ process pMMseqs2_taxonomy {
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy")
 
    input:
-      tuple val(sample), val(binID), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
+      tuple val(sample), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
-      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.taxonomy.tsv"), emit: taxonomy
-      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.krakenStyleTaxonomy.out"), emit: krakenStyleTaxonomy
-      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.krona.html"), emit: kronaHtml
+      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.taxonomy.tsv"), emit: taxonomy
+      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.krakenStyleTaxonomy.out"), emit: krakenStyleTaxonomy
+      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.krona.html"), emit: kronaHtml
       tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
 
    shell:
+   // Check if input comprises of binned or unbinned fasta files and label them again.
+   // If not labeled, they would override each other.
+   binType = '';
+   binType = fasta[0].getName().contains('notBinned') ? 'notBinned' : binType;
+   binType = fasta[0].getName().contains('bin') ? 'bin' : binType;
+    // A warning to notice if bin naming is changed at some point in time.
+   if (!fasta[0].getName().contains('notBinned') && !fasta[0].getName().contains('bin'))
+   {println("WARNING: No BIN type discovered. Multiple type files will override each other.")};
    '''
    mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part
@@ -185,14 +200,15 @@ process pMMseqs2_taxonomy {
     mkdir tmp
     # Only mmseqs2 databases can be used for every kind of search. Inputs have to be converted first.
     mmseqs createdb !{fasta} queryDB
-    # Load all indices into memory
+    # Load all indices into memory to increase searching speed
     mmseqs touchdb --threads !{task.cpus} queryDB
     mmseqs touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
-    mmseqs taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.taxresults.database tmp !{parameters} --threads !{task.cpus}
+    # Define taxonomies
+    mmseqs taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database tmp !{parameters} --threads !{task.cpus}
     # mmseqs2 searches produce output databases. These have to be converted to more useful formats.
-    mmseqs createtsv queryDB !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.taxonomy.tsv --threads !{task.cpus}
-    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.krakenStyleTaxonomy.out
-    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.krona.html --report-mode 1
+    mmseqs createtsv queryDB !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.taxonomy.tsv --threads !{task.cpus}
+    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.krakenStyleTaxonomy.out
+    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.krona.html --report-mode 1
    '''
 }
 
@@ -588,10 +604,9 @@ workflow _wAnnotation {
       })
 
       // Run all amino acid outputs against all databases
-
-      pProkka.out.faa | map{ [it[0], it[2]] }| groupTuple() | combine(Channel.from(selectedDBs)) | view()
-      // pProkka.out.faa | combine(Channel.from(selectedDBs)) | pMMseqs2
-      pProkka.out.faa | combine(Channel.from(selectedTaxDBs)) | pMMseqs2_taxonomy
+      // Collect by sample name to bundle searches and avoid calls with small input files
+      pProkka.out.faa | map{ [it[0], it[2]] }| groupTuple() | combine(Channel.from(selectedDBs)) | pMMseqs2
+      pProkka.out.faa | map{ [it[0], it[2]] }| groupTuple() | combine(Channel.from(selectedTaxDBs)) | pMMseqs2_taxonomy
       DB_TYPE_IDX = 0
       pMMseqs2.out.blast | filter({ result -> result[DB_TYPE_IDX] == "kegg" }) \
 	| map({ result -> result.remove(0); result }) \
