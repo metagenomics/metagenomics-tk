@@ -30,7 +30,8 @@ def constructParametersObject(String tool){
 /**
 *
 * MMseqs2 is used to search for big input queries in large databases. 
-* Multiple databases can be searched at the same time.
+* Multiple databases can be searched at the same time. Parts of the query and search database are loaded into the RAM.
+# Huge databases along with to little RAM could lead to errors.
 * Outputs will be saved in separate directories.
 *
 **/
@@ -59,8 +60,8 @@ process pMMseqs2 {
       tuple val(sample), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
-      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.blast.tsv"), emit: blast
-      tuple val("${sample}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+      tuple val("${dbType}"), val("${sample}"), val("${binType}"), path("${sample}_${binType}.${dbType}.blast.tsv"), emit: blast
+      tuple val("${sample}_${binType}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
    shell:
@@ -120,7 +121,8 @@ process pMMseqs2 {
 /**
 *
 * The MMseqs2 module taxonomy calls an internal module lca that implements an lowest common ancestor assignment for sequences by querying them against a seqTaxDB.
-* Multiple databases can be searched at the same time.
+* Multiple databases can be searched at the same time. Parts of the query and search database are loaded into the RAM.
+# Huge databases along with to little RAM could lead to errors.
 * Outputs will be saved in separate directories.
 *
 **/
@@ -151,7 +153,7 @@ process pMMseqs2_taxonomy {
       tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.taxonomy.tsv"), emit: taxonomy
       tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.krakenStyleTaxonomy.out"), emit: krakenStyleTaxonomy
       tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.krona.html"), emit: kronaHtml
-      tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+      tuple val("${sample}_${binType}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
 
@@ -353,11 +355,11 @@ process pKEGGFromBlast {
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("keggFromBlast")
 
    input:
-      tuple val(sample), val(binID), file(blast_result)
+      tuple val(sample), val(binType), file(blast_result)
 
    output:
-      tuple val("${sample}"), path("${sample}_${binID}_kegg.tsv"), emit: kegg_blast
-      tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+      tuple val("${sample}"), path("${sample}_${binType}_kegg.tsv"), emit: kegg_blast
+      tuple val("${sample}_${binType}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
    shell:
@@ -390,7 +392,9 @@ process pKEGGFromBlast {
       else
          KEGG_DB="!{EXTRACTED_DB}"
       fi
-      blast2kegg.py !{blast_result} ${KEGG_DB} !{sample}_!{binID}_kegg.tsv
+      # Failsafe if run with an empty input file.
+      echo "No results" > !{sample}_!{binType}_kegg.tsv
+      blast2kegg.py !{blast_result} ${KEGG_DB} !{sample}_!{binType}_kegg.tsv
       '''
 }
 
