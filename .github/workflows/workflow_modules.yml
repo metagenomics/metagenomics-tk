@@ -59,7 +59,7 @@ jobs:
 
 
   full_pipeline_ont:
-    timeout-minutes: 700
+    timeout-minutes: 2500
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
