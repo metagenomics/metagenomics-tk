@@ -1,5 +1,7 @@
 # Read Mapping
 
+**Note:** This module only support illumina data. 
+
 ## Input
 
 === "Command"

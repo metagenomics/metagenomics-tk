@@ -130,7 +130,7 @@ workflow wFileReadMappingBwa {
        | splitCsv(sep: '\t', header: true)\
        | map { it -> [it.SAMPLE, it.READS] } | set {samples}
 
-     _wReadMappingBwa(samples, Channel.empty(), genomesList)
+     _wReadMappingBwa(Channel.empty(), Channel.empty(), samples, Channel.empty(), genomesList)
    emit:
      trimmedMean = _wReadMappingBwa.out.trimmedMean
 }
