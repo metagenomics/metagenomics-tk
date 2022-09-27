@@ -607,10 +607,12 @@ workflow _wAnnotation {
              it.value.database?.download?.s5cmd?.params ?: "" ]
       })
 
+      SAMPLE_IDX=0
+      PATH_IDX=2
       // Run all amino acid outputs against all databases
       // Collect by sample name to bundle searches and avoid calls with small input files
-      pProkka.out.faa | map{ [it[0], it[2]] }| groupTuple() | combine(Channel.from(selectedDBs)) | pMMseqs2
-      pProkka.out.faa | map{ [it[0], it[2]] }| groupTuple() | combine(Channel.from(selectedTaxDBs)) | pMMseqs2_taxonomy
+      pProkka.out.faa | map{ [it[SAMPLE_IDX], it[PATH_IDX]] }| groupTuple() | combine(Channel.from(selectedDBs)) | pMMseqs2
+      pProkka.out.faa | map{ [it[SAMPLE_IDX], it[PATH_IDX]] }| groupTuple() | combine(Channel.from(selectedTaxDBs)) | pMMseqs2_taxonomy
       DB_TYPE_IDX = 0
       pMMseqs2.out.blast | filter({ result -> result[DB_TYPE_IDX] == "kegg" }) \
 	| map({ result -> result.remove(0); result }) \
@@ -621,7 +623,6 @@ workflow _wAnnotation {
       pKEGGFromBlast(mmseqs2Results)
 
       // Compute gene coverage based on contig coverage
-      SAMPLE_IDX=0
       contigCoverage | combine(pProkka.out.ffn, by: SAMPLE_IDX) | pGeneCoverage
 
       pProkka.out.logs | mix(pMMseqs2.out.logs) \
