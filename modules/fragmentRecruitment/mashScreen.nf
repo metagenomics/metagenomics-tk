@@ -94,6 +94,8 @@ workflow wMashScreenFile {
      	Channel.from(file(params.steps.fragmentRecruitment.mashScreen.samples.single)) | splitCsv(sep: '\t', header: true) \
              | map { line -> [ line.SAMPLE, file(line.READS)]} | set { singleReads  }
      }
+
+     ontReads = Channel.empty()
      if(params.steps.fragmentRecruitment.containsKey("mashScreen") && params.steps.fragmentRecruitment.mashScreen.samples.containsKey("ont")){
      	Channel.from(file(params.steps.fragmentRecruitment.mashScreen.samples.ont)) | splitCsv(sep: '\t', header: true) \
              | map { line -> [ line.SAMPLE, file(line.READS)]} | set { ontReads  }
