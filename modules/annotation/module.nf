@@ -378,9 +378,6 @@ process pKEGGFromBlast {
       else
          KEGG_DB="!{EXTRACTED_DB}"
       fi
-      # Failsafe if run with an empty input file.
-      echo "No results" > !{sample}_!{binType}_kegg.tsv
-      blast2kegg.py !{blast_result} ${KEGG_DB} !{sample}_!{binType}_kegg.tsv
       '''
 }
 
