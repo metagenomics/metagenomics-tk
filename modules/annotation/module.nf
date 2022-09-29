@@ -57,6 +57,7 @@ process pMMseqs2 {
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2")
 
    input:
+      val(binType)
       tuple val(sample), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
@@ -65,14 +66,6 @@ process pMMseqs2 {
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
    shell:
-   // Check if input comprises of binned or unbinned fasta files and label them again.
-   // If not labeled, they would override each other.
-   binType = '';
-   binType = fasta[0].getName().contains('notBinned') ? 'notBinned' : binType;
-   binType = fasta[0].getName().contains('bin') ? 'bin' : binType;
-    // A warning to notice if bin naming is changed at some point in time.
-   if (!fasta[0].getName().contains('notBinned') && !fasta[0].getName().contains('bin'))
-   {println("WARNING: No BIN type discovered. Multiple type files will override each other.")};
    '''
    mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part
@@ -147,6 +140,7 @@ process pMMseqs2_taxonomy {
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy")
 
    input:
+      val(binType)
       tuple val(sample), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
@@ -158,14 +152,6 @@ process pMMseqs2_taxonomy {
 
 
    shell:
-   // Check if input comprises of binned or unbinned fasta files and label them again.
-   // If not labeled, they would override each other.
-   binType = '';
-   binType = fasta[0].getName().contains('notBinned') ? 'notBinned' : binType;
-   binType = fasta[0].getName().contains('bin') ? 'bin' : binType;
-    // A warning to notice if bin naming is changed at some point in time.
-   if (!fasta[0].getName().contains('notBinned') && !fasta[0].getName().contains('bin'))
-   {println("WARNING: No BIN type discovered. Multiple type files will override each other.")};
    '''
    mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part
@@ -557,6 +543,7 @@ workflow wAnnotateFile {
 **/
 workflow wAnnotateList {
    take:
+      sourceChannel
       prodigalMode
       fasta
       gtdb
@@ -564,7 +551,7 @@ workflow wAnnotateList {
    main:
       annotationTmpDir = params.tempdir + "/annotation"
       file(annotationTmpDir).mkdirs()
-      _wAnnotation(prodigalMode, fasta, gtdb, contigCoverage)
+      _wAnnotation(sourceChannel, prodigalMode, fasta, gtdb, contigCoverage)
     emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }
@@ -581,6 +568,7 @@ workflow wAnnotateList {
 **/ 
 workflow _wAnnotation {
    take:
+      sourceChannel
       prodigalMode
       fasta
       gtdb
@@ -611,8 +599,10 @@ workflow _wAnnotation {
       PATH_IDX=2
       // Run all amino acid outputs against all databases
       // Collect by sample name to bundle searches and avoid calls with small input files
-      pProkka.out.faa | map{ [it[SAMPLE_IDX], it[PATH_IDX]] }| groupTuple() | combine(Channel.from(selectedDBs)) | pMMseqs2
-      pProkka.out.faa | map{ [it[SAMPLE_IDX], it[PATH_IDX]] }| groupTuple() | combine(Channel.from(selectedTaxDBs)) | pMMseqs2_taxonomy
+      combinedMMseqs = pProkka.out.faa | map{ [it[SAMPLE_IDX], it[PATH_IDX]] }| groupTuple() | combine(Channel.from(selectedDBs))
+      pMMseqs2(sourceChannel, combinedMMseqs)
+      combinedMMseqsTax = pProkka.out.faa | map{ [it[SAMPLE_IDX], it[PATH_IDX]] }| groupTuple() | combine(Channel.from(selectedTaxDBs))
+      pMMseqs2_taxonomy(sourceChannel, combinedMMseqsTax)
       DB_TYPE_IDX = 0
       pMMseqs2.out.blast | filter({ result -> result[DB_TYPE_IDX] == "kegg" }) \
 	| map({ result -> result.remove(0); result }) \
