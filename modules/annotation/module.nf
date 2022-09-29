@@ -23,7 +23,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 * See “/lib/Utils.groovy” for more information.
 **/
 def constructParametersObject(String tool){ 
-  return params?.steps?.annotation?."$tool".findAll().collect{ Utils.getDockerMountMMseqs(it.value?.database, params)}.join(" ")
+  return params?.steps?.annotation?."$tool".findAll().collect{ Utils.getDockerMount(it.value?.database, params, 'true')}.join(" ")
 }
 
 
