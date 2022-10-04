@@ -344,7 +344,7 @@ process pKEGGFromBlast {
       tuple val(sample), val(binType), file(blast_result)
 
    output:
-      tuple val("${sample}"), path("${sample}_${binType}_kegg.tsv"), emit: kegg_blast
+      tuple val("${sample}"), path("${sample}_${binType}_keggPaths.tsv"), emit: kegg_paths
       tuple val("${sample}_${binType}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -378,6 +378,7 @@ process pKEGGFromBlast {
       else
          KEGG_DB="!{EXTRACTED_DB}"
       fi
+      blast2kegg.py !{blast_result} ${KEGG_DB} !{sample}_!{binType}_keggPaths.tsv
       '''
 }
 
@@ -617,7 +618,7 @@ workflow _wAnnotation {
 	| mix(pResistanceGeneIdentifier.out.logs) \
 	| mix(pKEGGFromBlast.out.logs) | pDumpLogs
    emit:
-      keggAnnotation = pKEGGFromBlast.out.kegg_blast
+      keggAnnotation = pKEGGFromBlast.out.kegg_paths
       mmseqs2_kronaHtml = pMMseqs2_taxonomy.out.kronaHtml
       mmseqs2_krakenTaxonomy = pMMseqs2_taxonomy.out.krakenStyleTaxonomy
       mmseqs2_taxonomy = pMMseqs2_taxonomy.out.taxonomy
