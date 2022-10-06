@@ -20,7 +20,7 @@ steps:
       filterString: "Uncertain - plasmid or chromosomal|Plasmid"
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/pfam.hmm.gz
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/pfam-A_35.0.hmm.gz
           md5sum: c80b75bd48ec41760bbca19c70616e36
       additionalParams: " --thr 7 "
     MobTyper:
@@ -29,13 +29,13 @@ steps:
       additionalParams: " --min_length 9000  "
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_suite.tar.gz
-          md5sum: ed67193666c95738123e696f40df6172
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20220929.gz
+          md5sum: 21fcaf9c3754a985d1d6875939d71e28
     Platon:
       filter: false
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/platon.tar.gz
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/platon_20220929.tar.gz
           md5sum: f6d1701704396182c6c9daca053eb9d6
       additionalParams: "   "
     PlasClass:
@@ -49,8 +49,8 @@ steps:
       sharedKmerThreshold: 30
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip
-          md5sum: 52c65f4f1e8024a78743ac0972395c56
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20220929.tar.bz2
+          md5sum: 13c1078e6cd6a46e3f508c24ca07cc18
       additionalParams:
         mashSketch: " -S 42 -k 21 -s 1000 "
         mashDist: " -v 0.2 -d 0.2 "
