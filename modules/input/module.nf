@@ -71,6 +71,38 @@ process pGetMetadata {
    
 }
 
+process pGetSRAIDs {
+
+    label 'tiny'
+
+    container "${params.pysradb_image}"
+
+    errorStrategy 'retry'
+    
+    when:
+    params?.input.containsKey("SRA")
+
+    input:
+    val(sraid)
+
+    output:
+    path("output.tsv"), optional: true, emit: sraRunIDs
+    env(NOT_FOUND_ID), optional: true, emit: notFoundID
+
+    shell:
+    '''
+    pysradb metadata !{sraid} --saveto unfiltered_output.tsv
+    TAB=`echo -e "\t"`
+    cut -f 1,20 unfiltered_output.tsv | grep -e "$(printf '\t')!{sraid}$" -e "^!{sraid}$(printf '\t')" \
+	| sed -r '/^\s*$/d'  > containsIDTest.txt
+    if [ -s containsIDTest.txt ]; then
+    	cut -f 17,20 unfiltered_output.tsv > output.tsv  
+    else 
+        NOT_FOUND_ID=!{sraid}
+	echo "No result for ID !{sraid} found.";
+    fi
+    '''
+}
 
 
 
@@ -112,7 +144,11 @@ workflow _wSRAS3 {
            idsFromPath | set { files }
          }
 
-         files | splitCsv(sep: "\t", header: true) | map { it -> it.RUN_ID} | flatten | unique  \
+         files | splitCsv(sep: "\t", header: true) | map { it -> it.ACCESSION} | flatten | unique \
+	       | pGetSRAIDs 
+
+         pGetSRAIDs.out.sraRunIDs | splitCsv(sep: "\t", header: true) \
+	        | map { sample -> sample.run_accession }  | unique \
 		| branch {
                    passed: it.length() <= MAX_LENGTH && it.length() >= MIN_LENGTH
                            return it
@@ -130,12 +166,13 @@ workflow _wSRAS3 {
           fastqs = _wCheckSRAFiles.out.passedSamples
           failedSRAFastqFiles = _wCheckSRAFiles.out.failedSRAIDs
           incorrectAccessions = filteredIDs.failed
+          notFoundAccessions = pGetSRAIDs.out.notFoundID
 }
 
 
 /*
 *
-* Method to parse a tsv file containing a column with an RUN_ID header.
+* Method to parse a tsv file containing a column with an ACCESSION header.
 * Input: Path to a TSV file
 * Output: List of SRA run ids
 *
@@ -151,7 +188,7 @@ def fetchRunAccessions( tsv ) {
     Map<String, String> row
 
     while( row = splitter.fetchRecord( reader ) ) {
-       runAccessions.add( row['RUN_ID'] )
+       runAccessions.add( row['ACCESSION'] )
     }
     return runAccessions
 }
@@ -169,23 +206,25 @@ workflow _wCheckSRAFiles {
      ONT_FASTQ_FILE_IDX =2
 
      samples | map({sample -> sample[SAMPLE_IDX]}) | pGetMetadata \
-     | combine(samples, by: SAMPLE_IDX) | branch {
+        | combine(samples, by: SAMPLE_IDX) | branch {
          ONT: it[INSTRUMENT_IDX]=="OXFORD_NANOPORE"
          ILLUMINA: it[INSTRUMENT_IDX]=="ILLUMINA"
      } | set { samplesType }
 
      // Ensure that paired end files are included
-     Pattern illuminaPattern = Pattern.compile(params.input?.SRA?.S3?.patternIllumina);
-     samplesType.ILLUMINA | view | branch {
-            passed: it[FASTQ_FILES_IDX].size() >= 2 && it[FASTQ_FILES_IDX].stream().allMatch { sraFile -> illuminaPattern.matcher(sraFile.normalize().toString()).matches() }
+       Pattern illuminaPattern = Pattern.compile(params.input?.SRA?.pattern.illumina);
+       samplesType.ILLUMINA | branch {
+            passed: it[FASTQ_FILES_IDX].size() >= 2 \
+			&& it[FASTQ_FILES_IDX].stream().filter({ sraFile -> illuminaPattern.matcher(sraFile.normalize().toString()).matches() }).count() >= 2
                     return it
             other: true
                     return it
      } | set { sraFilesIllumina  }
 
-     Pattern ontPattern = Pattern.compile(params.input?.SRA?.S3?.patternONT);
+     Pattern ontPattern = Pattern.compile(params.input?.SRA?.pattern.ont);
      samplesType.ONT | branch {
-            passed: it[FASTQ_FILES_IDX].size() >= 1 && it[FASTQ_FILES_IDX].stream().allMatch { sraFile -> ontPattern.matcher(sraFile).matches() }
+            passed: it[FASTQ_FILES_IDX].size() >= 1 \
+			&& it[FASTQ_FILES_IDX].stream().anyMatch { sraFile -> ontPattern.matcher(sraFile.toString()).matches() }
                     return it
             other: true
                     return it
@@ -201,7 +240,7 @@ workflow _wCheckSRAFiles {
 
       // Ignore _3.fastq.gz and _2.fastq.gz files 
       sraFilesOnt.passed | map({ sample ->  [sample[SAMPLE_IDX], sample[INSTRUMENT_IDX], \
-	sample[FASTQ_FILES_IDX].findAll { sraFile -> ontPattern.matcher(sraFile).matches() } ].flatten()} ) \
+	sample[FASTQ_FILES_IDX].findAll { sraFile -> ontPattern.matcher(sraFile.toString()).matches() } ].flatten()} ) \
 
      //Set map entries
      | map({ sample -> [SAMPLE:sample[SAMPLE_IDX], TYPE:sample[INSTRUMENT_IDX], READS:sample[ONT_FASTQ_FILE_IDX]]}) \
@@ -211,10 +250,6 @@ workflow _wCheckSRAFiles {
      
      // Return ids of samples without two fastq files
      sraFilesIllumina.other | mix(sraFilesOnt.other) | map { it -> it[SAMPLE_IDX] } | set { failedSRAIDs }
-
-     // report failed SRA ids
-     failedSRAIDs \
-     | view { id -> "The following sample does not have two fastq files that match the user provided SRA file pattern." }
 
     emit:
       passedSamples = fastqs
@@ -242,36 +277,35 @@ workflow _wOntReads {
          fastqs
 }
 
-
-
 workflow _wSRANCBI {
        main:
          MAX_LENGTH=12
          MIN_LENGTH=9
-          
+
          // Parse TSV file to get access numbers
          accessions = fetchRunAccessions(params.input.SRA.NCBI.path)
 
-         // check that SRA IDs have the correct length
-         accessionsFiltered = accessions.findAll{ id -> id.length() <= MAX_LENGTH && id.length() >= MIN_LENGTH }
-
-         // get SRA IDs with incorrect length
-         incorrectAccessions = Channel.from(accessions.findAll{ id -> id.length() > MAX_LENGTH || id.length() < MIN_LENGTH })
-
          // check if the number of SRA files is correct and return the correct format 
-         Channel.fromSRA(accessionsFiltered.unique()) | _wCheckSRAFiles
+         ACCESSION_ID = 0
+         FASTQ_LIST = 1 
+         Channel.fromSRA(accessions.unique()) | set { foundSRAFiles }
+         foundSRAFiles | map { f -> [f[ACCESSION_ID],  Utils.asList(f[FASTQ_LIST])] } | _wCheckSRAFiles 
+         Channel.from(accessions) \
+		| combine(foundSRAFiles | map { sample -> sample[ACCESSION_ID]} | toList() | toList()) \
+  		| filter({ id,idList -> !idList.contains(id) }) | map{ id -> id[ACCESSION_ID] } \
+		| set { notFoundAccessions }
 
        emit:
          fastqs = _wCheckSRAFiles.out.passedSamples
          failedSRAFastqFiles = _wCheckSRAFiles.out.failedSRAIDs
-         incorrectAccessions = incorrectAccessions
+         notFoundAccessions = notFoundAccessions
 }
 
 
 /*
  *  The input modules defined three input sources: SRA NCBI, generic SRA S3 source that contains a column consisting of SRA IDs 
  *  and a generic source that allows to consume a file containing local path, https or S3 links of paired end or nanopore reads.
- *  SRA NCBI and generic SRA S3 source must contain a column with `RUN_ID` column header and the file for the generic source 
+ *  SRA NCBI and generic SRA S3 source must contain a column with `ACCESSION` column header and the file for the generic source 
  *  must contain the columns headers `SAMPLE`, `READS1` and `READS2` for paired end and `SAMPLE` and `READS` for nanopore data.
  * 
  *  In all cases a channel is returned containing values of the format: [TYPE: illumina or ont, SAMPLE:name of the sample, READS1: left read, READS2: right read],
@@ -290,41 +324,48 @@ workflow wInputFile {
         datasetsS3FailedSRAFastqFiles = Channel.empty()
         datasetsNCBIIncorrectAccessions = Channel.empty()
         datasetsNCBIFailedSRAFastqFiles = Channel.empty()
+        datasetsS3notFoundAccessions = Channel.empty()
+        datasetsNCBInotFoundAccessions = Channel.empty()
 
         if("S3" in SRA_MODE){
            _wSRAS3() | set { datasetsS3 }
            datasetsS3.fastqs | set { datasetsS3Fastqs }
            datasetsS3.incorrectAccessions | set { datasetsS3IncorrectAccessions }
            datasetsS3.failedSRAFastqFiles | set { datasetsS3FailedSRAFastqFiles }
+           datasetsS3.notFoundAccessions | set { datasetsS3notFoundAccessions }
         } 
 
         if ("NCBI" in SRA_MODE){
            _wSRANCBI() | set { datasetsNCBI }
            datasetsNCBI.fastqs | set { datasetsNCBIFastqs }
-           datasetsNCBI.incorrectAccessions | set { datasetsNCBIIncorrectAccessions }
            datasetsNCBI.failedSRAFastqFiles | set { datasetsNCBIFailedSRAFastqFiles }
+           datasetsNCBI.notFoundAccessions | set { datasetsNCBInotFoundAccessions }
         }
 
         datasetsS3Fastqs | mix(datasetsNCBIFastqs) | set { sraFastqs }
 
         fastqs | mix(sraFastqs) | set { fastqs }
 
-
-        datasetsS3IncorrectAccessions | mix(datasetsNCBIIncorrectAccessions) | set {incorrectAccessions}
+        datasetsS3IncorrectAccessions | set {incorrectAccessions}
 
         datasetsS3FailedSRAFastqFiles | mix(datasetsNCBIFailedSRAFastqFiles) | set {failedSRAFastqFiles}
 
+	datasetsNCBInotFoundAccessions | mix(datasetsS3notFoundAccessions) | set {notFoundFiles}
+
         incorrectAccessions \
-         | collectFile(newLine: true, seed: "RUN_ID", name: 'incorrectAccessions.tsv', storeDir: params.logDir)
+         | collectFile(newLine: true, seed: "ACCESSION", name: 'incorrectAccessions.tsv', storeDir: params.logDir)
 
         incorrectAccessions \
          | view { id -> "WARNING: The length of the ID $id is not between 9 and 12 characters and therefore will be skipped" }
 
         failedSRAFastqFiles \
-         | collectFile(newLine: true, seed: "RUN_ID", name: 'accessionsMissingFiles.tsv', storeDir: params.logDir)
+         | collectFile(newLine: true, seed: "ACCESSIN", name: 'accessionsMissingFiles.tsv', storeDir: params.logDir)
 
         failedSRAFastqFiles \
-         | view { id -> "WARNING: The SRA ID $id does not provide paired end reads and therefore will be skipped" }
+         | view { id -> "WARNING: The SRA ID $id does neither provide illumina nor nanopore reads according to the specified pattern and therefore will be skipped" }
+
+        notFoundFiles \
+         | view { id -> "WARNING: The following ids could not be found: " + id }
 
     }
 

@@ -76,18 +76,18 @@ The toolkit is able to fetch fastq files based on SRA run accession ids from NCB
 ```
 input:
   SRA:
+    pattern:
+      ont: ".+[^(_1|_2)].+$"
+      illumina: ".+(_1|_2).+$"
     S3:
       path: test_data/SRA/samples.tsv 
       bucket: "s3://ftp.era.ebi.ac.uk" 
       prefix: "/vol1/fastq/"
       watch: false
-      patternONT: ".+[^(_1|_2)].+$"
-      patternIllumina: ".+(_1|_2).+$"
-
 ```
 
 where:
-  * `path` is the path to a file containing a column with `RUN_ID` as header.
+  * `path` is the path to a file containing a column with `ACCESSION` as header. The `ACCESSION` column contains either SRA run or study accessions.
 
   * `bucket` is the S3 Bucket hosting the data.
 
@@ -106,6 +106,9 @@ With the following mode SRA datasets can directly be fetched from SRA.
 ```
 input:
   SRA:
+    pattern:
+      ont: ".+[^(_1|_2)].+$"
+      illumina: ".+(_1|_2).+$"
     NCBI:
       path: test_data/SRA/samples.tsv
 ```
