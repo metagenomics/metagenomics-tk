@@ -1,7 +1,7 @@
 nextflow.enable.dsl=2
 
 include { pDumpLogs } from '../utils/processes'
-include { pCovermContigsCoverage; pBowtie2} from '../binning/processes'
+include { pCovermContigsCoverage; pBowtie2; pMinimap2} from '../binning/processes'
 
 include { pPlaton as pPlatonCircular; \
           pPlaton as pPlatonLinear; \
@@ -30,7 +30,7 @@ process pSCAPP {
 
     label 'medium'
 
-    tag "$sample"
+    tag "Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "SCAPP", filename) }
 
@@ -93,17 +93,19 @@ workflow wPlasmidsPath {
 		| splitCsv(sep: '\t', header: true) \
 		| map {it -> [ it.DATASET, it.BIN_ID, it.PATH ]} | set {samplesContigs}
 
-         _wPlasmids(samplesContigs, Channel.empty(), Channel.empty())
+         _wPlasmids(samplesContigs, Channel.empty(), Channel.empty(), Channel.empty(), Channel.empty())
 }
 
 
 workflow wPlasmidsList {
      take:
        samplesContigs
-       samplesFastg
-       samplesReads
+       assemblyGraph
+       illuminaReads
+       ontReads
+       ontMedianQuality
      main:
-       _wPlasmids(samplesContigs, samplesFastg, samplesReads)
+       _wPlasmids(samplesContigs, assemblyGraph, illuminaReads, ontReads, ontMedianQuality)
     emit:
       newPlasmids = _wPlasmids.out.newPlasmids
       newPlasmidsCoverage = _wPlasmids.out.newPlasmidsCoverage
@@ -261,19 +263,22 @@ workflow _runNonPlasmidAssemblyAnalysis {
 
     emit:
       plasmids = samplesContigsPlasmids
-
 }
 
 
 workflow _runCircularAnalysis {
     take:
-       samplesFastg
-       samplesReads
+       assemblyGraph
+       illuminaReads
+       ontReads
+       ontMedianQuality
     main:
        // search for new plasmids
-       samplesFastg | pSCAPP
+       assemblyGraph | pSCAPP
+
        SAMPLE_IDX = 0
        BIN_IDX = 1
+       DO_NOT_ESTIMATE_IDENTITY = "-1"
 
        pSCAPP.out.plasmids \
 	| map { plasmids -> [plasmids[SAMPLE_IDX], "plasmid_assembly", plasmids[BIN_IDX]] } \
@@ -281,11 +286,22 @@ workflow _runCircularAnalysis {
 
        newPlasmids | (pPlasClassCircular & _wRunMobTyper & pViralVerifyPlasmidCircular & pPlatonCircular)
 
-       pBowtie2(Channel.value(params.steps.plasmid?.containsKey("SCAPP")), Channel.value([Utils.getModulePath(params.modules.plasmids), \
-	"SCAPP/readMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, false]), pSCAPP.out.plasmids | join(samplesReads))
+       pBowtie2(Channel.value(params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("SCAPP")), \
+	Channel.value([Utils.getModulePath(params.modules.plasmids), \
+	"SCAPP/readMapping/bowtie", params.steps?.plasmid?.SCAPP?.additionalParams?.bowtie, false]), pSCAPP.out.plasmids | join(illuminaReads))
+
+       pMinimap2(Channel.value(params.steps.containsKey("plasmid") && params?.steps?.plasmid.containsKey("SCAPP")), \
+	Channel.value([Utils.getModulePath(params.modules.plasmids), \
+       "SCAPP/readMapping/minimap", params.steps?.plasmid?.SCAPP?.additionalParams?.minimap, false]), \
+       pSCAPP.out.plasmids | join(ontReads))
+
+       pBowtie2.out.mappedReads \
+	| combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) \
+	| mix(pMinimap2.out.mappedReads | join(Channel.value(ontMedianQuality), by: SAMPLE_IDX)) \
+	| set { covermInput  }
 
        pCovermContigsCoverage(Channel.value(true), Channel.value([Utils.getModulePath(params?.modules?.plasmids) \
-	,"SCAPP/coverage", params?.steps?.plasmid?.SCAPP?.additionalParams?.coverm]), pBowtie2.out.mappedReads) 
+	,"SCAPP/coverage", params?.steps?.plasmid?.SCAPP?.additionalParams?.coverm]), covermInput) 
 
        // Check which tools the user has chosen for filtering contigs
        selectedFilterTools = params?.steps?.plasmid.findAll({ tool, options -> {  options instanceof Map && options?.filter } }).collect{it.key}
@@ -332,12 +348,14 @@ workflow _runCircularAnalysis {
 workflow _wPlasmids {
      take:
        samplesContigs
-       samplesFastg
-       samplesReads
+       assemblyGraph
+       illuminaReads
+       ontReads
+       ontMedianQuality
      main:
        _runNonPlasmidAssemblyAnalysis(samplesContigs)
 
-       _runCircularAnalysis(samplesFastg, samplesReads)
+       _runCircularAnalysis(assemblyGraph, illuminaReads, ontReads, ontMedianQuality)
     
        _runNonPlasmidAssemblyAnalysis.out.plasmids \
 	| mix(_runCircularAnalysis.out.plasmids) | set { allPlasmids} 

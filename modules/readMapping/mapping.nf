@@ -12,7 +12,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 process pBwaIndex {
     container "${params.bwa_image}"
     label 'large'
-    when params.steps.containsKey("readMapping")
+    when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa")
     input:
       path(representatives)
     output:
@@ -23,8 +23,38 @@ process pBwaIndex {
       """
 }
 
-process pMapBwa {
 
+process pMinimap2Index {
+    container "${params.ubuntu_image}"
+    label 'large'
+    when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("minimap2")
+    input:
+      path(representatives)
+    output:
+      path('ont.mmi')
+    shell:
+      """
+      minimap2 !{params.steps.readMapping.minimap2.additionalParams.minimap2_index} -x map-ont -d ont.mmi !{representatives}
+      """
+}
+
+
+process pMapMinimap2 {
+    label 'large'
+    container "${params.samtools_bwa_image}"
+    when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("minimap2")
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sampleID}", params.runid ,"minimap2", filename) }
+    input:
+      tuple val(sampleID), path(sample), val(mode), path(representatives_fasta), path(x, stageAs: "*") 
+    output:
+      tuple val("${sampleID}"), path("*bam"), path("*bam.bai"), emit: alignment
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+    shell:
+    template('minimap2.sh')
+}
+
+
+process pMapBwa {
     label 'large'
     container "${params.samtools_bwa_image}"
     when params.steps.containsKey("readMapping")
@@ -63,7 +93,7 @@ process pCovermCount {
     label 'small'
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
     input:
-      tuple val(sample), file(mapping), file(index), file(list_of_representatives)
+      tuple val(sample), file(mapping), file(index), file(list_of_representatives), val(medianQuality)
     output:
       tuple val("${sample}"), path("${sample}_out/mean.tsv"), emit: mean
       tuple val("${sample}"), path("${sample}_out/trimmed_mean.tsv"), emit: trimmedMean
@@ -72,6 +102,10 @@ process pCovermCount {
       tuple val("${sample}"), path("${sample}_out/tpm.tsv"), emit: tpm
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     shell:
+    DO_NOT_ESTIMATE_QUALITY = -1 
+    MEDIAN_QUALITY=Double.parseDouble(medianQuality)
+    percentIdentity = MEDIAN_QUALITY != DO_NOT_ESTIMATE_QUALITY ? \
+	" --min-read-percent-identity "+Utils.getMappingIdentityParam(MEDIAN_QUALITY) : " "
     template('coverm.sh')
 }
 
@@ -96,7 +130,7 @@ workflow wFileReadMappingBwa {
        | splitCsv(sep: '\t', header: true)\
        | map { it -> [it.SAMPLE, it.READS] } | set {samples}
 
-     _wReadMappingBwa(samples, Channel.empty(), genomesList)
+     _wReadMappingBwa(Channel.empty(), Channel.empty(), samples, Channel.empty(), genomesList)
    emit:
      trimmedMean = _wReadMappingBwa.out.trimmedMean
 }
@@ -113,11 +147,13 @@ workflow wFileReadMappingBwa {
 */
 workflow wListReadMappingBwa {
    take:
+     samplesONT
+     ontMedianQuality
      samplesPaired
      samplesSingle
      genomes
    main:
-     _wReadMappingBwa(samplesPaired, samplesSingle, genomes)
+     _wReadMappingBwa(samplesONT, ontMedianQuality, samplesPaired, samplesSingle, genomes)
    emit:
      trimmedMean = _wReadMappingBwa.out.trimmedMean
 }
@@ -125,6 +161,8 @@ workflow wListReadMappingBwa {
 
 workflow _wReadMappingBwa {
    take:
+     samplesONT
+     ontMedianQuality
      samplesPaired
      samplesSingle
      genomes
@@ -137,10 +175,12 @@ workflow _wReadMappingBwa {
      genomes | collectFile(tempDir: genomesTempDir){ item -> [ "mergedGenomes.fasta", item.text ] } \
       | set { genomesMerged }
 
-     // Create BWA index of all genomes
+     // Create BWA and Minimap index of all genomes
      BWA_INDEX_IDX=0
      GENOMES_IDX=1
      genomesMerged | pBwaIndex | set {index} 
+
+     genomesMerged | pMinimap2Index | set { ontIndex }
 
      // combine index with every sample
      index | map{ bwaIndex -> [bwaIndex]} \
@@ -155,16 +195,33 @@ workflow _wReadMappingBwa {
       | set {singleIndex}
      samplesSingle | combine(singleIndex) | set {single}
 
+     ontIndex | map{ bwaIndex -> [bwaIndex]} \
+      | combine(genomesMerged)  \
+      | map{ it -> ["ONT", it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
+      | set {ontLongReadIndex}
+     samplesONT | combine(ontLongReadIndex) | set {ont}
+
      // Paired and single reads should be mapped back
      pMapBwa(paired | mix(single))
+
+     // Map ONT data
+     pMapMinimap2(ont)
  
-     // The resulting alignments (bam files) should merged
+     // The resulting alignments (bam files) should merged if single and paired read alignments exist
      SAMPLE_NAME_IDX=0
      pMapBwa.out.alignment | groupTuple(by: SAMPLE_NAME_IDX) | pMergeAlignment
-   
-     // Map all samples against all genomes using bwa 
+
+     DO_NOT_ESTIMATE_IDENTITY = "-1"
      pMergeAlignment.out.alignmentIndex | combine(genomes | map {it -> file(it)} \
-      | toList() | map { it -> [it]}) | pCovermCount
+      | toList() | map { it -> [it]})  \
+      | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) \
+      | set { covermBWAInput }
+
+     pMapMinimap2.out.alignment | combine(genomes | map {it -> file(it)} \
+      | toList() | map { it -> [it]}) \
+      | join(ontMedianQuality, by: SAMPLE_NAME_IDX) | set { covermMinimapInput }
+
+     covermBWAInput | mix(covermMinimapInput) | pCovermCount
    emit:
      trimmedMean = pCovermCount.out.trimmedMean
 }

@@ -1,5 +1,6 @@
 # run fastp
 
+set -o pipefail
 fastp   --stdin -i <(s5cmd !{params.steps.qc.fastp.download.s5cmdParams} cat ${read1Url} 2> error1.log | zcat) \
       -I <(s5cmd !{params.steps.qc.fastp.download.s5cmdParams} cat ${read2Url} 2> error2.log | zcat) \
       -o read1.fastp.fq.gz -O read2.fastp.fq.gz -w !{task.cpus} -h !{sample}_report.html \

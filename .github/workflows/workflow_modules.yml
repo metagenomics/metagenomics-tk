@@ -53,6 +53,33 @@ jobs:
         run: |
           bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config "  ./example_params/fullPipelineSRAQC.yml "" ${PROFILE} || exit 1
 
+      - name: Test if SRA S3 Input module works with ONT data
+        run: |
+          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config "  ./example_params/fullPipelineSRAQCONT.yml "" ${PROFILE} || exit 1
+
+
+  full_pipeline_ont:
+    timeout-minutes: 2500
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Test Full Pipeline ONT Run
+        run: |
+          bash ./scripts/test_fullPipeline.sh \
+          " --databases=/vol/scratch/databases/ " \
+          ./example_params/fullPipelineONT.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
+
+      - name: Test Full Pipeline ONT and Illumina Run
+        run: |
+          bash ./scripts/test_fullPipeline.sh \
+          " --databases=/vol/scratch/databases/ " \
+          ./example_params/fullPipelineIlluminaOrONT.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
+
+      - name: Test if SRA S3 Input module works with ONT data
+        run: |
+          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config "  ./example_params/fullPipelineSRAQCONT.yml "" ${PROFILE} || exit 1
+
+
 
   mag_attributes:
     timeout-minutes: 800
@@ -133,6 +160,10 @@ jobs:
       - name: Test Metaspades Assembly
         run: |
           bash ./scripts/test_assembly.sh "" example_params/assemblyMetaspades.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+
+      - name: Test Metaflye Assembly
+        run: |
+          bash ./scripts/test_assemblyONT.sh "" example_params/assemblyONT.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
 
   cooccurrence:
     timeout-minutes: 800

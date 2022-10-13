@@ -3,19 +3,15 @@ summary: false
 output: "output"
 logDir: log
 runid: 1
+databases: "/mnt/databases"
 logLevel: 1
 scratch: "/vol/scratch"
-publishDirMode: "symlink"
 steps:
-  readMapping:
-    samples: test_data/readMapping/samples.tsv
-    mags: test_data/readMapping/mags.tsv
-    bwa:
-      additionalParams:
-        bwa_index: ""
-        bwa_mem: ""
-    coverm:
-      additionalParams: " --min-covered-fraction 0 "
+  qc:
+    input: "test_data/qc/reads_split.tsv"
+    fastp:
+       # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
+       additionalParams: "  "
 resources:
   large:
     cpus: 28
