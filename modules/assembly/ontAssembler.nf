@@ -21,6 +21,12 @@ def getMetaflyeQualityParam(medianQuality) {
    }
 }
 
+/*
+*
+* Metaflye processes long reads. Metaflye requires either --nano-raw, --nano-hq or --nano-hq and --read-error 0.03
+* as input. The optimal parameter setting will be chosen by evaluating the median phred score.
+*
+*/
 process pMetaflye {
 
     label 'large'

@@ -50,7 +50,7 @@ aws {
 
 ### Paired End Input
 
-The input can be a path to a tsv file containing sample id, path to left and right read.
+The input should be a path to a tsv file containing a sample id, as well as a path to the left and right read.
 
 Example:
 ```
@@ -71,7 +71,7 @@ input:
 
 ### Generic SRA
 
-The toolkit is able to fetch fastq files based on SRA run accession ids from NCBI or from a mirror based on S3:
+The toolkit is able to fetch fastq files based on SRA run accession ids from the NCBI or from a mirror based on S3:
 
 ```
 input:

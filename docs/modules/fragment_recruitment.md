@@ -2,7 +2,7 @@
 
 The fragment recruitment module can be used to find genomes in a set of read datasets.
 
-**Note:** This module only support illumina data. 
+**Note:** This module only supports illumina data. 
 
 ## Input
 

@@ -12,7 +12,7 @@ coverm genome -t !{task.cpus} ${additionalParams} -b !{mapping} \
 coverm genome -t !{task.cpus} ${additionalParams} -b !{mapping} \
 	--genome-fasta-list list.txt --methods count  --output-file $OUT/count.tsv  && sed -i '1 s| Read Count$||' $OUT/count.tsv || true
 coverm genome -t !{task.cpus} ${additionalParams} -b !{mapping} \
-	--genome-fasta-list  list.txt  --methods rpkm  --output-file $OUT/rpkm.tsv  && sed -i '1 s| RPKM$||' $OUT/rpkm.tsv || true
+	--genome-fasta-list list.txt  --methods rpkm  --output-file $OUT/rpkm.tsv  && sed -i '1 s| RPKM$||' $OUT/rpkm.tsv || true
 coverm genome -t !{task.cpus} ${additionalParams} -b !{mapping} \
 	--genome-fasta-list list.txt --methods tpm --output-file $OUT/tpm.tsv && sed -i '1 s| TPM$||' $OUT/tpm.tsv || true
 

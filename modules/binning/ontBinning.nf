@@ -38,7 +38,12 @@ process pGetMappingQuality {
     template 'mapping_quality.sh'
 }
 
-
+/*
+*
+* Binning Metagenomic Contigs via Composition, Coverage and Assembly Graphs. 
+* Since MetaCoag is only used for processing Metaflye assemblies, it takes Flyes assemblyInfo as input. 
+*
+*/
 process pMetaCoAG {
 
     container "${params.metacoag_image}"

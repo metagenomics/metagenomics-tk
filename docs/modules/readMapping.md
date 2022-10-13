@@ -1,6 +1,6 @@
 # Read Mapping
 
-**Note:** This module only support illumina data. 
+**Note:** This module only supports illumina data. 
 
 ## Input
 

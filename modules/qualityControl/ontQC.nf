@@ -8,6 +8,11 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
            '/' + TOOL + '/' + filename
 }
 
+/*
+* This process runs Adapter trimming (Porechop) and quality control (filtlong) in one step in order to reduce disk space consumption of the work directory.
+*  
+*
+*/
 process pPorechop {
 
     label 'medium'
@@ -34,7 +39,9 @@ process pPorechop {
     '''
 }
 
-
+/*
+* See Porechop
+*/
 process pPorechopDownload {
 
     label 'medium'
