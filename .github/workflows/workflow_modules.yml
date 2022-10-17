@@ -47,7 +47,7 @@ jobs:
 
       - name: Test if SRA S3 Entrypoint works 
         run: |
-          bash ./scripts/test_SRA.sh " -c  test_data/assets/aws.config " "" ${PROFILE} || exit 1
+          NCBI_API_KEY=${{ secrets.NCBI_API_KEY }}  bash ./scripts/test_SRA.sh " -c  test_data/assets/aws.config " "" ${PROFILE} || exit 1
 
       - name: Test if SRA S3 Input module works 
         run: |
