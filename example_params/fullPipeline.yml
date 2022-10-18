@@ -61,12 +61,17 @@ steps:
         lineage_set: " " 
         qa: "  "
   fragmentRecruitment:
-    frhit:
-      genomes: "/vol/spool/meta/test/data/bin.*.fa"
-      sort: true
-      additionalParams: 
-        frhit: " -c 95 "
-        coverm: " --min-covered-fraction 0 "
+    mashScreen:
+      genomes: test_data/fragmentRecruitment/mags.tsv
+      additionalParams:
+        mashSketch: " "
+        mashScreen: " "
+        bowtie: " "
+        coverm: "  --min-covered-fraction 5  "
+        minimap: "  "
+      mashDistCutoff: 0.95
+      coveredBasesCutoff: 0.2
+      mashHashCutoff: 800
   dereplication:
     pasolli:
       minimumCompleteness: 0
@@ -86,7 +91,8 @@ steps:
       additionalParams:
         bwa_index: ""
         bwa_mem: ""
-        coverm: " --min-covered-fraction 0 "
+    coverm:
+      additionalParams: " --min-covered-fraction 0 "
   cooccurrence:
     additionalParams: " -t 0.1 -z 80 -o 'correlation' "
   plasmid:
@@ -95,6 +101,7 @@ steps:
         SCAPP: "  "
         bowtie: "  "
         coverm: "  "
+        minimap: " "
     ViralVerifyPlasmid:
       filter: true
       filterString: "Uncertain - plasmid or chromosomal|Plasmid"

@@ -1,5 +1,4 @@
 nextflow.enable.dsl=2
-include { wUnmappedReadsFile } from '../../sampleAnalysis/module'
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.fragmentRecruitment.name + '/' + 
@@ -127,7 +126,7 @@ workflow wFragmentRecruitmentFile {
        | map { sample -> [sample.SAMPLE, file(sample.READS)] } | set {sampleReadsList}
 
      genomes | splitCsv(sep: '\t', header: true) \
-       | map { genome -> file(genome.BINS) } | set {magsList}
+       | map { genome -> file(genome.PATH) } | set {magsList}
 
      _wFragmentRecruitment(sampleReadsList, magsList)
 }

@@ -2,6 +2,9 @@ nextflow.enable.dsl=2
 
 include { pDumpLogs } from '../../utils/processes'
 
+include { pMashSketchGenome; pMashPaste } from './processes'
+
+
 def getOutput(RUNID, TOOL, filename){
     return "AGGREGATED" + '/' +  RUNID + '/' + params.modules.dereplication.name + '/' + 
          params.modules.dereplication.version.major + "." +
@@ -9,57 +12,6 @@ def getOutput(RUNID, TOOL, filename){
          params.modules.dereplication.version.patch +  
          '/' + TOOL + '/' + filename
 }
-
-
-process pMashSketchGenome {
-
-    container "${params.mash_image}"
-
-    label 'tiny'
-
-    when params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli")
-
-    input:
-    tuple path("g.fa"), val(binid)
-
-    output:
-    path("${binid}.msh"), emit: sketch
-    tuple env(GENOME_PATH), val("${binid}"), emit: stagedGenome
-    tuple val("${binid}"), val("${output}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
-	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
-
-    shell:
-    output = getOutput(params.runid, "pasolli/mash/sketch", "") 
-    '''
-    ln -s g.fa !{binid}
-    mash sketch !{params.steps.dereplication.pasolli.additionalParams.mash_sketch} !{binid} -o !{binid}.msh
-    GENOME_PATH=$(readlink -f g.fa)
-    '''
-
-}
-
-
-process pMashPaste {
-
-    container "${params.mash_image}"
-
-    label 'large'
-
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "pasolli/mash/paste", filename) }
-
-    input:
-    path sketches, stageAs: 'sketch*.msh'
-
-    output:
-    path('final_sketch.msh'), emit: sketch
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
-
-    shell:
-    '''
-    mash paste final_sketch !{sketches}
-    '''
-}
-
 
 process pMashDist {
 
@@ -405,13 +357,19 @@ workflow _wDereplicate {
      // filter genomes by contamination and completeness
      genomesTable | filter({ it.COMPLETENESS.toFloat() >= params?.steps?.dereplication?.pasolli?.minimumCompleteness }) \
        | filter({ it.CONTAMINATION.toFloat() <= params?.steps?.dereplication?.pasolli?.maximumContamination }) \
-       | map { line -> [file(line.PATH), line.BIN_ID] } | pMashSketchGenome
+       | map { line -> [line.BIN_ID, file(line.PATH)] } | set { mashSketchInput } 
+
+    pMashSketchGenome(params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli"), \
+	Channel.value(params?.steps?.dereplication?.pasolli?.additionalParams?.mash_sketch) , mashSketchInput)
 
      // concatenate (paste) multiple sketches in parallel and compute distance
-     pMashSketchGenome.out.sketch | buffer(size: defaultMashBuffer, remainder: true) \
-         | pMashPaste
+     pMashSketchGenome.out.sketch | buffer(size: defaultMashBuffer, remainder: true) | set { mashPasteInput }
 
-     pMashPaste.out.sketch | toList() | pMashDist 
+    pMashPaste(params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli"), \
+	Channel.value([Utils.getModulePath(params.modules.dereplication), "pasolli/mash/paste"]),  mashPasteInput)
+  
+     pMashPaste.out.sketch | toList() | pMashDist
+
      pMashDist.out.distance | pClusterDistances 
      pClusterDistances.out.clusters | set { clusters }
 

@@ -1,7 +1,7 @@
 shopt -s nullglob
 
 # Run metabat
-runMetaBat.sh !{params.steps.binning.metabat.additionalParams} !{contigs} !{bam}
+!{percentIdentity}  runMetaBat.sh !{metabatParams} !{contigs} !{bam}
 
 # Create temporary directory
 TEMP_DIR=$(mktemp -d -p .)

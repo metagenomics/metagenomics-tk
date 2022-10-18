@@ -23,7 +23,7 @@ process pPredictFlavor {
 
     tag "Sample: $sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "predictFlavor", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "predictFlavor", filename) }
 
     when params?.steps.containsKey("assembly") && params?.steps?.assembly.containsKey("megahit")
 
@@ -155,12 +155,12 @@ process pMetaspades {
  * Output is of the format [SAMPLE, CONTIGS] for contigs and [SAMPLE, fastg] for fastq files.
  * 
  */
-workflow wAssemblyList {
-     take:
+workflow wShortReadAssemblyList {
+    take:
        readsList
        nonpareil
        kmerFrequencies
-     main:
+    main:
        _wAssembly(readsList, nonpareil, kmerFrequencies)
     emit:
       contigs = _wAssembly.out.contigs
@@ -177,7 +177,7 @@ workflow wAssemblyList {
  * Output is of the format [SAMPLE, CONTIGS]
  * 
  */
-workflow wAssemblyFile {
+workflow wShortReadAssemblyFile {
     main:
        Channel.from(file(params.steps.assembly.input)) | splitCsv(sep: '\t', header: true) \
              | map { it -> [ it.SAMPLE, it.READS, file("NOT_SET")]} | set { reads  }

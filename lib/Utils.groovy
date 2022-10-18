@@ -72,4 +72,25 @@ class Utils {
         }
     }
   }
+  static Object[] flattenTuple(tupl){
+  	def chunkList = [];
+  	def SAMPLE_IDX = 0;
+  	def PATHS_IDX = 1;
+  	tupl[PATHS_IDX].each {
+     		chunkList.add([tupl[SAMPLE_IDX], it]);
+  	}
+  	return chunkList;
+  }
+
+  static getMappingIdentityParam(medianQuality) {
+    if(medianQuality > 17){
+      return 97
+    }
+    if(medianQuality > 13){
+      return 95
+    } else {
+      return 90
+    }
+  }
+
 }

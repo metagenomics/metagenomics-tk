@@ -48,9 +48,9 @@ aws {
 
 ## Configuration of input parameters of the full pipeline mode
 
-### Generic Input
+### Paired End Input
 
-The input can be a path to a tsv file containing sample id, path to left and right read.
+The input should be a path to a tsv file containing a sample id, as well as a path to the left and right read.
 
 Example:
 ```
@@ -59,9 +59,19 @@ input:
     path: "test_data/fullPipeline/reads_split.tsv"
 ```
 
+### Nanopore Input
+
+For Nanopore data a seperate input file should be specified.
+
+```
+input:
+  ont:
+    path: "test_data/fullPipeline/ont.tsv"
+```
+
 ### Generic SRA
 
-The toolkit is able to fetch fastq files based on SRA run accession ids from NCBI or from a mirror based on S3:
+The toolkit is able to fetch fastq files based on SRA run accession ids from the NCBI or from a mirror based on S3:
 
 ```
 input:
@@ -71,6 +81,9 @@ input:
       bucket: "s3://ftp.era.ebi.ac.uk" 
       prefix: "/vol1/fastq/"
       watch: false
+      patternONT: ".+[^(_1|_2)].+$"
+      patternIllumina: ".+(_1|_2).+$"
+
 ```
 
 where:
@@ -81,9 +94,12 @@ where:
   * `prefix` is the path to the actual SRA datasets.
 
   * `watch` if true, the file specified with the `path` attribute is watched and every time a new SRA run id is
-     appended, the pipeline is triggered. The pipeline will never finish in this mode.
+     appended, the pipeline is triggered. The pipeline will never finish in this mode. Please note that watch currently only works
+     if only one input type is specified (e.g "ont" or "paired" ...)
 
-#### NCBI SRA
+  *  `patternONT` and `patternIllumina` are patterns that are applied on the specified mirror in order to select the correct input files.
+
+### NCBI SRA
 
 With the following mode SRA datasets can directly be fetched from SRA.
 
@@ -248,3 +264,10 @@ resources:
 ```
 
 The full pipeline mode is able to predict the memory consumption of some assemblers (see assembly module section).
+
+## Fragment Recruitment for unmapped reads Configuration
+
+Reads that could not be mapped back to a MAG can be used for fragment recruitment.
+A list of genomes can be provided in the fragmentRecruitment part. 
+Matched reference genomes are included in all other parts of the remaining pipeline.
+Look out for their specific headers to differentiate results based on real assembled genomes and the reference genomes.
