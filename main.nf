@@ -71,8 +71,8 @@ workflow wSRATable {
 	| view({ it -> it.text })
 
    input.ONT | map { sample ->  [ sample.SAMPLE, sample.TYPE, sample.READS ] } \
-	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tREADS"){ it -> [ "samplesONT", it[INSTRUMENT_IDX] \
-        + "\t" + it[SAMPLE_IDX] \
+	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tREADS"){ it -> [ "samplesONT", it[SAMPLE_IDX] \
+        + "\t" + it[INSTRUMENT_IDX] \
 	+ "\t" + it[FASTQ_FILE_LEFT_IDX].toString() ]} \
 	| view({ it -> it.text })
 }

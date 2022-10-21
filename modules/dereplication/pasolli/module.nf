@@ -93,6 +93,8 @@ process pANIb {
 
     container "${params.ani_image}"
 
+    containerOptions " --entrypoint='' "
+
     when:
     params.steps.dereplication.pasolli.method.contains("ANI")
 
