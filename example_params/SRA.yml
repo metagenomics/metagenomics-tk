@@ -7,9 +7,21 @@ scratch: "/vol/scratch"
 publishDirMode: "symlink"
 input:
   SRA:
+    pattern:
+      ont: ".+[^(_1|_2)].+$"
+      illumina: ".+(_1|_2).+$"
     S3:
       path: test_data/SRA/samples.tsv 
-      bucket: "s3://ftp.era.ebi.ac.uk" 
+      bucket: "s3://meta_test" 
       prefix: "/vol1/fastq/"
       watch: false
+    NCBI:
+      path: test_data/SRA/ncbi_samples.tsv 
+  paired:
+    path: "test_data/fullPipeline/reads_split.tsv"
+    watch: false
+  ont:
+    path: "test_data/fullPipeline/ont.tsv"
+    watch: false
 steps:
+

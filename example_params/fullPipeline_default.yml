@@ -109,6 +109,7 @@ steps:
         bowtie: " --quiet --very-sensitive "
         SCAPP: "  "
         coverm: "  "
+        minimap: " "
     ViralVerifyPlasmid:
       filter: true
       # Select sequences that are labeled as uncertain or plasmid id ViralVerifies output

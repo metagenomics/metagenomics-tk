@@ -2,6 +2,8 @@
 
 The fragment recruitment module can be used to find genomes in a set of read datasets.
 
+**Note:** This module only supports illumina data. 
+
 ## Input
 
 === "Command"
@@ -15,12 +17,6 @@ The fragment recruitment module can be used to find genomes in a set of read dat
     ```YAML
     ---8<--- "../../example_params/fragmentRecruitmentMashScreen.yml"
     ``` 
-
-=== "Configuration file for fragment recruitment via frhit (deprecated)"
-
-    ```YAML
-    ---8<--- "../../example_params/fragmentRecruitment.yml"
-    ```
 
 === "Input TSV file for genomes"
 

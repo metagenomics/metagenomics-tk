@@ -68,6 +68,7 @@ steps:
         mashScreen: " "
         bowtie: " "
         coverm: "  --min-covered-fraction 5  "
+        minimap: "  "
       mashDistCutoff: 0.95
       coveredBasesCutoff: 0.2
       mashHashCutoff: 800
@@ -90,7 +91,8 @@ steps:
       additionalParams:
         bwa_index: ""
         bwa_mem: ""
-        coverm: " --min-covered-fraction 0 "
+    coverm:
+      additionalParams: " --min-covered-fraction 0 "
   cooccurrence:
     additionalParams: " -t 0.1 -z 80 -o 'correlation' "
   plasmid:
@@ -99,6 +101,7 @@ steps:
         SCAPP: "  "
         bowtie: "  "
         coverm: "  "
+        minimap: " "
     ViralVerifyPlasmid:
       filter: true
       filterString: "Uncertain - plasmid or chromosomal|Plasmid"

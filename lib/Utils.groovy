@@ -60,6 +60,15 @@ class Utils {
           module.version.patch
   }
 
+  static Collection asList(element){
+     if(element instanceof Collection){
+         return element;
+     } else {
+         return [element];
+     }
+}
+
+
   static String getPathWithoutFile(String filePath) {
     int dotIndex = filePath.lastIndexOf('/');
     return (dotIndex == -1) ? filePath : filePath.substring(0, dotIndex);
@@ -103,6 +112,17 @@ class Utils {
      		chunkList.add([tupl[SAMPLE_IDX], it]);
   	}
   	return chunkList;
+  }
+
+  static getMappingIdentityParam(medianQuality) {
+    if(medianQuality > 17){
+      return 97
+    }
+    if(medianQuality > 13){
+      return 95
+    } else {
+      return 90
+    }
   }
 
 }

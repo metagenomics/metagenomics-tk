@@ -69,7 +69,7 @@ process pMashPaste {
 
     label 'large'
 
-    publishDir params.output, saveAs: { filename -> getAggregatedOutput(params.runid, "${module}", "${outputToolDir}", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getAggregatedOutput(params.runid, "${module}", "${outputToolDir}", filename) }
 
     when:
     run

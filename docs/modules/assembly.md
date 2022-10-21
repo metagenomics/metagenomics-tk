@@ -2,10 +2,16 @@
 
 ## Input
 
-=== "Command"
+=== "Command for short read data"
 
     ```
-    -entry wAssembly -params-file example_params/assembly.yml
+    -entry wShortReadAssembly -params-file example_params/assembly.yml
+    ```
+
+=== "Command for long read data"
+
+    ```
+    -entry wOntAssembly -params-file example_params/assemblyONT.yml
     ```
 
 === "Megahit Configuration File"
@@ -20,11 +26,24 @@
     ---8<--- "../example_params/assemblyMetaspades.yml"
     ```
 
-=== "TSV Table"
+=== "MetaFlye Configuration File"
+
+    ```YAML
+    ---8<--- "../example_params/assemblyONT.yml"
+    ```
+
+=== "TSV Table Short Read"
 
     ```TSV
     ---8<--- "../test_data/assembly/samples.tsv"
     ```
+
+=== "TSV Table Nanopore"
+
+    ```TSV
+    ---8<--- "../test_data/assembly/samplesONT.tsv"
+    ```
+ 
  
 ## Output
 

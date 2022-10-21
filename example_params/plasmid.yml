@@ -15,6 +15,7 @@ steps:
         SCAPP: "  "
         bowtie: "  "
         coverm: "  "
+        minimap: "  "
     ViralVerifyPlasmid:
       filter: true
       filterString: "Uncertain - plasmid or chromosomal|Plasmid"

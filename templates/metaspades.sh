@@ -6,9 +6,10 @@ ASSEMBLY_GRAPH_OUTPUT=${METASPADES_OUTPUT_DIR}/assembly_graph.fastg
 spades.py -t !{task.cpus} --memory $(echo !{task.memory} | cut -f 1 -d ' ') --meta -o ${METASPADES_OUTPUT_DIR} --12 interleaved.fq.gz !{params.steps.assembly.metaspades.additionalParams}
 
 ASSEMBLY_GZIPPED_OUTPUT=!{sample}_contigs.fa.gz
+HEADER_MAPPING_OUTPUT=!{sample}_contigs_header_mapping.tsv
 
 # The following function modifies the assembly fasta headers according to the pattern: SAMPLEID_SEQUENCECOUNTER_SEQUENCEHASH
-transform.sh ${ASSEMBLY_OUTPUT} ${ASSEMBLY_GZIPPED_OUTPUT} !{sample} !{task.cpus}
+transform.sh ${ASSEMBLY_OUTPUT} ${ASSEMBLY_GZIPPED_OUTPUT} ${HEADER_MAPPING_OUTPUT} !{sample} !{task.cpus}
 
 # get basic contig stats 
 paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") <(seqkit stat -Ta ${ASSEMBLY_GZIPPED_OUTPUT}) > !{sample}_contigs_stats.tsv

@@ -1,6 +1,6 @@
 nextflow.enable.dsl=2
 
-include { pBowtie2; pCovermContigsCoverage; } from  '../binning/processes'
+include { pBowtie2; pMinimap2; pGetBinStatistics; } from  '../binning/processes'
 include { pMashSketchGenome; \
 	  pMashPaste as pMashPasteChunk; \
 	  pMashPaste as pMashPasteFinal; } from  '../dereplication/pasolli/processes'
@@ -22,28 +22,6 @@ def getModulePath(module){
 }
 
 
-process pGetBinStatistics {
-
-    container "${params.samtools_image}"
-
-    tag "Sample: $sample"
-
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "stats", filename) }
-
-    label 'tiny'
-
-    input:
-    tuple val(sample), path(binContigMapping), path(bam), val(binner), path(bins)
-
-    output:
-    tuple val("${sample}"), file("${sample}_contigs_depth.tsv"), optional: true, emit: contigsDepth
-    tuple val("${sample}"), file("${sample}_bins_stats.tsv"), optional: true, emit: binsStats
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-
-    shell:
-    template 'binStats.sh'
-}
-
 
 process pMashScreen {
 
@@ -51,7 +29,7 @@ process pMashScreen {
 
     tag "Sample: $sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "mashScreen",  filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "mashScreen",  filename) }
 
     container "${params.mash_image}"
 
@@ -78,7 +56,7 @@ process pGenomeContigMapping {
 
     label 'tiny'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "stats", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "stats", filename) }
 
     input:
     tuple val(sample), path(genomes)
@@ -117,7 +95,13 @@ workflow wMashScreenFile {
              | map { line -> [ line.SAMPLE, file(line.READS)]} | set { singleReads  }
      }
 
-     _wMashScreen(pairedReads, singleReads)
+     ontReads = Channel.empty()
+     if(params.steps.fragmentRecruitment.containsKey("mashScreen") && params.steps.fragmentRecruitment.mashScreen.samples.containsKey("ont")){
+     	Channel.from(file(params.steps.fragmentRecruitment.mashScreen.samples.ont)) | splitCsv(sep: '\t', header: true) \
+             | map { line -> [ line.SAMPLE, file(line.READS)]} | set { ontReads  }
+     }
+
+     _wMashScreen(pairedReads, singleReads, ontReads, Channel.empty())
 }
 
 
@@ -131,8 +115,10 @@ workflow wMashScreenFile {
 workflow wMashScreenList {
    take:
       pairedReads   
+      ontReads
+      medianQuality
    main:
-     _wMashScreen(pairedReads, Channel.empty())
+     _wMashScreen(pairedReads, Channel.empty(), ontReads, medianQuality)
    emit:
      genomes = _wMashScreen.out.genomes
      genomesSeperated = _wMashScreen.out.genomesSeperated
@@ -146,10 +132,10 @@ process pCovermCount {
 
     container "${params.ubuntu_image}"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
 
     input:
-      tuple val(sample), file(mapping), file(listOfRepresentatives)
+      tuple val(sample), file(mapping), file(listOfRepresentatives), val(medianQuality)
 
     output:
       tuple val("${sample}"), path("${sample}_stats_out/coveredBases.tsv"), emit: mean
@@ -158,6 +144,10 @@ process pCovermCount {
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
+    DO_NOT_ESTIMATE_QUALITY = -1 
+    MEDIAN_QUALITY=Double.parseDouble(medianQuality)
+    percentIdentity = MEDIAN_QUALITY != DO_NOT_ESTIMATE_QUALITY ? \
+	" --min-read-percent-identity "+Utils.getMappingIdentityParam(MEDIAN_QUALITY) : " "
     '''
     OUT=!{sample}_stats_out
     mkdir $OUT
@@ -168,7 +158,7 @@ process pCovermCount {
     
     # Get covered bases
     coverm genome -t !{task.cpus} -b !{mapping} \
-         !{params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.coverm} \
+         !{params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.coverm}  !{percentIdentity}  \
         --genome-fasta-list list.txt --methods covered_bases --output-file covTmpContent.tsv \
 
     # Get length
@@ -186,7 +176,7 @@ process pCovermCount {
 
     # Run other metrics like RPKM, TPM, ...
     coverm genome  -t !{task.cpus} -b !{mapping} \
-         !{params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.coverm} \
+         !{params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.coverm} !{percentIdentity} \
 	--genome-fasta-list list.txt --methods mean trimmed_mean variance length count reads_per_base rpkm tpm \
 	| sed -e '1 s/^.*$/SAMPLE\tGENOME\tMEAN\tTRIMMED_MEAN\tVARIANCE\tLENGTH\tREAD_COUNT\tREADS_PER_BASE\tRPKM\tTPM/' \
 	| sed -e "2,$ s/^/!{sample}\t/g" > $OUT/metrics.tsv || true
@@ -247,11 +237,12 @@ workflow _wRunMash {
 }
 
 
-workflow _wRunBowtie {
+workflow _wRunMapping {
   take:
      mashOutput
      sampleReads
      singleReads
+     ontReads
      genomesMap
   main:
      PATH_IDX = 0
@@ -287,10 +278,23 @@ workflow _wRunBowtie {
 
      pBowtie2(Channel.value(params?.steps.containsKey("fragmentRecruitment")), \
 	Channel.value([Utils.getModulePath(params.modules.fragmentRecruitment), \
-        "readMapping", params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.bowtie, \
+        "readMapping/bowtie", params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.bowtie, \
 	params.steps.containsKey("fragmentRecruitment")]), bowtieInput)
+
+     ontReads | join(genomesMerged, by: SAMPLE_IDX) \
+	| map { sample -> [sample[SAMPLE_IDX], sample[GENOMES_MERGED_IDX], sample[SAMPLE_2_IDX]] } \
+	| set { minimapInput }
+
+     pMinimap2(Channel.value(params?.steps.containsKey("fragmentRecruitment")), \
+	Channel.value([Utils.getModulePath(params.modules.fragmentRecruitment), \
+        "readMapping/minimap",  params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.minimap, \
+	params.steps.containsKey("fragmentRecruitment")]), minimapInput)
+
+     pBowtie2.out.mappedReads | mix(pMinimap2.out.mappedReads) | set { mappedReads }
+
   emit:
-    mappedReads = pBowtie2.out.mappedReads
+    bowtieMappedReads = pBowtie2.out.mappedReads
+    minimapMappedReads = pMinimap2.out.mappedReads
        
 }
 
@@ -299,6 +303,8 @@ workflow _wGetStatistics {
   take:
     mashScreenFilteredOutput
     bowtieMappedReads
+    minimapMappedReads
+    ontMedianQuality
     genomesMap
   main:
      PATH_IDX = 0
@@ -310,14 +316,25 @@ workflow _wGetStatistics {
      SAMPLE_2_IDX = 1
      PATH_2_IDX = 2
 
+     DO_NOT_SET_IDENTITY_AUTOMATICALLY = "-1"
+
      // Create input for coverm
      mashScreenFilteredOutput | splitCsv(sep: '\t', header: false) \
 	| map { line -> [line[GENOMES_IDX][FIRST_GENOME_IDX], line[SAMPLE_IDX]] } \
 	| combine(genomesMap, by: SAMPLE_IDX) | map { sample -> [sample[SAMPLE_2_IDX], sample[PATH_2_IDX]] }  \
-	| groupTuple(by: SAMPLE_IDX) | set { covermInput }
+	| groupTuple(by: SAMPLE_IDX) | set { covermGenomesInput }
 
      bowtieMappedReads \
-	| join(covermInput, by: SAMPLE_IDX) | pCovermCount
+	| join(covermGenomesInput, by: SAMPLE_IDX) \
+	| join(Channel.value(DO_NOT_SET_IDENTITY_AUTOMATICALLY), by: SAMPLE_IDX) \
+        | set { covermBowtieReadsInput  }
+
+     minimapMappedReads \
+	| join(covermGenomesInput, by: SAMPLE_IDX) \
+	| join(Channel.value(ontMedianQuality), by: SAMPLE_IDX) \
+        | set { covermMinimapReadsInput }
+
+     covermBowtieReadsInput | mix(covermMinimapReadsInput) | pCovermCount
 
      // Found genomes reported by coverm are just file names. These lines join unique file names with file paths. 
      pCovermCount.out.foundGenomes |  splitCsv(sep: '\t', header: false) \
@@ -340,7 +357,16 @@ workflow _wGetStatistics {
 
      pGenomeContigMapping.out.mapping | join(bowtieMappedReads, by: SAMPLE_IDX) \
         | combine(Channel.from("external")) | join(foundGenomesInGroup, by: SAMPLE_IDX) \
-        | pGetBinStatistics 
+        | join(Channel.value(DO_NOT_SET_IDENTITY_AUTOMATICALLY), by: SAMPLE_IDX) \
+        | set { bowtieMappingStatsInput }
+
+
+     pGenomeContigMapping.out.mapping | join(minimapMappedReads, by: SAMPLE_IDX) \
+        | combine(Channel.from("external")) | join(foundGenomesInGroup, by: SAMPLE_IDX) \
+        | join(ontMedianQuality, by: SAMPLE_IDX)
+        | set { minimapMappingStatsInput }
+
+     pGetBinStatistics(getModulePath(params.modules.fragmentRecruitment), bowtieMappingStatsInput | mix(minimapMappingStatsInput))
 
   emit:
      genomesSeperated = genomesSeperated
@@ -373,6 +399,8 @@ workflow _wMashScreen {
    take: 
      sampleReads
      singleReads
+     ontReads
+     ontMedianQuality
    main:
      PATH_IDX = 0
      SAMPLE_IDX = 0
@@ -396,13 +424,16 @@ workflow _wMashScreen {
      genomes | map { genome -> [file(genome).name, genome] } | set { genomesMap }
 
      // Run mash and return matched genomes per sample
-     _wRunMash(sampleReads, singleReads, genomesMap)
+     _wRunMash(sampleReads | mix(ontReads), singleReads, genomesMap)
 
      // Concatenate genomes per sample and map reads per sample against concatenated genomes via Bowtie 
-     _wRunBowtie(_wRunMash.out.mashScreenFilteredOutput, sampleReads, singleReads, genomesMap)
+     _wRunMapping(_wRunMash.out.mashScreenFilteredOutput, sampleReads, singleReads, ontReads, genomesMap)
 
      // Calculate different mapping statistics per genome
-     _wGetStatistics(_wRunMash.out.mashScreenFilteredOutput, _wRunBowtie.out.mappedReads, genomesMap)
+     _wGetStatistics(_wRunMash.out.mashScreenFilteredOutput, \
+	 _wRunMapping.out.bowtieMappedReads, \
+         _wRunMapping.out.minimapMappedReads, \
+	ontMedianQuality, genomesMap)
 
      _wGetStatistics.out.genomesSeperated \
 	| map { genome -> [SAMPLE: genome[SAMPLE_IDX], BIN_ID: genome[BIN_ID_IDX], PATH: genome[PATH_2_IDX]] } \
