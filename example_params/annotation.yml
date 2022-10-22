@@ -38,8 +38,8 @@ steps:
       rgi: 
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/data
-            md5sum: 2a1e01f01e904ed6e126b5ac162764c8
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
+            md5sum: d7e627221a1d4584d1c1795cda774cdb
         additionalParams: ""
       prokka:
         prodigalMode: "meta"
