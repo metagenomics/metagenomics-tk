@@ -175,6 +175,7 @@ jobs:
         run: |
           bash ./scripts/test_cooccurrence.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
 
+
   fragment_recruitment:
     timeout-minutes: 800
     needs: [cooccurrence]
@@ -308,5 +309,14 @@ jobs:
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.plasmid.MobTyper.database=env(database),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.Platon,.steps.plasmid.PLSDB)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="plasmid_yaml_database_tests"
+
+
+  codePolicy:
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Checks if every process defines a publishDirMode
+        run: |
+          make checkPublisDirMode || exit 1 
 
 

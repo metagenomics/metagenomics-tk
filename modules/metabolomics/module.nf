@@ -27,7 +27,8 @@ process pGapSeq {
 
     container "${params.gapseq_image}"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "gapseq", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", \
+      saveAs: { filename -> getOutput("${sample}", params.runid, "gapseq", filename) }, \
       pattern: "{**.xml,**.tbl,**.RDS,**.csv}"
 
     input:
@@ -212,7 +213,8 @@ process pBuildJson {
 
     containerOptions " --user 0:0"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmJson", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", \
+      saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmJson", filename) }, \
       pattern: "{**.json}"
 
     input:

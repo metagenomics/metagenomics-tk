@@ -22,7 +22,7 @@ process pCarveMe {
 	? Utils.getBeforeScript(params?.steps?.metabolomics?.beforeProcessScript.trim(), params.carveme_image) \
 	: ""
   
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "carveme", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "carveme", filename) }, \
         pattern: "{**.xml}"
 
     input:
