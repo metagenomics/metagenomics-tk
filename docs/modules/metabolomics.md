@@ -1,9 +1,9 @@
 # Metabolomics
 
-The metabolomics module runs genome scale metabolic modelling analysis based on a supplied genome or directly on its proteins.
+The metabolomics module runs genome scale metabolic modeling analysis based on a supplied genome or directly on its proteins.
 The module is able to use gapseq and carveme for analysing genomes and carveme for analysing predicted proteins
 which depends on the configuration you provide as input.
-All generated models are used for further downstream analysis such as the Minimum Resource Overlap computation by smetana.
+All generated models are used for further downstream analysis such as the "Minimum Resource Overlap" computation by smetana.
 
 ## Input
 
@@ -20,11 +20,11 @@ All generated models are used for further downstream analysis such as the Minimu
     ```
 
 Almost all tools of this module are using linear programming solvers. The tool developers are recommending the use of the cplex solver
-that is included in the IBM ILOG CPLEX Optimization Studio which is free for students and academics
+that is included in the [IBM ILOG CPLEX Optimization Studio](https://www.ibm.com/de-de/products/ilog-cplex-optimization-studio) which is free for students and academics
 through the IBM Academic Initiative programm. 
-Since the toolkit uses docker images that are downloaded from public dockerhub repositories and the cplex license is not allowed
+Since the toolkit uses docker images that are downloaded from public Docker Hub repositories and the cplex license is not allowed
 to be distributed, we prepared a [Dockerfile](../cplex/docker/Dockerfile) that allows you to build your own local docker image with all metabolomics specific tools installed.
-Just copy your cplex binary to the cplex docker folder and build your own docker image. You can override all existing images via the commandline.
+Just copy your cplex binary to the cplex docker folder and build your own docker image. You can override all existing images via the command line.
 
 In the following example your the image name is metabolomics:0.1.0:
 
@@ -51,10 +51,10 @@ All models are translated to json format and substrats, products and reactions a
 
 ### Memote
 
-Memote tests metabolic reconstruction models and produces therefore a machine readable json file  (`*_report.json.gz`)
+Memote tests metabolic reconstruction models and therefore produces a machine readable json file  (`*_report.json.gz`)
 and a human readable tsv (`*_metrics.tsv`) and html (`*_report.html`) file.
 
 ### Smetana
 
-Smetana is used for analysing possible interactions in microbial communities. Smetana global and detailed mode  
-is executed per sample. The Smetana output is saved in `*_detailed.tsv` and `*_global.tsv`.
+Smetana is used for analysing possible interactions in microbial communities. Smetana`s global and detailed modes 
+are executed per sample. The Smetana output is saved in `*_detailed.tsv` and `*_global.tsv`.

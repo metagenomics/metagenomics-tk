@@ -265,8 +265,8 @@ workflow wAnalyseMetabolitesFile {
 *  where:
 *     - COMPLETENESS and CONTAMINATION are values extracted from the checkm output.
 *     - BIN_ID is a unique id for the input genome or protein file over all samples.
-*     - SAMPLE is unique identifier for the sample
-*     - PROTEINS and PATH are containing the path to the corresponding genome or protein file.
+*     - SAMPLE is a unique identifier for the sample
+*     - PROTEINS and PATH contain the path to the corresponding genome or protein file.
 */
 workflow wAnalyseMetabolitesList {
    take:
