@@ -2,7 +2,7 @@ nextflow.enable.dsl=2
 
 include { pGetBinStatistics as pGetBinStatistics; \
 	pGetBinStatistics as pGetNotBinnedStatistics; \
-	pCovermContigsCoverage; pBowtie2 } from './processes'
+	pCovermContigsCoverage; pBowtie2; pMetabat } from './processes'
 
 def getModulePath(module){
     return module.name + '/' + module.version.major + "." +
@@ -21,7 +21,7 @@ process pGetMappingQuality {
 
     tag "$sample"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "readMappingQuality", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "readMappingQuality", filename) }
 
     label 'tiny'
 
@@ -38,41 +38,16 @@ process pGetMappingQuality {
     template 'mapping_quality.sh'
 }
 
-process pMetabat {
-
-    container "${params.metabat_image}"
-
-    tag "$sample"
-
-    label 'large'
-
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "metabat", filename) }
-
-    when params.steps.containsKey("binning") && params.steps.binning.containsKey("metabat")
-
-    input:
-    tuple val(sample), path(contigs), path(bam)
-
-    output:
-    tuple val("${sample}"), file("${sample}_bin.*.fa"), optional: true, emit: bins
-    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
-    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-
-
-    shell:
-    template 'metabat.sh'
-}
 
 process pMetabinner {
 
     container "${params.metabinner_image}"
 
-    tag "$sample"
+    tag "Sample: $sample"
 
     label 'large'
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "metabinner", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metabinner", filename) }
 
     when params.steps.containsKey("binning") && params.steps.binning.containsKey("metabinner")
 
@@ -103,8 +78,6 @@ process pMaxBin {
 
     when params.maxbin
 
-    publishDir "${params.output}/${sample}/binning/maxbin/${params.maxbin_tag}" 
-
     input:
     tuple val(sample), val(TYPE), path(contigs), path(reads)
 
@@ -121,6 +94,8 @@ process pMaxBin {
 }
 
 
+
+
 /*
 *
 * Input element is returns as an entry in a list.
@@ -133,23 +108,6 @@ def aslist(element){
     return [element];
   }
 }
-
-/*
-*
-* Method takes a list of the form [SAMPLE, [BIN1 path, BIN2 path]] as input
-* and produces a flattend list of the form [SAMPLE, BIN 1 path, BIN 2 path]
-*
-*/
-def flattenBins(binning){
-  def chunkList = [];
-  def SAMPLE_IDX = 0;
-  def BIN_PATHS_IDX = 1;
-  binning[BIN_PATHS_IDX].each {
-     chunkList.add([binning[SAMPLE_IDX], it]);
-  }
-  return chunkList;
-}
-
 
 /*
 *
@@ -183,27 +141,59 @@ def createMap(binning){
   return chunkList;
 }
 
+
+workflow wShortReadBinningList {
+  take:
+    contigs
+    inputReads     
+  main:
+    _wBinning(contigs, inputReads)   
+  emit:
+     binsStats = _wBinning.out.binsStats
+     bins = _wBinning.out.bins
+     mapping = _wBinning.out.mapping
+     notBinnedContigs = _wBinning.out.notBinnedContigs
+     unmappedReads = _wBinning.out.unmappedReads
+     contigCoverage = _wBinning.out.contigCoverage
+}
+
+
 /*
 *
 * This workflow takes an input_reads channel as input with the following format [SAMPLE, READS PAIRED, READS UNPAIRED]
 *
 */
-workflow wBinning {
+workflow _wBinning {
    take: 
      contigs
      inputReads
    main:
      // Map reads against assembly and retrieve mapping quality
      SAMPLE_IDX=0
+     DO_NOT_ESTIMATE_IDENTITY = "-1" 
+
      pBowtie2(Channel.value(params?.steps?.containsKey("binning")), Channel.value([getModulePath(params.modules.binning), \
-	"readMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, params.steps.containsKey("fragmentRecruitment")]), contigs | join(inputReads, by: SAMPLE_IDX))
+      "contigMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, params.steps.containsKey("fragmentRecruitment")]), \
+      contigs | join(inputReads, by: SAMPLE_IDX))
 
-     pBowtie2.out.mappedReads | (pGetMappingQuality)
-     pCovermContigsCoverage(Channel.value(params?.steps?.binning.find{ it.key == "contigsCoverage"}?.value), Channel.value([getModulePath(params.modules.binning), \
-	"contigCoverage", params?.steps?.binning?.contigsCoverage?.additionalParams]), pBowtie2.out.mappedReads)
+     pBowtie2.out.mappedReads | set { mappedReads }
 
-     // Run binning tool
-     contigs | join(pBowtie2.out.mappedReads, by: SAMPLE_IDX) | (pMetabinner & pMetabat )
+     mappedReads | pGetMappingQuality
+
+     pCovermContigsCoverage(Channel.value(params?.steps?.binning.find{ it.key == "contigsCoverage"}?.value), \
+	Channel.value([getModulePath(params.modules.binning), \
+	"contigCoverage", params?.steps?.binning?.contigsCoverage?.additionalParams]), \
+	mappedReads | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)))
+
+     contigs | join(mappedReads, by: SAMPLE_IDX) | set { binningInput }
+
+     pMetabinner(binningInput)
+
+     pMetabat(Channel.value(params?.steps?.containsKey("binning") && params?.steps?.binning.containsKey("metabat")), \
+      Channel.value([getModulePath(params.modules.binning), \
+      "metabat", params.steps?.binning?.metabat?.additionalParams]), \
+      binningInput | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)))
+
      pMetabinner.out.bins | mix(pMetabat.out.bins) | set { bins }
 
      pMetabinner.out.notBinned | mix(pMetabat.out.notBinned) | set { notBinned }
@@ -213,50 +203,30 @@ workflow wBinning {
 
      // Flatten metabat outputs per sample and create a map with the 
      // following entries [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
-     binsList | map { it -> flattenBins(it) } | flatMap {it -> createMap(it)} | set {binMap}
+     binsList | map { it -> Utils.flattenTuple(it) } | flatMap {it -> createMap(it)} | set {binMap}
 
      // Compute bin statistcs (e.g. N50, average coverage depth, etc. ...)
-     pMetabinner.out.binContigMapping | join(pBowtie2.out.mappedReads, by: SAMPLE_IDX) \
+     pMetabinner.out.binContigMapping | join(mappedReads, by: SAMPLE_IDX) \
 	| combine(Channel.from("metabinner")) | join(pMetabinner.out.bins, by: SAMPLE_IDX) \
 	| set { metabinnerBinStatisticsInput }  
-     pMetabat.out.binContigMapping | join(pBowtie2.out.mappedReads, by: SAMPLE_IDX) \
+     pMetabat.out.binContigMapping | join(mappedReads, by: SAMPLE_IDX) \
 	| combine(Channel.from("metabat")) | join(pMetabat.out.bins, by: SAMPLE_IDX) \
 	| set { metabatBinStatisticsInput }
 
-     metabatBinStatisticsInput | mix(metabinnerBinStatisticsInput) | pGetBinStatistics 
+     metabatBinStatisticsInput | mix(metabinnerBinStatisticsInput) \
+	| combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) | set {binStatsInput}
+
+     pGetBinStatistics(Channel.value(getModulePath(params.modules.binning)), binStatsInput)
 
      // Add bin statistics 
      pGetBinStatistics.out.binsStats | map { it -> file(it[1]) } \
 	| splitCsv(sep: '\t', header: true) | set { binsStats }
      mapJoin(binsStats, binMap, "BIN_ID", "BIN_ID") | set {binMap}
-
-     // Create summary if requested
-     if(params.summary){
-       pGetBinStatistics.out.contigsDepth \
-	| collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-         [ "metabat_bins_depth.tsv", item[1].text  ]
-       }
-
-       pGetBinStatistics.out.binsStats \
-	| collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-         [ "metabat_bins_depth.tsv", item[1].text  ]
-       }
-
-       pGetMappingQuality.out.flagstatPassed \
-	| collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-         [ "flagstat_passed.tsv", item[1].text  ]
-       }
-
-       pGetMappingQuality.out.flagstatFailed \
-	| collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-         [ "flagstat_failed.tsv", item[1].text  ]
-       }
-     }
    emit:
      binsStats = binMap
      bins = binsList
-     mapping = pBowtie2.out.mappedReads
+     mapping = mappedReads
      notBinnedContigs = notBinned
-     unmappedReads = pBowtie2.out.unmappedReads
+     unmappedReads =  pBowtie2.out.unmappedReads
      contigCoverage = pCovermContigsCoverage.out.coverage     
 }

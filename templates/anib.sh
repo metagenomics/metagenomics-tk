@@ -28,6 +28,7 @@ while IFS= read -r genomes_to_compare; do
 
 done <<< $GENOMES
 DIRECTORY=$(mktemp -d --suffix=.out  -p .)
+chmod +rx $DIRECTORY
 cat *_dir/out/*_percentage_identity.tab > ${DIRECTORY}/matrix.tab
 cat *_dir/*.tsv > ${DIRECTORY}/out.tsv 
 cat *_dir/*.tsv.upper > ${DIRECTORY}/out.tsv.upper

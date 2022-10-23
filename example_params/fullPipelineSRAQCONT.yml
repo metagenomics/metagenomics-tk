@@ -1,0 +1,29 @@
+tempdir: "tmp"
+summary: false
+output: "output"
+logDir: log
+runid: 1
+scratch: "/vol/scratch"
+input:
+  SRA:
+    pattern:
+      # Bielefeld Mirror:
+      #   patternONT: ".+[^(_1|_2)].+$"
+      ont: ".+(_1).+$"
+      illumina: ".+(_1|_2).+$"
+    S3:
+      path: test_data/SRA/ONTsamples.tsv
+      bucket: "s3://meta_test" 
+      prefix: "/vol1/fastq/"
+      watch: false
+steps:
+  qcONT:
+    porechop:
+      additionalParams:
+        porechop: ""
+        filtlong: " --min_length 1000 --keep_percent 90 "
+      download:
+        s5cmdParams: " --retry-count 30 --no-verify-ssl --no-sign-request --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "
+
+
+

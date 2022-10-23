@@ -27,14 +27,23 @@ else
 fi
 
 # run suggested checkm commands
-checkm tree !{params.steps.magAttributes.checkm.additionalParams.tree} --pplacer_threads !{task.cpus}  -t !{task.cpus} -x !{ending} . out
-checkm tree_qa out
-checkm lineage_set !{params.steps.magAttributes.checkm.additionalParams.lineage_set} out out/marker
-checkm analyze -x !{ending} -t !{task.cpus} out/marker . out
-checkm qa !{params.steps.magAttributes.checkm.additionalParams.qa} --tab_table -t !{task.cpus} -f checkm.txt out/marker out
+checkm tree !{params.steps.magAttributes.checkm.additionalParams.tree} --pplacer_threads !{task.cpus} -t !{task.cpus} -x !{ending} . out > >(tee -a checkm_stdout.log) 2> >(tee -a checkm_stderr.log >&2)
+checkm tree_qa out > >(tee -a checkm_stdout.log) 2> >(tee -a checkm_stderr.log >&2)
+checkm lineage_set !{params.steps.magAttributes.checkm.additionalParams.lineage_set} out out/marker > >(tee -a checkm_stdout.log) 2> >(tee -a checkm_stderr.log >&2)
+checkm analyze -x !{ending} -t !{task.cpus} out/marker . out > >(tee -a checkm_stdout.log) 2> >(tee -a checkm_stderr.log >&2)
+checkm qa !{params.steps.magAttributes.checkm.additionalParams.qa} --tab_table -t !{task.cpus} -f checkm.txt out/marker out > >(tee -a checkm_stdout.log) 2> >(tee -a checkm_stderr.log >&2)
+
+# If there is not enough disk space available, checkm exits with exit code 0
+# The only solution is to check the stdout for errors.
+if grep -q "Error" checkm_stdout.log checkm_stderr.log; then
+	echo "Error found in CheckM log.";
+	exit 1 ;
+else
+	echo "No error found in CheckM log.";
+fi
 
 # reformat output files according to magAttributes standard
 echo -e "SAMPLE\tBIN_ID\tMarker lineage\t# genomes\t# markers\t# marker sets\t0\t1\t2\t3\t4\t5+\tCOMPLETENESS\tCONTAMINATION\tHETEROGENEITY" > $FILE
-sed -i " 2,$ s/\t/.fa\t/"  checkm.txt
+sed -i " 2,$ s/\t/!{ending}\t/"  checkm.txt
 tail -n +2 checkm.txt | sed "s/^/!{sample}\t/g"  >> $FILE
 

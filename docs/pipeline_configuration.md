@@ -17,8 +17,11 @@
  * `steps`: Steps allows to specify multiple pipeline modules for running the toolkit. We distinguish between two modes. You can either run one tool of
    the pipeline or the whole pipeline with different configurations.
 
- * `databases`: This parameter specifies a place where files are downloaded to. If the `slurm` profile is used and databases should be downloaded, the path **must** point to a folder 
-    which is not shared between the worker nodes. If the `standard` profile is used, it **must** be a folder which is shared between all nodes. 
+ * `databases`: This parameter specifies a place where files are downloaded to. If the `slurm` profile is used and databases should be downloaded, the path **should** point to a folder 
+    which is not shared between the worker nodes (to reduce I/O on the shared folder resulting in a better performance).
+
+ * `publishDirMode`: (optional) Per default results are symlinked to the chosen `output` directory. This default mode can be changed with this parameter.
+    A useful mode is "copy", to copy results instead of just linking them. Other modes to choose from [here](https://www.nextflow.io/docs/latest/process.html#publishdir).  
 
 ## S3 Configuration
 
@@ -45,9 +48,9 @@ aws {
 
 ## Configuration of input parameters of the full pipeline mode
 
-### Generic Input
+### Paired End Input
 
-The input can be a path to a tsv file containing sample id, path to left and right read.
+The input should be a path to a tsv file containing a sample id, as well as a path to the left and right read.
 
 Example:
 ```
@@ -56,37 +59,59 @@ input:
     path: "test_data/fullPipeline/reads_split.tsv"
 ```
 
+### Nanopore Input
+
+For Nanopore data a seperate input file should be specified.
+
+```
+input:
+  ont:
+    path: "test_data/fullPipeline/ont.tsv"
+```
+
 ### Generic SRA
 
-The toolkit is able to fetch fastq files based on SRA run accession ids from NCBI or from a mirror based on S3:
+The toolkit is able to fetch fastq files based on SRA run accession ids from the NCBI or from a mirror based on S3:
 
 ```
 input:
   SRA:
+    pattern:
+      ont: ".+[^(_1|_2)].+$"
+      illumina: ".+(_1|_2).+$"
     S3:
       path: test_data/SRA/samples.tsv 
       bucket: "s3://ftp.era.ebi.ac.uk" 
       prefix: "/vol1/fastq/"
       watch: false
+      patternONT: ".+[^(_1|_2)].+$"
+      patternIllumina: ".+(_1|_2).+$"
+
 ```
 
 where:
-  * `path` is the path to a file containing a column with `RUN_ID` as header.
+  * `path` is the path to a file containing a column with `ACCESSION` as header. The `ACCESSION` column contains either SRA run or study accessions.
 
   * `bucket` is the S3 Bucket hosting the data.
 
   * `prefix` is the path to the actual SRA datasets.
 
   * `watch` if true, the file specified with the `path` attribute is watched and every time a new SRA run id is
-     appended, the pipeline is triggered. The pipeline will never finish in this mode.
+     appended, the pipeline is triggered. The pipeline will never finish in this mode. Please note that watch currently only works
+     if only one input type is specified (e.g "ont" or "paired" ...)
 
-#### NCBI SRA
+  *  `patternONT` and `patternIllumina` are patterns that are applied on the specified mirror in order to select the correct input files.
+
+### NCBI SRA
 
 With the following mode SRA datasets can directly be fetched from SRA.
 
 ```
 input:
   SRA:
+    pattern:
+      ont: ".+[^(_1|_2)].+$"
+      illumina: ".+(_1|_2).+$"
     NCBI:
       path: test_data/SRA/samples.tsv
 ```
@@ -95,7 +120,9 @@ input:
 
 Whenever a database field can be specified as part of the tool configuration (such as in gtdb or checkm), you are able to provide different methods to
 fetch the database. In all settings, please make sure that the file has the same ending (e.g. .zip, .tar.gz) as specified in the corresponding tool section.
-With the exception of the `extractedDBPath` parameter, all other input types (https, s3,...) will download the database to the folder specified in the `database` parameter.
+In addition, as database names are used to name results with which they were created, said database names should contain the respective database number or date of creation.
+With this every result can be linked to one exact database version to clarify results. 
+Except for the `extractedDBPath` parameter, all other input types (https, s3,...) will download the database to the folder specified in the `database` parameter.
 
 ### Extracted Database Path
 
@@ -110,7 +137,7 @@ database:
 
 ### HTTPS Download
 
-The toolkit is able to download and extract the database, as long as the file ending equals the one specified in the corresponding tool section (.zip, tar.gz)
+The toolkit is able to download and extract the database, as long as the file ending equals the one specified in the corresponding tool section (.zip, tar.gz, tar.zst)
 This setting is available in standard and slurm mode. 
 
 
@@ -165,7 +192,7 @@ database:
       keyfile: /vol/spool/credentials
 ```
 
-Your credentials file should follow the AWS credentials pattern:
+Your credentials file should follow the AWS credentials pattern and in case you want to use the slurm mode, be placed in a shared directory as all nodes need access:
 
 ```
 [default]
@@ -241,3 +268,12 @@ resources:
     cpus: 1
     memory: 2
 ```
+
+The full pipeline mode is able to predict the memory consumption of some assemblers (see assembly module section).
+
+## Fragment Recruitment for unmapped reads Configuration
+
+Reads that could not be mapped back to a MAG can be used for fragment recruitment.
+A list of genomes can be provided in the fragmentRecruitment part. 
+Matched reference genomes are included in all other parts of the remaining pipeline.
+Look out for their specific headers to differentiate results based on real assembled genomes and the reference genomes.

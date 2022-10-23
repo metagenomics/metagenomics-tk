@@ -10,14 +10,20 @@ runid: 1
 databases: "/mnt/databases/"
 logLevel: 1
 scratch: "/vol/scratch"
+publishDirMode: "symlink"
 steps:
   qc:
     fastp:
        # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
        additionalParams: "  "
+       timeLimit: "AUTO"
   assembly:
     megahit:
       additionalParams: " --min-contig-len 200 "
+      resources:
+         RAM: 
+            mode: 'DEFAULT'
+            predictMinLabel: 'AUTO' 
   binning:
     bowtie:
       additionalParams: 
@@ -33,7 +39,7 @@ steps:
       buffer: 1000
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb.tar.gz
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r202_data.tar.gz
           md5sum: f57c74e7b2d7ebf8b294ac25b913318f
       additionalParams: " --min_af 0.65 "
     checkm:
@@ -50,11 +56,10 @@ steps:
       defaultKingdom: 'Bacteria'
       additionalParams: " --mincontiglen 200 "
   annotation:
-    diamond:
-      kegg:
-        params: 'blastp --fast --outfmt 6 --max-target-seqs 100 --evalue 0.1'
-        database:
-          extractedDBPath: '/vol/spool/toolkit/kegg-2021-01.dmnd'
+    kegg:
+      params: ' -s 2 --exact-kmer-matching 1 '
+      database:
+        extractedDBPath: '/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB'
 resources:
   large:
     cpus: 28

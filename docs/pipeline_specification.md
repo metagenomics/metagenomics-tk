@@ -18,7 +18,7 @@ Outputs are produced by using the `publish dir` directive.
 DATASET_ID/RUN_ID/MODULE/VERSION/TOOL/
 ```
 where
-   * `DATASET_ID` specifies the ID of a dataset such as the SRA dataset.
+   * `DATASET_ID` specifies the ID of a dataset such as the SRA run ID.
    * `RUN_ID` specifies one possible run of the full or partial pipeline. The `RUN_ID` identifier can be any user provided identifier to keep track of multiple pipeline runs.
    * `MODULE` specifies the name of the pipeline module (e.g. binning).
    * `VERSION` specifies the module version number which follows semantic versioning (1.2.0).

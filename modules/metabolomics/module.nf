@@ -27,7 +27,7 @@ process pGapSeq {
 
     container "${params.gapseq_image}"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "gapseq", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "gapseq", filename) }, \
       pattern: "{**.xml,**.tbl,**.RDS,**.csv}"
 
     input:
@@ -65,7 +65,7 @@ process pMemote {
 
     when params.steps.containsKey("metabolomics") && params.steps.metabolomics.containsKey("memote")
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "memote", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "memote", filename) }, \
       pattern: "{**.json.gz,**.html,**.tsv}"
 
     input:
@@ -110,7 +110,7 @@ process pSmetanaDetailed {
 	? Utils.getBeforeScript(params?.steps?.metabolomics?.beforeProcessScript.trim(), params.smetana_image) \
 	: ""
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid , "smetana/detailed/", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid , "smetana/detailed/", filename) }, \
       pattern: "{**.tsv}"
 
     when params?.steps.containsKey("metabolomics") && params?.steps?.metabolomics?.containsKey("smetana") \
@@ -145,7 +145,7 @@ process pSmetanaGlobal {
        && params?.steps?.metabolomics?.smetana.containsKey("detailed") \
        && params?.steps?.metabolomics?.smetana?.global
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "smetana/global/", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "smetana/global/", filename) }, \
       pattern: "{**.tsv}"
 
     input:
@@ -168,8 +168,9 @@ process pAnalyse {
 
     container "${params.ubuntu_image}"
 
-    publishDir params.output, saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmTsv", filename) }, \
-      pattern: "{**.tsv}"
+    publishDir params.output, mode: "${params.publishDirMode}", \
+       saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmTsv", filename) }, \
+       pattern: "{**.tsv}"
 
     input:
       tuple val(sample), val(id), path(magJson)  

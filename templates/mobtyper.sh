@@ -1,3 +1,6 @@
+# Create new plasmid file
+seqkit range -r !{start}:!{stop} !{plasmids} > mobInput.fa
+
 # Check developer documentation
 MOB_TYPER_DB=""
 if [ -z "!{EXTRACTED_DB}" ]
@@ -20,15 +23,26 @@ else
    MOB_TYPER_DB=!{EXTRACTED_DB}
 fi
 
-seqkit replace -p "\s.+" !{plasmids} \
+seqkit replace -p "\s.+" mobInput.fa \
 	| seqkit seq --min-len !{MIN_LENGTH} > unzipped_plasmids.fasta
 
-MOB_TYPER_OUT=!{sample}_!{binID}_mobtyper.tsv
+MOB_TYPER_OUT=!{sample}_!{binID}_chunk_!{start}_!{stop}_mobtyper.tsv
 
 # Bug fix: Mob Typer does not search for the taxa.sqlite file in the user provided database directory
-sed -i " 148 i ETE3DBTAXAFILE = \"${MOB_TYPER_DB}/taxa.sqlite\"" /usr/local/lib/python3.9/dist-packages/mob_suite-3.0.3-py3.9.egg/mob_suite/constants.py
+sed -i " 178 i ETE3DBTAXAFILE = \"${MOB_TYPER_DB}/taxa.sqlite\"" /usr/local/lib/python3.8/dist-packages/mob_suite-3.1.0-py3.8.egg/mob_suite/constants.py
 
-mob_typer !{ADDITIONAL_PARAMS} -d ${MOB_TYPER_DB} -n !{task.cpus} --multi --infile unzipped_plasmids.fasta --out_file out.tsv 
+mob_typer !{ADDITIONAL_PARAMS} -d ${MOB_TYPER_DB} -n !{task.cpus} \
+	--multi --infile unzipped_plasmids.fasta --out_file out.tsv > >(tee -a mob_typer_stdout.log) 2> >(tee -a mob_typer_stderr.log >&2)
+ 
+# If there is not enough RAM on the host available, mobtyper exits with exit code 0 in some cases.
+# The only solution is to check the stdout for exceptions.
+if grep -q "Exception" mob_typer_stdout.log mob_typer_stderr.log; then
+	echo "Exception found in MobTyper log.";
+	exit 1 ;
+else
+	echo "No exception found in MobTyper log.";
+fi
+
 
 # Add Sample and BinID
 sed  '1 s/^[^\t]*\t/CONTIG\t/' out.tsv \

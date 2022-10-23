@@ -5,6 +5,7 @@ runid: 1
 logLevel: 1
 logDir: log
 scratch: "/vol/scratch"
+publishDirMode: "symlink"
 steps:
   magAttributes:
     input: "test_data/magAttributes/input.tsv"
@@ -12,7 +13,7 @@ steps:
       buffer: 1000
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb.tar.gz
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r202_data.tar.gz
           md5sum: f57c74e7b2d7ebf8b294ac25b913318f
       additionalParams: " --min_af 0.65 "
     checkm:
