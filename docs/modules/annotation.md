@@ -40,6 +40,12 @@ KeGGFromBlast is only executed if genes are searched against a KEGG database. Th
 KeGGFromBlast needs a kegg database as input which must be a tar.gz file.
 See [database section](../pipeline_configuration.md#database-input-configuration) for possible download strategies.
 
+### RGI
+
+RGI needs a CARD database which can be fetched via this link:  https://card.mcmaster.ca/latest/data.
+The compressed database must be a tar.bz2 file. 
+See [database section](../pipeline_configuration.md#database-input-configuration) for possible download strategies.
+
 ## Output
 
 ### MMseqs2

@@ -6,15 +6,16 @@ runid: 1
 scratch: "/vol/scratch"
 input:
   SRA:
+    pattern:
+      # Bielefeld Mirror:
+      #   patternONT: ".+[^(_1|_2)].+$"
+      ont: ".+(_1).+$"
+      illumina: ".+(_1|_2).+$"
     S3:
       path: test_data/SRA/ONTsamples.tsv
       bucket: "s3://meta_test" 
       prefix: "/vol1/fastq/"
       watch: false
-      # Bielefeld Mirror:
-      #   patternONT: ".+[^(_1|_2)].+$"
-      patternONT: ".+(_1).+$"
-      patternIllumina: ".+(_1|_2).+$"
 steps:
   qcONT:
     porechop:

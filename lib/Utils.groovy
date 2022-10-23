@@ -42,6 +42,22 @@ class Utils {
           module.version.patch
   }
 
+
+  static Collection asList(element){
+     if(element instanceof Collection){
+         return element;
+     } else {
+         return [element];
+     }
+}
+
+
+  static String getPathWithoutFile(String filePath) {
+    int dotIndex = filePath.lastIndexOf('/');
+    return (dotIndex == -1) ? filePath : filePath.substring(0, dotIndex);
+  }
+
+
   /*
    * This function sets a time limit based on a user provided mode and the resource defaults
    * that are usually consumed by the process.

@@ -38,6 +38,7 @@ process pGetMappingQuality {
     template 'mapping_quality.sh'
 }
 
+
 /*
 *
 * Binning Metagenomic Contigs via Composition, Coverage and Assembly Graphs. 
