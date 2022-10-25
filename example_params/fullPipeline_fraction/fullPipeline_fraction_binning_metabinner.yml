@@ -47,7 +47,7 @@ resources:
     memory: 246
   medium:
     cpus: 14
-    memory: 121
+    memory: 113
   small:
     cpus: 7
     memory: 14
