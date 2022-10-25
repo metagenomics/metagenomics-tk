@@ -24,10 +24,10 @@ steps:
 resources:
   large:
     cpus: 28
-    memory: 246
+    memory: 230
   medium:
     cpus: 14
-    memory: 121
+    memory: 113
   small:
     cpus: 7
     memory: 14
