@@ -60,14 +60,21 @@ class Utils {
           module.version.patch
   }
 
+  static String getBeforeScript(script, image){
+    if(script.isEmpty()){
+      return "echo 'No BeforeScript'";
+    } else {
+      return "bash " + script + " " + image ; 
+    }
+  }
+
   static Collection asList(element){
      if(element instanceof Collection){
          return element;
      } else {
          return [element];
      }
-}
-
+  }
 
   static String getPathWithoutFile(String filePath) {
     int dotIndex = filePath.lastIndexOf('/');
@@ -124,5 +131,4 @@ class Utils {
       return 90
     }
   }
-
 }

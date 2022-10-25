@@ -185,7 +185,26 @@ steps:
             md5sum: 184bb8207ee1575cae7756137cde076b
     keggFromBlast:
       database:
-        extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/"
+        extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 
+  metabolomics:
+     beforeProcessScript: ""
+     input:
+       bins: "test_data/metabolomics/input.tsv" 
+     filter:
+       minCompleteness: 49
+       maxContamination: 5
+     gapseq:
+       additionalParams: ""
+     smetana:
+       global: false
+       detailed: false
+       additionalParams:
+         detailed: ""
+         global: ""
+     memote:
+       additionalParams:
+         run: ""
+         report: ""
 resources:
   large:
     cpus: 28
@@ -199,3 +218,4 @@ resources:
   tiny:
     cpus: 1
     memory: 1
+

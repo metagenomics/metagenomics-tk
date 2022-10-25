@@ -113,7 +113,7 @@ These values can be used in the publish dir directive to enable or disable the o
 
 
 ```JAVA
-   publishDir params.output, saveAs: { filename -> getOutput(params.runid, "pasolli/mash/sketch", filename) }, \
+   publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "pasolli/mash/sketch", filename) }, \
         pattern: "{**.out,**.err, **.sh, **.log}", enabled: params.logLevel <= params.LOG_LEVELS.ALL
 ```
 

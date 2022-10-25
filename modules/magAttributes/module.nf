@@ -39,6 +39,8 @@ process pCheckM {
 
     container "${params.checkm_image}"
 
+    tag "Sample: $sample"
+
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }, \
       pattern: "{**.tsv}"
 
@@ -74,6 +76,8 @@ process pGtdbtk {
     container "${params.gtdbtk_image}"
 
     label 'large'
+
+    tag "Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }, \
       pattern: "{**.tsv}"

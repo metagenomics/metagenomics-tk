@@ -9,10 +9,9 @@ include { wShortReadBinningList } from './modules/binning/shortReadBinning'
 include { wLongReadBinningList } from './modules/binning/ontBinning'
 include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
 include { wDereplicateFile; wDereplicateList} from './modules/dereplication/pasolli/module'
+include { wAnalyseMetabolitesList; wAnalyseMetabolitesFile } from './modules/metabolomics/module'
 include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/mapping.nf'
-include { wAnalyseMetabolites } from './modules/metabolomics/module'
 include { wFragmentRecruitmentFile; wFragmentRecruitmentList;} from './modules/fragmentRecruitment/module'
-
 include { wAnnotateFile; wAnnotateList as wAnnotateBinsList; \
 	  wAnnotateList as wAnnotateUnbinnedList; wAnnotateList as wAnnotatePlasmidList } from './modules/annotation/module'
 
@@ -99,6 +98,10 @@ workflow wFragmentRecruitment {
 
 workflow wAnnotate {
    wAnnotateFile(Channel.from(file(params?.steps?.annotation?.input)))
+}
+
+workflow wMetabolomics {
+   wAnalyseMetabolitesFile()
 }
 
 workflow wCooccurrence {
@@ -192,7 +195,6 @@ workflow _wAggregate {
 
      wListReadMappingBwa(samplesONT, ontMedianQuality, samplesPaired, samplesSingle, representativesList)
 
-     binsStats | wAnalyseMetabolites
 
      wCooccurrenceList(wListReadMappingBwa.out.trimmedMean, gtdb)
 }
@@ -341,6 +343,14 @@ workflow wPipeline {
     wAnnotateBinsList(Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, contigCoverage)
 
     wAnnotateUnbinnedList(Channel.value("meta"), notBinnedContigs, null, contigCoverage)
+
+    SAMPLE_IDX = 0
+    BIN_ID_IDX = 1
+    PATH_IDX = 2
+    wAnnotateBinsList.out.proteins \
+	| map{ it -> [SAMPLE: it[SAMPLE_IDX], BIN_ID: it[BIN_ID_IDX], PROTEINS: it[PATH_IDX]] } | set { proteins}
+
+    wAnalyseMetabolitesList(binsStats, mapJoin(wMagAttributesList.out.checkm, proteins, "BIN_ID", "BIN_ID"))
 
     _wAggregate(ont.reads, ont.medianQuality, illumina.readsPair, illumina.readsSingle, binsStats, wMagAttributesList.out.gtdb )
 }

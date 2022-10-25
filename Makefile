@@ -54,7 +54,8 @@ runDatabaseTest: ## Run database tests
 		${MODULE_DB_TEST_YML} ${MODULE_DB_TEST_YML_PATH} ${MODULE_DB_TEST_YML_SCRIPT} ${MODULE_DB_TEST_GENERATED_YML_DIR} \
 		${MODULE_DB_TEST_SKIP_TESTS}
 
-.PHONY: list clean test_clean run_small_full_test check changelog python_version_check
+.PHONY: list clean test_clean run_small_full_test check changelog python_version_check checkPublisDirMode
+
 clean : ## Removes all files that are produced during runs are not necessary
 	- rm .nextflow.log*
 	- rm report.html*
@@ -71,6 +72,9 @@ nextflow: ## Downloads Nextflow binary
 
 check: ## Checks if processes did failed in the current nextflow returns exit code 1. (Useful in github actions context)
 	! grep -q "FAILED" log/trace.tsv || (echo "$?"; exit 1)
+
+checkPublisDirMode: ## Check if publishDirMode is set in process
+	! (grep -r publishIR modules/ | grep -v "//" | grep -v params.publishDirMode) || echo "publishDirMode must always be set in process publishDir method"
 
 python_version_check:
 	./scripts/pythonVersionCheck.sh
