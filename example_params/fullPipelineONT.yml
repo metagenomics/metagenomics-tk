@@ -49,7 +49,7 @@ steps:
         download:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb.tar.gz
           md5sum: f57c74e7b2d7ebf8b294ac25b913318f
-      additionalParams: " --min_af 0.65 "
+      additionalParams: " --min_af 0.65 --scratch_dir . "
     checkm:
       database:
         download:
