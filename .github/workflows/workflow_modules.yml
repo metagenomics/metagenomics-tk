@@ -20,6 +20,7 @@ jobs:
   full_pipeline:
     timeout-minutes: 2500
     runs-on: [ self-hosted, slurm]
+    needs: [codePolicy]
     steps:
       - uses: actions/checkout@v2
       - name: Test Full Pipeline Run
@@ -61,6 +62,7 @@ jobs:
   full_pipeline_ont:
     timeout-minutes: 2500
     runs-on: [ self-hosted, slurm]
+    needs: [codePolicy]
     steps:
       - uses: actions/checkout@v2
       - name: Test Full Pipeline ONT Run
@@ -83,7 +85,7 @@ jobs:
 
   mag_attributes:
     timeout-minutes: 800
-    needs: [full_pipeline]
+    needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
@@ -128,7 +130,7 @@ jobs:
   dereplication:
     timeout-minutes: 800
     runs-on: [ self-hosted, slurm]
-    needs: [mag_attributes]
+    needs: [codePolicy]
     steps:
       - uses: actions/checkout@v2
       - name: Test Dereplication
@@ -140,7 +142,7 @@ jobs:
                                                  "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
   readmapping:
     timeout-minutes: 800
-    needs: [dereplication]
+    needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
@@ -150,6 +152,7 @@ jobs:
 
   assembly:
     timeout-minutes: 800
+    needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
@@ -167,7 +170,7 @@ jobs:
 
   cooccurrence:
     timeout-minutes: 800
-    needs: [assembly]
+    needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
@@ -178,7 +181,7 @@ jobs:
 
   fragment_recruitment:
     timeout-minutes: 800
-    needs: [cooccurrence]
+    needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
@@ -188,7 +191,7 @@ jobs:
 
   annotation:
     timeout-minutes: 2200
-    needs: [fragment_recruitment]
+    needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
@@ -244,6 +247,7 @@ jobs:
   metabolomics:
     timeout-minutes: 700
     runs-on: [ self-hosted, slurm]
+    needs: [codePolicy]
     steps:
       - uses: actions/checkout@v2
       - name: Metabolomics
@@ -253,7 +257,7 @@ jobs:
                                                --smetana_image=pbelmann/metabolomics:0.1.0 --gapseq_image=pbelmann/metabolomics:0.1.0 --steps.metabolomics.carveme.additionalParams=''  " "" "${WORK_DIR}/${{ github.head_ref }} " "slurm"
   plasmid:
     timeout-minutes: 800
-    needs: [metabolomics]
+    needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
