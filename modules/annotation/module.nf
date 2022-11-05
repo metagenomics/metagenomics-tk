@@ -552,6 +552,7 @@ workflow wAnnotateList {
       _wAnnotation(sourceChannel, prodigalMode, fasta, gtdb, contigCoverage)
     emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
+      proteins = _wAnnotation.out.prokka_faa
 }
 
 
