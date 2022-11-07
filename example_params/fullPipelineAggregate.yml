@@ -1,7 +1,7 @@
 tempdir: "tmp"
 summary: false
 output: "output"
-baseDir: "s3://meta_out/0/2/0"
+input: "input"
 logDir: log
 runid: 1
 logLevel: 1
@@ -10,7 +10,6 @@ publishDirMode: "symlink"
 steps:
   dereplication:
     pasolli:
-      input: "test_data/dereplication/input.tsv"
       minimumCompleteness: 0
       maximumContamination: 5000
       ANIBuffer: 20
@@ -28,7 +27,15 @@ steps:
       additionalParams:
         bwa_index: ""
         bwa_mem: ""
-        coverm: " --min-covered-fraction 0 "
+    coverm:
+        additionalParams: " --min-covered-fraction 0 "
+    minimap2:
+      additionalParams:
+        minimap2_index: ""
+        minimap2: ""
+  cooccurrence:
+    additionalParams: " -t 0.1 -z 80 -o 'correlation' "
+
 resources:
   large:
     cpus: 28
