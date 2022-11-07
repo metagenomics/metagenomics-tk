@@ -77,3 +77,27 @@ In addition to the pipeline module outputs defined in the module section (Derepl
  
  * read mapping (bam files)
 
+### Optional: Run per sample analysis and the aggregation of per sample seperately
+
+There are two ways to execute the toolkit. You can either run all steps in one execution or you run first the per sample analysis
+(e.g. assembly, binning, annotation, etc.) and afterwards you combine the results (e.g. dereplication, co-occurrence) in a second run.
+The second option allows you to process multiple samples via independent toolkit executions on different infrastructures and combine all
+results afterwards.
+
+You would first have to run the wPipeline mode without dereplication, read mapping and co-occurrence modules
+and afterwards run the the aggregation as described below:
+
+#### Input
+
+=== "Command"
+
+    ```BASH
+    -entry wAggregatePipeline -params-file example_params/fullPipelineAggregate.yml
+    ```
+
+=== "Configuration File"
+
+    ```YAML
+    ---8<--- "../example_params/fullPipelineAggregate.yml"
+    ```
+
