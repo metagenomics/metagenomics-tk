@@ -1,7 +1,7 @@
 tempdir: "tmp"
 summary: false
 output: "output"
-input: "input"
+input: "output"
 logDir: log
 runid: 1
 logLevel: 1
