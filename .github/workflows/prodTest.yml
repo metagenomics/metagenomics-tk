@@ -1,7 +1,4 @@
 name: "Run Tests against real samples"
-on:
-  push:
-    branches: [ dev ]
 jobs:
   build_job:
     runs-on: [self-hosted, prodTest]

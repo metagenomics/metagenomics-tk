@@ -1,5 +1,5 @@
 
-name: CI
+name: Test Pull Requests
 
 on:
   pull_request:
