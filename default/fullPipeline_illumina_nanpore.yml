@@ -14,6 +14,7 @@ output: output
 logDir: log
 runid: 1
 databases: "/vol/scratch/databases"
+publishDirMode: "symlink"
 logLevel: 1
 scratch: "/vol/scratch"
 steps:
@@ -252,6 +253,11 @@ steps:
           #        params: ' --max-seqs 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
           #        database:
           #          download:
+    keggFromMMseqs2:
+      database:
+        download:
+          source: s3://databases_internal/kegg-links-mirror-2021-01.tar.gz
+          md5sum: 69538151ecf4128f4cb1e0ac21ff55b3
   metabolomics:
      beforeProcessScript: ""
      filter:
