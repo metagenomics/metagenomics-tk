@@ -148,24 +148,24 @@ steps:
       additionalParams: " --mincontiglen 200 "
     mmseqs2:
       kegg:
-        params: ' -s 2 --exact-kmer-matching 1 '
+        params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
         database:
           extractedDBPath: '/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB'
 
 #      vfdb:
-#        params: ' -s 2 --exact-kmer-matching 1 '
+#        params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
 #        database:
 #          download:
 #            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_2022_07_29.tar.zst
 #            md5sum: 7e32aaed112d6e056fb8764b637bf49e
 #      bacmet20_experimental:
-#        params: ' -s 2 --exact-kmer-matching 1 '
+#        params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
 #        database:
 #          download:
 #            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_experimental.tar.zst
 #            md5sum: 57a6d328486f0acd63f7e984f739e8fe
       bacmet20_predicted:
-        params: ' -s 2 --exact-kmer-matching 1 '
+        params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
@@ -178,7 +178,7 @@ steps:
           md5sum: d7e627221a1d4584d1c1795cda774cdb
     mmseqs2_taxonomy:
       ncbi_nr:
-        params: '-s 1 --orf-filter-s 1 -e 1e-15'
+        params: '-s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --orf-filter-s 1 -e 1e-15 --db-load-mode 3'
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst

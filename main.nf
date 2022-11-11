@@ -338,11 +338,11 @@ workflow wPipeline {
     mapJoin(wMagAttributesList.out.checkm, binsStats | mix(wFragmentRecruitmentList.out.binsStats), "BIN_ID", "BIN_ID") \
 	| set { binsStats  }
 
-    wAnnotatePlasmidList(Channel.value("meta"), wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage)
+    wAnnotatePlasmidList(Channel.value("plasmid"), Channel.value("meta"), wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage)
 
-    wAnnotateBinsList(Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, contigCoverage)
+    wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, contigCoverage)
 
-    wAnnotateUnbinnedList(Channel.value("meta"), notBinnedContigs, null, contigCoverage)
+    wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs, null, contigCoverage)
 
     SAMPLE_IDX = 0
     BIN_ID_IDX = 1
