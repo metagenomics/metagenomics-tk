@@ -1,13 +1,20 @@
 tempdir: "tmp"
 summary: false
 input:
-  paired:
-    path: "test_data/fullPipeline/reads_split.tsv"
-    watch: false
-output: "output"
+  SRA:
+    pattern:
+      ont: ".+[^(_1|_2)].+$"
+      illumina: ".+(_1|_2).+$"
+    S3:
+      path: test_data/fullPipeline/production.tsv
+      bucket: "s3://ftp.era.ebi.ac.uk" 
+      prefix: "/vol1/fastq/"
+      watch: false
+output: output
 logDir: log
 runid: 1
 databases: "/vol/scratch/databases"
+publishDirMode: "symlink"
 logLevel: 1
 scratch: "/vol/scratch"
 steps:
@@ -26,6 +33,16 @@ steps:
       additionalParams:
         count: " -m 21 -s 100M "
         histo: " "
+
+  qcONT:
+    porechop:
+       additionalParams:
+         porechop: ""
+        # --keep_percent Throw out the worst 10% of reads. This is measured by bp, not by read count. So this option throws out the worst 10% of read bases. 
+        # 
+         filtlong: " --min_length 1000  --keep_percent 90 "
+    nanoplot:
+      additionalParams: ""
   assembly:
     megahit:
       # --mem-flag 0 to use minimum memory, --mem-flag 1 (default) moderate memory and --mem-flag 2 all memory.
@@ -37,6 +54,10 @@ steps:
         RAM:
           mode: 'PREDICT'
           predictMinLabel: 'medium'
+  assemblyONT:
+    metaflye:
+      additionalParams: " -i 1 "
+      quality: "AUTO"
   binning:
     bowtie:
       additionalParams: 
@@ -47,6 +68,16 @@ steps:
       additionalParams: ""
     metabat:
       # Set --seed positive numbers to reproduce the result exactly. Otherwise, random seed will be set each time.
+      additionalParams: " --seed 234234  "
+  binningONT:
+    minimap2:
+      additionalParams: 
+        minimap2: " "
+        # samtools flags are used to filter resulting bam file
+        samtoolsView: " -F 3584 " 
+    contigsCoverage:
+      additionalParams: ""
+    metabat:
       additionalParams: " --seed 234234  "
   magAttributes:
     # gtdbtk classify_wf
@@ -71,14 +102,22 @@ steps:
         lineage_set: " " 
         qa: "  "
   fragmentRecruitment:
-    frhit:
-      genomes: "/vol/spool/meta/test/data/bin.*.fa"
-      sort: true
+    mashScreen:
+      genomes: test_data/fragmentRecruitment/mags.tsv
       additionalParams:
-        # More interested in more remote hits
-        # Are output files to big for higher c's and more inputs ?  
-        frhit: " -c 75 "
-        coverm: " --min-covered-fraction 0 "
+        mashSketch: " "
+        mashScreen: " "
+        bowtie: " --quiet --very-sensitive "
+        # We demand that matches should be at least 70 percent to restrict the
+        # search space. We further restrict all found matches in 'coveredBasesCutoff' parameter.
+        coverm: " --min-covered-fraction 70 "
+        minimap: "   "
+       # Mash identity should be at least 95%
+      mashDistCutoff: 0.95
+       # percentage of covered genome
+      coveredBasesCutoff: 0.90
+       # Minimum number of k-mer hashes to match
+      mashHashCutoff: 700
   dereplication:
     pasolli:
       # stricter MIMAG medium quality
@@ -99,8 +138,15 @@ steps:
       additionalParams:
         bwa_index: ""
         bwa_mem: ""
-        # Even low coverage values should be reported
-        coverm: " --min-covered-fraction 0 "
+     # Even low coverage values should be reported
+     # because evaluation whether a dataset contains a genome
+     # can be done afterwards.
+    coverm:
+      additionalParams: " --min-covered-fraction 0 "
+    minimap2:
+      additionalParams:
+        minimap2_index: ""
+        minimap2: ""
   cooccurrence:
     additionalParams: " -t 0.1 -z 80 -o 'correlation' "
   plasmid:
@@ -169,6 +215,9 @@ steps:
           download:
             source: s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst
             md5sum: 0d20db97b3e7ee6571ca1fd5ad3a87f1
+            s5cmd:
+              keyfile: /vol/spool/keyfile
+              params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
       vfdb:
         params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
         database:
@@ -211,6 +260,23 @@ steps:
         download:
           source: s3://databases_internal/kegg-links-mirror-2021-01.tar.gz
           md5sum: 69538151ecf4128f4cb1e0ac21ff55b3
+  metabolomics:
+     beforeProcessScript: ""
+     filter:
+       minCompleteness: 90
+       maxContamination: 5
+     gapseq:
+       additionalParams: ""
+     smetana:
+       global: false
+       detailed: false
+       additionalParams:
+         detailed: ""
+         global: ""
+     memote:
+       additionalParams:
+         run: ""
+         report: ""
 resources:
   large:
     cpus: 28
@@ -223,4 +289,4 @@ resources:
     memory: 14
   tiny:
     cpus: 1
-    memory: 1
+    memory: 2
