@@ -175,7 +175,8 @@ workflow _wBinning {
      SAMPLE_IDX=0
 
      pMinimap2(Channel.value(params?.steps?.containsKey("binningONT")), Channel.value([getModulePath(params.modules.binningONT), \
-     "contigMapping", params.steps?.binningONT?.minimap2?.additionalParams?.minimap2, params.steps.containsKey("fragmentRecruitment")]), \
+     "contigMapping", params.steps?.binningONT?.minimap?.additionalParams?.minimap, \
+     params.steps?.binningONT?.minimap?.additionalParams?.samtoolsView, params.steps.containsKey("fragmentRecruitment")]), \
      contigs | join(inputReads, by: SAMPLE_IDX))
 
      pMinimap2.out.mappedReads | set { mappedReads }

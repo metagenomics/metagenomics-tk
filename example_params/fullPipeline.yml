@@ -31,13 +31,12 @@ steps:
         RAM: 
           mode: 'PREDICT'
           predictMinLabel: 'medium' 
-
   binning:
-    bowtie:
+    bwa:
       additionalParams: 
-        bowtie: " --quiet --very-sensitive "
+        bwa: "   "
         # samtools flags are used to filter resulting bam file
-        samtoolsView: " -F 3584 " 
+        samtoolsView: "  -F 3584  "
     contigsCoverage:
       additionalParams: ""
     metabat:
@@ -66,9 +65,11 @@ steps:
       additionalParams:
         mashSketch: " "
         mashScreen: " "
-        bowtie: " "
+        bwa: " "
         coverm: "  --min-covered-fraction 5  "
         minimap: "  "
+        samtoolsViewBwa: " -F 3584 " 
+        samtoolsViewMinimap: " " 
       mashDistCutoff: 0.95
       coveredBasesCutoff: 0.2
       mashHashCutoff: 800
@@ -99,9 +100,11 @@ steps:
     SCAPP:
       additionalParams: 
         SCAPP: "  "
-        bowtie: "  "
+        bwa: "  "
         coverm: "  "
         minimap: " "
+        samtoolsViewBwa: " -F 3584 " 
+        samtoolsViewMinimap: " " 
     ViralVerifyPlasmid:
       filter: true
       filterString: "Uncertain - plasmid or chromosomal|Plasmid"

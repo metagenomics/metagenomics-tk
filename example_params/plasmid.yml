@@ -14,6 +14,8 @@ steps:
       additionalParams: 
         SCAPP: "  "
         bowtie: "  "
+        samtoolsViewBowtie: " -F 3584 " 
+        samtoolsViewMinimap: " " 
         coverm: "  "
         minimap: "  "
     ViralVerifyPlasmid:

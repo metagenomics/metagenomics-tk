@@ -2,7 +2,7 @@ nextflow.enable.dsl=2
 
 include { pGetBinStatistics as pGetBinStatistics; \
 	pGetBinStatistics as pGetNotBinnedStatistics; \
-	pCovermContigsCoverage; pBowtie2; pMetabat } from './processes'
+	pCovermContigsCoverage; pBowtie2; pMetabat; pBwa } from './processes'
 
 def getModulePath(module){
     return module.name + '/' + module.version.major + "." +
@@ -173,10 +173,18 @@ workflow _wBinning {
      DO_NOT_ESTIMATE_IDENTITY = "-1" 
 
      pBowtie2(Channel.value(params?.steps?.containsKey("binning")), Channel.value([getModulePath(params.modules.binning), \
-      "contigMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, params.steps.containsKey("fragmentRecruitment")]), \
+      "contigMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, \
+      params.steps?.binning?.bowtie?.additionalParams?.samtoolsView, params.steps.containsKey("fragmentRecruitment")]), \
       contigs | join(inputReads, by: SAMPLE_IDX))
 
-     pBowtie2.out.mappedReads | set { mappedReads }
+     pBwa(Channel.value(params?.steps?.containsKey("binning")), Channel.value([getModulePath(params.modules.binning), \
+      "contigMapping", params.steps?.binning?.bwa?.additionalParams?.bwa, \
+      params.steps?.binning?.bwa?.additionalParams?.samtoolsView,
+      params.steps.containsKey("fragmentRecruitment")]), \
+      contigs | join(inputReads, by: SAMPLE_IDX))
+
+     pBowtie2.out.mappedReads | mix(pBowtie2.out.mappedReads) | set { mappedReads }
+     pBowtie2.out.unmappedReads | mix(pBwa.out.unmappedReads) | set { unmappedReads }
 
      mappedReads | pGetMappingQuality
 
@@ -227,6 +235,6 @@ workflow _wBinning {
      bins = binsList
      mapping = mappedReads
      notBinnedContigs = notBinned
-     unmappedReads =  pBowtie2.out.unmappedReads
+     unmappedReads =  unmappedReads
      contigCoverage = pCovermContigsCoverage.out.coverage     
 }

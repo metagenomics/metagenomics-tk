@@ -18,6 +18,8 @@ steps:
         bowtie: " "
         minimap: " "
         coverm: "  --min-covered-fraction 0  "
+        samtoolsViewBowtie: " -F 3584 " 
+        samtoolsViewMinimap: " " 
       mashDistCutoff: 0.70
       coveredBasesCutoff: 0.2
       mashHashCutoff: 2
