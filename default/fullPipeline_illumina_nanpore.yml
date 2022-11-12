@@ -210,7 +210,7 @@ steps:
       additionalParams: " --mincontiglen 500 "
     mmseqs2:
       kegg:
-        params: ' --max-seqs 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
         database:
           download:
             source: s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst
@@ -219,40 +219,42 @@ steps:
               keyfile: /vol/spool/keyfile
               params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
       vfdb:
-        params: ' --max-seqs 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_2022_07_29.tar.zst
             md5sum: 7e32aaed112d6e056fb8764b637bf49e
       bacmet20_experimental:
-        params: ' --max-seqs 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_experimental.tar.zst
             md5sum: 57a6d328486f0acd63f7e984f739e8fe
       bacmet20_predicted:
-        params: ' --max-seqs 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
             md5sum: 55902401a765fc460c09994d839d9b64
-            #      ncbi_nr:
-            #        params: ' --max-seqs 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
-            #        database:
-            #          download:
-            #            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
-            #            md5sum: 184bb8207ee1575cae7756137cde076b
+      ncbi_nr:
+        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+        database:
+          download:
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
+            md5sum: 184bb8207ee1575cae7756137cde076b
     rgi:
       additionalParams: ""
       database:
         download:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
           md5sum: d7e627221a1d4584d1c1795cda774cdb
-          #    mmseqs2_taxonomy:
-          #      ncbi_nr:
-          #        params: ' --max-seqs 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
-          #        database:
-          #          download:
+    mmseqs2_taxonomy:
+      ncbi_nr:
+        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+        database:
+          download:
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
+            md5sum: 184bb8207ee1575cae7756137cde076b
     keggFromMMseqs2:
       database:
         download:

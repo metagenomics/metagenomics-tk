@@ -6,59 +6,42 @@ class Utils {
   * otherwise mount the file directly if it is already available on the filesystem.
   *
   **/
-  static String getDockerMount(config, params) {
+  static String getDockerMount(config, params, useParentDirectory=false) {
+      def getPathWithoutFile = { filePath ->
+          int dotIndex = filePath.lastIndexOf('/');
+          return (dotIndex == -1) ? filePath : filePath.substring(0, dotIndex);
+      }
 
-    if(config!=null){
-        if(config.containsKey("extractedDBPath")){
-                return " --volume " + config.extractedDBPath + ":" + config.extractedDBPath ;
-        } else if (config.containsKey("download")) {
-                def volumeMountStr = ""
-                if(config.download.source.startsWith("/")){
-                        volumeMountStr += " --volume " + config.download.source + ":" + config.download.source  
-                }
-                volumeMountStr += " --volume " + params.polished.databases + ":" + params.polished.databases ;
+      def selectInput = { f -> useParentDirectory ? getPathWithoutFile(f): f }
+      if(config!=null){
+          if(config.containsKey("extractedDBPath")){
+              return " --volume " + selectInput(config.extractedDBPath) + ":" + selectInput(config.extractedDBPath) ;
+          } else if (config.containsKey("download")) {
+              def volumeMountStr = ""
+              if(config.download.source.startsWith("/")){
+                  volumeMountStr += " --volume " +  selectInput(config.download.source) + ":" + selectInput(config.download.source)
+              }
+              volumeMountStr += " --volume " + params.polished.databases + ":" + params.polished.databases ;
 
-        	if(config.download.containsKey("s5cmd") && config.download.s5cmd.containsKey("keyfile")){
-                	volumeMountStr += " --volume " + config.download.s5cmd.keyfile + ":/.aws/credentials" + " --volume " + config.download.s5cmd.keyfile + ":/root/.aws/credentials"
-        	}
+              if(config.download.containsKey("s5cmd") && config.download.s5cmd.containsKey("keyfile")){
+                  volumeMountStr += " --volume " + config.download.s5cmd.keyfile + ":/.aws/credentials" + " --volume " + config.download.s5cmd.keyfile + ":/root/.aws/credentials"
+              }
 
-        	return volumeMountStr;
-        }
+              return volumeMountStr;
+          }
 
-    } else {
-    	return "";
-    }
+      } else {
+          return "";
+      }
   }
 
-  static String getDockerMountMMseqs(config, params) {
-
-    if(config!=null){
-        if(config.containsKey("extractedDBPath")){ 
-                return " --volume " + getPathWithoutFile(config.extractedDBPath) + ":" + getPathWithoutFile(config.extractedDBPath) ;
-        } else if (config.containsKey("download")) {
-                def volumeMountStr = ""
-                if(config.download.source.startsWith("/")){
-                        volumeMountStr += " --volume " + getPathWithoutFile(config.download.source) + ":" + getPathWithoutFile(config.download.source)
-                }
-                volumeMountStr += " --volume " + params.polished.databases + ":" + params.polished.databases ;
-
-                if(config.download.containsKey("s5cmd") && config.download.s5cmd.containsKey("keyfile")){
-                        volumeMountStr += " --volume " + config.download.s5cmd.keyfile + ":/.aws/credentials" + " --volume " + config.download.s5cmd.keyfile + ":/root/.aws/credentials"
-                }
-
-                return volumeMountStr;
-        }
-
-    } else {
-        return "";
-    }
-  }
 
   static String getModulePath(module){
     return module.name + '/' + module.version.major + "." +
           module.version.minor + "." +
           module.version.patch
   }
+
 
   static String getBeforeScript(script, image){
     if(script.isEmpty()){
@@ -67,6 +50,7 @@ class Utils {
       return "bash " + script + " " + image ; 
     }
   }
+
 
   static Collection asList(element){
      if(element instanceof Collection){
@@ -80,6 +64,7 @@ class Utils {
     int dotIndex = filePath.lastIndexOf('/');
     return (dotIndex == -1) ? filePath : filePath.substring(0, dotIndex);
   }
+
 
   /*
    * This function sets a time limit based on a user provided mode and the resource defaults
