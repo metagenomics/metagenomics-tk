@@ -66,6 +66,7 @@ process pMMseqs2 {
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
    shell:
+   output = getOutput("${sample}", params.runid, "mmseqs2/${dbType}", "")
    '''
    mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part
@@ -152,6 +153,7 @@ process pMMseqs2_taxonomy {
 
 
    shell:
+   output = getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", "")
    '''
    mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part
@@ -224,6 +226,7 @@ process pResistanceGeneIdentifier {
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
    shell:
+   output = getOutput("${sample}", params.runid, "rgi", "")
    EXTRACTED_DB=params.steps?.annotation?.rgi?.database?.extractedDBPath ?: ""
    DOWNLOAD_LINK=params.steps?.annotation?.rgi?.database?.download?.source ?: ""
    MD5SUM=params?.steps?.annotation?.rgi?.database?.download?.md5sum ?: ""
