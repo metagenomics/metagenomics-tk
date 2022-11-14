@@ -12,10 +12,16 @@ The fragment recruitment module can be used to find genomes in a set of read dat
     -entry wFragmentRecruitment -params-file example_params/fragmentRecruitment.yml
     ```
 
-=== "Configuration file for fragment recruitment via mash screen"
+=== "Configuration file for fragment recruitment via mash screen and BWA"
 
     ```YAML
     ---8<--- "../../example_params/fragmentRecruitmentMashScreen.yml"
+    ``` 
+
+=== "Configuration file for fragment recruitment via mash screen and Bowtie"
+
+    ```YAML
+    ---8<--- "../../example_params/fragmentRecruitment_fraction/fragmentRecruitmentMashScreenBowtie.yml"
     ``` 
 
 === "Input TSV file for genomes"

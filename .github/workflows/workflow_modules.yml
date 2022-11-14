@@ -191,9 +191,14 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
-      - name: Test Fragment Recruitment via Mash Screen
+      - name: Test Fragment Recruitment via Mash Screen wtih BWA
         run: |
           bash ./scripts/test_fragmentRecruitment.sh "" "example_params/fragmentRecruitmentMashScreen.yml" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+      - name: Test Fragment Recruitment via Mash Screen wtih Bowtie
+        run: |
+          bash ./scripts/test_fragmentRecruitment.sh "" \
+             "example_params/fragmentRecruitment_fraction/fragmentRecruitmentMashScreenBowtie.yml" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+
 
   annotation:
     timeout-minutes: 2200
@@ -267,7 +272,7 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
-      - name: Plasmid
+      - name: Plasmid Test
         run: |
           bash ./scripts/test_plasmids.sh " --databases=/vol/scratch/databases/  " "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
       - name: Plasmids Database Test
