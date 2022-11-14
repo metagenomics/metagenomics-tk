@@ -172,18 +172,20 @@ workflow _wBinning {
      SAMPLE_IDX=0
      DO_NOT_ESTIMATE_IDENTITY = "-1" 
 
-     pBowtie2(Channel.value(params?.steps?.containsKey("binning")), Channel.value([getModulePath(params.modules.binning), \
+     pBowtie2(Channel.value(params?.steps?.containsKey("binning") && params?.steps?.binning.containsKey("bowtie")), \
+      Channel.value([getModulePath(params.modules.binning), \
       "contigMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, \
       params.steps?.binning?.bowtie?.additionalParams?.samtoolsView, params.steps.containsKey("fragmentRecruitment")]), \
       contigs | join(inputReads, by: SAMPLE_IDX))
 
-     pBwa(Channel.value(params?.steps?.containsKey("binning")), Channel.value([getModulePath(params.modules.binning), \
+     pBwa(Channel.value(params?.steps?.containsKey("binning") && params?.steps?.binning.containsKey("bwa")), \
+      Channel.value([getModulePath(params.modules.binning), \
       "contigMapping", params.steps?.binning?.bwa?.additionalParams?.bwa, \
       params.steps?.binning?.bwa?.additionalParams?.samtoolsView,
       params.steps.containsKey("fragmentRecruitment")]), \
       contigs | join(inputReads, by: SAMPLE_IDX))
 
-     pBowtie2.out.mappedReads | mix(pBowtie2.out.mappedReads) | set { mappedReads }
+     pBowtie2.out.mappedReads | mix(pBwa.out.mappedReads) | set { mappedReads }
      pBowtie2.out.unmappedReads | mix(pBwa.out.unmappedReads) | set { unmappedReads }
 
      mappedReads | pGetMappingQuality
