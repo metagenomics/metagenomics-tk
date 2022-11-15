@@ -164,10 +164,12 @@ workflow _wReadMappingBwa {
      // Create BWA and Minimap index of all genomes
      BWA_INDEX_IDX=0
      GENOMES_IDX=1
+     MERGED_GENOME_IDX=2
       
      pMinimap2IndexLong(Channel.value(params?.steps.containsKey("readMapping") \
 	&& Channel.value(params?.steps?.readMapping.containsKey("minimap"))), \
-	Channel.value("map-ont"), genomesMerged) | set { ontIndex }
+	Channel.value("map-ont"), samplesONT | combine(genomesMerged) \
+	| map { sample -> samples[MERGED_GENOME_IDX] } ) | set { ontIndex }
 
      // Create BWA index
      genomesMerged | pBwaIndex | map{ bwaIndex -> [bwaIndex]} \

@@ -47,7 +47,7 @@ steps:
   binning:
     bwa:
       additionalParams: 
-        bwa: " --quiet --very-sensitive "
+        bwa: "  "
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
     contigsCoverage:
