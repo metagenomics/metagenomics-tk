@@ -354,7 +354,16 @@ workflow _wDereplicate {
    main:
      defaultMashBuffer = params?.steps?.dereplication?.pasolli?.mashBuffer ?: 500
 
-     genomesTableFile | splitCsv(sep: '\t', header: true) | set { genomesTable }
+     genomesTableFile | splitCsv(sep: '\t', header: true) | set { genomesTablePreprocessing }
+
+     // Check if theres is more then one MAG in the input channel
+     // If this is not the case then the no further processes are triggered
+     genomesTablePreprocessing | count() | set { numberOfMags }
+     MAGS_IDX = 0
+     NUMBER_OF_MAGS_IDX = 1
+     genomesTablePreprocessing | combine(numberOfMags) \
+	| filter({ it -> it[NUMBER_OF_MAGS_IDX] > 1 }) \
+	| map { it -> it[MAGS_IDX]} | set { genomesTable }
 
      // filter genomes by contamination and completeness
      genomesTable | filter({ it.COMPLETENESS.toFloat() >= params?.steps?.dereplication?.pasolli?.minimumCompleteness }) \
@@ -370,7 +379,7 @@ workflow _wDereplicate {
     pMashPaste(params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli"), \
 	Channel.value([Utils.getModulePath(params.modules.dereplication), "pasolli/mash/paste"]),  mashPasteInput)
   
-     pMashPaste.out.sketch | toList() | pMashDist
+     pMashPaste.out.sketch | collect(flat: false) | pMashDist
 
      pMashDist.out.distance | pClusterDistances 
      pClusterDistances.out.clusters | set { clusters }

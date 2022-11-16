@@ -23,3 +23,28 @@ process pDumpLogs {
     '''
 }
 
+
+process pPublish {
+
+    label 'tiny'
+
+    container "${params.ubuntu_image}"
+
+    publishDir "${outDir}", mode: "${params.publishDirMode}"
+
+    errorStrategy 'retry'
+
+    when:
+    params?.input.containsKey("SRA")
+
+    input:
+    val(outDir)
+    path(in)
+
+    output:
+    path("$in", includeInputs: true)
+
+    shell:
+    '''
+    '''
+}
