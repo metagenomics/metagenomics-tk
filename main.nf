@@ -2,6 +2,7 @@ nextflow.enable.dsl=2
 import java.util.regex.*;
 
 include { wSaveSettingsList } from './modules/config/module'
+include { pPublish as pPublishIllumina; pPublish as pPublishOnt } from './modules/utils/processes'
 include { wShortReadQualityControlFile; wShortReadQualityControlList} from './modules/qualityControl/shortReadQC'
 include { wOntQualityControlFile; wOntQualityControlList} from './modules/qualityControl/ontQC'
 include { wShortReadAssemblyFile; wShortReadAssemblyList } from './modules/assembly/shortReadAssembler'
@@ -52,6 +53,8 @@ workflow wReadMapping {
    wFileReadMappingBwa()
 }
 
+
+
 workflow wSRATable {
    SAMPLE_IDX = 0
    FASTQ_FILE_LEFT_IDX = 2 
@@ -64,17 +67,21 @@ workflow wSRATable {
    } | set { input }
      
    input.ILLUMINA | map { sample ->  [ sample.SAMPLE, sample.TYPE, sample.READS1, sample.READS2 ] } \
-	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tREADS1\tREADS2"){ it -> [ "samplesILLUMINA", it[SAMPLE_IDX] \
+	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tREADS1\tREADS2"){ it -> [ "samplesILLUMINA.tsv", it[SAMPLE_IDX] \
         + "\t" + it[INSTRUMENT_IDX] \
 	+ "\t" + it[FASTQ_FILE_LEFT_IDX].toString() \
 	+ "\t" + it[FASTQ_FILE_RIGHT_IDX].toString()] } \
-	| view({ it -> it.text })
+	| set {illuminaFile} 
+   illuminaFile | view({ it -> it.text })
+   pPublishIllumina(params.logDir, illuminaFile)
 
    input.ONT | map { sample ->  [ sample.SAMPLE, sample.TYPE, sample.READS ] } \
-	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tREADS"){ it -> [ "samplesONT", it[SAMPLE_IDX] \
+	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tREADS"){ it -> [ "samplesONT.tsv", it[SAMPLE_IDX] \
         + "\t" + it[INSTRUMENT_IDX] \
 	+ "\t" + it[FASTQ_FILE_LEFT_IDX].toString() ]} \
-	| view({ it -> it.text })
+	| set {ontFile} 
+   ontFile | view({ it -> it.text })
+   pPublishOnt(params.logDir, ontFile)
 }
 
 workflow wDereplicationPath {

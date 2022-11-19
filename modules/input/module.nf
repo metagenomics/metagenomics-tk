@@ -17,7 +17,9 @@ process pGetSRAPath {
     errorStrategy 'retry'
     
     executor 'local'
-    
+
+    tag "Accession: $sraid"
+
     when:
     params?.input.containsKey("SRA") && params?.input.SRA.containsKey("S3") 
 
@@ -53,6 +55,10 @@ process pGetMetadata {
     container "${params.pysradb_image}"
 
     errorStrategy 'retry'
+
+    tag "Accession: $sraid"
+
+    maxForks 3
     
     when:
     params?.input.containsKey("SRA")
@@ -78,6 +84,10 @@ process pGetSRAIDs {
     container "${params.pysradb_image}"
 
     errorStrategy 'retry'
+
+    maxForks 4
+
+    tag "Accession: $sraid"
     
     when:
     params?.input.containsKey("SRA")
@@ -96,7 +106,8 @@ process pGetSRAIDs {
     cut -f 1,20 unfiltered_output.tsv | grep -e "$(printf '\t')!{sraid}$" -e "^!{sraid}$(printf '\t')" \
 	| sed -r '/^\s*$/d'  > containsIDTest.txt
     if [ -s containsIDTest.txt ]; then
-    	cut -f 17,20 unfiltered_output.tsv > output.tsv  
+        echo "run_accession" > output.tsv
+	cut -f 2 containsIDTest.txt >> output.tsv
     else 
         NOT_FOUND_ID=!{sraid}
 	echo "No result for ID !{sraid} found.";
