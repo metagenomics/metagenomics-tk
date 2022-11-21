@@ -292,13 +292,14 @@ workflow _wAnalyseMetabolites {
      take:
         bins
         proteins
+        type
      main:
         bins | pGapSeq
 
         // While GapSeq is only able to process genomes, carveme is able to use
         // predicted proteins.
-        pCarveProteins(proteins, Channel.value("proteins"))
-        pCarveGenomes(bins, Channel.value("genome"))
+        pCarveProteins(proteins, Channel.value("proteins"), type | filter(it == "proteins"))
+        pCarveGenomes(bins, Channel.value("genome"), type | filter(it == "bins"))
 
         // build, validate and analyse all models
         pGapSeq.out.model | mix(pCarveProteins.out.model) \
