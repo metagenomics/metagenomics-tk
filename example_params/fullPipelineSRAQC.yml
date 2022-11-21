@@ -15,8 +15,6 @@ input:
       bucket: "s3://ftp.era.ebi.ac.uk" 
       prefix: "/vol1/fastq/"
       watch: false
-      patternONT: ".+[^(_1|_2)].+$"
-      patternIllumina: ".+(_1|_2).+$"
 steps:
   qc:
     fastp:
