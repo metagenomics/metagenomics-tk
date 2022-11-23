@@ -1,10 +1,8 @@
 nextflow.enable.dsl=2
 
 
-include { pMinimap2Index as pMinimap2IndexShort; \
-        pMinimap2Index as pMinimap2IndexLong; \
-        pMapMinimap2 as pMapMinimap2Short; \
-        pMapMinimap2 as pMapMinimap2Long; } from './processes'
+include { pMinimap2Index as pMinimap2IndexLong; \
+          pMapMinimap2 as pMapMinimap2Long; } from './processes'
 
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
@@ -74,8 +72,8 @@ process pCovermCount {
 * wListReadMappingBwa maps a set of fastq samples against a set of genomes.
 * Input Parameters
 *
-*  * ONT, Paired and single end samplesheets must have the columns "READS" and "SAMPLE"  
-*  * Mags file contains paths to every input genome (BINS column).
+*  * ONT, paired and single end sample sheets must have the columns "READS" and "SAMPLE"  
+*  * MAGs file contains paths to every input genome (BINs column).
 *  * Columns of the mags file must be SAMPLE for sample identifier and READS for the path to the fastq files.
 *
 */
@@ -186,7 +184,8 @@ workflow _wReadMappingBwa {
 
      // Map ONT data
      samplesONT | combine(ontIndex) | set {ont}
-     pMapMinimap2Long(false,ont)
+     pMapMinimap2Long(Channel.value(params?.steps.containsKey("readMapping") \
+	&& Channel.value(params?.steps?.readMapping.containsKey("minimap"))) ont)
  
      DO_NOT_ESTIMATE_IDENTITY = "-1"
      pMapBwa.out.alignment | combine(genomes | map {it -> file(it)} \
