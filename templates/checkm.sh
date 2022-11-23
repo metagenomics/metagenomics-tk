@@ -17,8 +17,8 @@ then
   flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
     --link=!{DOWNLOAD_LINK} \
     --httpsCommand="wget -O checkm.tar.gz !{DOWNLOAD_LINK} && tar -xzvf checkm.tar.gz && rm checkm.tar.gz" \
-    --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} checkm.tar.gz && tar -xzvf checkm.tar.gz && rm checkm.tar.gz" \
-    --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} . " \
+    --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} checkm.tar.gz && tar -xzvf checkm.tar.gz && rm checkm.tar.gz" \
+    --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
     --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
     --localCommand="tar -xzvf !{DOWNLOAD_LINK}" \
     --expectedMD5SUM=!{MD5SUM}

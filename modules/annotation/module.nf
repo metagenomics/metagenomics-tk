@@ -84,8 +84,8 @@ process pMMseqs2 {
          flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE}/!{dbType} \
             --link=!{DOWNLOAD_LINK} \
             --httpsCommand="wget -O mmseqs.!{dbType}.tar.zst !{DOWNLOAD_LINK}  && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
-            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
-            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
+            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
+            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
 	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
             --localCommand="zstd -T!{task.cpus} -d !{DOWNLOAD_LINK} -o mmseqs.!{dbType}.tar && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
             --expectedMD5SUM=!{MD5SUM}
@@ -171,8 +171,8 @@ process pMMseqs2_taxonomy {
             flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE}/!{dbType} \
                --link=!{DOWNLOAD_LINK} \
                --httpsCommand="wget -O mmseqs.!{dbType}.tar.zst !{DOWNLOAD_LINK}  && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
-               --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
-               --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
+               --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus}  !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
+               --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
    	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
                --localCommand="zstd -T!{task.cpus} -d !{DOWNLOAD_LINK} -o mmseqs.!{dbType}.tar && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
                --expectedMD5SUM=!{MD5SUM}
@@ -247,8 +247,8 @@ process pResistanceGeneIdentifier {
         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
          --link=!{DOWNLOAD_LINK} \
          --httpsCommand="wget -O data !{DOWNLOAD_LINK} && tar -xvf data && rm data" \
-         --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} . " \
-         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} data && tar -xvf data  && rm data" \
+         --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus}  !{DOWNLOAD_LINK} . " \
+         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} data && tar -xvf data  && rm data" \
 	 --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
          --localCommand="tar -xvf !{DOWNLOAD_LINK}" \
          --expectedMD5SUM=!{MD5SUM}
@@ -371,7 +371,7 @@ process pKEGGFromBlast {
         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
          --link=!{DOWNLOAD_LINK} \
          --httpsCommand="wget -O kegg.tar.gz !{DOWNLOAD_LINK} && tar -xzvf kegg.tar.gz && rm kegg.tar.gz " \
-         --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} . " \
+         --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
          --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} kegg.tar.gz && tar -xzvf kegg.tar.gz && rm kegg.tar.gz " \
 	 --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
          --localCommand="tar -xzvf !{DOWNLOAD_LINK} " \
