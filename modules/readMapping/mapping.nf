@@ -185,7 +185,7 @@ workflow _wReadMappingBwa {
      // Map ONT data
      samplesONT | combine(ontIndex) | set {ont}
      pMapMinimap2Long(Channel.value(params?.steps.containsKey("readMapping") \
-	&& Channel.value(params?.steps?.readMapping.containsKey("minimap"))) ont)
+	&& Channel.value(params?.steps?.readMapping.containsKey("minimap"))), ont)
  
      DO_NOT_ESTIMATE_IDENTITY = "-1"
      pMapBwa.out.alignment | combine(genomes | map {it -> file(it)} \
