@@ -316,8 +316,7 @@ workflow _wAnalyseMetabolites {
         pCarveMe(proteins | mix(bins), type)
 
         // build, validate and analyse all models
-        pGapSeq.out.model | mix(pCarveProteins.out.model) \
-	 | mix(pCarveGenomes.out.model) | set { model } 
+        pGapSeq.out.model | mix(pCarveMe.out.model) | set { model } 
 
         model | pBuildJson & pMemote
         pBuildJson.out.model | pAnalyse 
@@ -331,6 +330,6 @@ workflow _wAnalyseMetabolites {
         // compute possible interactions 
         modelGroup | pSmetanaDetailed & pSmetanaGlobal
 
-        pGapSeq.out.logs | mix(pCarveGenomes.out.logs, pCarveProteins.out.logs) \
+        pGapSeq.out.logs | mix(pCarveMe.out.logs) \
             | mix(pMemote.out.logs, pAnalyse.out.logs, pBuildJson.out.logs) | pDumpLogs
 }
