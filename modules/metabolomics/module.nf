@@ -249,7 +249,7 @@ workflow wAnalyseMetabolitesFile {
 		| splitCsv(sep: '\t', header: true) \
 		| map {it -> [ it.SAMPLE, it.BIN_ID, it.PATH ]} \
                 | set { bins }
-         Channel.value("bins") | set { type }
+         Channel.value("genome") | set { type }
      }
 
      _wAnalyseMetabolites(bins, proteins, type)
@@ -287,7 +287,7 @@ workflow wAnalyseMetabolitesList {
           | map { it -> [it.SAMPLE, it.BIN_ID, it.PATH]} \
           | set { filteredBins }
 
-       Channel.value("proteins") | set { type }
+       Channel.value("genome") | set { type }
      }
 
      if(params.steps.containsKey("metabolomics") && params.steps.metabolomics.containsKey("carveme")){
