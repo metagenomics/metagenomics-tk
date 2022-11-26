@@ -29,6 +29,8 @@ process pMashScreen {
 
     tag "Sample: $sample"
 
+    cache 'deep'
+
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "mashScreen",  filename) }
 
     container "${params.mash_image}"
@@ -72,6 +74,33 @@ process pGenomeContigMapping {
     done
     '''
 }
+
+process pSaveMatchedGenomes {
+
+    container "${params.ubuntu_image}"
+
+    tag "Sample: $sample"
+
+    label 'tiny'
+
+    publishDir params.output, mode: "${params.publishDirMode}", \
+	saveAs: { filename -> getOutput("${sample}", params.runid, "matches", filename) }
+
+    input:
+    tuple val(sample), path(genomes)
+
+    output:
+    path("matches/*"), emit: matches
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+
+    shell:
+    '''
+    mkdir matches
+    cp !{genomes} matches
+    '''
+}
+
+
 
 /*
 *
@@ -119,6 +148,7 @@ workflow wMashScreenList {
       medianQuality
    main:
      _wMashScreen(pairedReads, Channel.empty(), ontReads, medianQuality)
+
    emit:
      genomes = _wMashScreen.out.genomes
      genomesSeperated = _wMashScreen.out.genomesSeperated
@@ -326,12 +356,12 @@ workflow _wGetStatistics {
 
      bowtieMappedReads \
 	| join(covermGenomesInput, by: SAMPLE_IDX) \
-	| join(Channel.value(DO_NOT_SET_IDENTITY_AUTOMATICALLY), by: SAMPLE_IDX) \
+	| combine(Channel.value(DO_NOT_SET_IDENTITY_AUTOMATICALLY)) \
         | set { covermBowtieReadsInput  }
 
      minimapMappedReads \
 	| join(covermGenomesInput, by: SAMPLE_IDX) \
-	| join(Channel.value(ontMedianQuality), by: SAMPLE_IDX) \
+	| join(ontMedianQuality, by: SAMPLE_IDX) \
         | set { covermMinimapReadsInput }
 
      covermBowtieReadsInput | mix(covermMinimapReadsInput) | pCovermCount
@@ -355,11 +385,12 @@ workflow _wGetStatistics {
   
      foundGenomesInGroup | pGenomeContigMapping
 
-     pGenomeContigMapping.out.mapping | join(bowtieMappedReads, by: SAMPLE_IDX) \
-        | combine(Channel.from("external")) | join(foundGenomesInGroup, by: SAMPLE_IDX) \
-        | join(Channel.value(DO_NOT_SET_IDENTITY_AUTOMATICALLY), by: SAMPLE_IDX) \
-        | set { bowtieMappingStatsInput }
+     foundGenomesInGroup | pSaveMatchedGenomes
 
+     pGenomeContigMapping.out.mapping | join(bowtieMappedReads, by: SAMPLE_IDX) \
+        | combine(Channel.from("stats")) | join(foundGenomesInGroup, by: SAMPLE_IDX) \
+        | combine(Channel.value(DO_NOT_SET_IDENTITY_AUTOMATICALLY)) \
+        | set { bowtieMappingStatsInput }
 
      pGenomeContigMapping.out.mapping | join(minimapMappedReads, by: SAMPLE_IDX) \
         | combine(Channel.from("external")) | join(foundGenomesInGroup, by: SAMPLE_IDX) \
@@ -379,6 +410,10 @@ process pUnzip {
   label 'tiny'
 
   container "${params.ubuntu_image}"
+
+  tag "Genome: ${x.baseName}"
+
+  cache 'deep'
 
   input:
   path x

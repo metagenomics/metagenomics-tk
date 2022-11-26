@@ -98,6 +98,8 @@ process pMinimap2 {
 
     tag "Sample: $sample"
 
+    cache 'deep'
+
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
 
     input:
@@ -137,6 +139,8 @@ process pBowtie2 {
     label 'large'
 
     tag "Sample: $sample"
+
+    cache 'deep'
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
 
