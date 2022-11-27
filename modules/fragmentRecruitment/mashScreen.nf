@@ -396,7 +396,7 @@ workflow _wGetStatistics {
 
      foundGenomesInGroup | pSaveMatchedGenomes
 
-     pGenomeContigMapping.out.mapping | join(bowtieMappedReads, by: SAMPLE_IDX) \
+     pGenomeContigMapping.out.mapping | join(mappedShortReads, by: SAMPLE_IDX) \
         | combine(Channel.from("stats")) | join(foundGenomesInGroup, by: SAMPLE_IDX) \
         | combine(Channel.value(DO_NOT_SET_IDENTITY_AUTOMATICALLY)) \
         | set { shortReadMappingStatsInput }
