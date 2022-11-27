@@ -29,10 +29,10 @@ steps:
         bwa_mem: ""
     coverm:
         additionalParams: " --min-covered-fraction 0 "
-    minimap2:
+    minimap:
       additionalParams:
-        minimap2_index: ""
-        minimap2: ""
+        minimap_index: ""
+        minimap: ""
   cooccurrence:
     additionalParams: " -t 0.1 -z 80 -o 'correlation' "
 

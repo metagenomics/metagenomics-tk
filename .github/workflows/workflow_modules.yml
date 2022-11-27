@@ -193,9 +193,14 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
-      - name: Test Fragment Recruitment via Mash Screen
+      - name: Test Fragment Recruitment via Mash Screen with BWA
         run: |
           bash ./scripts/test_fragmentRecruitment.sh "" "example_params/fragmentRecruitmentMashScreen.yml" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+      - name: Test Fragment Recruitment via Mash Screen with Bowtie
+        run: |
+          bash ./scripts/test_fragmentRecruitment.sh "" \
+             "example_params/fragmentRecruitment_fraction/fragmentRecruitmentMashScreenBowtie.yml" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+
 
   annotation:
     timeout-minutes: 2200
@@ -269,7 +274,7 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
-      - name: Plasmid
+      - name: Plasmid Test
         run: |
           bash ./scripts/test_plasmids.sh " --databases=/vol/scratch/databases/  " "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
       - name: Plasmids Database Test
@@ -307,7 +312,7 @@ jobs:
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/platon_20220929.tar.gz" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
-                               MODULE_DB_TEST_YML_PATH="'.steps.plasmid.Platon.database=env(databaseß),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.MobTyper,.steps.plasmid.PLSDB)'" \
+                               MODULE_DB_TEST_YML_PATH="'.steps.plasmid.Platon.database=env(database),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.MobTyper,.steps.plasmid.PLSDB)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="plasmid_yaml_database_tests"
 
       - name: MobTyper Test

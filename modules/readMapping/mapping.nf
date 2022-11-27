@@ -1,6 +1,10 @@
 nextflow.enable.dsl=2
 
 
+include { pMinimap2Index as pMinimap2IndexLong; \
+          pMapMinimap2 as pMapMinimap2Long; } from './processes'
+
+
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.readMapping.name + '/' + 
          params.modules.readMapping.version.major + "." + 
@@ -8,6 +12,8 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
          params.modules.readMapping.version.patch +
          '/' + TOOL + '/' + filename
 }
+
+
 
 process pBwaIndex {
     container "${params.bwa_image}"
@@ -24,67 +30,18 @@ process pBwaIndex {
 }
 
 
-process pMinimap2Index {
-    container "${params.ubuntu_image}"
-    label 'large'
-    when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("minimap2")
-    input:
-      path(representatives)
-    output:
-      path('ont.mmi')
-    shell:
-      """
-      minimap2 !{params.steps.readMapping.minimap2.additionalParams.minimap2_index} -x map-ont -d ont.mmi !{representatives}
-      """
-}
-
-
-process pMapMinimap2 {
-    label 'large'
-    container "${params.samtools_bwa_image}"
-    when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("minimap2")
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sampleID}", params.runid ,"minimap2", filename) }
-    input:
-      tuple val(sampleID), path(sample), val(mode), path(representatives_fasta), path(x, stageAs: "*") 
-    output:
-      tuple val("${sampleID}"), path("*bam"), path("*bam.bai"), emit: alignment
-      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
-    shell:
-    template('minimap2.sh')
-}
-
-
 process pMapBwa {
     label 'large'
     container "${params.samtools_bwa_image}"
     when params.steps.containsKey("readMapping")
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sampleID}", params.runid ,"bwa", filename) }
     input:
-      tuple val(sampleID), path(sample), val(mode), path(representatives_fasta), path(x, stageAs: "*") 
+      tuple val(sampleID), path(sample, stageAs: "sample*"), path(representatives), path(index, stageAs: "*") 
     output:
-      tuple val("${sampleID}"), path("*bam"), emit: alignment
+      tuple val("${sampleID}"), path("*bam"), path("*bai"), emit: alignment
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
     shell:
-    MODE = mode == "paired" ? " -p " : ""
     template('bwa.sh')
-}
-
-
-process pMergeAlignment {
-    when params.steps.containsKey("readMapping")
-    label 'tiny'
-    container 'quay.io/biocontainers/samtools:1.12--h9aed4be_1'
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
-    input:
-      tuple val(sample), file("alignment?.bam")
-    output:
-      tuple val("${sample}"), path("${sample}.bam"), path("*bam.bai"), emit: alignmentIndex
-      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-    shell:
-    """
-    samtools merge !{sample}.bam alignment*.bam
-    samtools index !{sample}.bam
-    """
 }
 
 
@@ -115,22 +72,45 @@ process pCovermCount {
 * wListReadMappingBwa maps a set of fastq samples against a set of genomes.
 * Input Parameters
 *
+*  * ONT, paired and single end sample sheets must have the columns "READS" and "SAMPLE"  
+*  * MAGs file contains paths to every input genome (BINs column).
 *  * Columns of the mags file must be SAMPLE for sample identifier and READS for the path to the fastq files.
 *
 */
 workflow wFileReadMappingBwa {
    main:
+    
+     paired = Channel.empty()
+     single = Channel.empty()
+     ontReads = Channel.empty()
+     ontMedianQuality = Channel.empty()
+   
      GENOMES_PATH_IDX = 0
      Channel.from(file(params?.steps?.readMapping?.mags)) \
        | splitCsv(sep: '\t', header: false, skip: 1) \
        | map { it -> file(it[GENOMES_PATH_IDX]) } \
        | set {genomesList}
 
-     Channel.from(file(params?.steps?.readMapping?.samples)) \
-       | splitCsv(sep: '\t', header: true)\
-       | map { it -> [it.SAMPLE, it.READS] } | set {samples}
+     if(params?.steps?.readMapping?.samples.containsKey("paired")){
+       Channel.from(file(params?.steps?.readMapping?.samples?.paired)) \
+         | splitCsv(sep: '\t', header: true)\
+         | map { it -> [it.SAMPLE, it.READS] } | set {paired}
+     }     
 
-     _wReadMappingBwa(Channel.empty(), Channel.empty(), samples, Channel.empty(), genomesList)
+     if(params?.steps?.readMapping?.samples.containsKey("single")){
+       Channel.from(file(params?.steps?.readMapping?.samples?.single)) \
+         | splitCsv(sep: '\t', header: true)\
+         | map { it -> [it.SAMPLE, it.READS] } | set {single}
+     }
+
+     if(params?.steps?.readMapping?.samples.containsKey("ont")){
+       Channel.from(file(params?.steps?.readMapping?.samples?.ont)) \
+         | splitCsv(sep: '\t', header: true) | set { ont }
+       ont | map { sample -> [sample.SAMPLE, sample.READS] } | set {ontReads}
+       ont | map { sample -> [sample.SAMPLE, sample.MEDIAN_PHRED] } | set {ontMedianQuality}
+     }   
+
+     _wReadMappingBwa(ontReads, ontMedianQuality, paired, single, genomesList)
    emit:
      trimmedMean = _wReadMappingBwa.out.trimmedMean
 }
@@ -140,8 +120,10 @@ workflow wFileReadMappingBwa {
 * wListReadMappingBwa maps a set of fastq samples against a set of genomes.
 * Input Parameters
 *
-*  * Entries in the samples channel consist of Maps of the format [SAMPLE:test1, READS:/path/to/interleaved/fastq/test1_interleaved.qc.fq.gz]. 
+*  * Entries in the samples channels (ont, paired and single illumina) consist of lists with the format [SAMPLE, READS]. 
 *
+*  * Entries in the ontMedianQuality channel must have the format [SAMPLE, QUALITY].
+*   
 *  * Entries of the genomes channel are paths to the genomes. 
 *
 */
@@ -167,6 +149,8 @@ workflow _wReadMappingBwa {
      samplesSingle
      genomes
    main:
+     SAMPLE_NAME_IDX=0
+
      // Create temporary directory for merged fasta files
      genomesTempDir = params.tempdir + "/genomesToBeMerged"
      file(genomesTempDir).mkdirs()
@@ -178,46 +162,38 @@ workflow _wReadMappingBwa {
      // Create BWA and Minimap index of all genomes
      BWA_INDEX_IDX=0
      GENOMES_IDX=1
-     genomesMerged | pBwaIndex | set {index} 
+     MERGED_GENOME_IDX=2
+      
+     pMinimap2IndexLong(Channel.value(params?.steps.containsKey("readMapping") \
+	&& Channel.value(params?.steps?.readMapping.containsKey("minimap"))), \
+	Channel.value("map-ont"), samplesONT | combine(genomesMerged) \
+	| map { sample -> sample[MERGED_GENOME_IDX] } ) | set { ontIndex }
 
-     genomesMerged | pMinimap2Index | set { ontIndex }
-
-     // combine index with every sample
-     index | map{ bwaIndex -> [bwaIndex]} \
-      | combine(genomesMerged) \
-      | map{ it -> ["paired", it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
-      | set {pairedIndex}
-     samplesPaired | combine(pairedIndex) | set {paired}
-
-     index | map{ bwaIndex -> [bwaIndex]} \
-      | combine(genomesMerged) \
-      | map{ it -> ["single", it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
-      | set {singleIndex}
-     samplesSingle | combine(singleIndex) | set {single}
-
-     ontIndex | map{ bwaIndex -> [bwaIndex]} \
+     // Create BWA index
+     genomesMerged | pBwaIndex | map{ bwaIndex -> [bwaIndex]} \
       | combine(genomesMerged)  \
-      | map{ it -> ["ONT", it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
-      | set {ontLongReadIndex}
-     samplesONT | combine(ontLongReadIndex) | set {ont}
+      | map{ it -> [it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
+      | set  {shortPairedReadIndex}
 
-     // Paired and single reads should be mapped back
-     pMapBwa(paired | mix(single))
+     // Combine index with samples
+     samplesPaired | join(samplesSingle, remainder: true) \
+       | map { sample -> [sample[SAMPLE_NAME_IDX], sample.findAll().tail()] } \
+       | combine(shortPairedReadIndex) | set {illumina}
+
+     pMapBwa(illumina)
 
      // Map ONT data
-     pMapMinimap2(ont)
+     samplesONT | combine(ontIndex) | set {ont}
+     pMapMinimap2Long(Channel.value(params?.steps.containsKey("readMapping") \
+	&& Channel.value(params?.steps?.readMapping.containsKey("minimap"))), ont)
  
-     // The resulting alignments (bam files) should merged if single and paired read alignments exist
-     SAMPLE_NAME_IDX=0
-     pMapBwa.out.alignment | groupTuple(by: SAMPLE_NAME_IDX) | pMergeAlignment
-
      DO_NOT_ESTIMATE_IDENTITY = "-1"
-     pMergeAlignment.out.alignmentIndex | combine(genomes | map {it -> file(it)} \
+     pMapBwa.out.alignment | combine(genomes | map {it -> file(it)} \
       | toList() | map { it -> [it]})  \
       | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) \
       | set { covermBWAInput }
 
-     pMapMinimap2.out.alignment | combine(genomes | map {it -> file(it)} \
+     pMapMinimap2Long.out.alignment | combine(genomes | map {it -> file(it)} \
       | toList() | map { it -> [it]}) \
       | join(ontMedianQuality, by: SAMPLE_NAME_IDX) | set { covermMinimapInput }
 
