@@ -84,7 +84,7 @@ process pSaveMatchedGenomes {
     label 'tiny'
 
     publishDir params.output, mode: "${params.publishDirMode}", \
-	saveAs: { filename -> getOutput("${sample}", params.runid, "matches", filename) }
+	saveAs: { filename -> getOutput("${sample}", params.runid, "", filename) }
 
     input:
     tuple val(sample), path(genomes)

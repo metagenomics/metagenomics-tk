@@ -217,8 +217,8 @@ workflow _wFragmentRecruitment {
      | unique({ bin -> bin.BIN_ID})
      | set{ recruitedGenomes }
 
-    Pattern recruitedGenomesStatsPattern = Pattern.compile('.*/fragmentRecruitment/' + params.modules.fragmentRecruitment.version.major + '..*/external/.*_bins_stats.tsv$')
-     sraFiles | filter({ sra, path -> recruitedGenomesStatsPattern.matcher(path.toString()).matches()}) \
+    Pattern recruitedGenomesStatsPattern = Pattern.compile('.*/fragmentRecruitment/' + params.modules.fragmentRecruitment.version.major + '..*/stats/.*_bins_stats.tsv$')
+    sraFiles | filter({ sra, path -> recruitedGenomesStatsPattern.matcher(path.toString()).matches()}) \
        | splitCsv(header: true, sep: '\t') | map { sra, bins -> bins } \
        | unique({ bin -> bin.BIN_ID}) \
        | set{recruitedGenomesStats}
