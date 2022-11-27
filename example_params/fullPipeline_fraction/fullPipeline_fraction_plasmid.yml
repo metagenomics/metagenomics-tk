@@ -41,6 +41,8 @@ steps:
         bowtie: "  "
         coverm: "  "
         minimap: " "
+        samtoolsViewBowtie: " -F 3584 " 
+        samtoolsViewMinimap: " " 
     ViralVerifyPlasmid:
       filter: true
       filterString: "Uncertain - plasmid or chromosomal|Plasmid"

@@ -1,6 +1,6 @@
 nextflow.enable.dsl=2
 
-include { pBowtie2; pMinimap2; pGetBinStatistics; } from  '../binning/processes'
+include { pBowtie2; pMinimap2; pBwa; pGetBinStatistics; } from  '../binning/processes'
 include { pMashSketchGenome; \
 	  pMashPaste as pMashPasteChunk; \
 	  pMashPaste as pMashPasteFinal; } from  '../dereplication/pasolli/processes'
@@ -20,7 +20,6 @@ def getModulePath(module){
           module.version.minor + "." +
           module.version.patch
 }
-
 
 
 process pMashScreen {
@@ -281,7 +280,7 @@ workflow _wRunMapping {
      fragmentRecruitmentGenomes = params.tempdir + "/fragmentRecruitmentGenomes"
      file(fragmentRecruitmentGenomes).mkdirs()
 
-     // Get found genomes and merge them as a preparation for bowtie 
+     // Get found genomes and merge them as a preparation for short read mapper 
      GENOMES_IDX = 1
      FIRST_GENOME_IDX = 0
      SAMPLE_2_IDX = 1
@@ -292,7 +291,7 @@ workflow _wRunMapping {
 	| collectFile(tempDir: fragmentRecruitmentGenomes){ item -> [ "${item[SAMPLE_2_IDX]}", item[PATH_2_IDX].text ] } \
 	| map { genome -> [genome.name, genome] } | set{genomesMerged}
 
-     // Validate if the found genomes via mash can also be detected via bowtie + coverm
+     // Validate if the found genomes via mash can also be detected via a read mapper and coverm
      emptyFile = file(params.tempdir + "/empty")
      emptyFile.text = ""
      GENOMES_MERGED_IDX = 2
@@ -304,12 +303,21 @@ workflow _wRunMapping {
 	| join(singleReads, by: SAMPLE_IDX, remainder: true) \
 	| filter { sample -> sample[SAMPLE_2_IDX] != null } \
 	| map { sample -> sample[SINGLE_SAMPLE_IDX]? sample : [sample[SAMPLE_IDX], sample[GENOMES_MERGED_2_IDX], sample[SAMPLE_3_IDX], emptyFile] } \
-	| set { bowtieInput }
+	| set { mapperInput }
 
-     pBowtie2(Channel.value(params?.steps.containsKey("fragmentRecruitment")), \
+     pBowtie2(Channel.value(params?.steps.containsKey("fragmentRecruitment")  \
+ 	&& params.steps?.fragmentRecruitment?.mashScreen?.additionalParams.containsKey("bowtie")), \
 	Channel.value([Utils.getModulePath(params.modules.fragmentRecruitment), \
         "readMapping/bowtie", params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.bowtie, \
-	params.steps.containsKey("fragmentRecruitment")]), bowtieInput)
+	params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.samtoolsViewBowtie, \
+	params.steps.containsKey("fragmentRecruitment")]), mapperInput)
+
+     pBwa(Channel.value(params?.steps.containsKey("fragmentRecruitment") \
+	&& params.steps?.fragmentRecruitment?.mashScreen?.additionalParams.containsKey("bwa")), \
+	Channel.value([Utils.getModulePath(params.modules.fragmentRecruitment), \
+        "readMapping/bwa", params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.bwa, \
+	params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.samtoolsViewBwa, \
+	params.steps.containsKey("fragmentRecruitment")]), mapperInput)
 
      ontReads | join(genomesMerged, by: SAMPLE_IDX) \
 	| map { sample -> [sample[SAMPLE_IDX], sample[GENOMES_MERGED_IDX], sample[SAMPLE_2_IDX]] } \
@@ -318,12 +326,13 @@ workflow _wRunMapping {
      pMinimap2(Channel.value(params?.steps.containsKey("fragmentRecruitment")), \
 	Channel.value([Utils.getModulePath(params.modules.fragmentRecruitment), \
         "readMapping/minimap",  params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.minimap, \
+        params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.samtoolsViewMinimap, \
 	params.steps.containsKey("fragmentRecruitment")]), minimapInput)
 
-     pBowtie2.out.mappedReads | mix(pMinimap2.out.mappedReads) | set { mappedReads }
+      pBowtie2.out.mappedReads | mix(pBwa.out.mappedReads) | set { mappedReads }
 
   emit:
-    bowtieMappedReads = pBowtie2.out.mappedReads
+    mappedShortReads = mappedReads
     minimapMappedReads = pMinimap2.out.mappedReads
        
 }
@@ -332,7 +341,7 @@ workflow _wRunMapping {
 workflow _wGetStatistics {
   take:
     mashScreenFilteredOutput
-    bowtieMappedReads
+    mappedShortReads
     minimapMappedReads
     ontMedianQuality
     genomesMap
@@ -354,7 +363,7 @@ workflow _wGetStatistics {
 	| combine(genomesMap, by: SAMPLE_IDX) | map { sample -> [sample[SAMPLE_2_IDX], sample[PATH_2_IDX]] }  \
 	| groupTuple(by: SAMPLE_IDX) | set { covermGenomesInput }
 
-     bowtieMappedReads \
+     mappedShortReads \
 	| join(covermGenomesInput, by: SAMPLE_IDX) \
 	| combine(Channel.value(DO_NOT_SET_IDENTITY_AUTOMATICALLY)) \
         | set { covermBowtieReadsInput  }
@@ -390,14 +399,14 @@ workflow _wGetStatistics {
      pGenomeContigMapping.out.mapping | join(bowtieMappedReads, by: SAMPLE_IDX) \
         | combine(Channel.from("stats")) | join(foundGenomesInGroup, by: SAMPLE_IDX) \
         | combine(Channel.value(DO_NOT_SET_IDENTITY_AUTOMATICALLY)) \
-        | set { bowtieMappingStatsInput }
+        | set { shortReadMappingStatsInput }
 
      pGenomeContigMapping.out.mapping | join(minimapMappedReads, by: SAMPLE_IDX) \
         | combine(Channel.from("external")) | join(foundGenomesInGroup, by: SAMPLE_IDX) \
         | join(ontMedianQuality, by: SAMPLE_IDX)
         | set { minimapMappingStatsInput }
 
-     pGetBinStatistics(getModulePath(params.modules.fragmentRecruitment), bowtieMappingStatsInput | mix(minimapMappingStatsInput))
+     pGetBinStatistics(getModulePath(params.modules.fragmentRecruitment), shortReadMappingStatsInput | mix(minimapMappingStatsInput))
 
   emit:
      genomesSeperated = genomesSeperated
@@ -466,7 +475,7 @@ workflow _wMashScreen {
 
      // Calculate different mapping statistics per genome
      _wGetStatistics(_wRunMash.out.mashScreenFilteredOutput, \
-	 _wRunMapping.out.bowtieMappedReads, \
+	 _wRunMapping.out.mappedShortReads, \
          _wRunMapping.out.minimapMappedReads, \
 	ontMedianQuality, genomesMap)
 

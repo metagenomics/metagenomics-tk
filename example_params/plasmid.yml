@@ -10,12 +10,6 @@ publishDirMode: "symlink"
 steps:
   plasmid:
     input: "test_data/plasmid/input_contigs.tsv"
-    SCAPP:
-      additionalParams: 
-        SCAPP: "  "
-        bowtie: "  "
-        coverm: "  "
-        minimap: "  "
     ViralVerifyPlasmid:
       filter: true
       filterString: "Uncertain - plasmid or chromosomal|Plasmid"

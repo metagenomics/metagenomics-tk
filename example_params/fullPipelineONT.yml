@@ -22,22 +22,12 @@ steps:
     metaflye:
       additionalParams: " -i 1 "
       quality: "AUTO"
-  binning:
-    bowtie:
-      additionalParams: 
-        bowtie: " "
-        # samtools flags are used to filter resulting bam file
-        samtoolsView: " -F 3584 " 
-    contigsCoverage:
-      additionalParams: ""
-    metabat:
-      additionalParams: " --seed 234234  "
   binningONT:
-    minimap2:
+    minimap:
       additionalParams: 
-        minimap2: " "
+        minimap: " "
         # samtools flags are used to filter resulting bam file
-        samtoolsView: " -F 3584 " 
+        samtoolsView: " " 
     contigsCoverage:
       additionalParams: ""
     metabat:
@@ -67,6 +57,8 @@ steps:
         mashSketch: " "
         mashScreen: " "
         bowtie: " "
+        samtoolsViewBowtie: " -F 3584 " 
+        samtoolsViewMinimap: " " 
         coverm: "  --min-covered-fraction 5  "
         minimap: " "
       mashDistCutoff: 0.95
@@ -89,15 +81,17 @@ steps:
   readMapping:
     coverm:
       additionalParams: " --min-covered-fraction 0 "
-    minimap2:
+    minimap:
       additionalParams:
-        minimap2_index: ""
-        minimap2: ""
+        minimap_index: ""
+        minimap: ""
   plasmid:
     SCAPP:
       additionalParams: 
         SCAPP: "  "
         bowtie: "  "
+        samtoolsViewBowtie: " -F 3584 " 
+        samtoolsViewMinimap: " " 
         coverm: "  "
         minimap: "  "
     ViralVerifyPlasmid:
