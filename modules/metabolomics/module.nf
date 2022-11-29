@@ -1,7 +1,6 @@
 include { pDumpLogs } from '../utils/processes'
 
-include { pCarveMe as pCarveProteins;  \
-	 pCarveMe as pCarveGenomes; } from './processes'
+include { pCarveMe } from './processes'
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.metabolomics.name + '/' +
@@ -237,20 +236,23 @@ workflow wAnalyseMetabolitesFile {
    main:
      bins = Channel.empty()
      proteins = Channel.empty()
+     type = Channel.empty()
      if(params.steps.metabolomics.input.containsKey("proteins")){
          Channel.from(file(params.steps.metabolomics.input.proteins)) \
 		| splitCsv(sep: '\t', header: true) \
 		| map {it -> [ it.SAMPLE, it.BIN_ID, it.PATH ]} \
                 | set { proteins }
+         Channel.value("proteins") | set { type }
      }
      if(params.steps.metabolomics.input.containsKey("bins")){
          Channel.from(file(params.steps.metabolomics.input.bins))
 		| splitCsv(sep: '\t', header: true) \
 		| map {it -> [ it.SAMPLE, it.BIN_ID, it.PATH ]} \
                 | set { bins }
+         Channel.value("genome") | set { type }
      }
 
-     _wAnalyseMetabolites(bins, proteins)
+     _wAnalyseMetabolites(bins, proteins, type)
 }
 
 
@@ -274,17 +276,30 @@ workflow wAnalyseMetabolitesList {
      proteins
    main:
      // Filter by completeness and contamination
-     bins | filter({ it.COMPLETENESS.toFloat() > params.steps?.metabolomics?.filter?.minCompleteness }) \
+
+     filteredProteins = Channel.empty()
+     filteredBins = Channel.empty()
+     type = Channel.empty()
+
+     if(params.steps.containsKey("metabolomics") && params.steps.metabolomics.containsKey("gapseq")){
+       bins | filter({ it.COMPLETENESS.toFloat() > params.steps?.metabolomics?.filter?.minCompleteness }) \
           | filter({ it.CONTAMINATION.toFloat() < params.steps?.metabolomics?.filter?.maxContamination }) \
           | map { it -> [it.SAMPLE, it.BIN_ID, it.PATH]} \
           | set { filteredBins }
 
-     proteins | filter({ it.COMPLETENESS.toFloat() > params.steps?.metabolomics?.filter?.minCompleteness }) \
+       Channel.value("genome") | set { type }
+     }
+
+     if(params.steps.containsKey("metabolomics") && params.steps.metabolomics.containsKey("carveme")){
+       proteins | filter({ it.COMPLETENESS.toFloat() > params.steps?.metabolomics?.filter?.minCompleteness }) \
           | filter({ it.CONTAMINATION.toFloat() < params.steps?.metabolomics?.filter?.maxContamination }) \
           | map { it -> [it.SAMPLE, it.BIN_ID, it.PROTEINS]} \
           | set { filteredProteins }
 
-     _wAnalyseMetabolites(filteredBins, filteredProteins)
+       Channel.value("proteins") | set { type }
+     }
+
+     _wAnalyseMetabolites(filteredBins, filteredProteins, type)
 }
 
 
@@ -292,17 +307,16 @@ workflow _wAnalyseMetabolites {
      take:
         bins
         proteins
+        type
      main:
         bins | pGapSeq
 
-        // While GapSeq is only able to process genomes, carveme is able to use
+        // While GapSeq is only able to process genomes, carveme is also able to use
         // predicted proteins.
-        pCarveProteins(proteins, Channel.value("proteins"))
-        pCarveGenomes(bins, Channel.value("genome"))
+        pCarveMe(proteins | mix(bins), type)
 
         // build, validate and analyse all models
-        pGapSeq.out.model | mix(pCarveProteins.out.model) \
-	 | mix(pCarveGenomes.out.model) | set { model } 
+        pGapSeq.out.model | mix(pCarveMe.out.model) | set { model } 
 
         model | pBuildJson & pMemote
         pBuildJson.out.model | pAnalyse 
@@ -316,6 +330,6 @@ workflow _wAnalyseMetabolites {
         // compute possible interactions 
         modelGroup | pSmetanaDetailed & pSmetanaGlobal
 
-        pGapSeq.out.logs | mix(pCarveGenomes.out.logs, pCarveProteins.out.logs) \
+        pGapSeq.out.logs | mix(pCarveMe.out.logs) \
             | mix(pMemote.out.logs, pAnalyse.out.logs, pBuildJson.out.logs) | pDumpLogs
 }

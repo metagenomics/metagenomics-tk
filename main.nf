@@ -1,6 +1,8 @@
 nextflow.enable.dsl=2
+import java.util.regex.*;
 
 include { wSaveSettingsList } from './modules/config/module'
+include { pPublish as pPublishIllumina; pPublish as pPublishOnt } from './modules/utils/processes'
 include { wShortReadQualityControlFile; wShortReadQualityControlList} from './modules/qualityControl/shortReadQC'
 include { wOntQualityControlFile; wOntQualityControlList} from './modules/qualityControl/ontQC'
 include { wShortReadAssemblyFile; wShortReadAssemblyList } from './modules/assembly/shortReadAssembler'
@@ -51,6 +53,8 @@ workflow wReadMapping {
    wFileReadMappingBwa()
 }
 
+
+
 workflow wSRATable {
    SAMPLE_IDX = 0
    FASTQ_FILE_LEFT_IDX = 2 
@@ -63,17 +67,21 @@ workflow wSRATable {
    } | set { input }
      
    input.ILLUMINA | map { sample ->  [ sample.SAMPLE, sample.TYPE, sample.READS1, sample.READS2 ] } \
-	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tREADS1\tREADS2"){ it -> [ "samplesILLUMINA", it[SAMPLE_IDX] \
+	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tREADS1\tREADS2"){ it -> [ "samplesILLUMINA.tsv", it[SAMPLE_IDX] \
         + "\t" + it[INSTRUMENT_IDX] \
 	+ "\t" + it[FASTQ_FILE_LEFT_IDX].toString() \
 	+ "\t" + it[FASTQ_FILE_RIGHT_IDX].toString()] } \
-	| view({ it -> it.text })
+	| set {illuminaFile} 
+   illuminaFile | view({ it -> it.text })
+   pPublishIllumina(params.logDir, illuminaFile)
 
    input.ONT | map { sample ->  [ sample.SAMPLE, sample.TYPE, sample.READS ] } \
-	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tREADS"){ it -> [ "samplesONT", it[SAMPLE_IDX] \
+	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tREADS"){ it -> [ "samplesONT.tsv", it[SAMPLE_IDX] \
         + "\t" + it[INSTRUMENT_IDX] \
 	+ "\t" + it[FASTQ_FILE_LEFT_IDX].toString() ]} \
-	| view({ it -> it.text })
+	| set {ontFile} 
+   ontFile | view({ it -> it.text })
+   pPublishOnt(params.logDir, ontFile)
 }
 
 workflow wDereplicationPath {
@@ -122,52 +130,123 @@ def collectFiles(dir, sra){
    return fileList;
 }
 
+
+/*
+* This method either returns file path or url
+*/
+def getPath(f){
+  return params.input.startsWith("s3://")? "s3:/" + f: f
+}
+
+workflow _wAggregateONT { 
+   take:
+     sraFiles
+   main:
+    // get Nanopore Fastq files
+    Pattern ontFastqPattern = Pattern.compile('.*/qcONT/' + params.modules.qcONT.version.major + '..*/.*/.*qc.fq.gz$')
+    sraFiles | filter({ sra, path -> ontFastqPattern.matcher(path.toString()).matches()}) \
+     | map{ sra,f -> [sra, getPath(f)] } | set { ontSamples }
+
+    // get Nanopore median phred quality score
+    SAMPLE_NAME=0
+    SAMPLE_STATS=1
+
+    Pattern ontStatsPattern = Pattern.compile('.*/qcONT/' + params.modules.qcONT.version.major + '..*/.*/NanoStats.tsv$')
+    sraFiles | filter({ sra, path -> ontStatsPattern.matcher(path.toString()).matches()}) \
+     | map{ sra,f -> [sra, getPath(f)] } | splitCsv(sep: '\t', header: true) \
+     | map { sample -> [sample[SAMPLE_NAME], sample[SAMPLE_STATS].median_qual]} |set { ontMedianQuality }
+
+    Pattern binsONTPattern = Pattern.compile('.*/binningONT/' + params.modules.binning.version.major + '..*/.*/.*_bin.*.fa$')
+    sraFiles | filter({ sra, path -> binsONTPattern.matcher(path.toString()).matches()}) \
+     | map{ sra,f -> [SAMPLE:sra, PATH: getPath(f), BIN_ID:file(f).name] } \
+     | set{ ontBins }
+
+    // get ont binning stats
+    Pattern ontBinsStatsPattern = Pattern.compile('.*/binningONT/' + params.modules.binningONT.version.major + '..*/.*/.*_bins_stats.tsv$')
+    sraFiles | filter({ sra, path -> ontBinsStatsPattern.matcher(path.toString()).matches()}) \
+     | splitCsv(header: true, sep: '\t') | map { sra, bins -> bins } | set{ ontBinStats }
+
+   emit:
+     ontSamples = ontSamples
+     ontMedianQuality = ontMedianQuality
+     ontBins = ontBins
+     ontBinStats = ontBinStats
+}
+
+workflow _wAggregateIllumina { 
+    take:
+      sraFiles
+    main:
+      // get Illumina paired Fastq files
+      Pattern illuminaPattern = Pattern.compile('.*/qc/' + params.modules.qc.version.major + '..*/.*/.*interleaved.qc.fq.gz$')
+      sraFiles | filter({ sra, path -> illuminaPattern.matcher(path.toString()).matches()}) \
+       | map{ sra,f -> [sra, getPath(f)] } | set { illuminaSamples }
+
+      // get Illumina unpaired Fastq files
+      Pattern unpairedIlluminaPattern = Pattern.compile('.*/qc/' + params.modules.qc.version.major + '..*/.*/.*unpaired.qc.fq.gz$')
+      sraFiles | filter({ sra, path -> unpairedIlluminaPattern.matcher(path.toString()).matches()}) \
+       | map{ sra,f -> [sra, getPath(f)] } | set { unpairedIlluminaSamples }
+
+      // get Bins
+      Pattern binsIlluminaPattern = Pattern.compile('.*/binning/' + params.modules.binning.version.major + '..*/.*/.*_bin.*.fa$')
+      sraFiles | filter({ sra, path -> binsIlluminaPattern.matcher(path.toString()).matches()}) \
+       | map{ sra,f -> [SAMPLE:sra, PATH: getPath(f), BIN_ID:file(f).name] } \
+       | set{ illuminaBins }
+
+      // get binning stats of illumina samples
+      Pattern illuminaBinsStatsPattern = Pattern.compile('.*/binning/' + params.modules.binning.version.major + '..*/.*/.*_bins_stats.tsv$')
+      sraFiles | filter({ sra, path -> illuminaBinsStatsPattern.matcher(path.toString()).matches()}) \
+       | splitCsv(header: true, sep: '\t') | map { sra, bins -> bins } | set{illuminaBinStats}
+    emit:
+      illuminaSamples = illuminaSamples
+      unpairedIlluminaSamples = unpairedIlluminaSamples
+      illuminaBins = illuminaBins
+      illuminaBinStats = illuminaBinStats
+}
+
+/*
+* This workflow entry point allows to aggregate information of different samples.
+* It will perform analysis steps such as dereplication, read mapping and co-occurrence.
+* The input files are automatically fetched as long as they adhere to the pipeline specification document (see documentation).
+*/
 workflow wAggregatePipeline {
-    def baseDir = params.baseDir
+    def input = params.input
     def runID = params.runid
 
-
     // List all available SRAIDs
-    Channel.from(file(baseDir).list()) | filter({ path -> !(path ==~ /.*summary$/)}) \
+    Channel.from(file(input).list()) | filter({ path -> !(path ==~ /.*summary$/) && !(path ==~ /null$/) }) \
      | filter({ path -> !(path ==~ /.*AGGREGATED$/)}) | set { sraDatasets }
-    sraDatasets | map { sra ->  [sra, baseDir + "/" + sra + "/" + runID + "/" ]} \
+
+    sraDatasets | map { sra ->  [sra, input + "/" + sra + "/" + runID + "/" ]} \
      | set {sraIDs}
 
     // List all files in sample directories
     sraIDs | flatMap { sraID, path -> collectFiles(file(path), sraID)} | set {sraFiles}
-
-    // get Fastq files
-    sraFiles | filter({ sra, path -> (path ==~ /.*\/qc\/.*\/fastp\/.*interleaved.qc.fq.gz$/)}) \
-     | map{ sra,f -> [sra, baseDir.startsWith("s3://")? "s3:/" + f: f] } | set{samples}
-
-    // get available samples
-    samples | map { it -> "${it[0]}\t${it[1]}" } \
-      | collectFile(seed: "SAMPLE\tREADS", name: 'processed_reads.txt', newLine: true) | set { samplesFile }
-
-    // get Bins
-    sraFiles | filter({ sra, path -> (path ==~ /.*\/binning\/.*\/metabat\/.*.fa$/)}) \
-     | map{ sra,f -> [SAMPLE:sra, PATH: baseDir.startsWith("s3://")? "s3:/" + f: f, BIN_ID:file(f).name] } | set{bins}
+    sraFiles | _wAggregateIllumina 
+    sraFiles | _wAggregateONT
 
     // get Checkm results
-    sraFiles | filter({ sra, path -> (path ==~ /.*\/magAttributes\/.*\/checkm\/.*.tsv$/)}) \
-     | splitCsv(header: ["SAMPLE", "BIN_ID", "Marker lineage", "# genomes", "# markers", "# marker sets", "0", "1", "2", "3", "4", "5+", "COMPLETENESS", "CONTAMINATION", "HETEROGENEITY"], sep: '\t') \
+    Pattern checkmPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_checkm_.*.tsv$')
+    sraFiles | filter({ sra, path -> checkmPattern.matcher(path.toString()).matches()}) \
+     | splitCsv(header: ["SAMPLE", "BIN_ID", "Marker lineage", "# genomes", "# markers", \
+          "# marker sets", "0", "1", "2", "3", "4", "5+", "COMPLETENESS", "CONTAMINATION", "HETEROGENEITY"], sep: '\t') \
      | map { sra, bins -> bins} \
      | set { checkm }
 
-    // get gtdbtk
-    sraFiles | filter({ sra, path -> (path ==~ /.*\/magAttributes\/.*\/gtdb\/.*_gtdbtk_.*.tsv$/)}) \
-     | map { sra, bins -> bins} \
+    // get gtdbtk summary files
+    Pattern gtdbPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_.*.tsv$')
+    sraFiles | filter({ sra, path -> gtdbPattern.matcher(path.toString()).matches()}) \
+     | map { sraID, bins -> [bins, sraID] } \
      | set { gtdb }
 
-    // get binning stats
-    sraFiles | filter({ sra, path -> (path ==~ /.*\/binning\/0.1.0\/metabat\/.*_bins_stats.tsv$/)}) \
-     | splitCsv(header: true, sep: '\t') | map { sra, bins -> bins } | set{binStats}
+    mapJoin(_wAggregateIllumina.out.illuminaBinStats | mix(_wAggregateONT.out.ontBinStats), checkm, "BIN_ID", "BIN_ID") \
+	| set {checkmBinStats}
+    mapJoin(checkmBinStats, _wAggregateIllumina.out.illuminaBins | mix(_wAggregateONT.out.ontBins), "BIN_ID", "BIN_ID") \
+	| set {binsStatsComplete}
 
-    // TODO: file vs. BIN_ID
-    mapJoin(binStats, checkm, "file", "BIN_ID") | set {checkmBinStats}
-    mapJoin(checkmBinStats, bins, "file", "BIN_ID") | set {binsStatsComplete}
+    _wAggregate(_wAggregateONT.out.ontSamples, _wAggregateONT.out.ontMedianQuality, _wAggregateIllumina.out.illuminaSamples, \
+	_wAggregateIllumina.out.unpairedIlluminaSamples, binsStatsComplete, gtdb)
 
-    _wAggregate(samplesFile, binsStatsComplete, gtdb)
 }
 
 
@@ -184,6 +263,7 @@ workflow _wAggregate {
      file(representativeGenomesTempDir).mkdirs()
 
      wDereplicateList(binsStats)
+
      representativesListOfFiles = wDereplicateList.out
 
      REPRESENTATIVES_PATH_IDX = 0
@@ -197,6 +277,7 @@ workflow _wAggregate {
 
 
      wCooccurrenceList(wListReadMappingBwa.out.trimmedMean, gtdb)
+
 }
 
 
@@ -338,11 +419,11 @@ workflow wPipeline {
     mapJoin(wMagAttributesList.out.checkm, binsStats | mix(wFragmentRecruitmentList.out.binsStats), "BIN_ID", "BIN_ID") \
 	| set { binsStats  }
 
-    wAnnotatePlasmidList(Channel.value("meta"), wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage)
+    wAnnotatePlasmidList(Channel.value("plasmid"), Channel.value("meta"), wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage)
 
-    wAnnotateBinsList(Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, contigCoverage)
+    wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, contigCoverage)
 
-    wAnnotateUnbinnedList(Channel.value("meta"), notBinnedContigs, null, contigCoverage)
+    wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs, null, contigCoverage)
 
     SAMPLE_IDX = 0
     BIN_ID_IDX = 1

@@ -8,12 +8,20 @@ scratch: "/vol/scratch"
 publishDirMode: "symlink"
 steps:
   readMapping:
-    samples: test_data/readMapping/samples.tsv
+    samples: 
+       paired: test_data/readMapping/samples.tsv
+       single: test_data/readMapping/single.tsv
+       ont: test_data/readMapping/ont.tsv
     mags: test_data/readMapping/mags.tsv
     bwa:
       additionalParams:
         bwa_index: ""
         bwa_mem: ""
+    minimap:
+      additionalParams:
+        minimap_index: ""
+        minimap: ""
+
     coverm:
       additionalParams: " --min-covered-fraction 0 "
 resources:

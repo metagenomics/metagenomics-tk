@@ -26,3 +26,4 @@ wiki_venv
 *.html
 wiki_scripts/site/
 generated_yamls
+tmp

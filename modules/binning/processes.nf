@@ -90,6 +90,7 @@ process pCovermContigsCoverage {
     '''
 }
 
+
 process pMinimap2 {
 
     container "${params.samtools_image}"
@@ -98,11 +99,12 @@ process pMinimap2 {
 
     tag "Sample: $sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", \
+	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
 
     input:
     val(run)
-    tuple val(module), val(outputToolDir), val(bowtieParams), val(getUnmapped)
+    tuple val(module), val(outputToolDir), val(minimapParams), val(samtoolsViewParams), val(getUnmapped)
     tuple val(sample), path(contigs), path(reads, stageAs: 'reads.fq.gz')
 
     when:
@@ -111,14 +113,13 @@ process pMinimap2 {
     output:
     tuple val("${sample}"), file("${sample}.bam"), optional: true, emit: mappedReads
     tuple val("${sample}"), file("${sample}_unmapped.fq.gz"), optional: true, emit: unmappedReads
-    tuple val("${sample}"), file("${sample}_minimap2_stats.txt"), optional: true, emit: stats
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     getUnmapped = getUnmapped ? "TRUE" : ""
     '''
-    minimap2 -t !{task.cpus}  -ax map-ont !{contigs} reads.fq.gz \
-             | samtools view -F 3584 --threads !{task.cpus} -bS - \
+    minimap2 -t !{task.cpus} !{minimapParams} -ax map-ont !{contigs} reads.fq.gz \
+             | samtools view !{samtoolsViewParams} --threads !{task.cpus} -bS - \
              | samtools sort -l 9 --threads !{task.cpus} - > !{sample}.bam
 
     # If Fragment Recruitment is selected then reads that could not be mapped should be returned
@@ -138,11 +139,12 @@ process pBowtie2 {
 
     tag "Sample: $sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", \
+	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
 
     input:
     val(run)
-    tuple val(module), val(outputToolDir), val(bowtieParams), val(getUnmapped)
+    tuple val(module), val(outputToolDir), val(bowtieParams), val(samtoolsViewParams), val(getUnmapped)
     tuple val(sample), path(contigs), path(pairedReads, stageAs: 'paired.fq.gz'), path(unpairedReads, stageAs: 'unpaired.fq.gz')
 
     when:
@@ -164,7 +166,7 @@ process pBowtie2 {
     # Run Bowtie
     bowtie2 -p !{task.cpus} !{bowtieParams} -x $INDEX \
               --interleaved paired.fq.gz -U unpaired.fq.gz 2> !{sample}_bowtie_stats.txt \
-             | samtools view -F 3584 --threads !{task.cpus} -bS - \
+             | samtools view !{samtoolsViewParams} --threads !{task.cpus} -bS - \
              | samtools sort -l 9 --threads !{task.cpus} - > !{sample}.bam
 
     # If Fragment Recruitment is selected then reads that could not be mapped should be returned
@@ -173,6 +175,51 @@ process pBowtie2 {
     fi
     '''
 }
+
+
+process pBwa {
+
+    container "${params.samtools_bwa_image}"
+
+    label 'large'
+
+    tag "Sample: $sample"
+
+    publishDir params.output, mode: "${params.publishDirMode}", \
+	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
+
+    input:
+    val(run)
+    tuple val(module), val(outputToolDir), val(bwaParams), val(samtoolsViewParams), val(getUnmapped)
+    tuple val(sample), path(contigs), path(pairedReads, stageAs: 'paired.fq.gz'), path(unpairedReads, stageAs: 'unpaired.fq.gz')
+
+    when:
+    run
+
+    output:
+    tuple val("${sample}"), file("${sample}.bam"), optional: true, emit: mappedReads
+    tuple val("${sample}"), file("${sample}_unmapped.fq.gz"), optional: true, emit: unmappedReads
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    shell:
+    getUnmapped = getUnmapped ? "TRUE" : ""
+    '''
+    # Build BWA Index
+    bwa index !{contigs}
+
+    # Run BWA
+    bwa mem !{bwaParams} -p  \
+       -t !{task.cpus} !{contigs} <(cat !{pairedReads} !{unpairedReads}) - \
+      | samtools view !{samtoolsViewParams} -@ !{task.cpus} -S -b - \
+      | samtools sort -l 9 -@ !{task.cpus} - > !{sample}.bam
+
+    # If Fragment Recruitment is selected then reads that could not be mapped should be returned
+    if [[ "!{getUnmapped}" == "TRUE" ]]; then
+        samtools bam2fq -f 4 !{sample}.bam | pigz --best --processes !{task.cpus} > !{sample}_unmapped.fq.gz
+    fi
+    '''
+}
+
 
 
 process pMetabat {

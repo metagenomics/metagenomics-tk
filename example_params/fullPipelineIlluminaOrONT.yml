@@ -45,9 +45,9 @@ steps:
       additionalParams: " -i 1 "
       quality: "AUTO"
   binning:
-    bowtie:
+    bwa:
       additionalParams: 
-        bowtie: " --quiet --very-sensitive "
+        bwa: "  "
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
     contigsCoverage:
@@ -55,9 +55,9 @@ steps:
     metabat:
       additionalParams: " --seed 234234  "
   binningONT:
-    minimap2:
+    minimap:
       additionalParams: 
-        minimap2: " "
+        minimap: " "
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
     contigsCoverage:
@@ -102,7 +102,9 @@ steps:
       additionalParams:
         mashSketch: " "
         mashScreen: " "
-        bowtie: " "
+        bwa: " "
+        samtoolsViewBwa: " -F 3584 " 
+        samtoolsViewMinimap: " " 
         coverm: "  --min-covered-fraction 5  "
         minimap: "  "
       mashDistCutoff: 0.95
@@ -115,10 +117,10 @@ steps:
         bwa_mem: ""
     coverm:
       additionalParams: " --min-covered-fraction 0 "
-    minimap2:
+    minimap:
       additionalParams:
-        minimap2_index: ""
-        minimap2: ""
+        minimap_index: ""
+        minimap: ""
   annotation:
     prokka:
       prodigalMode: "meta"
@@ -163,15 +165,15 @@ steps:
     keggFromBlast:
       database:
         extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 
-
-
   cooccurrence:
     additionalParams: " -t 0.1 -z 80 -o 'correlation' "
   plasmid:
     SCAPP:
       additionalParams: 
         SCAPP: "  "
-        bowtie: "  "
+        bwa: "  "
+        samtoolsViewBwa: " -F 3584 " 
+        samtoolsViewMinimap: " " 
         coverm: "  "
         minimap: " "
     ViralVerifyPlasmid:

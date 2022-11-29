@@ -71,7 +71,7 @@ nextflow: ## Downloads Nextflow binary
 	- wget -qO- https://get.nextflow.io | bash
 
 check: ## Checks if processes did failed in the current nextflow returns exit code 1. (Useful in github actions context)
-	! grep -q "FAILED" $$(ls -1 log/trace.* | sort -n | tail -n 1) || (echo "$?"; exit 1)
+	bash ./scripts/check_log.sh $$(ls -1 log/trace.* | tail -n 1 ) || (echo "$?"; exit 1)
 
 checkPublisDirMode: ## Check if publishDirMode is set in process
 	! (grep -r publishIR modules/ | grep -v "//" | grep -v params.publishDirMode) || echo "publishDirMode must always be set in process publishDir method"

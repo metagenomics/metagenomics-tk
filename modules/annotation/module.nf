@@ -23,14 +23,15 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 * See “/lib/Utils.groovy” for more information.
 **/
 def constructParametersObject(String tool){ 
-  return params?.steps?.annotation?."$tool".findAll().collect{ Utils.getDockerMountMMseqs(it.value?.database, params)}.join(" ")
+  return params?.steps?.annotation?."$tool".findAll().collect{ Utils.getDockerMount(it.value?.database, params, 'true')}.join(" ")
 }
 
 
 /**
 *
 * MMseqs2 is used to search for big input queries in large databases. 
-* Multiple databases can be searched at the same time.
+* Multiple databases can be searched at the same time. Parts of the query and search database are loaded into the RAM.
+# Huge databases along with to little RAM could lead to errors.
 * Outputs will be saved in separate directories.
 *
 **/
@@ -56,17 +57,19 @@ process pMMseqs2 {
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2")
 
    input:
-      tuple val(sample), val(binID), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
+      val(binType)
+      tuple val(sample), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
-      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.blast.tsv"), emit: blast
-      tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+      tuple val("${dbType}"), val("${sample}"), val("${binType}"), path("${sample}_${binType}.${dbType}.blast.tsv"), emit: blast
+      tuple val("${sample}_${binType}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
    shell:
+   output = getOutput("${sample}", params.runid, "mmseqs2/${dbType}", "")
    '''
    mkdir -p !{params.polished.databases}
-   # if no local database is referenced, start download part 
+   # if no local database is referenced, start download part
    if [ -z "!{EXTRACTED_DB}" ] 
    then
          # polished params end with a / so no additional one is needed at the end
@@ -81,8 +84,8 @@ process pMMseqs2 {
          flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE}/!{dbType} \
             --link=!{DOWNLOAD_LINK} \
             --httpsCommand="wget -O mmseqs.!{dbType}.tar.zst !{DOWNLOAD_LINK}  && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
-            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
-            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
+            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
+            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
 	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
             --localCommand="zstd -T!{task.cpus} -d !{DOWNLOAD_LINK} -o mmseqs.!{dbType}.tar && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
             --expectedMD5SUM=!{MD5SUM}
@@ -100,16 +103,20 @@ process pMMseqs2 {
     mkdir tmp
     # Only mmseqs2 databases can be used for every kind of search. Inputs have to be converted first.
     mmseqs createdb !{fasta} queryDB
-    mmseqs search queryDB ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.results.database tmp !{parameters} --threads !{task.cpus}
+    # Load all indices into memory to increase searching speed
+    mmseqs touchdb --threads !{task.cpus} queryDB
+    mmseqs touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
+    mmseqs search queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database tmp !{parameters} --threads !{task.cpus}
     # mmseqs2 searches produce output databases. These have to be converted to a more useful format. The blast -outfmt 6 in this case.
-    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.results.database !{binID}.!{dbType}.blast.tsv --threads !{task.cpus}
+    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database !{sample}_!{binType}.!{dbType}.blast.tsv --threads !{task.cpus}
    '''
 }
 
 /**
 *
 * The MMseqs2 module taxonomy calls an internal module lca that implements an lowest common ancestor assignment for sequences by querying them against a seqTaxDB.
-* Multiple databases can be searched at the same time.
+* Multiple databases can be searched at the same time. Parts of the query and search database are loaded into the RAM.
+# Huge databases along with to little RAM could lead to errors.
 * Outputs will be saved in separate directories.
 *
 **/
@@ -131,21 +138,22 @@ process pMMseqs2_taxonomy {
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", filename) }, \
          pattern: "{*.out,*.html,*.tsv}"
  
-
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy")
 
    input:
-      tuple val(sample), val(binID), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
+      val(binType)
+      tuple val(sample), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
-      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.taxonomy.tsv"), emit: taxonomy
-      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.krakenStyleTaxonomy.out"), emit: krakenStyleTaxonomy
-      tuple val("${dbType}"), val("${sample}"), val("${binID}"), path("${binID}.${dbType}.krona.html"), emit: kronaHtml
-      tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.taxonomy.tsv"), emit: taxonomy
+      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.krakenStyleTaxonomy.out"), emit: krakenStyleTaxonomy
+      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.krona.html"), emit: kronaHtml
+      tuple val("${sample}_${binType}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
 
    shell:
+   output = getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", "")
    '''
    mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part
@@ -163,8 +171,8 @@ process pMMseqs2_taxonomy {
             flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE}/!{dbType} \
                --link=!{DOWNLOAD_LINK} \
                --httpsCommand="wget -O mmseqs.!{dbType}.tar.zst !{DOWNLOAD_LINK}  && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
-               --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
-               --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
+               --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus}  !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
+               --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
    	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
                --localCommand="zstd -T!{task.cpus} -d !{DOWNLOAD_LINK} -o mmseqs.!{dbType}.tar && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
                --expectedMD5SUM=!{MD5SUM}
@@ -182,11 +190,15 @@ process pMMseqs2_taxonomy {
     mkdir tmp
     # Only mmseqs2 databases can be used for every kind of search. Inputs have to be converted first.
     mmseqs createdb !{fasta} queryDB
-    mmseqs taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.taxresults.database tmp !{parameters} --threads !{task.cpus}
+    # Load all indices into memory to increase searching speed
+    mmseqs touchdb --threads !{task.cpus} queryDB
+    mmseqs touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
+    # Define taxonomies
+    mmseqs taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database tmp !{parameters} --threads !{task.cpus}
     # mmseqs2 searches produce output databases. These have to be converted to more useful formats.
-    mmseqs createtsv queryDB !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.taxonomy.tsv --threads !{task.cpus}
-    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.krakenStyleTaxonomy.out
-    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{binID}.!{dbType}.taxresults.database !{binID}.!{dbType}.krona.html --report-mode 1
+    mmseqs createtsv queryDB !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.taxonomy.tsv --threads !{task.cpus}
+    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.krakenStyleTaxonomy.out
+    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.krona.html --report-mode 1
    '''
 }
 
@@ -214,6 +226,7 @@ process pResistanceGeneIdentifier {
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
    shell:
+   output = getOutput("${sample}", params.runid, "rgi", "")
    EXTRACTED_DB=params.steps?.annotation?.rgi?.database?.extractedDBPath ?: ""
    DOWNLOAD_LINK=params.steps?.annotation?.rgi?.database?.download?.source ?: ""
    MD5SUM=params?.steps?.annotation?.rgi?.database?.download?.md5sum ?: ""
@@ -234,8 +247,8 @@ process pResistanceGeneIdentifier {
         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
          --link=!{DOWNLOAD_LINK} \
          --httpsCommand="wget -O data !{DOWNLOAD_LINK} && tar -xvf data && rm data" \
-         --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} . " \
-         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} data && tar -xvf data  && rm data" \
+         --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus}  !{DOWNLOAD_LINK} . " \
+         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} data && tar -xvf data  && rm data" \
 	 --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
          --localCommand="tar -xvf !{DOWNLOAD_LINK}" \
          --expectedMD5SUM=!{MD5SUM}
@@ -331,11 +344,11 @@ process pKEGGFromBlast {
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("keggFromBlast")
 
    input:
-      tuple val(sample), val(binID), file(blast_result)
+      tuple val(sample), val(binType), file(blast_result)
 
    output:
-      tuple val("${sample}"), path("${sample}_${binID}_kegg.tsv"), emit: kegg_blast
-      tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+      tuple val("${sample}"), path("${sample}_${binType}_keggPaths.tsv"), emit: kegg_paths
+      tuple val("${sample}_${binType}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
    shell:
@@ -358,7 +371,7 @@ process pKEGGFromBlast {
         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
          --link=!{DOWNLOAD_LINK} \
          --httpsCommand="wget -O kegg.tar.gz !{DOWNLOAD_LINK} && tar -xzvf kegg.tar.gz && rm kegg.tar.gz " \
-         --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} . " \
+         --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
          --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} kegg.tar.gz && tar -xzvf kegg.tar.gz && rm kegg.tar.gz " \
 	 --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
          --localCommand="tar -xzvf !{DOWNLOAD_LINK} " \
@@ -368,7 +381,7 @@ process pKEGGFromBlast {
       else
          KEGG_DB="!{EXTRACTED_DB}"
       fi
-      blast2kegg.py !{blast_result} ${KEGG_DB} !{sample}_!{binID}_kegg.tsv
+      blast2kegg.py !{blast_result} ${KEGG_DB} !{sample}_!{binType}_keggPaths.tsv
       '''
 }
 
@@ -519,7 +532,7 @@ workflow wAnnotateFile {
       file(annotationTmpDir).mkdirs()
       projectTableFile | splitCsv(sep: '\t', header: true) \
       | map{ [it.DATASET, it.BIN_ID, file(it.PATH)] } | set { input } 
-      _wAnnotation(Channel.value("param"), input, null, Channel.empty())
+      _wAnnotation(Channel.value("out"), Channel.value("param"), input, null, Channel.empty())
    emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }
@@ -531,6 +544,7 @@ workflow wAnnotateFile {
 **/
 workflow wAnnotateList {
    take:
+      sourceChannel
       prodigalMode
       fasta
       gtdb
@@ -538,7 +552,7 @@ workflow wAnnotateList {
    main:
       annotationTmpDir = params.tempdir + "/annotation"
       file(annotationTmpDir).mkdirs()
-      _wAnnotation(prodigalMode, fasta, gtdb, contigCoverage)
+      _wAnnotation(sourceChannel, prodigalMode, fasta, gtdb, contigCoverage)
     emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
       proteins = _wAnnotation.out.prokka_faa
@@ -556,6 +570,7 @@ workflow wAnnotateList {
 **/ 
 workflow _wAnnotation {
    take:
+      sourceChannel
       prodigalMode
       fasta
       gtdb
@@ -568,7 +583,7 @@ workflow _wAnnotation {
       // Collect all databases
       selectedDBs = params?.steps?.annotation?.mmseqs2.findAll().collect({ 
             [it.key, it.value?.params ?: "", \
-	     it.value?.database?.extractedDBPath ?: "", \
+	         it.value?.database?.extractedDBPath ?: "", \
              it.value.database?.download?.source ?: "", \
              it.value.database?.download?.md5sum ?: "", \
              it.value.database?.download?.s5cmd?.params ?: "" ]
@@ -582,9 +597,14 @@ workflow _wAnnotation {
              it.value.database?.download?.s5cmd?.params ?: "" ]
       })
 
-      // Run all amino acid outputs against all databases 
-      pProkka.out.faa | combine(Channel.from(selectedDBs)) | pMMseqs2
-      pProkka.out.faa | combine(Channel.from(selectedTaxDBs)) | pMMseqs2_taxonomy
+      SAMPLE_IDX=0
+      PATH_IDX=2
+      // Run all amino acid outputs against all databases
+      // Collect by sample name to bundle searches and avoid calls with small input files
+      combinedMMseqs = pProkka.out.faa | map{ [it[SAMPLE_IDX], it[PATH_IDX]] }| groupTuple() | combine(Channel.from(selectedDBs))
+      pMMseqs2(sourceChannel, combinedMMseqs)
+      combinedMMseqsTax = pProkka.out.faa | map{ [it[SAMPLE_IDX], it[PATH_IDX]] }| groupTuple() | combine(Channel.from(selectedTaxDBs))
+      pMMseqs2_taxonomy(sourceChannel, combinedMMseqsTax)
       DB_TYPE_IDX = 0
       pMMseqs2.out.blast | filter({ result -> result[DB_TYPE_IDX] == "kegg" }) \
 	| map({ result -> result.remove(0); result }) \
@@ -595,7 +615,6 @@ workflow _wAnnotation {
       pKEGGFromBlast(mmseqs2Results)
 
       // Compute gene coverage based on contig coverage
-      SAMPLE_IDX=0
       contigCoverage | combine(pProkka.out.ffn, by: SAMPLE_IDX) | pGeneCoverage
 
       pProkka.out.logs | mix(pMMseqs2.out.logs) \
@@ -603,7 +622,7 @@ workflow _wAnnotation {
 	| mix(pResistanceGeneIdentifier.out.logs) \
 	| mix(pKEGGFromBlast.out.logs) | pDumpLogs
    emit:
-      keggAnnotation = pKEGGFromBlast.out.kegg_blast
+      keggAnnotation = pKEGGFromBlast.out.kegg_paths
       mmseqs2_kronaHtml = pMMseqs2_taxonomy.out.kronaHtml
       mmseqs2_krakenTaxonomy = pMMseqs2_taxonomy.out.krakenStyleTaxonomy
       mmseqs2_taxonomy = pMMseqs2_taxonomy.out.taxonomy

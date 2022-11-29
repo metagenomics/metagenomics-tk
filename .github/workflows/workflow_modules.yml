@@ -1,5 +1,5 @@
 
-name: CI
+name: Test Pull Requests
 
 on:
   pull_request:
@@ -23,6 +23,19 @@ jobs:
     needs: [codePolicy]
     steps:
       - uses: actions/checkout@v2
+      - name: Test if SRA S3 Entrypoint works 
+        run: |
+          NCBI_API_KEY=${{ secrets.NCBI_API_KEY }}  bash ./scripts/test_SRA.sh " -c  test_data/assets/aws.config " "" ${PROFILE} || exit 1
+      - name: Test if just the input SRA datasets are reported 
+        run: |
+          bash ./scripts/test_SRA_large.sh ${PROFILE} || exit 1
+      - name: Test if SRA S3 Input module works 
+        run: |
+          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config "  ./example_params/fullPipelineSRAQC.yml "" ${PROFILE} || exit 1
+
+      - name: Test if SRA S3 Input module works with ONT data
+        run: |
+          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config "  ./example_params/fullPipelineSRAQCONT.yml "" ${PROFILE} || exit 1
       - name: Test Full Pipeline Run
         run: |
           bash ./scripts/test_fullPipeline.sh \
@@ -46,19 +59,6 @@ jobs:
           example_params/fullPipeline_fraction/fullPipeline_fraction_binning_metabinner.yml \
           "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
 
-      - name: Test if SRA S3 Entrypoint works 
-        run: |
-          NCBI_API_KEY=${{ secrets.NCBI_API_KEY }}  bash ./scripts/test_SRA.sh " -c  test_data/assets/aws.config " "" ${PROFILE} || exit 1
-
-      - name: Test if SRA S3 Input module works 
-        run: |
-          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config "  ./example_params/fullPipelineSRAQC.yml "" ${PROFILE} || exit 1
-
-      - name: Test if SRA S3 Input module works with ONT data
-        run: |
-          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config "  ./example_params/fullPipelineSRAQCONT.yml "" ${PROFILE} || exit 1
-
-
   full_pipeline_ont:
     timeout-minutes: 2500
     runs-on: [ self-hosted, slurm]
@@ -74,12 +74,20 @@ jobs:
       - name: Test Full Pipeline ONT and Illumina Run
         run: |
           bash ./scripts/test_fullPipeline.sh \
-          " --databases=/vol/scratch/databases/ " \
-          ./example_params/fullPipelineIlluminaOrONT.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
+          " --databases=/vol/scratch/databases/ --output=output " \
+          ./example_params/fullPipelineIlluminaOrONT.yml \
+          "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
+
+      - name: Test aggregate workflow based on previous test
+        run: |
+          bash ./scripts/test_fullPipelineAggregate.sh \
+          " --output=output " ./example_params/fullPipelineAggregate.yml \
+          "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
 
       - name: Test if SRA S3 Input module works with ONT data
         run: |
-          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config "  ./example_params/fullPipelineSRAQCONT.yml "" ${PROFILE} || exit 1
+          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config "  \
+          ./example_params/fullPipelineSRAQCONT.yml "" ${PROFILE} || exit 1
 
 
 
@@ -185,9 +193,14 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
-      - name: Test Fragment Recruitment via Mash Screen
+      - name: Test Fragment Recruitment via Mash Screen with BWA
         run: |
           bash ./scripts/test_fragmentRecruitment.sh "" "example_params/fragmentRecruitmentMashScreen.yml" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+      - name: Test Fragment Recruitment via Mash Screen with Bowtie
+        run: |
+          bash ./scripts/test_fragmentRecruitment.sh "" \
+             "example_params/fragmentRecruitment_fraction/fragmentRecruitmentMashScreenBowtie.yml" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+
 
   annotation:
     timeout-minutes: 2200
@@ -261,7 +274,7 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
-      - name: Plasmid
+      - name: Plasmid Test
         run: |
           bash ./scripts/test_plasmids.sh " --databases=/vol/scratch/databases/  " "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
       - name: Plasmids Database Test
@@ -299,7 +312,7 @@ jobs:
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/platon_20220929.tar.gz" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
-                               MODULE_DB_TEST_YML_PATH="'.steps.plasmid.Platon.database=env(databaseß),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.MobTyper,.steps.plasmid.PLSDB)'" \
+                               MODULE_DB_TEST_YML_PATH="'.steps.plasmid.Platon.database=env(database),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.MobTyper,.steps.plasmid.PLSDB)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="plasmid_yaml_database_tests"
 
       - name: MobTyper Test

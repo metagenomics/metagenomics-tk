@@ -18,6 +18,7 @@ Only the detected plasmids will be used for downstream analysis.
 
 
 For running a plasmid assembly we suggest running the full pipeline mode with the enabled plasmids module. See input example configuration files.
+The read mapper can either be Bowtie or Bwa for Illumina and minimap for long reads.  
 
 ## Input
 

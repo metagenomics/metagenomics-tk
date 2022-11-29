@@ -22,6 +22,8 @@ process pViralVerifyPlasmid {
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("ViralVerifyPlasmid")
 
+    shell = ['/bin/bash']
+
     containerOptions Utils.getDockerMount(params?.steps?.plasmid?.ViralVerifyPlasmid?.database, params)
 
     container "${params.viralVerify_image}"
@@ -60,7 +62,7 @@ process pViralVerifyPlasmid {
             --link=!{DOWNLOAD_LINK} \
             --httpsCommand="wget -O - !{DOWNLOAD_LINK} | pigz -fdc > pfam.hmm " \
             --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat !{DOWNLOAD_LINK} | pigz -fdc > pfam.hmm  " \
-            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} pfam.hmm.gz && pigz -fdc pfam.hmm.gz > pfam.hmm && rm pfam.hmm.gz " \
+            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} pfam.hmm.gz && pigz -fdc pfam.hmm.gz > pfam.hmm && rm pfam.hmm.gz " \
             --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
             --localCommand="gunzip -c !{DOWNLOAD_LINK} > ./pfam.hmm " \
             --expectedMD5SUM=!{MD5SUM}
@@ -71,7 +73,7 @@ process pViralVerifyPlasmid {
     fi
 
     # ViralVerify should exit gracefully if the query sequence is too short for hmmsearch
-    trap 'if [[ $? == 1 && -s unzipped*proteins_circ.fa ]]; then echo "hmmsearch could not detect any protein"; exit 0; fi' EXIT
+    trap 'if [[ $? == 1 && ! -s unzipped*proteins_circ.fa ]]; then echo "hmmsearch could not detect any protein"; exit 0; fi' EXIT
     viralverify !{ADDITIONAL_PARAMS}  --hmm ${PFAM_FILE} -p -t !{task.cpus} -f unzipped.fasta -o .
 
     if [ -n "$(find . -name '*.csv')" ]; then
@@ -200,7 +202,7 @@ process pPlaton {
 	--link=!{DOWNLOAD_LINK} \
 	--httpsCommand="wget -qO- !{DOWNLOAD_LINK} | tar -xvz " \
 	--s3FileCommand="s5cmd !{S5CMD_PARAMS} cat !{DOWNLOAD_LINK} | tar -xvz  " \
-	--s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} platon.tar.gz && tar -xzvf platon.tar.gz && rm platon.tar.gz " \
+	--s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} platon.tar.gz && tar -xzvf platon.tar.gz && rm platon.tar.gz " \
 	--s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
 	--localCommand="tar xzvf !{DOWNLOAD_LINK} " \
 	--expectedMD5SUM=!{MD5SUM}
@@ -213,7 +215,7 @@ process pPlaton {
     pigz -p !{task.cpus} -fdc !{assembly} > assembly.fasta
 
     # In some cases prodigal fails because of a too short query sequence. In such cases the process should end with exit code 0.
-    trap 'if [[ $? == 1 && $(grep -q "ORFs failed" assembly.log) == 0 ]]; then echo "Protein Prediction Failed"; exit 0; fi' EXIT
+    trap 'if [ "$?" == 1 ] && ( grep -q "ORFs failed" assembly.log || grep -q "Error detecting input file format. First line seems to be blank." assembly.log ); then echo "Protein Prediction Failed"; exit 0; fi' EXIT
     platon assembly.fasta !{ADDITIONAL_PARAMS} --db ${PLATON_DB} --mode sensitivity -t !{task.cpus}
 
     if [ -n "$(find . -name '*.tsv')" ]; then

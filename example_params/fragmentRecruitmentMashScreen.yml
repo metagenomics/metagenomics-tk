@@ -5,6 +5,7 @@ logDir: log
 runid: 1
 logLevel: 1
 scratch: "/vol/scratch"
+publishDirMode: "symlink"
 steps:
   fragmentRecruitment:
     mashScreen:
@@ -15,9 +16,11 @@ steps:
       additionalParams:
         mashSketch: " "
         mashScreen: " "
-        bowtie: " "
+        bwa: " "
         minimap: " "
         coverm: "  --min-covered-fraction 0  "
+        samtoolsViewBwa: " -F 3584 " 
+        samtoolsViewMinimap: " " 
       mashDistCutoff: 0.70
       coveredBasesCutoff: 0.2
       mashHashCutoff: 2

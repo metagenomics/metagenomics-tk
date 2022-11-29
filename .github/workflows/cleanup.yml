@@ -1,4 +1,4 @@
-name: Close Pull Request
+name: Close artifacts of closed Pull Requests
 
 # only trigger on pull request closed events
 on:
