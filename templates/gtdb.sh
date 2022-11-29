@@ -61,6 +61,6 @@ paste -d$'\t' <(cut -f 3 $GTDB_SUMMARY_TMP | sed '1,1s/user_genome/BIN_ID/') $GT
 
 # Copy trees to output
 for tree in $(ls -1 output/classify/*.tree); do 
-	NEW_TREE_NAME=$(basename $(echo ${tree} | rev | cut -f 2-  -d '.' | rev)_"${FILE_ID}.tree");
+	NEW_TREE_NAME=$(basename $(echo ${tree} | sed "s/classify.tree/classify_${FILE_ID}.tree/g"));
         mv ${tree} ${NEW_TREE_NAME}
 done
