@@ -187,6 +187,8 @@ process pBwa {
 
     label 'large'
 
+    cache 'deep'
+
     tag "Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", \

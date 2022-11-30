@@ -19,6 +19,8 @@ process pPorechop {
 
     tag "$sample"
 
+    cache 'deep'
+
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "porechop", filename) }
 
     when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("porechop")
@@ -48,6 +50,8 @@ process pPorechopDownload {
     label 'medium'
 
     tag "Sample: $sample"
+
+    cache 'deep'
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "porechop", filename) }
 
