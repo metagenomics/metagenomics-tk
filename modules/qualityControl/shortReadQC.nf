@@ -15,6 +15,8 @@ process pFastpSplit {
 
     tag "Sample: $sample"
 
+    cache "deep"
+
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
 
     when params?.steps.containsKey("qc") && params?.steps?.qc.containsKey("fastp")
@@ -101,6 +103,8 @@ process pFastpSplitDownload {
     label 'medium'
 
     tag "Sample: $sample"
+
+    cache 'deep'
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
 

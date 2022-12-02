@@ -204,6 +204,31 @@ workflow _wAggregateIllumina {
       illuminaBinStats = illuminaBinStats
 }
 
+
+workflow _wFragmentRecruitment {
+  take:
+    sraFiles
+  main:
+    // get genomes retrieved by fragment recruitment
+    Pattern recruitedGenomesPattern = Pattern.compile('.*/fragmentRecruitment/' + params.modules.fragmentRecruitment.version.major + '..*/matches/.*$')
+    sraFiles | filter({ sra, path -> recruitedGenomesPattern.matcher(path.toString()).matches()}) \
+     | filter({ path -> !(path ==~ /.*command.*$/)}) \
+     | map{ sra,f -> [SAMPLE:sra, PATH: getPath(f), BIN_ID:file(f).name] } \
+     | unique({ bin -> bin.BIN_ID})
+     | set{ recruitedGenomes }
+
+    Pattern recruitedGenomesStatsPattern = Pattern.compile('.*/fragmentRecruitment/' + params.modules.fragmentRecruitment.version.major + '..*/stats/.*_bins_stats.tsv$')
+    sraFiles | filter({ sra, path -> recruitedGenomesStatsPattern.matcher(path.toString()).matches()}) \
+       | splitCsv(header: true, sep: '\t') | map { sra, bins -> bins } \
+       | unique({ bin -> bin.BIN_ID}) \
+       | set{recruitedGenomesStats}
+
+   emit:
+     recruitedGenomes = recruitedGenomes
+     recruitedGenomesStats = recruitedGenomesStats
+}
+
+
 /*
 * This workflow entry point allows to aggregate information of different samples.
 * It will perform analysis steps such as dereplication, read mapping and co-occurrence.
@@ -215,7 +240,8 @@ workflow wAggregatePipeline {
 
     // List all available SRAIDs
     Channel.from(file(input).list()) | filter({ path -> !(path ==~ /.*summary$/) && !(path ==~ /null$/) }) \
-     | filter({ path -> !(path ==~ /.*AGGREGATED$/)}) | set { sraDatasets }
+     | filter({ path -> !(path ==~ /.*AGGREGATED$/)}) \
+     | set { sraDatasets }
 
     sraDatasets | map { sra ->  [sra, input + "/" + sra + "/" + runID + "/" ]} \
      | set {sraIDs}
@@ -224,6 +250,7 @@ workflow wAggregatePipeline {
     sraIDs | flatMap { sraID, path -> collectFiles(file(path), sraID)} | set {sraFiles}
     sraFiles | _wAggregateIllumina 
     sraFiles | _wAggregateONT
+    sraFiles | _wFragmentRecruitment
 
     // get Checkm results
     Pattern checkmPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_checkm_.*.tsv$')
@@ -239,9 +266,16 @@ workflow wAggregatePipeline {
      | map { sraID, bins -> [bins, sraID] } \
      | set { gtdb }
 
-    mapJoin(_wAggregateIllumina.out.illuminaBinStats | mix(_wAggregateONT.out.ontBinStats), checkm, "BIN_ID", "BIN_ID") \
+    recruitedGenomes = _wFragmentRecruitment.out.recruitedGenomes
+
+    recruitedGenomesStats =  _wFragmentRecruitment.out.recruitedGenomesStats
+
+    mapJoin(_wAggregateIllumina.out.illuminaBinStats | mix(_wAggregateONT.out.ontBinStats) \
+	| mix(recruitedGenomesStats), checkm, "BIN_ID", "BIN_ID") \
 	| set {checkmBinStats}
-    mapJoin(checkmBinStats, _wAggregateIllumina.out.illuminaBins | mix(_wAggregateONT.out.ontBins), "BIN_ID", "BIN_ID") \
+
+    mapJoin(checkmBinStats, _wAggregateIllumina.out.illuminaBins | mix(_wAggregateONT.out.ontBins) \
+	| mix(recruitedGenomes), "BIN_ID", "BIN_ID") \
 	| set {binsStatsComplete}
 
     _wAggregate(_wAggregateONT.out.ontSamples, _wAggregateONT.out.ontMedianQuality, _wAggregateIllumina.out.illuminaSamples, \
@@ -264,20 +298,15 @@ workflow _wAggregate {
 
      wDereplicateList(binsStats)
 
-     representativesListOfFiles = wDereplicateList.out
-
      REPRESENTATIVES_PATH_IDX = 0
-
-     representativesListOfFiles \
+     wDereplicateList.out \
 	| splitCsv(sep: '\t') \
         | map { it -> file(it[REPRESENTATIVES_PATH_IDX]) }\
         | set { representativesList }
 
      wListReadMappingBwa(samplesONT, ontMedianQuality, samplesPaired, samplesSingle, representativesList)
 
-
      wCooccurrenceList(wListReadMappingBwa.out.trimmedMean, gtdb)
-
 }
 
 

@@ -105,11 +105,11 @@ steps:
         bwa: " "
         samtoolsViewBwa: " -F 3584 " 
         samtoolsViewMinimap: " " 
-        coverm: "  --min-covered-fraction 5  "
+        coverm: "  --min-covered-fraction 0 "
         minimap: "  "
-      mashDistCutoff: 0.95
-      coveredBasesCutoff: 0.2
-      mashHashCutoff: 800
+      mashDistCutoff: 0.05
+      coveredBasesCutoff: 0.01
+      mashHashCutoff: 2
   readMapping:
     bwa:
       additionalParams:

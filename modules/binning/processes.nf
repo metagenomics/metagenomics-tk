@@ -99,6 +99,8 @@ process pMinimap2 {
 
     tag "Sample: $sample"
 
+    cache 'deep'
+
     publishDir params.output, mode: "${params.publishDirMode}", \
 	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
 
@@ -138,6 +140,8 @@ process pBowtie2 {
     label 'large'
 
     tag "Sample: $sample"
+
+    cache 'deep'
 
     publishDir params.output, mode: "${params.publishDirMode}", \
 	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
@@ -182,6 +186,8 @@ process pBwa {
     container "${params.samtools_bwa_image}"
 
     label 'large'
+
+    cache 'deep'
 
     tag "Sample: $sample"
 
