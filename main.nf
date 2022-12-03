@@ -261,7 +261,7 @@ workflow wAggregatePipeline {
      | set { checkm }
 
     // get gtdbtk summary files
-    Pattern gtdbPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_.*.tsv$')
+    Pattern gtdbPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_combined.tsv$' )
     sraFiles | filter({ sra, path -> gtdbPattern.matcher(path.toString()).matches()}) \
      | map { sraID, bins -> [bins, sraID] } \
      | set { gtdb }

@@ -37,7 +37,7 @@ touch output/gtdbtk.ar122.summary.tsv
 FILE_ID=$(mktemp -u XXXXXXXXXX)
 FILE_BAC=chunk_${FILE_ID}_!{sample}_gtdbtk.bac120.summary.tsv
 FILE_ARC=chunk_${FILE_ID}_!{sample}_gtdbtk.ar122.summary.tsv
-FILE_COMB=!{sample}_gtdbtk_${FILE_ID}.tsv
+FILE_COMB=chunk_${FILE_ID}_!{sample}_gtdbtk_combined.tsv
 FILE_UNCLASSIFIED=!{sample}_gtdbtk_unclassifed_${FILE_ID}.tsv
 
 # Filter out unclassified
