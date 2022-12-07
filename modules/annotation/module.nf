@@ -208,12 +208,12 @@ process pResistanceGeneIdentifier {
       
       containerOptions Utils.getDockerMount(params?.steps?.annotation?.rgi?.database, params)
  
-      tag "$sample $binID"
+      tag "Sample: $sample, BinID: $binID"
 
       label 'large'
 
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "rgi", filename) }, \
-         pattern: "{**.rgi.tsv}"
+         pattern: "{**.rgi.tsv,**.png,**.eps,**.csv}"
 
       when params.steps.containsKey("annotation") && params?.steps.annotation.containsKey("rgi")
 
@@ -221,7 +221,10 @@ process pResistanceGeneIdentifier {
       tuple val(sample), val(binID), file(fasta)
    
    output:
-      tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}.rgi.tsv"), emit: results
+      tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}.rgi.tsv"), optional:true, emit: results
+      tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}.rgi-1.csv"), optional:true, emit: resultsGenes
+      tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}.rgi-1.eps"), \
+	path("${sample}_${binID}.rgi-1.png"), optional:true, emit: png
       tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -261,15 +264,25 @@ process pResistanceGeneIdentifier {
    # gunzip (if required) and strip '*' sign from amino acid files
    zcat -f !{fasta} | sed 's/*//g' > input.faa
 
-   RGI_OUTPUT=!{binID}.rgi
+   mkdir output
+   OUTPUT_ID=!{sample}_!{binID}.rgi
+   RGI_OUTPUT=output/${OUTPUT_ID}
    # load CARD database and run rgi
    rgi load --card_json ${CARD_JSON} --local
    rgi main --input_sequence input.faa \
                --output_file ${RGI_OUTPUT} --input_type protein --local \
                --alignment_tool DIAMOND --num_threads !{task.cpus} --clean ${ADDITIONAL_RGI_PARAMS}
 
-   #  add sample and binid information to rgi output
-   sed  '1 s/^/SAMPLE\tBIN_ID\t/g' ${RGI_OUTPUT}.txt | sed "2,$ s/^/!{sample}\t!{binID}\t/g" > !{sample}_!{binID}.rgi.tsv
+   # Produce files only if there is an actual output
+   if [ $(tail -n +2 ${RGI_OUTPUT}.txt | wc -l) -gt 0 ]; then 
+
+     #  add sample and binid information to rgi output
+     sed  '1 s/^/SAMPLE\tBIN_ID\t/g' ${RGI_OUTPUT}.txt  \
+	| sed "2,$ s/^/!{sample}\t!{binID}\t/g" > !{sample}_!{binID}.rgi.tsv
+
+     rgi heatmap --input output --output ${OUTPUT_ID}
+   fi
+
    '''
 }
 
