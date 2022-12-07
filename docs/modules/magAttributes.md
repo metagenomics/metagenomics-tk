@@ -30,12 +30,6 @@ please specify the path to the `releasesXXX` directory (e.g. "/vol/spool/gtdb/re
 
 ## Output
 
-### Prokka
-
-Prokka computes `*.err`, `*.faa`, `*.ffn`, `*.fna`, `*.fsa`, `*.gbk`, `*.gff`, `*.sqn`, `*.tbl`, `*.tbl` for every bin.
-Details of all files can be read on the Prokka page.
-In addition, it also computes a summary tsv file which adheres to the magAttributes specification.
-
 ### GTDBTk
 
 All GTDB files include the GTDB specific columns in addition to a `SAMPLE` column (`SAMPLE_gtdbtk.bac120.summary.tsv`, `SAMPLE_gtdbtk.ar122.summary.tsv`).
