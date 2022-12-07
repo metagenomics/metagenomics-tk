@@ -487,7 +487,7 @@ process pProkka {
     shell:
       output = getOutput("${sample}", params.runid, "prokka", "")
       prodigalModeStr = getProdigalModeString(prodigalMode)
-
+      prokkaDomain = domain ? " --kingdom " + domain : ""
       '''
       # Prepare Input Variables
       BIN=!{fasta}
@@ -497,10 +497,10 @@ process pProkka {
       # Run Prokka
       if [[ !{fasta} == *.gz ]]; then
         zcat -f !{fasta} > input.fasta
-        prokka !{params.steps.annotation.prokka.additionalParams} !{prodigalModeStr} --partialgenes --cpus !{task.cpus} --outdir out --kingdom !{domain} input.fasta
+        prokka !{params.steps.annotation.prokka.additionalParams} !{prodigalModeStr} --partialgenes --cpus !{task.cpus} --outdir out !{prokkaDomain} input.fasta
         rm input.fasta
       else 
-        prokka !{params.steps.annotation.prokka.additionalParams} !{prodigalModeStr} --partialgenes --cpus !{task.cpus} --outdir out --kingdom !{domain} !{fasta}
+        prokka !{params.steps.annotation.prokka.additionalParams} !{prodigalModeStr} --partialgenes --cpus !{task.cpus} --outdir out !{prokkaDomain} !{fasta}
       fi
 
       # Prepare output 
