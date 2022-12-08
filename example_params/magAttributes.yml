@@ -27,7 +27,7 @@ steps:
         lineage_set: " " 
         qa: "  "
     prokka:
-      defaultKingdom: 'Bacteria'
+      defaultKingdom: false
       additionalParams: " --mincontiglen 200 "
 
 resources:

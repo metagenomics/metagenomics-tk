@@ -1,6 +1,6 @@
 # Annotation
 
-The annotation module is able to predict genes and annotate those based on a set of user provided databases.
+The annotation module is able to predict genes and annotate those based on Prokka and a set of user provided databases.
 A user can add additional formatted databases as part of the configuration by adding a key (Example: `kegg` ) with 
 a possible download strategy. See [database section](../pipeline_configuration.md#database-input-configuration) for possible download strategies.
 In addition, the resistance gene identifier is executed by default.
@@ -59,9 +59,11 @@ This lowest common ancestor is a robust taxonomic label for unknown sequences.
 These labels are presented in form of an `*.taxonomy.tsv` file, a `*.krakenStyleTaxonomy.out` formatted in accordance to the [KRAKEN tool](https://ccb.jhu.edu/software/kraken/) outputs and
 an interactive [KRONA](https://github.com/marbl/Krona/wiki) plot in form of a html website `*.krona.html`.
 
-### Prodigal
+### Prokka
 
-Predicted genes in the `*.faa` `*.fna` and `*.gff` file format.
+Prokka computes `*.err`, `*.faa`, `*.ffn`, `*.fna`, `*.fsa`, `*.gbk`, `*.gff`, `*.sqn`, `*.tbl`, `*.tbl` for every bin.
+Details of all files can be read on the Prokka page.
+In addition, it also computes a summary tsv file which adheres to the magAttributes specification.
 
 ### KEGGFromBlast
 

@@ -209,8 +209,7 @@ steps:
         mashDist: " -v 0.1 -d 0.1 "
   annotation:
     prokka:
-      prodigalMode: "meta"
-      defaultKingdom: 'Bacteria'
+      defaultKingdom: false
       additionalParams: " --mincontiglen 500 "
     mmseqs2:
       kegg:

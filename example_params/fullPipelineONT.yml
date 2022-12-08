@@ -137,7 +137,7 @@ steps:
   annotation:
     prokka:
       prodigalMode: "meta"
-      defaultKingdom: 'Bacteria'
+      defaultKingdom: false
       additionalParams: " --mincontiglen 200 "
     mmseqs2:
 #      vfdb:
