@@ -16,10 +16,28 @@ include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/
 include { wFragmentRecruitmentFile; wFragmentRecruitmentList;} from './modules/fragmentRecruitment/module'
 include { wAnnotateFile; wAnnotateList as wAnnotateBinsList; \
 	  wAnnotateList as wAnnotateUnbinnedList; wAnnotateList as wAnnotatePlasmidList } from './modules/annotation/module'
-
 include { wCooccurrenceList; wCooccurrenceFile } from './modules/cooccurrence/module'
 include { wPlasmidsList; wPlasmidsPath; } from './modules/plasmids/module'
 include { wInputFile } from './modules/input/module'
+
+
+def checkVersions(){
+  supportedVersionsFormatted = params.supportedVersions.collect({ version -> version.YEAR + "." + version.MONTH })
+  isVersionMatched = params.supportedVersions.collect({ version -> nextflow.version.matches(">=" + version.YEAR + "." + version.MONTH) \
+	&& nextflow.version.matches("<" + version.YEAR + "." + (version.MONTH + 1)) }).any()
+
+  if(!isVersionMatched){
+    println "The meta-omics-toolkit was tested against the following Nextflow versions $supportedVersionsFormatted -- You are running version $nextflow.version"
+    println "You can still use a different Nextflow version by using --skipVersionCheck "
+    exit 1
+  }
+}
+
+if(! params.skipVersionCheck){
+  checkVersions()
+}
+
+
 
 
 def mapJoin(channel_a, channel_b, key_a, key_b){
@@ -405,7 +423,7 @@ workflow _wProcessOnt {
 *
 * Left and right read could be https, s3 links or file path. 
 */
-workflow wPipeline {
+workflow wFullPipeline {
    
     _wConfigurePipeline()
 

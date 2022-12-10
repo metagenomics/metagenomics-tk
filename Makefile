@@ -29,6 +29,9 @@ ifndef BRANCH
 	override BRANCH = "dev"
 endif
 
+ifndef VERSION
+	override VERSION = $(shell cat VERSIONS.txt | sort | tail -n 1)
+endif
 
 ifndef MODULE_DB_TEST_EXTRACTED
 	override MODULE_DB_TEST_EXTRACTED = "/vol/spool/peter/plsdb"
@@ -68,11 +71,11 @@ changelog: ## Creates a new CHANGELOG.md file
 	docker run -v "$${PWD}":/workdir quay.io/git-chglog/git-chglog:latest "$${LATEST}"
 
 nextflow: ## Downloads Nextflow binary
-	- wget -qO- https://get.nextflow.io | bash
+	wget -qO- https://github.com/nextflow-io/nextflow/releases/download/v${VERSION}/nextflow-${VERSION}-all > nextflow
+	chmod a+x nextflow
 
 check: ## Checks if processes did failed in the current nextflow returns exit code 1. (Useful in github actions context)
 	bash ./scripts/check_log.sh $$(ls -1 log/trace.* | tail -n 1 ) || (echo "$?"; exit 1)
-	
 
 checkPublisDirMode: ## Check if publishDirMode is set in process
 	! (grep -r publishIR modules/ | grep -v "//" | grep -v params.publishDirMode) || echo "publishDirMode must always be set in process publishDir method"

@@ -45,6 +45,10 @@ bash scripts/test_dereplication.sh "  --steps.dereplication.pasolli.input=test/b
 bash scripts/test_magAttributes.sh "  --steps.magAttributes.input=test/bins/small/attributes.tsv "
 ```
 
+### Nextflow Versions
+
+The toolkit is tested against the lowest and highest Nextflow version number specified in VERSIONS.txt.
+
 ## Modules
 
 Functionality is structured in modules (assembly, binning, dereplication, .etc). Each module can have multiple workflows.
