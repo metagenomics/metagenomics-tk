@@ -23,6 +23,9 @@
  * `publishDirMode`: (optional) Per default results are symlinked to the chosen `output` directory. This default mode can be changed with this parameter.
     A useful mode is "copy", to copy results instead of just linking them. Other modes to choose from [here](https://www.nextflow.io/docs/latest/process.html#publishdir).  
 
+ * `skipVersionCheck`: The toolkit is regurarly tested against a set of Nextflow versions. Setting the `--skipVersionCheck` allows you to use the toolkit with Nextflow versions
+   that were not tested.
+
 ## S3 Configuration
 
 All modules inputs and outputs can be used in conjunction with S3.
