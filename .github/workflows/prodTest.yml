@@ -1,7 +1,9 @@
 name: "Run Tests against real samples"
 on: [workflow_dispatch]
+env:
+    WORK_DIR: "/vol/spool"
 jobs:
-  build_job:
+  run_full_pipeline:
     runs-on: [self-hosted, prodTest]
     steps:
       - uses: actions/checkout@v2
