@@ -113,7 +113,8 @@ process pNanoPlot {
     shell:
     '''
     NanoPlot --threads !{task.cpus} --tsv_stats  --fastq reads.fq.gz
-    csvtk -tT transpose  <(tail -n +2 NanoStats.txt) > NanoStats.tsv
+    csvtk -tT transpose  <(tail -n +2 NanoStats.txt)  > NanoStatsTmp.tsv
+    paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") NanoStatsTmp.tsv > NanoStats.tsv
     MEDIAN_QUALITY=$(cut -f 8 NanoStats.tsv | tail -n 1)
     '''
 }

@@ -1,7 +1,6 @@
 nextflow.enable.dsl=2
 
 include { pGetBinStatistics as pGetBinStatistics; \
-	pGetBinStatistics as pGetNotBinnedStatistics; \
 	pCovermContigsCoverage; pMinimap2; pMetabat } from './processes'
 
 def getModulePath(module){
