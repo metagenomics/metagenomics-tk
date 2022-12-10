@@ -17,7 +17,7 @@ Exceptions of this handling are specified in the corresponding module section.
 ```BASH
 nextflow run main.nf -work-dir /shared/directory/test \
 	-profile PROFILE  -resume \
-	-entry wPipeline -params-file example_params/fullPipeline.yml
+	-entry wFullPipeline -params-file example_params/fullPipeline.yml
 ```
 
 where
@@ -32,7 +32,7 @@ where
 === "Command"
 
     ```BASH
-    -entry wPipeline -params-file example_params/fullPipeline.yml
+    -entry wFullPipeline -params-file example_params/fullPipeline.yml
     ```
 
 === "Configuration File"
@@ -84,7 +84,7 @@ There are two ways to execute the toolkit. You can either run all steps in one e
 The second option allows you to process multiple samples via independent toolkit executions on different infrastructures and combine all
 results afterwards.
 
-You would first have to run the wPipeline mode without dereplication, read mapping and co-occurrence modules
+You would first have to run the wFullPipeline mode without dereplication, read mapping and co-occurrence modules
 and afterwards run the the aggregation as described below:
 
 #### Input
