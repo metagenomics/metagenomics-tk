@@ -1,7 +1,5 @@
 name: "Run Tests against real samples"
 on: [workflow_dispatch]
-env:
-    WORK_DIR: "/vol/spool"
 jobs:
   run_full_pipeline:
     timeout-minutes: 14400
@@ -12,6 +10,6 @@ jobs:
         run: |
           bash ./scripts/test_fullPipeline.sh \
           " -c /vol/spool/aws.config --databases=/vol/scratch/databases/  --logDir s3://toolkit-dev-benchmark " \
-          ./default/fullPipeline_illumina_nanpore.yml "${WORK_DIR}/${{ github.head_ref }}" slurm || exit 1
+          ./default/fullPipeline_illumina_nanpore.yml "" slurm || exit 1
 
 
