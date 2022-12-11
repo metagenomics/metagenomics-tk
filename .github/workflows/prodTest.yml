@@ -4,6 +4,7 @@ env:
     WORK_DIR: "/vol/spool"
 jobs:
   run_full_pipeline:
+    timeout-minutes: 14400
     runs-on: [self-hosted, prodTest]
     steps:
       - uses: actions/checkout@v2
