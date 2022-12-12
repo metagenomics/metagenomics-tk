@@ -70,9 +70,9 @@ steps:
       # Set --seed positive numbers to reproduce the result exactly. Otherwise, random seed will be set each time.
       additionalParams: " --seed 234234  "
   binningONT:
-    minimap2:
+    minimap:
       additionalParams: 
-        minimap2: " "
+        minimap: " "
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
     contigsCoverage:
