@@ -59,9 +59,9 @@ steps:
       additionalParams: " -i 1 "
       quality: "AUTO"
   binning:
-    bwa:
+    bwa2:
       additionalParams: 
-        bwa: " "
+        bwa2: " "
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
     contigsCoverage:
@@ -107,12 +107,12 @@ steps:
       additionalParams:
         mashSketch: " "
         mashScreen: " "
-        bwa: "  "
+        bwa2: "  "
         # We demand that matches should be at least 70 percent to restrict the
         # search space. We further restrict all found matches in 'coveredBasesCutoff' parameter.
         coverm: " --min-covered-fraction 70 "
         minimap: "   "
-        samtoolsViewBwa: " -F 3584 " 
+        samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
        # Mash identity should be at least 95%
       mashDistCutoff: 0.95
@@ -136,10 +136,10 @@ steps:
         pyani: " -m ANIb "
         representativeAniCutoff: 0.95
   readMapping:
-    bwa:
+    bwa2:
       additionalParams:
-        bwa_index: ""
-        bwa_mem: ""
+        bwa2_index: ""
+        bwa2_mem: ""
      # Even low coverage values should be reported
      # because evaluation whether a dataset contains a genome
      # can be done afterwards.
@@ -154,11 +154,11 @@ steps:
   plasmid:
     SCAPP:
       additionalParams:
-        bwa: "  "
+        bwa2: "  "
         SCAPP: "  "
         coverm: "  "
         minimap: " "
-        samtoolsViewBwa: " -F 3584 " 
+        samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
     ViralVerifyPlasmid:
       filter: true
