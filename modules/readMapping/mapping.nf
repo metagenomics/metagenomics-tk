@@ -29,11 +29,24 @@ process pBwaIndex {
       """
 }
 
+process pBwa2Index {
+    container "${params.bwa2_image}"
+    label 'large'
+    when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa2")
+    input:
+      path(representatives)
+    output:
+      path('*.{amb,ann,bwt,pac,sa,fa}')
+    shell:
+      """
+      bwa-mem2 index !{params.steps.readMapping.bwa2.additionalParams.bwa2_index} !{representatives}
+      """
+}
 
 process pMapBwa {
     label 'large'
     container "${params.samtools_bwa_image}"
-    when params.steps.containsKey("readMapping")
+    when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa")
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sampleID}", params.runid ,"bwa", filename) }
     input:
       tuple val(sampleID), path(sample, stageAs: "sample*"), path(representatives), path(index, stageAs: "*") 
@@ -43,6 +56,22 @@ process pMapBwa {
     shell:
     template('bwa.sh')
 }
+
+
+process pMapBwa2 {
+    label 'large'
+    container "${params.samtools_bwa2_image}"
+    when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa2")
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sampleID}", params.runid ,"bwa2", filename) }
+    input:
+      tuple val(sampleID), path(sample, stageAs: "sample*"), path(representatives), path(index, stageAs: "*") 
+    output:
+      tuple val("${sampleID}"), path("*bam"), path("*bai"), emit: alignment
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+    shell:
+    template('bwa2.sh')
+}
+
 
 
 process pCovermCount {
@@ -175,6 +204,12 @@ workflow _wReadMappingBwa {
       | map{ it -> [it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
       | set  {shortPairedReadIndex}
 
+     // Create BWA2 index
+     genomesMerged | pBwa2Index | map{ bwa2Index -> [bwa2Index]} \
+      | combine(genomesMerged)  \
+      | map{ it -> [it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
+      | set  {shortPairedReadIndex}
+
      // Combine index with samples
      samplesPaired | join(samplesSingle, remainder: true) \
        | map { sample -> [sample[SAMPLE_NAME_IDX], sample.findAll().tail()] } \
@@ -182,13 +217,15 @@ workflow _wReadMappingBwa {
 
      pMapBwa(illumina)
 
+     pMapBwa2(illumina)
+
      // Map ONT data
      samplesONT | combine(ontIndex) | set {ont}
      pMapMinimap2Long(Channel.value(params?.steps.containsKey("readMapping") \
 	&& Channel.value(params?.steps?.readMapping.containsKey("minimap"))), ont)
  
      DO_NOT_ESTIMATE_IDENTITY = "-1"
-     pMapBwa.out.alignment | combine(genomes | map {it -> file(it)} \
+     pMapBwa.out.alignment | mix(pMapBwa2.out.alignment ) | combine(genomes | map {it -> file(it)} \
       | toList() | map { it -> [it]})  \
       | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) \
       | set { covermBWAInput }
