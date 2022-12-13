@@ -115,13 +115,15 @@ workflow wCooccurrenceList {
 
 workflow _wCooccurrence {
    take: 
-     count
+     countCh
      gtdbConcatenated
    main:
      COLLECT_BUFFER=10000
 
      // Collect abundance/ count information of every sample
-     count | map { id, count -> file(count) }\
+     countCh | combine(countCh | count )  \
+	| filter({ sample, abundance, count -> count > 1 }) \
+	| map { sample, abundance, count -> file(abundance) }\
         | buffer( size: COLLECT_BUFFER, remainder: true ) \
         | pVerticalConcat | collect \
         | pVerticalConcatFinal | set { abundance }
