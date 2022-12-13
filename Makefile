@@ -107,10 +107,9 @@ dev_wiki: wiki_venv ## Start mkdocs developer session
 
 build_publish_docker:
 	bash ./scripts/buildPublishImage.sh ${COMMIT_START} ${COMMIT_END} ${DOCKER_REPOSITORY}
-
 	
 run_small_full_test: nextflow ## Prepares input files like downloading bins and reads and executes Nextflow. The default configuration it runs the full pipeline locally.
-	./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR}_${ENTRY} -profile ${PROFILE} -resume -entry ${ENTRY} -params-file ${PARAMS_FILE}; exit $$?
+	NXF_HOME=$$PWD/.nextflow ./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR}_${ENTRY} -profile ${PROFILE} -resume -entry ${ENTRY} -params-file ${PARAMS_FILE}; exit $$?
 
 help: ## Lists available Makefile commands
 	@egrep '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-16s\033[0m %s\n", $$1, $$2}'
