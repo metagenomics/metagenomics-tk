@@ -260,7 +260,7 @@ process pBwa2 {
     bwa-mem2 index !{contigs}
 
     # Run BWA
-    bwa-mem2 !{bwaParams} -p  \
+    bwa-mem2 mem !{bwaParams} -p  \
        -t !{task.cpus} !{contigs} <(cat !{pairedReads} !{unpairedReads}) - \
       | samtools view !{samtoolsViewParams} -@ !{task.cpus} -S -b - \
       | samtools sort -l 9 -@ !{task.cpus} - > !{sample}.bam
