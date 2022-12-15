@@ -36,7 +36,7 @@ process pBwa2Index {
     input:
       path(representatives)
     output:
-      path('*.{amb,ann,bwt,pac,sa,fa}')
+      path('*.{0123,amb,ann,64,pac}')
     shell:
       """
       bwa-mem2 index !{params.steps.readMapping.bwa2.additionalParams.bwa2_index} !{representatives}
