@@ -9,6 +9,7 @@ make run_small_full_test WORK_DIR=${WORK} \
         PARAMS_FILE=$YAML \
        	PROFILE="$PROFILE" \
        	OPTIONS=" $OPTIONS " \
-        ENTRY="wFullPipeline"
-        VERSION="$VERSION" \
+        ENTRY="wFullPipeline" \
+        VERSION="$VERSION" 
+
 make check
