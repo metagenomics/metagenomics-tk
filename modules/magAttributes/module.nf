@@ -75,12 +75,12 @@ process pGtdbtk {
 
     container "${params.gtdbtk_image}"
 
-    label 'large'
+    label 'medium'
 
     tag "Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }, \
-      pattern: "{**.tsv}"
+      pattern: "{**.tsv,**.tree}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("gtdb")
 
@@ -94,6 +94,8 @@ process pGtdbtk {
     output:
     tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
     tuple path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), val("${sample}"), optional: true, emit: archea
+    tuple path("${sample}_gtdbtk_unclassifed_*.tsv"), val("${sample}"), optional: true, emit: unclassified
+    tuple path("*.tree"), val("${sample}"), optional: true, emit: tree
     tuple path("${sample}_gtdbtk_*.tsv"), val("${sample}"), optional: true, emit: combined
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
@@ -104,6 +106,7 @@ process pGtdbtk {
     DOWNLOAD_LINK=params?.steps?.magAttributes?.gtdb?.database?.download?.source ?: ""
     MD5SUM=params.steps?.magAttributes?.gtdb?.database?.download?.md5sum ?: ""
     EXTRACTED_DB=params.steps?.magAttributes?.gtdb?.database?.extractedDBPath ?: ""
+    GTDB_PARAMS=params.steps.magAttributes.gtdb.additionalParams ?: ""
     template 'gtdb.sh'
 }
 

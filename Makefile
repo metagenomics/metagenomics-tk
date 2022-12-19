@@ -74,7 +74,7 @@ nextflow: ## Downloads Nextflow binary
 	wget -qO- https://github.com/nextflow-io/nextflow/releases/download/v${VERSION}/nextflow-${VERSION}-all > nextflow
 	chmod a+x nextflow
 
-check: ## Checks if processes did failed in the current nextflow returns exit code 1. (Useful in github actions context)
+check: ## Checks if processes did fail and the current nextflow run returns exit code 1. (Useful in a github actions context)
 	bash ./scripts/check_log.sh $$(ls -1 log/trace.* | tail -n 1 ) || (echo "$?"; exit 1)
 
 checkPublisDirMode: ## Check if publishDirMode is set in process
