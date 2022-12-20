@@ -15,4 +15,5 @@ make run_small_full_test WORK_DIR=${WORK} \
         ENTRY="${ENTRY}" \
         VERSION="$VERSION" 
 
+
 make check LOG_DIR=${LOG_DIR}
