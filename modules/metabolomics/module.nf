@@ -72,9 +72,9 @@ process pMemote {
       tuple val(sample), val(id), path(model)
 
     output:
-      tuple val("${sample}"), val("${id}"), path("${sample}_${id}_report.json.gz"), optional: true, emit: reportJson
-      tuple val("${sample}"), val("${id}"), path("${sample}_${id}_report.html"), optional: true, emit: reportHtml
-      tuple val("${sample}"), val("${id}"), path("${sample}_${id}_metrics.tsv"), optional: true, emit: reportTsv
+      tuple val("${sample}"), val("${id}"), path("${id}_report.json.gz"), optional: true, emit: reportJson
+      tuple val("${sample}"), val("${id}"), path("${id}_report.html"), optional: true, emit: reportHtml
+      tuple val("${sample}"), val("${id}"), path("${id}_metrics.tsv"), optional: true, emit: reportTsv
       tuple val("${id}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
