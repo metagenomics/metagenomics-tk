@@ -15,7 +15,6 @@ concurrency:
 
 env:
   WORK_DIR: "/vol/spool/${{ github.head_ref }}"
-  LOG_DIR: "/vol/spool/${{ github.head_ref }}/logs/${{ github.run_number }} "
   PROFILE: "slurm"
 jobs:
   full_pipeline:
@@ -29,7 +28,7 @@ jobs:
           NCBI_API_KEY=${{ secrets.NCBI_API_KEY }}  bash ./scripts/test_SRA.sh " -c  test_data/assets/aws.config " "" "${WORK_DIR}" ${PROFILE} || exit 1
       - name: Test if just the input SRA datasets are reported 
         run: |
-          bash ./scripts/test_SRA_large.sh ${PROFILE} || exit 1
+          bash ./scripts/test_SRA_large.sh "${WORK_DIR}" ${PROFILE} || exit 1
       - name: Test if SRA S3 Input module works 
         run: |
           bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config    " \
@@ -278,7 +277,7 @@ jobs:
         run: |
           bash ./scripts/test_metabolomics.sh "   -c  test_data/assets/aws.config     \
                                                --carveme_image=pbelmann/metabolomics:0.1.0 --steps.metabolomics.beforeProcessScript=/vol/spool/dockerPull.sh \
-                                               --smetana_image=pbelmann/metabolomics:0.1.0 --gapseq_image=pbelmann/metabolomics:0.1.0 --steps.metabolomics.carveme.additionalParams=''  " "" "${WORK_DIR} " "slurm"
+                                               --smetana_image=pbelmann/metabolomics:0.1.0 --gapseq_image=pbelmann/metabolomics:0.1.0 --steps.metabolomics.carveme.additionalParams=''  " "" "${WORK_DIR}" "slurm"
   plasmid:
     timeout-minutes: 800
     needs: [codePolicy]
