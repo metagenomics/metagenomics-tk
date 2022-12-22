@@ -27,6 +27,26 @@ def constructParametersObject(String tool){
 }
 
 
+/*
+*
+* This function decides if the MMSeqs taxonomy process should be executed on MAGs.
+*
+*/
+def runMMSeqsTaxonomy(isMMSeqsTaxonomySettingSet, isBinned, runOnBinned){
+    if(isMMSeqsTaxonomySettingSet && !isBinned){
+      return true
+    } else if(isMMSeqsTaxonomySettingSet && isBinned) {
+       if(runOnBinned){
+         return true
+       } else {
+         return false
+       }
+    } else {
+      return false
+    }
+}
+
+
 /**
 *
 * MMseqs2 is used to search for big input queries in large databases. 
@@ -138,7 +158,9 @@ process pMMseqs2_taxonomy {
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", filename) }, \
          pattern: "{*.out,*.html,*.tsv}"
  
-      when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy")
+      when runMMSeqsTaxonomy(params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy"), \
+	   binType.equals("binned"), \
+           params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy") && params?.steps.annotation.mmseqs2_taxonomy.runOnMAGs)
 
    input:
       val(binType)

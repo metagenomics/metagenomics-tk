@@ -180,6 +180,7 @@ steps:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
           md5sum: d7e627221a1d4584d1c1795cda774cdb
     mmseqs2_taxonomy:
+      runOnMAGs: true
       ncbi_nr:
         params: '-s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --orf-filter-s 1 -e 1e-15 --db-load-mode 3'
         database:
