@@ -94,9 +94,9 @@ process pGtdbtk {
     output:
     tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
     tuple path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), val("${sample}"), optional: true, emit: archea
-    tuple path("${sample}_gtdbtk_unclassified_*.tsv"), val("${sample}"), optional: true, emit: unclassified
+    tuple path("chunk_*_${sample}_gtdbtk_unclassified.tsv"), val("${sample}"), optional: true, emit: unclassified
     tuple path("*.tree"), val("${sample}"), optional: true, emit: tree
-    tuple path("${sample}_gtdbtk_*.tsv"), val("${sample}"), optional: true, emit: combined
+    tuple path("chunk_*_${sample}_gtdbtk_combined.tsv"), val("${sample}"), optional: true, emit: combined
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 

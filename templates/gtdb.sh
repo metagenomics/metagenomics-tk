@@ -38,7 +38,7 @@ FILE_ID=$(mktemp -u XXXXXXXXXX)
 FILE_BAC=chunk_${FILE_ID}_!{sample}_gtdbtk.bac120.summary.tsv
 FILE_ARC=chunk_${FILE_ID}_!{sample}_gtdbtk.ar122.summary.tsv
 FILE_COMB=chunk_${FILE_ID}_!{sample}_gtdbtk_combined.tsv
-FILE_UNCLASSIFIED=!{sample}_gtdbtk_unclassified_${FILE_ID}.tsv
+FILE_UNCLASSIFIED=chunk_${FILE_ID}_!{sample}_gtdbtk_unclassified.tsv
 
 # Filter out unclassified
 head -n 1 output/gtdbtk.bac120.summary.tsv > output/unclassified.tsv
