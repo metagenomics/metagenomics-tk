@@ -23,7 +23,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 * See “/lib/Utils.groovy” for more information.
 **/
 def constructParametersObject(String tool){ 
-  return params?.steps?.annotation?."$tool".findAll().collect{ Utils.getDockerMount(it.value?.database, params, 'true')}.join(" ")
+  return params?.steps?.annotation?."$tool".findAll({ it.key != "runOnMAGs" }).collect{ Utils.getDockerMount(it.value?.database, params, 'true')}.join(" ")
 }
 
 
@@ -158,7 +158,8 @@ process pMMseqs2_taxonomy {
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", filename) }, \
          pattern: "{*.out,*.html,*.tsv}"
  
-      when runMMSeqsTaxonomy(params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy"), \
+      when:
+      runMMSeqsTaxonomy(params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy"), \
 	   binType.equals("binned"), \
            params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy") && params?.steps.annotation.mmseqs2_taxonomy.runOnMAGs)
 
@@ -624,7 +625,7 @@ workflow _wAnnotation {
              it.value.database?.download?.s5cmd?.params ?: "" ]
       })
 
-      selectedTaxDBs = params?.steps?.annotation?.mmseqs2_taxonomy.findAll().collect({
+      selectedTaxDBs = params?.steps?.annotation?.mmseqs2_taxonomy.findAll({  it.key != "runOnMAGs"  }).collect({
             [it.key, it.value?.params ?: "", \
              it.value?.database?.extractedDBPath ?: "", \
              it.value.database?.download?.source ?: "", \
