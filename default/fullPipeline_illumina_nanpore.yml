@@ -150,7 +150,7 @@ steps:
         minimap2_index: ""
         minimap2: ""
   cooccurrence:
-    additionalParams: " -t 0.1 -z 80 -o 'correlation' "
+    additionalParams: " -t 0.9 -z 40 -o 'correlation' "
   plasmid:
     SCAPP:
       additionalParams:
