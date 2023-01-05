@@ -33,7 +33,7 @@ process pBuildNetwork {
    
     container "${params.cooccurrence_image}"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "matrix", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "network", filename) }
 
     when params.steps.containsKey("cooccurrence")
 

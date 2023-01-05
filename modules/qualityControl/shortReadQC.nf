@@ -31,9 +31,10 @@ process pFastpSplit {
     output:
     tuple val("${sample}"), path("${sample}_interleaved.qc.fq.gz"), emit: readsPair
     tuple val("${sample}"), path("${sample}_unpaired.qc.fq.gz"), emit: readsSingle
-    tuple val("${sample}"), path("fastp_summary_before.tsv"), emit: fastpSummaryBefore
-    tuple val("${sample}"), path("fastp_summary_after.tsv"), emit: fastpSummaryAfter
-    tuple val("${sample}"), path("fastp.json"), emit: fastpSummary
+    tuple val("${sample}"), path("${sample}_fastp_summary_before.tsv"), emit: fastpSummaryBefore
+    tuple val("${sample}"), path("${sample}_fastp_summary_after.tsv"), emit: fastpSummaryAfter
+    tuple val("${sample}"), path("${sample}_unpaired_summary.tsv"), emit: fastpSummaryUnpaired
+    tuple val("${sample}"), path("${sample}_fastp.json"), emit: fastpSummary
     tuple val("${sample}"), path("*_report.html"), emit: fastpSummaryHtml
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
@@ -120,9 +121,10 @@ process pFastpSplitDownload {
     output:
     tuple val("${sample}"), path("${sample}_interleaved.qc.fq.gz"), emit: readsPair
     tuple val("${sample}"), path("${sample}_unpaired.qc.fq.gz"), emit: readsSingle
-    tuple val("${sample}"), path("fastp_summary_before.tsv"), emit: fastpSummaryBefore
-    tuple val("${sample}"), path("fastp_summary_after.tsv"), emit: fastpSummaryAfter
-    tuple val("${sample}"), path("fastp.json"), emit: fastpSummary
+    tuple val("${sample}"), path("${sample}_fastp_summary_before.tsv"), emit: fastpSummaryBefore
+    tuple val("${sample}"), path("${sample}_fastp_summary_after.tsv"), emit: fastpSummaryAfter
+    tuple val("${sample}"), path("${sample}_unpaired_summary.tsv"), emit: fastpSummaryUnpaired
+    tuple val("${sample}"), path("${sample}_fastp.json"), emit: fastpSummary
     tuple val("${sample}"), path("*_report.html"), emit: fastpSummaryHtml
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 

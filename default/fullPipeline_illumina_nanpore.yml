@@ -150,7 +150,7 @@ steps:
         minimap2_index: ""
         minimap2: ""
   cooccurrence:
-    additionalParams: " -t 0.1 -z 80 -o 'correlation' "
+    additionalParams: " -t 0.9 -z 40 -o 'correlation' "
   plasmid:
     SCAPP:
       additionalParams:
@@ -251,13 +251,13 @@ steps:
         download:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
           md5sum: d7e627221a1d4584d1c1795cda774cdb
-    mmseqs2_taxonomy:
-      ncbi_nr:
-        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
-        database:
-          download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
-            md5sum: 184bb8207ee1575cae7756137cde076b
+          #    mmseqs2_taxonomy:
+          #      ncbi_nr:
+          #        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          #        database:
+          #          download:
+          #            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
+          #            md5sum: 184bb8207ee1575cae7756137cde076b
     keggFromMMseqs2:
       database:
         download:

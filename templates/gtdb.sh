@@ -38,12 +38,18 @@ FILE_ID=$(mktemp -u XXXXXXXXXX)
 FILE_BAC=chunk_${FILE_ID}_!{sample}_gtdbtk.bac120.summary.tsv
 FILE_ARC=chunk_${FILE_ID}_!{sample}_gtdbtk.ar122.summary.tsv
 FILE_COMB=chunk_${FILE_ID}_!{sample}_gtdbtk_combined.tsv
-FILE_UNCLASSIFIED=!{sample}_gtdbtk_unclassifed_${FILE_ID}.tsv
+FILE_UNCLASSIFIED=chunk_${FILE_ID}_!{sample}_gtdbtk_unclassified.tsv
 
 # Filter out unclassified
 head -n 1 output/gtdbtk.bac120.summary.tsv > output/unclassified.tsv
 grep "$(printf '\t')Unclassified$(printf '\t')" output/gtdbtk.bac120.summary.tsv >> output/unclassified.tsv || true
-grep -v "$(printf '\t')Unclassified$(printf '\t')" output/gtdbtk.bac120.summary.tsv > output/classifiedBacteria.tsv || true
+grep "$(printf '\t')Unclassified Bacteria$(printf '\t')" output/gtdbtk.bac120.summary.tsv >> output/unclassified.tsv || true
+grep "$(printf '\t')Unclassified Archaea$(printf '\t')" output/gtdbtk.ar122.summary.tsv >> output/unclassified.tsv || true
+
+grep -v "$(printf '\t')Unclassified$(printf '\t')" output/gtdbtk.bac120.summary.tsv \
+       | grep -v "$(printf '\t')Unclassified Bacteria$(printf '\t')" > output/classifiedBacteria.tsv || true
+
+grep -v "$(printf '\t')Unclassified Archaea$(printf '\t')" output/gtdbtk.ar122.summary.tsv > output/classifiedArchaea.tsv || true
 
 sed "s/^/SAMPLE\t/g" <(head -n 1 output/unclassified.tsv) > ${FILE_UNCLASSIFIED}
 sed "s/^/!{sample}\t/g"  <(tail -n +2 output/unclassified.tsv) >> ${FILE_UNCLASSIFIED}
@@ -51,8 +57,8 @@ sed "s/^/!{sample}\t/g"  <(tail -n +2 output/unclassified.tsv) >> ${FILE_UNCLASS
 sed "s/^/SAMPLE\t/g" <(head -n 1 output/classifiedBacteria.tsv) > $FILE_BAC
 sed "s/^/!{sample}\t/g"  <(tail -n +2 output/classifiedBacteria.tsv) >> $FILE_BAC
 
-sed "s/^/SAMPLE\t/g" <(head -n 1 output/gtdbtk.ar122.summary.tsv) > $FILE_ARC
-sed "s/^/!{sample}\t/g" <(tail -n +2 output/gtdbtk.ar122.summary.tsv) >> $FILE_ARC
+sed "s/^/SAMPLE\t/g" <(head -n 1 output/classifiedArchaea.tsv) > $FILE_ARC
+sed "s/^/!{sample}\t/g" <(tail -n +2 output/classifiedArchaea.tsv) >> $FILE_ARC
 
 GTDB_SUMMARY_TMP=gtdbtk_tmp.tsv
 cat <(head -n 1 ${FILE_BAC}) <(head -n 1 ${FILE_ARC}) | sort | uniq | sed 's/^/DOMAIN\t/g' > $GTDB_SUMMARY_TMP
