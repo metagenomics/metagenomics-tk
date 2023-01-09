@@ -4,6 +4,13 @@ nextflow.enable.dsl=2
 include { pMinimap2Index as pMinimap2IndexLong; \
           pMapMinimap2 as pMapMinimap2Long; } from './processes'
 
+include { pCovermGenomeCoverage; } from '../binning/processes'
+
+def getModulePath(module){
+    return module.name + '/' + module.version.major + "." +
+          module.version.minor + "." +
+          module.version.patch
+}
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.readMapping.name + '/' + 
@@ -12,8 +19,6 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
          params.modules.readMapping.version.patch +
          '/' + TOOL + '/' + filename
 }
-
-
 
 process pBwaIndex {
     container "${params.bwa_image}"
@@ -42,28 +47,6 @@ process pMapBwa {
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
     shell:
     template('bwa.sh')
-}
-
-
-process pCovermCount {
-    when params.steps.containsKey("readMapping")
-    label 'small'
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
-    input:
-      tuple val(sample), file(mapping), file(index), file(list_of_representatives), val(medianQuality)
-    output:
-      tuple val("${sample}"), path("${sample}_out/mean.tsv"), emit: mean
-      tuple val("${sample}"), path("${sample}_out/trimmed_mean.tsv"), emit: trimmedMean
-      tuple val("${sample}"), path("${sample}_out/count.tsv"), emit: count
-      tuple val("${sample}"), path("${sample}_out/rpkm.tsv"), emit: rpkm
-      tuple val("${sample}"), path("${sample}_out/tpm.tsv"), emit: tpm
-      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-    shell:
-    DO_NOT_ESTIMATE_QUALITY = -1 
-    MEDIAN_QUALITY=Double.parseDouble(medianQuality)
-    percentIdentity = MEDIAN_QUALITY != DO_NOT_ESTIMATE_QUALITY ? \
-	" --min-read-percent-identity "+Utils.getMappingIdentityParam(MEDIAN_QUALITY) : " "
-    template('coverm.sh')
 }
 
 
@@ -197,7 +180,12 @@ workflow _wReadMappingBwa {
       | toList() | map { it -> [it]}) \
       | join(ontMedianQuality, by: SAMPLE_NAME_IDX) | set { covermMinimapInput }
 
-     covermBWAInput | mix(covermMinimapInput) | pCovermCount
+     ALIGNMENT_INDEX = 2
+     pCovermGenomeCoverage(Channel.value(params.steps?.readMapping?.find{ it.key == "coverm" }?.value), \
+	Channel.value([getModulePath(params.modules.readMapping), \
+	"genomeCoverage", params.steps?.readMapping?.coverm?.additionalParams]), \
+	covermBWAInput | mix(covermMinimapInput))
+
    emit:
-     trimmedMean = pCovermCount.out.trimmedMean
+     trimmedMean = pCovermGenomeCoverage.out.trimmedMean
 }
