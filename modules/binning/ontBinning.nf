@@ -196,8 +196,8 @@ workflow _wBinning {
      pMetabat.out.bins | mix(pMetaCoAG.out.bins) | set { bins }
 
      ALIGNMENT_INDEX = 2
-     pCovermGenomeCoverage(Channel.value(params?.steps?.binning.find{ it.key == "genomeCoverage"}?.value), \
-	Channel.value([getModulePath(params.modules.binning), \
+     pCovermGenomeCoverage(Channel.value(params?.steps?.binningONT.find{ it.key == "genomeCoverage"}?.value), \
+	Channel.value([getModulePath(params.modules.binningONT), \
 	"genomeCoverage", params?.steps?.binningONT?.genomeCoverage?.additionalParams]), \
 	mappedReads | join(bins, by: SAMPLE_IDX) \
 	| map { sample -> sample.addAll(ALIGNMENT_INDEX, emptyFile); sample } | join(medianQuality, by: SAMPLE_IDX) )
