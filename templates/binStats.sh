@@ -7,8 +7,8 @@ jgi_summarize_bam_contig_depths !{percentIdentity} !{bam} --outputDepth $DEPTH
 # Add sample and bin information to every contig in depth file
 BIN_CONTIG_MAPPING=!{binContigMapping}
 BIN_DEPTH=!{sample}_contigs_depth.tsv
-head -n 1 *.depth.tsv  | sed "s/$/\tBIN_ID\tSAMPLE/g" > ${BIN_DEPTH}
-csvtk join -t -H -f "1;2" <(tail -n +2 *.depth.tsv) ${BIN_CONTIG_MAPPING} \
+head -n 1 *.depth.tsv  | sed "s/^.*$/CONTIG\tLENGTH\tTOTAL_AVG_DEPTH\tBAM\tVARIANCE\tBIN_ID\tSAMPLE/g" > ${BIN_DEPTH}
+csvtk join -t -H -f "1;2" <(tail -n +2 *.depth.tsv) <(tail -n +2 ${BIN_CONTIG_MAPPING}) \
 	        | sed "s/$/\t!{sample}/g" >> ${BIN_DEPTH}
 
 # Compute bin statistics
