@@ -19,6 +19,7 @@ metacoag --assembler flye --graph !{graph}  --nthreads !{task.cpus} --contigs co
 # Rename contig and file names according to toolkit specification
 BIN_CONTIG_MAPPING=!{sample}_bin_contig_mapping.tsv
 BINNED_IDS=binned.tsv
+echo -e "BIN_ID\tCONTIG" > ${BIN_CONTIG_MAPPING}
 for bin in  $(find bins -name "bin*.fasta") ; do
 
 	# Get id of the bin (e.g get 2 of the bin SAMPLEID_bin.2.fa)
