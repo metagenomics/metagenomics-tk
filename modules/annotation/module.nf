@@ -287,47 +287,6 @@ process pResistanceGeneIdentifier {
 }
 
 
-process pGeneCoverage {
-
-   tag "$sample"
-
-   label 'small'
-
-   container "${params.ubuntu_image}"
-
-   publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "geneCoverage", filename) }
-
-   when params.steps.containsKey("annotation")
-
-   input:
-      tuple val(sample), file(defaultAbundances), file(metabatAbundances), val(binID), path(genes)
-
-   output:
-      tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}_default_abundances.tsv"), emit: metabatAbundances
-      tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}_metabat_abundances.tsv"), emit: defaultAbundances
-      tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
-        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
-
-   shell:
-   output = getOutput("${sample}", params.runid, "geneCoverage", "")
-   '''
-   # Split in ContigIDs and GeneIDs
-   seqkit fx2tab -n -i !{genes} \
-	| tee gene_ids.tsv \
-	| rev | cut -d '_' -f 2- \
-	| rev > contig_ids.tsv
-
-   # Create Contig to gene mapping
-   echo -e "CONTIG\tGENE" > contig_gene_id.tsv
-   paste -d$'\t' contig_ids.tsv gene_ids.tsv >> contig_gene_id.tsv
-
-   # Add abundance values to genes
-   join --header -t$'\t' -1 2 -2 1 <(sort -t$'\t' -k 2,2 !{defaultAbundances}) <(sort -k 1,1 -t$'\t' contig_gene_id.tsv) > !{sample}_!{binID}_default_abundances.tsv
-   join --header -t$'\t' -1 2 -2 1 <(sort -t$'\t' -k 2,2 !{metabatAbundances}) <(sort -k 1,1 -t$'\t' contig_gene_id.tsv) > !{sample}_!{binID}_metabat_abundances.tsv
-   '''
-}
-
-
 /**
 *
 * pKEGGFromBlast is build to handle results in the outfmt 6 file standard.
@@ -481,7 +440,7 @@ process pProkka {
 
     input:
       val(prodigalMode)
-      tuple val(sample), val(binID), file(fasta), val(domain)
+      tuple val(sample), val(binID), file(fasta), val(domain), file(defaultCoverage), file(metabatCoverage)
 
     output:
       tuple val("${sample}"), val("${binID}"), file("*.gff.gz"), emit: gff 
@@ -493,7 +452,7 @@ process pProkka {
       tuple val("${sample}"), val("${binID}"), file("*.tbl.gz"), emit: tbl 
       tuple val("${sample}"), val("${binID}"), file("*.sqn.gz"), emit: sqn 
       tuple val("${sample}"), val("${binID}"), file("*.txt"), emit: txt 
-      tuple val("${sample}"), val("${binID}"), file("*.tsv"), emit: tsv 
+      tuple val("${sample}"), val("${binID}"), file("${sample}_*_prokka.tsv"), emit: tsv 
       tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -501,27 +460,7 @@ process pProkka {
       output = getOutput("${sample}", params.runid, "prokka", "")
       prodigalModeStr = getProdigalModeString(prodigalMode)
       prokkaDomain = domain ? " --kingdom " + domain : ""
-      '''
-      # Prepare Input Variables
-      BIN=!{fasta}
-      BIN_PREFIX=$(echo "${BIN%.*}")
-      BIN_ID="$(basename !{fasta})"
-
-      # Run Prokka
-      if [[ !{fasta} == *.gz ]]; then
-        zcat -f !{fasta} > input.fasta
-        prokka !{params.steps.annotation.prokka.additionalParams} !{prodigalModeStr} --partialgenes --cpus !{task.cpus} --outdir out !{prokkaDomain} input.fasta
-        rm input.fasta
-      else 
-        prokka !{params.steps.annotation.prokka.additionalParams} !{prodigalModeStr} --partialgenes --cpus !{task.cpus} --outdir out !{prokkaDomain} !{fasta}
-      fi
-
-      # Prepare output 
-      for f in out/* ; do suffix=$(echo "${f##*.}"); mv $f ${BIN_PREFIX}.${suffix}; done
-      sed -i  -e "2,$ s/^/!{sample}\t${BIN_ID}\t/"  -e "1,1 s/^/SAMPLE\tBIN_ID\t/g" *.tsv
-      mv *.tsv !{sample}_prokka_${BIN_ID}.tsv
-      pigz --best --processes !{task.cpus} *gff *.faa *.fna *.ffn *.fsa *.gbk *.sqn *tbl
-      '''
+      template "prokka.sh"
 }
 
 
@@ -589,9 +528,11 @@ workflow _wAnnotation {
       gtdb
       contigCoverage
    main:
+      SAMPLE_IDX=0
+
       // Format input for prokka and run prokka:
       _wCreateProkkaInput(fasta, gtdb)
-      pProkka(prodigalMode, _wCreateProkkaInput.out.prokkaInput)
+      pProkka(prodigalMode, _wCreateProkkaInput.out.prokkaInput | combine(contigCoverage, by: SAMPLE_IDX))
       
       // Collect all databases
       selectedDBs = params?.steps?.annotation?.mmseqs2.findAll().collect({ 
@@ -610,7 +551,6 @@ workflow _wAnnotation {
              it.value.database?.download?.s5cmd?.params ?: "" ]
       })
 
-      SAMPLE_IDX=0
       PATH_IDX=2
       // Run all amino acid outputs against all databases
       // Collect by sample name to bundle searches and avoid calls with small input files
@@ -626,9 +566,6 @@ workflow _wAnnotation {
       // Run Resistance Gene Identifier with amino acid outputs
       pProkka.out.faa | pResistanceGeneIdentifier
       pKEGGFromBlast(mmseqs2Results)
-
-      // Compute gene coverage based on contig coverage
-      contigCoverage | combine(pProkka.out.ffn, by: SAMPLE_IDX) | pGeneCoverage
 
       pProkka.out.logs | mix(pMMseqs2.out.logs) \
         | mix(pMMseqs2_taxonomy.out.logs) \
