@@ -65,7 +65,10 @@ steps:
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
     contigsCoverage:
-      additionalParams: ""
+      additionalParams: " --min-covered-fraction 0 "
+    genomeCoverage:
+      additionalParams: " --min-covered-fraction 0 "
+
     metabat:
       # Set --seed positive numbers to reproduce the result exactly. Otherwise, random seed will be set each time.
       additionalParams: " --seed 234234  "
@@ -156,7 +159,7 @@ steps:
       additionalParams:
         bwa: "  "
         SCAPP: "  "
-        coverm: "  "
+        coverm: " --min-covered-fraction 0 "
         minimap: " "
         samtoolsViewBwa: " -F 3584 " 
         samtoolsViewMinimap: " " 
@@ -246,7 +249,10 @@ steps:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
             md5sum: 184bb8207ee1575cae7756137cde076b
     rgi:
-      additionalParams: ""
+      # --include_loose includes matches of more distant homologs of AMR genes which may also report spurious partial matches
+      # --include_nudge Partial ORFs may do not pass curated bitscore cut-offs or novel samples may contain divergent alleles, so nudging 
+      #                 95% identity Loose matches to Strict matches may aid resistome annotation 
+      additionalParams: " --include_loose --include_nudge "
       database:
         download:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
