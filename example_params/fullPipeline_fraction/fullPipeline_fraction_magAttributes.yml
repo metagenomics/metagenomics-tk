@@ -32,6 +32,8 @@ steps:
         samtoolsView: " -F 3584 " 
     contigsCoverage:
       additionalParams: ""
+    genomeCoverage:
+      additionalParams: ""
     metabat:
       additionalParams: "   "
   magAttributes:

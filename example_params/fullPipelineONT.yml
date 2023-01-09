@@ -30,6 +30,8 @@ steps:
         samtoolsView: " " 
     contigsCoverage:
       additionalParams: ""
+    genomeCoverage:
+      additionalParams: " --min-covered-fraction 0 "
     metabat:
       additionalParams: " --seed 234234  "
   magAttributes:

@@ -52,6 +52,8 @@ steps:
         samtoolsView: " -F 3584 " 
     contigsCoverage:
       additionalParams: ""
+    genomeCoverage:
+      additionalParams: ""
     metabat:
       additionalParams: " --seed 234234  "
   binningONT:
