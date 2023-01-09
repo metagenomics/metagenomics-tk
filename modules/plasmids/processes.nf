@@ -215,7 +215,7 @@ process pPlaton {
     pigz -p !{task.cpus} -fdc !{assembly} > assembly.fasta
 
     # In some cases prodigal fails because of a too short query sequence. In such cases the process should end with exit code 0.
-    trap 'if [ "$?" == 1 ] && ( grep -q "ORFs failed" assembly.log || grep -q "Error detecting input file format. First line seems to be blank." assembly.log ); then echo "Protein Prediction Failed"; exit 0; fi' EXIT
+    trap 'if [ "$?" == 1 ] && ( grep -q "ORFs failed" assembly.log || grep -q "ORFs=0$" assembly.log || grep -q "Error detecting input file format. First line seems to be blank." assembly.log ); then echo "Protein Prediction Failed"; exit 0; fi' EXIT
     platon assembly.fasta !{ADDITIONAL_PARAMS} --db ${PLATON_DB} --mode sensitivity -t !{task.cpus}
 
     if [ -n "$(find . -name '*.tsv')" ]; then
