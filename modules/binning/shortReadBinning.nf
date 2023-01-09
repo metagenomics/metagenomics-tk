@@ -1,7 +1,7 @@
 nextflow.enable.dsl=2
 
 include { pGetBinStatistics as pGetBinStatistics; \
-	pCovermContigsCoverage; pBowtie2; pMetabat; pBwa } from './processes'
+	pCovermContigsCoverage; pCovermGenomeCoverage; pBowtie2; pMetabat; pBwa } from './processes'
 
 def getModulePath(module){
     return module.name + '/' + module.version.major + "." +
@@ -91,8 +91,6 @@ process pMaxBin {
     run_MaxBin.pl -preserve_intermediate -contig !{contigs} -reads !{reads} -thread 28 -out !{TYPE}_!{sample}/out
     '''
 }
-
-
 
 
 /*
@@ -194,7 +192,8 @@ workflow _wBinning {
 	"contigCoverage", params?.steps?.binning?.contigsCoverage?.additionalParams]), \
 	mappedReads | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)))
 
-     contigs | join(mappedReads, by: SAMPLE_IDX) | set { binningInput }
+     
+      contigs | join(mappedReads, by: SAMPLE_IDX) | set { binningInput }
 
      pMetabinner(binningInput)
 
@@ -204,6 +203,16 @@ workflow _wBinning {
       binningInput | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)))
 
      pMetabinner.out.bins | mix(pMetabat.out.bins) | set { bins }
+
+     emptyFile = file(params.tempdir + "/empty")
+     emptyFile.text = ""
+
+     ALIGNMENT_INDEX = 2
+     pCovermGenomeCoverage(Channel.value(params?.steps?.binning.find{ it.key == "genomeCoverage"}?.value), \
+	Channel.value([getModulePath(params.modules.binning), \
+	"genomeCoverage", params?.steps?.binning?.genomeCoverage?.additionalParams]), \
+	mappedReads | join(bins, by: SAMPLE_IDX) \
+	| map { sample -> sample.addAll(ALIGNMENT_INDEX, emptyFile); sample } | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)))
 
      pMetabinner.out.notBinned | mix(pMetabat.out.notBinned) | set { notBinned }
 
