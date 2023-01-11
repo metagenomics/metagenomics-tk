@@ -337,6 +337,9 @@ workflow _wAggregate {
 *
 */
 workflow _wConfigurePipeline {
+
+    file(params.tempdir).mkdirs()
+
     // For plasmid detection we need the assembly graph of the assembler
     if(params.steps.containsKey("plasmid")){
        def fastg = [ fastg: true]
