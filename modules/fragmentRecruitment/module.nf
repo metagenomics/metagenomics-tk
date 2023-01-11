@@ -21,4 +21,6 @@ workflow wFragmentRecruitmentList {
    emit:
      binsStats = wMashScreenList.out.binsStats
      genomes = wMashScreenList.out.genomes
+     foundGenomesSeperated = wMashScreenList.out.foundGenomesSeperated
+     contigCoverage = wMashScreenList.out.contigCoverage
 }

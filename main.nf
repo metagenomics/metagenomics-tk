@@ -15,7 +15,9 @@ include { wAnalyseMetabolitesList; wAnalyseMetabolitesFile } from './modules/met
 include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/mapping.nf'
 include { wFragmentRecruitmentFile; wFragmentRecruitmentList;} from './modules/fragmentRecruitment/module'
 include { wAnnotateFile; wAnnotateList as wAnnotateBinsList; \
-	  wAnnotateList as wAnnotateUnbinnedList; wAnnotateList as wAnnotatePlasmidList } from './modules/annotation/module'
+	  wAnnotateList as wAnnotateUnbinnedList; \
+	  wAnnotateList as wAnnotatePlasmidList; \
+	  wAnnotateList as wAnnotateRecruitedGenomesList; } from './modules/annotation/module'
 include { wCooccurrenceList; wCooccurrenceFile } from './modules/cooccurrence/module'
 include { wPlasmidsList; wPlasmidsPath; } from './modules/plasmids/module'
 include { wInputFile } from './modules/input/module'
@@ -458,8 +460,8 @@ workflow wFullPipeline {
     wSaveSettingsList(inputSamples | map { it -> it.SAMPLE })
 
     MAX_KMER = 0
-    wPlasmidsList(bins | mix(notBinnedContigs), fastg | mix(gfa | combine(Channel.value(MAX_KMER))) | join(mapping)\
-	, illumina.readsPairSingle, ont.reads, ont.medianQuality)
+    wPlasmidsList(bins | mix(notBinnedContigs), fastg | mix(gfa | combine(Channel.value(MAX_KMER))) | join(mapping) \
+	,illumina.readsPairSingle, ont.reads, ont.medianQuality)
 
     wMagAttributesList(ont.bins | mix(illumina.bins, wFragmentRecruitmentList.out.genomes))
 
@@ -469,6 +471,9 @@ workflow wFullPipeline {
     wAnnotatePlasmidList(Channel.value("plasmid"), Channel.value("meta"), wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage)
 
     wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, contigCoverage)
+
+//    wAnnotateRecruitedGenomesList(Channel.value("binned"), Channel.value("single"), wFragmentRecruitmentList.out.foundGenomesSeperated, \
+//  	null, wFragmentRecruitmentList.out.contigCoverage)
 
     wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs, null, contigCoverage)
 
