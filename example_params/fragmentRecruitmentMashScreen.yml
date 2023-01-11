@@ -24,6 +24,10 @@ steps:
       mashDistCutoff: 0.70
       coveredBasesCutoff: 0.2
       mashHashCutoff: 2
+    genomeCoverage:
+      additionalParams: ""
+    contigsCoverage:
+      additionalParams: ""
 resources:
   large:
     cpus: 28

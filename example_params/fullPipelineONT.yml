@@ -66,6 +66,10 @@ steps:
       mashDistCutoff: 0.95
       coveredBasesCutoff: 0.2
       mashHashCutoff: 800
+    genomeCoverage:
+      additionalParams: ""
+    contigsCoverage:
+      additionalParams: ""
   dereplication:
     pasolli:
       minimumCompleteness: 0

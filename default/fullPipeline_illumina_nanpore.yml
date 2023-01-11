@@ -123,6 +123,12 @@ steps:
       coveredBasesCutoff: 0.90
        # Minimum number of k-mer hashes to match
       mashHashCutoff: 700
+    # For final reporting of the covered fraction, the --min-covered-fraction parameter is set to the same value as 
+    # in the binning and other sections
+    genomeCoverage:
+      additionalParams: " --min-covered-fraction 0 "
+    contigsCoverage:
+      additionalParams: " --min-covered-fraction 0 "
   dereplication:
     pasolli:
       # stricter MIMAG medium quality
