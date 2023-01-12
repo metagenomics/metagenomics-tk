@@ -15,7 +15,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 */
 process pPorechop {
 
-    label 'medium'
+    label 'small'
 
     tag "$sample"
 
@@ -47,7 +47,7 @@ process pPorechop {
 */
 process pPorechopDownload {
 
-    label 'medium'
+    label 'small'
 
     tag "Sample: $sample"
 
@@ -90,7 +90,7 @@ process pPorechopDownload {
 
 process pNanoPlot {
 
-    label 'medium'
+    label 'small'
 
     tag "Sample: $sample"
 

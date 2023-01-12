@@ -13,7 +13,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 
 process pViralVerifyPlasmid {
 
-    label 'medium'
+    label 'small'
 
     tag "Sample: $sample, BinID: $binID"
 

@@ -210,7 +210,7 @@ process pResistanceGeneIdentifier {
  
       tag "Sample: $sample, BinID: $binID"
 
-      label 'large'
+      label 'medium'
 
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "rgi", filename) }, \
          pattern: "{**.rgi.tsv,**.png,**.eps,**.csv}"

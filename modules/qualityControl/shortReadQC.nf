@@ -45,7 +45,7 @@ process pFastpSplit {
 
 process pNonpareil {
 
-    label 'medium'
+    label 'small'
 
     tag "Sample: $sample"
 
