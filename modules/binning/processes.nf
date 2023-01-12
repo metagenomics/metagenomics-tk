@@ -234,7 +234,7 @@ process pMetabat {
 
     tag "$sample"
 
-    label 'large'
+    label 'small'
 
     publishDir params.output, mode: "${params.publishDirMode}", \
 	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
