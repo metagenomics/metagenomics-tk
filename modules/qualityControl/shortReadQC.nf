@@ -76,6 +76,8 @@ process pJellyFish {
 
     label 'medium'
 
+    tag "Sample: $sample"
+
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "jellyfish", filename) }
 
     container "${params.jellyfish_image}"
