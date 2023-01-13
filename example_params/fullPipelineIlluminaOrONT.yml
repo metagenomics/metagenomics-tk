@@ -64,6 +64,9 @@ steps:
         samtoolsView: " -F 3584 " 
     contigsCoverage:
       additionalParams: ""
+    genomeCoverage:
+      additionalParams: ""
+
     metabat:
       additionalParams: " --seed 234234  "
   magAttributes:
@@ -112,6 +115,10 @@ steps:
       mashDistCutoff: 0.05
       coveredBasesCutoff: 0.01
       mashHashCutoff: 2
+    genomeCoverage:
+      additionalParams: ""
+    contigsCoverage:
+      additionalParams: ""
   readMapping:
     bwa:
       additionalParams:

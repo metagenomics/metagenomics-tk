@@ -205,7 +205,7 @@ workflow _wBinning {
      pMetabinner.out.bins | mix(pMetabat.out.bins) | set { bins }
 
      emptyFile = file(params.tempdir + "/empty")
-     emptyFile.text = ""
+//     emptyFile.text = ""
 
      ALIGNMENT_INDEX = 2
      pCovermGenomeCoverage(Channel.value(params?.steps?.binning.find{ it.key == "genomeCoverage"}?.value), \
