@@ -170,8 +170,9 @@ workflow wShortReadAssemblyList {
 
 
 /*
- * Takes a tab separated file of files containing reads as input and produces assembly results.
- * Input file with columns seperated by tabs:
+ * Takes two tab separated file of files containing paired and optional single reads 
+ * as input and produces assembly results.
+ * Input files must have two columns seperated by tabs:
  * SAMPLE and READS
  *
  * Output is of the format [SAMPLE, CONTIGS]
@@ -179,8 +180,26 @@ workflow wShortReadAssemblyList {
  */
 workflow wShortReadAssemblyFile {
     main:
-       Channel.from(file(params.steps.assembly.input)) | splitCsv(sep: '\t', header: true) \
-             | map { it -> [ it.SAMPLE, it.READS, file("NOT_SET")]} | set { reads  }
+       SAMPLE_IDX = 0       
+       SAMPLE_PAIRED_IDX = 1
+       UNPAIRED_IDX = 2
+
+       readsPaired = Channel.empty()
+       if(params.steps.assembly.input.containsKey("paired")) {
+       	 Channel.from(file(params.steps.assembly.input.paired)) | splitCsv(sep: '\t', header: true) \
+             | map { it -> [ it.SAMPLE, it.READS]} | set { readsPaired  }
+       }
+
+       readsSingle = Channel.empty()
+       if(params.steps.assembly.input.containsKey("single")) {
+         Channel.from(file(params.steps.assembly.input.single)) | splitCsv(sep: '\t', header: true) \
+             | map { it -> [ it.SAMPLE, it.READS]} | set { readsSingle  }
+       }
+
+       readsPaired | join(readsSingle, by: SAMPLE_IDX, remainder: true) \
+	| map { sample -> sample[UNPAIRED_IDX] == null ? \
+		[sample[SAMPLE_IDX], sample[SAMPLE_PAIRED_IDX], file("NOT_SET")] : sample } \
+	| view | set { reads }
 
        _wAssembly(reads, Channel.empty(), Channel.empty())
     emit:
