@@ -11,6 +11,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
           '/' + TOOL + '/' + filename
 }
 
+def timestamp = new java.util.Date().format( 'YYYYMMdd-HHmmss-SSS')
 
 /*
 * This process uses kmer frequencies and the nonpareil diversity index to predict peak memory consumption on an assembler.
@@ -199,7 +200,7 @@ workflow wShortReadAssemblyFile {
        readsPaired | join(readsSingle, by: SAMPLE_IDX, remainder: true) \
 	| map { sample -> sample[UNPAIRED_IDX] == null ? \
 		[sample[SAMPLE_IDX], sample[SAMPLE_PAIRED_IDX], file("NOT_SET")] : sample } \
-	| view | set { reads }
+	| set { reads }
 
        _wAssembly(reads, Channel.empty(), Channel.empty())
     emit:
@@ -306,9 +307,10 @@ workflow _wCalculateMegahitResources {
           | join(kmerFrequencies) | pPredictFlavor
 
          PREDICTED_RAM_IDX = 1
+
          pPredictFlavor.out.memory \
           | collectFile(newLine: true, seed: "SAMPLE\tPREDICTED_RAM", storeDir: params.logDir){ item ->
-        	[ "predictedMegahitRAM.tsv", item[SAMPLE_IDX] + '\t' + item[PREDICTED_RAM_IDX]  ]
+        	[ "predictedMegahitRAM." + timestamp + ".tsv", item[SAMPLE_IDX] + '\t' + item[PREDICTED_RAM_IDX]  ]
     	  }
 
          resourceType.doNotPredict | map{ it -> it + "NoPrediction" } \
