@@ -2,7 +2,7 @@
 
 ## Input
 
-=== "Command for short read data"
+=== "Command for short read data with optional single end reads"
 
     ```
     -entry wShortReadAssembly -params-file example_params/assembly.yml
