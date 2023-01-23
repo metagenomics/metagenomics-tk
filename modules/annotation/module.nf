@@ -236,7 +236,7 @@ process pResistanceGeneIdentifier {
    S5CMD_PARAMS=params.steps?.annotation?.rgi?.database?.download?.s5cmd?.params ?: ""
    '''
    mkdir -p !{params.polished.databases}
-   ADDITIONAL_RGI_PARAMS=!{params.steps?.annotation?.rgi?.additionalParams}
+   ADDITIONAL_RGI_PARAMS="!{params.steps?.annotation?.rgi?.additionalParams}"
 
    # Check developer documentation
    CARD_JSON=""
