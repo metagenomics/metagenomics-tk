@@ -401,9 +401,10 @@ workflow _wCreateProkkaInput {
              | set { gtdbDomain }
             //set domain for each bin
             DOMAIN_PROKKA_INPUT_IDX = 3
-            fasta  |  map {it -> [it[DATASET_IDX], it[BIN_ID_IDX], file(it[PATH_IDX]) ]} \
+            fasta   |  map {it -> [it[DATASET_IDX], it[BIN_ID_IDX], file(it[PATH_IDX]) ]} \
              | join(gtdbDomain, by:[DATASET_IDX, BIN_ID_IDX], remainder: true) \
-             | map { it -> [ it[DATASET_IDX], it[BIN_ID_IDX], it[PATH_IDX], it[DOMAIN_PROKKA_INPUT_IDX]?:params?.steps?.annotation?.prokka?.defaultKingdom ] } \
+             | filter({ it -> it[PATH_IDX]!=null }) \
+	     | map { it -> [ it[DATASET_IDX], it[BIN_ID_IDX], it[PATH_IDX], it[DOMAIN_PROKKA_INPUT_IDX]?:params?.steps?.annotation?.prokka?.defaultKingdom ] } \
              | set { prokkaInput }
         } else {
             //if no gtdb annotation available, default to the defaultKingdom in params
@@ -532,7 +533,7 @@ workflow _wAnnotation {
 
       // Format input for prokka and run prokka:
       _wCreateProkkaInput(fasta, gtdb)
-      pProkka(prodigalMode, _wCreateProkkaInput.out.prokkaInput | combine(contigCoverage, by: SAMPLE_IDX))
+      pProkka(prodigalMode, _wCreateProkkaInput.out.prokkaInput | combine(contigCoverage, by: SAMPLE_IDX) | view)
       
       // Collect all databases
       selectedDBs = params?.steps?.annotation?.mmseqs2.findAll().collect({ 
