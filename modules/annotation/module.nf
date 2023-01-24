@@ -236,7 +236,7 @@ process pResistanceGeneIdentifier {
    S5CMD_PARAMS=params.steps?.annotation?.rgi?.database?.download?.s5cmd?.params ?: ""
    '''
    mkdir -p !{params.polished.databases}
-   ADDITIONAL_RGI_PARAMS=!{params.steps?.annotation?.rgi?.additionalParams}
+   ADDITIONAL_RGI_PARAMS="!{params.steps?.annotation?.rgi?.additionalParams}"
 
    # Check developer documentation
    CARD_JSON=""
@@ -533,7 +533,8 @@ workflow _wAnnotation {
 
       // Format input for prokka and run prokka:
       _wCreateProkkaInput(fasta, gtdb)
-      pProkka(prodigalMode, _wCreateProkkaInput.out.prokkaInput | combine(contigCoverage, by: SAMPLE_IDX) | view)
+
+      pProkka(prodigalMode, _wCreateProkkaInput.out.prokkaInput | combine(contigCoverage, by: SAMPLE_IDX))
       
       // Collect all databases
       selectedDBs = params?.steps?.annotation?.mmseqs2.findAll().collect({ 

@@ -27,11 +27,17 @@ steps:
        # --length_required  reads shorter than length_required will be discarded, default is 15. (int [=15])
        # PE data, the front/tail trimming settings are given with -f, --trim_front1 and -t, --trim_tail1
        additionalParams: " --detect_adapter_for_pe -q 20 --cut_front --trim_front1 3 --cut_tail --trim_tail1 3 --cut_mean_quality 10 --length_required 50 "
+       timeLimit: "AUTO"
     nonpareil:
       additionalParams: " -v 10 -r 1234 "
     jellyfish:
       additionalParams:
-        count: " -m 21 -s 100M "
+        # --counter-len is the counter length in bits.
+        # -s is the size of the hash
+        # -m k-mer length
+        # -m, --conter-len and -s  determine the RAM peak usage which can be tested by using jellyfish mem.
+        # --disk writes intermediate results to disk
+        count: " -m 21 --counter-len 9 -s 30G --disk  "
         histo: " "
 
   qcONT:

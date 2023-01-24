@@ -8,7 +8,9 @@ scratch: "/vol/scratch"
 publishDirMode: "symlink"
 steps:
   assembly:
-    input: test_data/assembly/samples.tsv 
+    input:
+      paired: test_data/assembly/samples.tsv
+      single: test_data/assembly/samplesUnpaired.tsv
     megahit:
       additionalParams: " --min-contig-len 200 "
       fastg: true
