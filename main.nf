@@ -2,7 +2,7 @@ nextflow.enable.dsl=2
 import java.util.regex.*;
 
 include { wSaveSettingsList } from './modules/config/module'
-include { pPublish as pPublishIllumina; pPublish as pPublishOnt; pUpdateRecruitedGenomeGTDBFile } from './modules/utils/processes'
+include { pPublish as pPublishIllumina; pPublish as pPublishOnt; } from './modules/utils/processes'
 include { wShortReadQualityControlFile; wShortReadQualityControlList} from './modules/qualityControl/shortReadQC'
 include { wOntQualityControlFile; wOntQualityControlList} from './modules/qualityControl/ontQC'
 include { wShortReadAssemblyFile; wShortReadAssemblyList } from './modules/assembly/shortReadAssembler'
@@ -373,29 +373,6 @@ def flattenBins(binning){
   return chunkList;
 }
 
-/*
-*
-* GTDB output file for recruited genomes contains as sample Name "EXTERNAL_GENOMES".
-* This method creates all possible combinations of GTDB output for a recruited genome and all sample names
-* where a genome could be recruited. The correct gtdb output of a recruited genome will be selected in the
-* annotation module. This workflow represents a quickfix as long as recruited genomes are collected in the
-* "AGGREGATION" directory.
-*
-*/
-workflow _wAdjustRecruitedGTDBBins {
-   take:
-     gtdb
-     genomes
-   main:
-     SAMPLE_IDX = 0
-     GTDB_SAMPLE_IDX = 2
-     GTDB_FILE_IDX = 0
-     gtdb | combine(genomes | map { sample -> sample[SAMPLE_IDX]} | unique) \
-	| map { sample -> [sample[GTDB_FILE_IDX], sample[GTDB_SAMPLE_IDX]] } | pUpdateRecruitedGenomeGTDBFile
-   emit:
-     gtdb = pUpdateRecruitedGenomeGTDBFile.out
-}
-
 
 workflow _wProcessIllumina {
     take:
@@ -489,7 +466,7 @@ workflow wFullPipeline {
     wPlasmidsList(bins | mix(notBinnedContigs), fastg | mix(gfa | combine(Channel.value(MAX_KMER))) | join(mapping) \
 	,illumina.readsPairSingle, ont.reads, ont.medianQuality)
 
-    wMagAttributesList(ont.bins | mix(illumina.bins, wFragmentRecruitmentList.out.genomes))
+    wMagAttributesList(ont.bins | mix(illumina.bins, wFragmentRecruitmentList.out.foundGenomesPerSample ))
 
     mapJoin(wMagAttributesList.out.checkm, binsStats | mix(wFragmentRecruitmentList.out.binsStats), "BIN_ID", "BIN_ID") \
 	| set { binsStats  }
@@ -498,13 +475,8 @@ workflow wFullPipeline {
 
     wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, contigCoverage)
 
-    // GTDB output of recruited genomes must be adjusted for annotation module 
-    SAMPLE_IDX_2 = 1
-    _wAdjustRecruitedGTDBBins(wMagAttributesList.out.gtdb | filter({ sample -> sample[SAMPLE_IDX_2].equals("EXTERNAL_GENOMES") }), \
-		wFragmentRecruitmentList.out.foundGenomesSeperated)
-
     wAnnotateRecruitedGenomesList(Channel.value("binned"), Channel.value("single"), wFragmentRecruitmentList.out.foundGenomesSeperated, \
-  	_wAdjustRecruitedGTDBBins.out.gtdb, wFragmentRecruitmentList.out.contigCoverage)
+  	wMagAttributesList.out.gtdb, wFragmentRecruitmentList.out.contigCoverage)
 
     wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs, null, contigCoverage)
 

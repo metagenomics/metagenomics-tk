@@ -49,21 +49,3 @@ process pPublish {
     '''
 }
 
-
-process pUpdateRecruitedGenomeGTDBFile {
-
-    label 'tiny'
-
-    container "${params.ubuntu_image}"
-
-    input:
-    tuple path(gtdb), val(sample)
-
-    output:
-    tuple path("*.tsv"), val(sample)
-
-    shell:
-    '''
-    sed 's/\tEXTERNAL_GENOMES\t/\t!{sample}\t/g' !{gtdb} > fragmentRecruitment_$(basename !{gtdb})  
-    '''
-}
