@@ -2,7 +2,7 @@ nextflow.enable.dsl=2
 import java.util.regex.*;
 
 include { wSaveSettingsList } from './modules/config/module'
-include { pPublish as pPublishIllumina; pPublish as pPublishOnt } from './modules/utils/processes'
+include { pPublish as pPublishIllumina; pPublish as pPublishOnt; } from './modules/utils/processes'
 include { wShortReadQualityControlFile; wShortReadQualityControlList} from './modules/qualityControl/shortReadQC'
 include { wOntQualityControlFile; wOntQualityControlList} from './modules/qualityControl/ontQC'
 include { wShortReadAssemblyFile; wShortReadAssemblyList } from './modules/assembly/shortReadAssembler'
@@ -466,7 +466,7 @@ workflow wFullPipeline {
     wPlasmidsList(bins | mix(notBinnedContigs), fastg | mix(gfa | combine(Channel.value(MAX_KMER))) | join(mapping) \
 	,illumina.readsPairSingle, ont.reads, ont.medianQuality)
 
-    wMagAttributesList(ont.bins | mix(illumina.bins, wFragmentRecruitmentList.out.genomes))
+    wMagAttributesList(ont.bins | mix(illumina.bins, wFragmentRecruitmentList.out.foundGenomesPerSample ))
 
     mapJoin(wMagAttributesList.out.checkm, binsStats | mix(wFragmentRecruitmentList.out.binsStats), "BIN_ID", "BIN_ID") \
 	| set { binsStats  }
@@ -475,8 +475,8 @@ workflow wFullPipeline {
 
     wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, contigCoverage)
 
-//    wAnnotateRecruitedGenomesList(Channel.value("binned"), Channel.value("single"), wFragmentRecruitmentList.out.foundGenomesSeperated, \
-//  	null, wFragmentRecruitmentList.out.contigCoverage)
+    wAnnotateRecruitedGenomesList(Channel.value("binned"), Channel.value("single"), wFragmentRecruitmentList.out.foundGenomesSeperated, \
+  	wMagAttributesList.out.gtdb, wFragmentRecruitmentList.out.contigCoverage)
 
     wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs, null, contigCoverage)
 

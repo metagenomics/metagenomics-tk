@@ -69,7 +69,9 @@ process pMashPaste {
 
     label 'large'
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getAggregatedOutput(params.runid, "${module}", "${outputToolDir}", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", \
+	saveAs: { filename -> getAggregatedOutput(params.runid, "${module}", "${outputToolDir}", filename) }, \
+        pattern: "{**.msh}"
 
     when:
     run
@@ -80,11 +82,14 @@ process pMashPaste {
     path sketches, stageAs: 'sketch*.msh'
 
     output:
-    path('final_sketch.msh'), emit: sketch
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+    path('final_sketch_*.msh'), emit: sketch
+    tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getAggregatedOutput(params.runid, module,"${outputToolDir}" , "")
     '''
-    mash paste final_sketch !{sketches}
+    FILE_ID=$(mktemp XXXXXXXX)
+    mash paste final_sketch_${FILE_ID} !{sketches}
     '''
 }
