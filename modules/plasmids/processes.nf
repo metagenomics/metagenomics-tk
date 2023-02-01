@@ -230,7 +230,7 @@ process pFilter {
 
     label 'small'
 
-    tag "$sample $binID"
+    tag "Sample: $sample, BinId: $binID"
 
     container "${params.ubuntu_image}"
 
@@ -244,6 +244,7 @@ process pFilter {
 
     output:
     tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}_plasmids_filtered.fasta.gz"), emit: plasmids, optional: true
+    tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}_plasmids_filtered.tsv"), emit: plasmidsTsv, optional: true
     tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -256,10 +257,16 @@ process pFilter {
        for file in !{contigHeaderFiles}; do 
     	 csvtk cut -f CONTIG --tabs ${file} | tail -n +2 >> filtered_header.tsv
        done
+
+       PLASMID_OUT_FASTA=!{sample}_!{binID}_plasmids_filtered.fasta.gz 
+       PLASMID_OUT_TSV=!{sample}_!{binID}_plasmids_filtered.tsv
+
        if [ -s filtered_header.tsv ]; then
          sort filtered_header.tsv | uniq > filtered_sorted_header.tsv
          seqkit grep -f filtered_sorted_header.tsv !{contigs} | seqkit seq --min-len !{MIN_LENGTH} \
-         | pigz -c > !{sample}_!{binID}_plasmids_filtered.fasta.gz
+         | pigz -c > ${PLASMID_OUT_FASTA}
+
+         seqkit fx2tab -H --length --only-id --gc --name ${PLASMID_OUT_FASTA} > ${PLASMID_OUT_TSV}
        fi
        '''
        break;
