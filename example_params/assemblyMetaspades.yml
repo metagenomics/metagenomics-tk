@@ -8,7 +8,8 @@ scratch: "/vol/scratch"
 publishDirMode: "symlink"
 steps:
   assembly:
-    input: test_data/assembly/samples.tsv 
+    input: 
+      paired: test_data/assembly/samples.tsv 
     metaspades:
       additionalParams: "  "
       fastg: true

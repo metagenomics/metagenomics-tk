@@ -27,11 +27,17 @@ steps:
        # --length_required  reads shorter than length_required will be discarded, default is 15. (int [=15])
        # PE data, the front/tail trimming settings are given with -f, --trim_front1 and -t, --trim_tail1
        additionalParams: " --detect_adapter_for_pe -q 20 --cut_front --trim_front1 3 --cut_tail --trim_tail1 3 --cut_mean_quality 10 --length_required 50 "
+       timeLimit: "AUTO"
     nonpareil:
       additionalParams: " -v 10 -r 1234 "
     jellyfish:
       additionalParams:
-        count: " -m 21 -s 100M "
+        # --counter-len is the counter length in bits.
+        # -s is the size of the hash
+        # -m k-mer length
+        # -m, --conter-len and -s  determine the RAM peak usage which can be tested by using jellyfish mem.
+        # --disk writes intermediate results to disk
+        count: " -m 21 --counter-len 9 -s 30G --disk  "
         histo: " "
 
   qcONT:
@@ -65,7 +71,10 @@ steps:
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
     contigsCoverage:
-      additionalParams: ""
+      additionalParams: " --min-covered-fraction 0 "
+    genomeCoverage:
+      additionalParams: " --min-covered-fraction 0 "
+
     metabat:
       # Set --seed positive numbers to reproduce the result exactly. Otherwise, random seed will be set each time.
       additionalParams: " --seed 234234  "
@@ -120,6 +129,12 @@ steps:
       coveredBasesCutoff: 0.90
        # Minimum number of k-mer hashes to match
       mashHashCutoff: 700
+    # For final reporting of the covered fraction, the --min-covered-fraction parameter is set to the same value as 
+    # in the binning and other sections
+    genomeCoverage:
+      additionalParams: " --min-covered-fraction 0 "
+    contigsCoverage:
+      additionalParams: " --min-covered-fraction 0 "
   dereplication:
     pasolli:
       # stricter MIMAG medium quality
@@ -150,13 +165,13 @@ steps:
         minimap2_index: ""
         minimap2: ""
   cooccurrence:
-    additionalParams: " -t 0.1 -z 80 -o 'correlation' "
+    additionalParams: " -t 0.9 -z 40 -o 'correlation' "
   plasmid:
     SCAPP:
       additionalParams:
         bwa2: "  "
         SCAPP: "  "
-        coverm: "  "
+        coverm: " --min-covered-fraction 0 "
         minimap: " "
         samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
@@ -246,18 +261,21 @@ steps:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
             md5sum: 184bb8207ee1575cae7756137cde076b
     rgi:
-      additionalParams: ""
+      # --include_loose includes matches of more distant homologs of AMR genes which may also report spurious partial matches
+      # --include_nudge Partial ORFs may do not pass curated bitscore cut-offs or novel samples may contain divergent alleles, so nudging 
+      #                 95% identity Loose matches to Strict matches may aid resistome annotation 
+      additionalParams: " --include_loose --include_nudge "
       database:
         download:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
           md5sum: d7e627221a1d4584d1c1795cda774cdb
-    mmseqs2_taxonomy:
-      ncbi_nr:
-        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
-        database:
-          download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
-            md5sum: 184bb8207ee1575cae7756137cde076b
+          #    mmseqs2_taxonomy:
+          #      ncbi_nr:
+          #        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          #        database:
+          #          download:
+          #            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
+          #            md5sum: 184bb8207ee1575cae7756137cde076b
     keggFromMMseqs2:
       database:
         download:

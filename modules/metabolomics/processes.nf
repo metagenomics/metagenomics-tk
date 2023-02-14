@@ -39,11 +39,11 @@ process pCarveMe {
 
     if(mode == "proteins")
        '''
-       carve !{mag} -o !{id}.model.xml !{params.steps.metabolomics.carveme.additionalParams}
+       carve !{mag} -o !{id}.xml !{params.steps.metabolomics.carveme.additionalParams}
        '''
     else if(mode == "genome")
        '''
-       carve --dna !{mag} -o !{id}.model.xml !{params.steps.metabolomics.carveme.additionalParams}
+       carve --dna !{mag} -o !{id}.xml !{params.steps.metabolomics.carveme.additionalParams}
        '''
      else
         error "Invalid mode: ${mode}"

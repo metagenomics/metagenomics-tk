@@ -31,6 +31,7 @@ bash /usr/local/bin/run_metabinner.sh -a $CONTIGS -o $RESULT -d $COVERAGE -k $(p
 METABINNER_RESULT=${RESULT}/metabinner_res/metabinner_result.tsv 
 OLD_BINS=${TEMP_DIR}/old_bins
 BIN_CONTIG_MAPPING=!{sample}_bin_contig_mapping.tsv
+echo -e "BIN_ID\tCONTIG" > ${BIN_CONTIG_MAPPING}
 mkdir ${OLD_BINS}
 for binId in $(cut -f 2 $METABINNER_RESULT | sort | uniq); do
 
