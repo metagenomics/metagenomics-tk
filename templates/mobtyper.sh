@@ -26,7 +26,7 @@ fi
 seqkit replace -p "\s.+" mobInput.fa \
 	| seqkit seq --min-len !{MIN_LENGTH} > unzipped_plasmids.fasta
 
-MOB_TYPER_OUT=!{sample}_!{binID}_chunk_!{start}_!{stop}_mobtyper.tsv
+MOB_TYPER_OUT=!{binID}_chunk_!{start}_!{stop}_mobtyper.tsv
 
 # Bug fix: Mob Typer does not search for the taxa.sqlite file in the user provided database directory
 sed -i " 178 i ETE3DBTAXAFILE = \"${MOB_TYPER_DB}/taxa.sqlite\"" /usr/local/lib/python3.8/dist-packages/mob_suite-3.1.0-py3.8.egg/mob_suite/constants.py

@@ -1,7 +1,7 @@
 # Prepare Input Variables
 BIN=!{fasta}
 BIN_PREFIX=$(echo "${BIN%.*}")
-BIN_ID="$(basename !{fasta})"
+BIN_ID="!{binID}"
 
 # Run Prokka
 if [[ !{fasta} == *.gz ]]; then
@@ -22,7 +22,7 @@ gffread ${BIN_PREFIX}.gff --table @id,@geneid,@chr,@start,@end,@strand,@numexons
 # join prokka tsv output with the tsv version of the gff file for additional contig information.
 PROKKA_TMP_TSV=!{sample}_${BIN_ID}_prokka_tmp.tsv
 PROKKA_COV_TMP_TSV=!{sample}_${BIN_ID}_prokka_cov_tmp.tsv
-PROKKA_TSV=!{sample}_${BIN_ID}_prokka.tsv
+PROKKA_TSV=${BIN_ID}_prokka.tsv
 csvtk join -d$'\t' -T -f "locus_tag;ID" ${BIN_PREFIX}.tsv gff.tsv > ${PROKKA_TMP_TSV}
 
 # join prokka tsv with contig coverage tsv

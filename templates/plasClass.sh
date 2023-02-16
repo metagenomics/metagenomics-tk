@@ -1,7 +1,7 @@
 contigs="!{binID}_contigs.fa"
 PLASCLASS_OUT=out.tsv
 SEQUENCE_PROBABILITIES=sequence_length.tsv
-FINAL_OUTPUT=!{sample}_!{binID}_plasclass.tsv
+FINAL_OUTPUT=!{binID}_plasclass.tsv
 
 pigz  -f -d -c !{assembly} > ${contigs}
 classify_fasta.py -f ${contigs} -o ${SEQUENCE_PROBABILITIES} -p !{task.cpus} !{params.steps.plasmid.PlasClass.additionalParams}

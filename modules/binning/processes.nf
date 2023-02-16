@@ -110,11 +110,11 @@ process pCovermGenomeCoverage {
     run
 
     output:
-    tuple val("${sample}"), path("${sample}_out/mean.tsv"), emit: mean
-    tuple val("${sample}"), path("${sample}_out/trimmed_mean.tsv"), emit: trimmedMean
-    tuple val("${sample}"), path("${sample}_out/count.tsv"), emit: count
-    tuple val("${sample}"), path("${sample}_out/rpkm.tsv"), emit: rpkm
-    tuple val("${sample}"), path("${sample}_out/tpm.tsv"), emit: tpm
+    tuple val("${sample}"), path("${sample}_mean.tsv"), emit: mean
+    tuple val("${sample}"), path("${sample}_trimmed_mean.tsv"), emit: trimmedMean
+    tuple val("${sample}"), path("${sample}_count.tsv"), emit: count
+    tuple val("${sample}"), path("${sample}_rpkm.tsv"), emit: rpkm
+    tuple val("${sample}"), path("${sample}_tpm.tsv"), emit: tpm
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:

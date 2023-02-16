@@ -2,8 +2,8 @@ for file in !{contigHeaderFiles}; do
 	csvtk cut -f CONTIG --tabs ${file} | tail -n +2 >> filtered_tools_header.tsv
 done
 
-PLASMID_OUT_FASTA=!{sample}_!{binID}_plasmids_filtered.fasta.gz 
-PLASMID_OUT_TSV=!{sample}_!{binID}_plasmids_filtered.tsv
+PLASMID_OUT_FASTA=!{binID}_filtered.fasta.gz 
+PLASMID_OUT_TSV=!{binID}_filtered.tsv
 
 if [ -s filtered_tools_header.tsv ]; then
 	sort filtered_tools_header.tsv <(seqkit fx2tab --name --only-id !{contigs}) \
