@@ -77,9 +77,9 @@ process pPLSDB {
     tuple val(sample), val(binID), path(plasmids)
 
     output:
-    tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}.tsv"), emit: allHits
-    tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}_kmerThreshold_*.tsv"), emit: filteredHitsMetadata
-    tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+    tuple val("${sample}"), val("${binID}"), path("${binID}.tsv"), emit: allHits
+    tuple val("${sample}"), val("${binID}"), path("${binID}_kmerThreshold_*.tsv"), emit: filteredHitsMetadata
+    tuple val("${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
@@ -281,7 +281,7 @@ workflow _runCircularAnalysis {
        DO_NOT_ESTIMATE_IDENTITY = "-1"
 
        pSCAPP.out.plasmids \
-	| map { plasmids -> [plasmids[SAMPLE_IDX], "plasmid_assembly", plasmids[BIN_IDX]] } \
+	| map { plasmids -> [plasmids[SAMPLE_IDX], plasmids[SAMPLE_IDX] + "_plasmid_assembly", plasmids[BIN_IDX]] } \
 	| set { newPlasmids }
 
        newPlasmids | (pPlasClassCircular & _wRunMobTyper & pViralVerifyPlasmidCircular & pPlatonCircular)
