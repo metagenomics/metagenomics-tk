@@ -32,18 +32,10 @@ def constructParametersObject(String tool){
 * This function decides if the MMSeqs taxonomy process should be executed on MAGs.
 *
 */
-def runMMSeqsTaxonomy(isMMSeqsTaxonomySettingSet, isBinned, runOnBinned){
-    if(isMMSeqsTaxonomySettingSet && !isBinned){
-      return true
-    } else if(isMMSeqsTaxonomySettingSet && isBinned) {
-       if(runOnBinned){
-         return true
-       } else {
-         return false
-       }
-    } else {
-      return false
-    }
+def runMMSeqsTaxonomy(isMMSeqsTaxonomySettingSet, isBinned, runOnBinned) {
+    // True if the MMSeqsTaxonomy setting is set and either the sample is not binned 
+    // or should explicitly run on binned samples 
+    return isMMSeqsTaxonomySettingSet && (!isBinned || runOnBinned)
 }
 
 
