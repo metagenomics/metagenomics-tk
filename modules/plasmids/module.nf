@@ -1,7 +1,7 @@
 nextflow.enable.dsl=2
 
 include { pDumpLogs } from '../utils/processes'
-include { pCovermContigsCoverage; pBowtie2; pMinimap2; pBwa;} from '../binning/processes'
+include { pCovermContigsCoverage; pBowtie2; pMinimap2; pBwa; pBwa2} from '../binning/processes'
 
 include { pPlaton as pPlatonCircular; \
           pPlaton as pPlatonLinear; \
@@ -300,13 +300,22 @@ workflow _runCircularAnalysis {
         params.steps?.plasmid?.SCAPP?.additionalParams?.samtoolsViewBwa, \
 	false]), pSCAPP.out.plasmids | join(illuminaReads))
 
+       pBwa2(Channel.value(params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("SCAPP") \
+		&& params.steps?.plasmid?.SCAPP?.additionalParams.containsKey("bwa2")), \
+	Channel.value([Utils.getModulePath(params.modules.plasmids), \
+	"SCAPP/readMapping/bwa2", params.steps?.plasmid?.SCAPP?.additionalParams?.bwa2, \
+        params.steps?.plasmid?.SCAPP?.additionalParams?.samtoolsViewBwa2, \
+	false]), pSCAPP.out.plasmids | join(illuminaReads))
+
+
+
        pMinimap2(Channel.value(params.steps.containsKey("plasmid") && params?.steps?.plasmid.containsKey("SCAPP")), \
 	Channel.value([Utils.getModulePath(params.modules.plasmids), \
         "SCAPP/readMapping/minimap", params.steps?.plasmid?.SCAPP?.additionalParams?.minimap, \
         params.steps?.plasmid?.SCAPP?.additionalParams?.samtoolsViewMinimap, false]), \
        pSCAPP.out.plasmids | join(ontReads))
 
-       pBowtie2.out.mappedReads | mix(pBwa.out.mappedReads) \
+       pBowtie2.out.mappedReads | mix(pBwa.out.mappedReads, pBwa2.out.mappedReads) \
 	| combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) \
 	| mix(pMinimap2.out.mappedReads | join(Channel.value(ontMedianQuality), by: SAMPLE_IDX)) \
 	| set { covermInput  }

@@ -9,7 +9,8 @@ jobs:
       - name: "Run full pipeline mode with all samples"
         run: |
           bash ./scripts/test_fullPipeline.sh \
-          " -c /vol/spool/aws.config --databases=/vol/scratch/databases/ --stageInMode 'copy' --logDir s3://toolkit-dev-benchmark " \
+          " -c /vol/spool/aws.config --databases=/vol/scratch/databases/  --logDir s3://toolkit-dev-benchmark --stageInMode 'copy' \
+           --carveme_image=pbelmann/metabolomics:0.1.0 --steps.metabolomics.beforeProcessScript=/vol/spool/dockerPull.sh \
+           --steps.metabolomics.carveme.additionalParams='' " \
           ./default/fullPipeline_illumina_nanpore.yml "" slurm || exit 1
-
 

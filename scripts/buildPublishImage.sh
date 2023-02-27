@@ -19,3 +19,5 @@ do
   docker push $IMAGE_ID:$VERSION
 done;
 
+# Cleanup docker images
+docker system prune -af

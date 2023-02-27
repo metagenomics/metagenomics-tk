@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  WORK_DIR: "/vol/spool"
+  WORK_DIR: "/vol/spool/${{ github.head_ref }}"
   PROFILE: "slurm"
 jobs:
   full_pipeline:
@@ -25,40 +25,42 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test if SRA S3 Entrypoint works 
         run: |
-          NCBI_API_KEY=${{ secrets.NCBI_API_KEY }}  bash ./scripts/test_SRA.sh " -c  test_data/assets/aws.config " "" ${PROFILE} || exit 1
+          NCBI_API_KEY=${{ secrets.NCBI_API_KEY }}  bash ./scripts/test_SRA.sh " -c  test_data/assets/aws.config " "" "${WORK_DIR}" ${PROFILE} || exit 1
       - name: Test if just the input SRA datasets are reported 
         run: |
-          bash ./scripts/test_SRA_large.sh ${PROFILE} || exit 1
+          bash ./scripts/test_SRA_large.sh "${WORK_DIR}" ${PROFILE} || exit 1
       - name: Test if SRA S3 Input module works 
         run: |
-          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config "  ./example_params/fullPipelineSRAQC.yml "" ${PROFILE} || exit 1
+          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config    " \
+               ./example_params/fullPipelineSRAQC.yml "${WORK_DIR}" ${PROFILE}  || exit 1
 
       - name: Test if SRA S3 Input module works with ONT data
         run: |
-          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config "  ./example_params/fullPipelineSRAQCONT.yml "" ${PROFILE} || exit 1
+          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config    " \
+                      ./example_params/fullPipelineSRAQCONT.yml "${WORK_DIR}" ${PROFILE} || exit 1
       - name: Test Full Pipeline Run
         run: |
           VERSION=$(sort VERSIONS.txt | tail -n 1)
           bash ./scripts/test_fullPipeline.sh \
-          " --databases=/vol/scratch/databases/ " \
-          "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} ${VERSION} || exit 1
+          " --databases=/vol/scratch/databases/      " \
+          "" "${WORK_DIR}" ${PROFILE} ${VERSION} || exit 1
 
       - name: Test Full Pipeline run that ends with magAttributes
         run: |
           bash ./scripts/test_fullPipeline.sh \
-          " --databases=/vol/scratch/databases/ " \
-          example_params/fullPipeline_fraction/fullPipeline_fraction_magAttributes.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
+          " --databases=/vol/scratch/databases/   " \
+          example_params/fullPipeline_fraction/fullPipeline_fraction_magAttributes.yml "${WORK_DIR}" ${PROFILE} || exit 1
 
       - name: Test Full Pipeline run that ends with plasmids
         run: |
-          bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/ " \
-          example_params/fullPipeline_fraction/fullPipeline_fraction_plasmid.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
+          bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/    " \
+          example_params/fullPipeline_fraction/fullPipeline_fraction_plasmid.yml "${WORK_DIR}" ${PROFILE} || exit 1
 
       - name: Test Full Pipeline run that ends with binning
         run: |
-          bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/  " \
+          bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/     " \
           example_params/fullPipeline_fraction/fullPipeline_fraction_binning_metabinner.yml \
-          "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
+          "${WORK_DIR}" ${PROFILE} || exit 1
 
   full_pipeline_ont:
     timeout-minutes: 2500
@@ -70,28 +72,28 @@ jobs:
         run: |
           VERSION=$(sort VERSIONS.txt | tail -n 1)
           bash ./scripts/test_fullPipeline.sh \
-          " --databases=/vol/scratch/databases/ " \
-          ./example_params/fullPipelineONT.yml "${WORK_DIR}/${{ github.head_ref }}" \
+          " --databases=/vol/scratch/databases/      " \
+          ./example_params/fullPipelineONT.yml "${WORK_DIR}" \
           ${PROFILE} ${VERSION}  || exit 1
 
       - name: Test Full Pipeline ONT and Illumina Run
         run: |
           VERSION=$(sort -r VERSIONS.txt | tail -n 1)
           bash ./scripts/test_fullPipeline.sh \
-          " --databases=/vol/scratch/databases/ --output=output " \
+          " --databases=/vol/scratch/databases/ --output=output     " \
           ./example_params/fullPipelineIlluminaOrONT.yml \
-          "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} ${VERSION} || exit 1
+          "${WORK_DIR}" ${PROFILE} ${VERSION} || exit 1
 
       - name: Test aggregate workflow based on previous test
         run: |
           bash ./scripts/test_fullPipelineAggregate.sh \
-          " --output=output " ./example_params/fullPipelineAggregate.yml \
-          "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
+          " --output=output     " ./example_params/fullPipelineAggregate.yml \
+          "${WORK_DIR}" ${PROFILE} || exit 1
 
       - name: Test if SRA S3 Input module works with ONT data
         run: |
-          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config "  \
-          ./example_params/fullPipelineSRAQCONT.yml "" ${PROFILE} || exit 1
+          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config     "  \
+          ./example_params/fullPipelineSRAQCONT.yml "${WORK_DIR}" ${PROFILE} || exit 1
 
 
 
@@ -104,14 +106,14 @@ jobs:
       - name: Test MAG Attributes
         run: |
           bash ./scripts/test_magAttributes.sh \
-          " --databases=/vol/scratch/databases/  " \
-          "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
+          " --databases=/vol/scratch/databases/    " \
+          "" "${WORK_DIR}" ${PROFILE} || exit 1
 
       - name: Test MAG Attributes Fraction
         run: |
           bash ./scripts/test_magAttributes.sh \
-          " --databases=/vol/scratch/databases/ " \
-          example_params/magAttributes_fraction/magAttributes.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
+          " --databases=/vol/scratch/databases/    " \
+          example_params/magAttributes_fraction/magAttributes.yml "${WORK_DIR}" ${PROFILE} || exit 1
       - name: Test Checkm runs against different database parameters
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/checkm/" \
@@ -123,7 +125,7 @@ jobs:
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/checkm \
                                MODULE_DB_TEST_YML=example_params/magAttributes.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.magAttributes.checkm.database=env(database),del(.steps.magAttributes.gtdb,.steps.magAttributes.prokka)'" \
-                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/checkm_yaml_database_tests"
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/checkm_yaml_database_tests"
       
       - name: Test GTDB runs against different database parameters
         run: |
@@ -137,7 +139,7 @@ jobs:
                                MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/gtdb \
                                MODULE_DB_TEST_YML=example_params/magAttributes.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.magAttributes.gtdb.database=env(database),del(.steps.magAttributes.checkm,.steps.magAttributes.prokka)'" \
-                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/gtdb_yaml_database_tests" 
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/gtdb_yaml_database_tests" 
 
   dereplication:
     timeout-minutes: 800
@@ -147,11 +149,13 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test Dereplication
         run: |
-          bash ./scripts/test_dereplication.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
+          bash ./scripts/test_dereplication.sh "    " "" "${WORK_DIR}" ${PROFILE} || exit 1
       - name: Test Species Dereplication
         run: |
-          bash ./scripts/test_dereplication.sh "" example_params/dereplication_fraction/dereplication.yml \
-                                                 "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+          bash ./scripts/test_dereplication.sh "     " example_params/dereplication_fraction/dereplication.yml \
+                                                 "${WORK_DIR}" ${PROFILE}  || exit 1
+
+
   readmapping:
     timeout-minutes: 800
     needs: [codePolicy]
@@ -160,7 +164,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test Read Mapping
         run: |
-          bash ./scripts/test_readMapping.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+          bash ./scripts/test_readMapping.sh "    " "" "${WORK_DIR}" ${PROFILE}  || exit 1
 
   assembly:
     timeout-minutes: 800
@@ -170,15 +174,15 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test Megahit Assembly
         run: |
-          bash ./scripts/test_assembly.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+          bash ./scripts/test_assembly.sh "    " "" "${WORK_DIR}" ${PROFILE}  || exit 1
 
       - name: Test Metaspades Assembly
         run: |
-          bash ./scripts/test_assembly.sh "" example_params/assemblyMetaspades.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+          bash ./scripts/test_assembly.sh "    " example_params/assemblyMetaspades.yml "${WORK_DIR}" ${PROFILE}  || exit 1
 
       - name: Test Metaflye Assembly
         run: |
-          bash ./scripts/test_assemblyONT.sh "" example_params/assemblyONT.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+          bash ./scripts/test_assemblyONT.sh "    " example_params/assemblyONT.yml "${WORK_DIR}" ${PROFILE}  || exit 1
 
   cooccurrence:
     timeout-minutes: 800
@@ -188,7 +192,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test Cooccurrence
         run: |
-          bash ./scripts/test_cooccurrence.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+          bash ./scripts/test_cooccurrence.sh "     " "" "${WORK_DIR}" ${PROFILE}  || exit 1
 
 
   fragment_recruitment:
@@ -199,11 +203,11 @@ jobs:
       - uses: actions/checkout@v2
       - name: Test Fragment Recruitment via Mash Screen with BWA
         run: |
-          bash ./scripts/test_fragmentRecruitment.sh "" "example_params/fragmentRecruitmentMashScreen.yml" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+          bash ./scripts/test_fragmentRecruitment.sh "     " "example_params/fragmentRecruitmentMashScreen.yml" "${WORK_DIR}" ${PROFILE}  || exit 1
       - name: Test Fragment Recruitment via Mash Screen with Bowtie
         run: |
-          bash ./scripts/test_fragmentRecruitment.sh "" \
-             "example_params/fragmentRecruitment_fraction/fragmentRecruitmentMashScreenBowtie.yml" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+          bash ./scripts/test_fragmentRecruitment.sh "    " \
+             "example_params/fragmentRecruitment_fraction/fragmentRecruitmentMashScreenBowtie.yml" "${WORK_DIR}" ${PROFILE}  || exit 1
 
 
   annotation:
@@ -215,8 +219,8 @@ jobs:
       - name: Test Annotation
         run: |
           bash ./scripts/test_annotation.sh \
-            " --steps.annotation.mmseqs.kegg.database.extractedDBPath=/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB --steps.annotation.keggFromBlast.database.extractedDBPath=/vol/spool/toolkit/kegg_2021-01/ --databases=/vol/scratch/databases/ " "" \
-            "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+            "     --steps.annotation.mmseqs.kegg.database.extractedDBPath=/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB --steps.annotation.keggFromBlast.database.extractedDBPath=/vol/spool/toolkit/kegg_2021-01/ --databases=/vol/scratch/databases/ " "" \
+            "${WORK_DIR}" ${PROFILE}  || exit 1
       - name: Test rgi against different database configurations
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/card_20221209/card.json" \
@@ -229,7 +233,7 @@ jobs:
                                MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/rgi \
                                MODULE_DB_TEST_YML=example_params/annotation.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.annotation.rgi.database=env(database),del(.steps.annotation.mmseqs2,.steps.annotation.keggFromBlast)'" \
-                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/rgi_yaml_database_tests"
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/rgi_yaml_database_tests"
                                MODULE_DB_TEST_SKIP_TESTS="https"
 
       - name: Test keggFromBlast against different database configurations
@@ -244,7 +248,7 @@ jobs:
                                MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/kegg \
                                MODULE_DB_TEST_YML=example_params/annotation.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.annotation.keggFromBlast.database=env(database),del(.steps.annotation.rgi)'" \
-                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/kegg_yaml_database_tests" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/kegg_yaml_database_tests" \
                                MODULE_DB_TEST_SKIP_TESTS="https"
 
       - name: Test mmseqs2 against different database configurations
@@ -260,7 +264,7 @@ jobs:
                                MODULE_DB_TEST_YML=example_params/annotation.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.annotation.mmseqs2.kegg.database=env(database),del(.steps.annotation.rgi,.steps.annotation.keggFromBlast)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" \
-                               MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/mmseqs2_yaml_database_tests" \
+                               MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/mmseqs2_yaml_database_tests" \
                                MODULE_DB_TEST_SKIP_TESTS="https"
 
   metabolomics:
@@ -271,9 +275,9 @@ jobs:
       - uses: actions/checkout@v2
       - name: Metabolomics
         run: |
-          bash ./scripts/test_metabolomics.sh "   -c  test_data/assets/aws.config \
+          bash ./scripts/test_metabolomics.sh "   -c  test_data/assets/aws.config     \
                                                --carveme_image=pbelmann/metabolomics:0.1.0 --steps.metabolomics.beforeProcessScript=/vol/spool/dockerPull.sh \
-                                               --smetana_image=pbelmann/metabolomics:0.1.0 --gapseq_image=pbelmann/metabolomics:0.1.0 --steps.metabolomics.carveme.additionalParams=''  " "" "${WORK_DIR}/${{ github.head_ref }} " "slurm"
+                                               --smetana_image=pbelmann/metabolomics:0.1.0 --gapseq_image=pbelmann/metabolomics:0.1.0 --steps.metabolomics.carveme.additionalParams=''  " "" "${WORK_DIR}" "slurm"
   plasmid:
     timeout-minutes: 800
     needs: [codePolicy]
@@ -282,7 +286,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Plasmid Test
         run: |
-          bash ./scripts/test_plasmids.sh " --databases=/vol/scratch/databases/  " "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+          bash ./scripts/test_plasmids.sh " --databases=/vol/scratch/databases/     " "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
       - name: Plasmids Database Test
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/plasmids_plsdb_20220929" \
@@ -295,7 +299,7 @@ jobs:
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids \
                                MODULE_DB_TEST_YML=example_params/plasmid.yml MODULE_DB_TEST_YML_PATH="'.steps.plasmid.PLSDB.database=env(database),del(.steps.plasmid.Platon,.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.MobTyper)'" \
-                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/${{ github.head_ref }}/plasmid_yaml_database_tests"
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/plasmid_yaml_database_tests"
 
       - name: ViralVerify Plasmid Test
         run: |
