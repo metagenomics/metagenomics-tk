@@ -20,5 +20,7 @@ workflow wFragmentRecruitmentList {
      wMashScreenList(pairedReads, ontReads, medianQuality)
    emit:
      binsStats = wMashScreenList.out.binsStats
-     genomes = wMashScreenList.out.genomes
+     foundGenomesPerSample = wMashScreenList.out.foundGenomesPerSample
+     foundGenomesSeperated = wMashScreenList.out.foundGenomesSeperated
+     contigCoverage = wMashScreenList.out.contigCoverage
 }

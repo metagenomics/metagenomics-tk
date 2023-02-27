@@ -6,7 +6,12 @@ fastp -i read1.fq.gz -I read2.fq.gz -o read1.fastp.fq.gz -O read2.fastp.fq.gz \
 # fix 'unexpected end of file' of unpaired reads gzip file
 touch empty.txt
 gzip empty.txt
-cat empty.txt.gz >> !{sample}_unpaired.qc.fq.gz
+
+UNPAIRED=!{sample}_unpaired.qc.fq.gz
+cat empty.txt.gz >> ${UNPAIRED}
+
+# create statistics for unpaired fastq files
+paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") <(seqkit stats -T ${UNPAIRED}) > !{sample}_unpaired_summary.tsv
 
 # create interleaved fastq file for further analysis
 paste <(zcat read1.fastp.fq.gz)  <(zcat read2.fastp.fq.gz) \
@@ -16,7 +21,9 @@ paste <(zcat read1.fastp.fq.gz)  <(zcat read2.fastp.fq.gz) \
 
 # create tables of the fastp summary
 cat fastp.json | jq -r  ' [.summary.before_filtering] | (map(keys) | add | unique) as $cols | map(. as $row | $cols | map($row[.])) as $rows | $cols, $rows[] | @tsv ' > fastp_summary_before_tmp.tsv
-paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") fastp_summary_before_tmp.tsv > fastp_summary_before.tsv
+paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") fastp_summary_before_tmp.tsv > !{sample}_fastp_summary_before.tsv
 
 cat fastp.json | jq -r  ' [.summary.after_filtering] | (map(keys) | add | unique) as $cols | map(. as $row | $cols | map($row[.])) as $rows | $cols, $rows[] | @tsv ' > fastp_summary_after_tmp.tsv
-paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") fastp_summary_after_tmp.tsv > fastp_summary_after.tsv
+paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") fastp_summary_after_tmp.tsv > !{sample}_fastp_summary_after.tsv
+
+mv fastp.json !{sample}_fastp.json

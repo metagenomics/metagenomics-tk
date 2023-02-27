@@ -1,9 +1,10 @@
 nextflow.enable.dsl=2
 
-include { pBowtie2; pMinimap2; pBwa; pGetBinStatistics; } from  '../binning/processes'
+include { pBowtie2; pMinimap2; pBwa; pGetBinStatistics; pCovermGenomeCoverage; pCovermContigsCoverage; } from  '../binning/processes'
 include { pMashSketchGenome; \
 	  pMashPaste as pMashPasteChunk; \
 	  pMashPaste as pMashPasteFinal; } from  '../dereplication/pasolli/processes'
+include { pDumpLogs } from '../utils/processes'
 
 
 
@@ -74,6 +75,8 @@ process pGenomeContigMapping {
     '''
 }
 
+
+
 process pSaveMatchedGenomes {
 
     container "${params.ubuntu_image}"
@@ -83,16 +86,19 @@ process pSaveMatchedGenomes {
     label 'tiny'
 
     publishDir params.output, mode: "${params.publishDirMode}", \
-	saveAs: { filename -> getOutput("${sample}", params.runid, "", filename) }
+	saveAs: { filename -> getOutput("${sample}", params.runid, "", filename) }, \
+        pattern: "{matches/*}"
 
     input:
     tuple val(sample), path(genomes)
 
     output:
     path("matches/*"), emit: matches
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+    tuple val("${sample}"), val("${output}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
+      file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput("${sample}", params.runid, "matches", "")
     '''
     mkdir matches
     cp !{genomes} matches
@@ -149,9 +155,10 @@ workflow wMashScreenList {
      _wMashScreen(pairedReads, Channel.empty(), ontReads, medianQuality)
 
    emit:
-     genomes = _wMashScreen.out.genomes
-     genomesSeperated = _wMashScreen.out.genomesSeperated
+     foundGenomesPerSample = _wMashScreen.out.foundGenomesPerSample
+     foundGenomesSeperated = _wMashScreen.out.foundGenomesSeperated
      binsStats = _wMashScreen.out.binsStats
+     contigCoverage = _wMashScreen.out.contigCoverage
 }
 
 
@@ -256,6 +263,8 @@ workflow _wRunMash {
 
      pMashPasteFinal(params?.steps.containsKey("fragmentRecruitment") &&  params?.steps.fragmentRecruitment.containsKey("mashScreen"), \
 	Channel.value([getModulePath(params.modules.fragmentRecruitment), "mash/paste"]),  pMashPasteChunk.out.sketch | collect(flat: false))
+
+     pMashPasteFinal.out.logs | view | pDumpLogs
 
      // Screen reads for genomes
      SAMPLE_IDX = 0
@@ -380,9 +389,6 @@ workflow _wGetStatistics {
 	| map { genomes -> genomes[GENOMES_IDX] } | flatten | join(genomesMap) | map { genome -> genome[GENOMES_IDX] } \
 	| set { covermFilteredGenomes }
 
-     covermFilteredGenomes | unique { genome -> genome.name } \
-        | collect | map { genomes -> [ "EXTERNAL_GENOMES", genomes] } | set { foundGenomes }
-
      // Get Bin coverage statistics of the alignment
      covermFilteredGenomes | map { genome -> ["EXTERNAL_GENOMES", file(genome).name, genome] } | set { genomesSeperated }
 
@@ -390,11 +396,17 @@ workflow _wGetStatistics {
         | map { genomes -> Utils.flattenTuple(genomes).flatten()} \
 	| combine(genomesMap | map { genome -> genome.reverse() }, by: GENOMES_IDX) \
 	| map { genomes -> [genomes[SAMPLE_2_IDX], genomes[GENOMES_2_IDX]]} \
-	| groupTuple(by: SAMPLE_IDX) | set { foundGenomesInGroup }
+	| set { foundGenomesSeperated }
+
+     foundGenomesSeperated | groupTuple(by: SAMPLE_IDX) | set { foundGenomesInGroup }
+     foundGenomesSeperated | map { genome -> [genome[SAMPLE_IDX], file(genome[GENOMES_IDX]).name, genome[GENOMES_IDX]] } \
+	| set { foundGenomesIDSeperated }
   
      foundGenomesInGroup | pGenomeContigMapping
 
      foundGenomesInGroup | pSaveMatchedGenomes
+
+     pSaveMatchedGenomes.out.logs | pDumpLogs
 
      pGenomeContigMapping.out.mapping | join(mappedShortReads, by: SAMPLE_IDX) \
         | combine(Channel.from("stats")) | join(foundGenomesInGroup, by: SAMPLE_IDX) \
@@ -408,10 +420,34 @@ workflow _wGetStatistics {
 
      pGetBinStatistics(getModulePath(params.modules.fragmentRecruitment), shortReadMappingStatsInput | mix(minimapMappingStatsInput))
 
+     pCovermContigsCoverage(Channel.value(params?.steps?.fragmentRecruitment.find{ it.key == "contigsCoverage"}?.value), \
+	Channel.value([getModulePath(params.modules.fragmentRecruitment), \
+	"contigCoverage", params?.steps?.fragmentRecruitment?.contigsCoverage?.additionalParams]), \
+	mappedShortReads | combine(Channel.value(DO_NOT_SET_IDENTITY_AUTOMATICALLY)) \
+	| mix(minimapMappedReads | join(ontMedianQuality, by: SAMPLE_IDX)))
+
+     emptyFile = file(params.tempdir + "/empty")
+     emptyFile.text = ""
+
+     minimapMappedReads | join(foundGenomesInGroup, by: SAMPLE_IDX) \
+        | join(ontMedianQuality, by: SAMPLE_IDX) | set { minimapMappedReadsCovInput }
+
+     mappedShortReads | join(foundGenomesInGroup, by: SAMPLE_IDX) \
+        | combine(Channel.value(DO_NOT_SET_IDENTITY_AUTOMATICALLY)) | set { mappedShortReadsCovInput }
+
+     ALIGNMENT_INDEX = 2
+     pCovermGenomeCoverage(Channel.value(params?.steps?.fragmentRecruitment.find{ it.key == "genomeCoverage"}?.value), \
+	Channel.value([getModulePath(params.modules.fragmentRecruitment), \
+	"genomeCoverage", params?.steps?.fragmentRecruitment?.genomeCoverage?.additionalParams]), \
+	 minimapMappedReadsCovInput | mix(mappedShortReadsCovInput) \
+	| map { sample -> sample.addAll(ALIGNMENT_INDEX, emptyFile); sample })
+
   emit:
+     foundGenomesPerSample = foundGenomesInGroup 
+     foundGenomesSeperated = foundGenomesIDSeperated
      genomesSeperated = genomesSeperated
      binsStats = pGetBinStatistics.out.binsStats     
-     foundGenomes = foundGenomes
+     contigCoverage = pCovermContigsCoverage.out.coverage
 }
 
 process pUnzip {
@@ -490,7 +526,8 @@ workflow _wMashScreen {
 
      binMap | unique { bin -> bin.BIN_ID } | set { binMap }
     emit:
-     genomes = _wGetStatistics.out.foundGenomes
+     foundGenomesPerSample = _wGetStatistics.out.foundGenomesPerSample
      binsStats = binMap
-     genomesSeperated = _wGetStatistics.out.genomesSeperated
+     contigCoverage = _wGetStatistics.out.contigCoverage
+     foundGenomesSeperated = _wGetStatistics.out.foundGenomesSeperated
 }

@@ -49,12 +49,12 @@ process pGetBinStatistics {
 
 process pCovermContigsCoverage {
 
-    label 'medium'
+    label 'small'
 
     tag "Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "${module}" , "${outputToolDir}", filename) }, \
-        pattern: "{**.tsv,**.fasta.gz}"
+        pattern: "{**.tsv,**.fasta.gz,**.out,**.err,**.log,**.sh}"
 
     input:
     val(run)
@@ -68,7 +68,7 @@ process pCovermContigsCoverage {
     tuple val("${sample}"), path("${sample}_default_coverm_coverage.tsv"), path("${sample}_metabat_coverm_coverage.tsv"), emit: coverage, optional: true
     tuple val("${sample}"), path("${sample}_default_coverm_coverage.tsv"), emit: default_coverage, optional: true
     tuple val("${sample}"), path("${sample}_metabat_coverm_coverage.tsv"), emit: metabat_coverage, optional: true
-    tuple file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+    tuple file(".command.out"), file(".command.err"), file(".command.log"), file(".command.sh"), emit: logs
 
     shell:
     DO_NOT_ESTIMATE_QUALITY = -1 
@@ -79,15 +79,50 @@ process pCovermContigsCoverage {
     coverm contig --threads !{task.cpus} \
 	--bam-files !{bamFile} !{covermParams} !{percentIdentity} \
 	--methods mean trimmed_mean variance length count reads_per_base rpkm tpm \
-	| sed '1 s/^/SAMPLE\t/' \
+	| sed '1 s/^.*$/SAMPLE\tCONTIG\tMEAN_CONTIG\tTRIMMED_MEAN_CONTIG\tVARIANCE_CONTIG\tLENGTH_CONTIG\tREAD_COUNT_CONTIG\tREADS_PER_BASE_CONTIG\tRPKM_CONTIG\tTPM_CONTIG/g' \
 	| sed "2,$ s/^/!{sample}\t/g" > !{sample}_default_coverm_coverage.tsv
 
     coverm contig --threads !{task.cpus} \
 	--bam-files !{bamFile} !{covermParams} !{percentIdentity} \
         --methods metabat \
-	| sed '1 s/^/SAMPLE\t/' \
+	| sed '1 s/^.*$/SAMPLE\tCONTIG_NAME\tMETABAT_CONTIG_LENGTH\tMETABAT_TOTAL_AVG_DEPTH_CONTIG\tMETABAT_BAM_CONTIG\tMETABAT_VARIANCE_CONTIG/g' \
 	| sed "2,$ s/^/!{sample}\t/g" > !{sample}_metabat_coverm_coverage.tsv
     '''
+}
+
+
+process pCovermGenomeCoverage {
+
+    label 'small'
+
+    tag "Sample: $sample"
+
+    publishDir params.output, mode: "${params.publishDirMode}", \
+	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}" , "${outputToolDir}", filename) }, \
+        pattern: "{**.tsv,**.sh,**.out,**.err,**.log}"
+
+    input:
+    val(run)
+    tuple val(module), val(outputToolDir), val(covermParams)
+    tuple val(sample), file(mapping), file(index), file(list_of_representatives), val(medianQuality)
+
+    when:
+    run
+
+    output:
+    tuple val("${sample}"), path("${sample}_mean.tsv"), emit: mean
+    tuple val("${sample}"), path("${sample}_trimmed_mean.tsv"), emit: trimmedMean
+    tuple val("${sample}"), path("${sample}_count.tsv"), emit: count
+    tuple val("${sample}"), path("${sample}_rpkm.tsv"), emit: rpkm
+    tuple val("${sample}"), path("${sample}_tpm.tsv"), emit: tpm
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    shell:
+    DO_NOT_ESTIMATE_QUALITY = -1 
+    MEDIAN_QUALITY=Double.parseDouble(medianQuality)
+    percentIdentity = MEDIAN_QUALITY != DO_NOT_ESTIMATE_QUALITY ? \
+	" --min-read-percent-identity "+Utils.getMappingIdentityParam(MEDIAN_QUALITY) : " "
+    template('coverm.sh')
 }
 
 
@@ -234,7 +269,7 @@ process pMetabat {
 
     tag "$sample"
 
-    label 'large'
+    label 'small'
 
     publishDir params.output, mode: "${params.publishDirMode}", \
 	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }

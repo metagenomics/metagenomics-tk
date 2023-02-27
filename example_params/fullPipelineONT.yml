@@ -30,6 +30,8 @@ steps:
         samtoolsView: " " 
     contigsCoverage:
       additionalParams: ""
+    genomeCoverage:
+      additionalParams: " --min-covered-fraction 0 "
     metabat:
       additionalParams: " --seed 234234  "
   magAttributes:
@@ -64,6 +66,10 @@ steps:
       mashDistCutoff: 0.95
       coveredBasesCutoff: 0.2
       mashHashCutoff: 800
+    genomeCoverage:
+      additionalParams: ""
+    contigsCoverage:
+      additionalParams: ""
   dereplication:
     pasolli:
       minimumCompleteness: 0

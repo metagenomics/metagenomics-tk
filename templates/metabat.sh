@@ -7,6 +7,7 @@ shopt -s nullglob
 TEMP_DIR=$(mktemp -d -p .)
 
 BIN_CONTIG_MAPPING=!{sample}_bin_contig_mapping.tsv
+echo -e "BIN_ID\tCONTIG" > ${BIN_CONTIG_MAPPING}
 for bin in $(find $(basename !{contigs})* -name "bin*.fa"); do
 	BIN_NAME="!{sample}_$(basename ${bin})"
 

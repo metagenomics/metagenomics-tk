@@ -1,18 +1,15 @@
-OUT=!{sample}_out
-mkdir $OUT
-
 readlink -f !{list_of_representatives} > list.txt 
 
-additionalParams=" !{percentIdentity} !{params.steps.readMapping.coverm.additionalParams} " 
+additionalParams=" !{percentIdentity} !{covermParams} " 
+covermCountParams=" --min-covered-fraction 0 "
 
 coverm genome -t !{task.cpus} ${additionalParams} -b !{mapping} \
-	--genome-fasta-list list.txt --methods mean --output-file $OUT/mean.tsv && sed -i '1 s| Mean$||' $OUT/mean.tsv  || true
+	--genome-fasta-list list.txt --methods mean --output-file !{sample}_mean.tsv && sed -i '1 s| Mean$||' !{sample}_mean.tsv  || true
 coverm genome -t !{task.cpus} ${additionalParams} -b !{mapping} \
-	--genome-fasta-list list.txt --methods trimmed_mean --output-file $OUT/trimmed_mean.tsv && sed -i '1 s| Trimmed Mean$||' $OUT/trimmed_mean.tsv || true
+	--genome-fasta-list list.txt --methods trimmed_mean --output-file !{sample}_trimmed_mean.tsv && sed -i '1 s| Trimmed Mean$||' !{sample}_trimmed_mean.tsv || true
+coverm genome -t !{task.cpus} -b !{mapping} ${covermCountParams} \
+	--genome-fasta-list list.txt --methods count  --output-file !{sample}_count.tsv  && sed -i '1 s| Read Count$||' !{sample}_count.tsv || true
 coverm genome -t !{task.cpus} ${additionalParams} -b !{mapping} \
-	--genome-fasta-list list.txt --methods count  --output-file $OUT/count.tsv  && sed -i '1 s| Read Count$||' $OUT/count.tsv || true
+	--genome-fasta-list list.txt  --methods rpkm  --output-file !{sample}_rpkm.tsv  && sed -i '1 s| RPKM$||' !{sample}_rpkm.tsv || true
 coverm genome -t !{task.cpus} ${additionalParams} -b !{mapping} \
-	--genome-fasta-list list.txt  --methods rpkm  --output-file $OUT/rpkm.tsv  && sed -i '1 s| RPKM$||' $OUT/rpkm.tsv || true
-coverm genome -t !{task.cpus} ${additionalParams} -b !{mapping} \
-	--genome-fasta-list list.txt --methods tpm --output-file $OUT/tpm.tsv && sed -i '1 s| TPM$||' $OUT/tpm.tsv || true
-
+	--genome-fasta-list list.txt --methods tpm --output-file !{sample}_tpm.tsv && sed -i '1 s| TPM$||' !{sample}_tpm.tsv || true

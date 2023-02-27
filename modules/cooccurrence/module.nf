@@ -33,16 +33,17 @@ process pBuildNetwork {
    
     container "${params.cooccurrence_image}"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "matrix", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "network", filename) }
 
     when params.steps.containsKey("cooccurrence")
 
     input:
     file('abundance.tsv')
-    file('gtdb.tsv')
+    file('gtdb.input.tsv')
 
     output:
     path("community.tsv"), emit: community
+    path("gtdb.tsv"), emit: gtdb
     path("output.graphml"), emit: graphml
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 

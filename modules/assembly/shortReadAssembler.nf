@@ -11,6 +11,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
           '/' + TOOL + '/' + filename
 }
 
+def timestamp = new java.util.Date().format( 'YYYYMMdd-HHmmss-SSS')
 
 /*
 * This process uses kmer frequencies and the nonpareil diversity index to predict peak memory consumption on an assembler.
@@ -42,6 +43,7 @@ process pPredictFlavor {
     BASEPAIRS_COUNTER=$(zcat !{interleavedReads} !{unpairedReads} | seqkit stats -T | cut -d$'\t' -f 5 | tail -n 1)
     MODEL=!{baseDir}/models/assembler/megahit/default.pkl
     MEMORY=$(cli.py predict -m ${MODEL} -k !{kmerFrequencies} -b ${BASEPAIRS_COUNTER} -d !{nonpareilDiversity} -r ${READS_COUNTER})
+    echo -e "Memory: ${MEMORY}\nBasepairs: ${BASEPAIRS_COUNTER}\nReads: ${READS_COUNTER}" 
     '''
 }
 
@@ -88,11 +90,11 @@ process pMegahit {
 
     tag "Sample: $sample"
 
-    cpus { getNextHigherResource([-9, 137], task.exitStatus, "cpus", task.attempt, \
+    cpus { getNextHigherResource([-9, 137, 247], task.exitStatus, "cpus", task.attempt, \
 	"${memory}", params.steps.assembly.megahit, \
 	params.modules.assembly.process.pMegahit.defaults.flavor, "${sample}") }
 
-    memory { getNextHigherResource([-9, 137], task.exitStatus, "memory", task.attempt, \
+    memory { getNextHigherResource([-9, 137, 247], task.exitStatus, "memory", task.attempt, \
 	"${memory}", params.steps.assembly.megahit, \
 	params.modules.assembly.process.pMegahit.defaults.flavor, "${sample}") + ' GB' }
 
@@ -170,8 +172,9 @@ workflow wShortReadAssemblyList {
 
 
 /*
- * Takes a tab separated file of files containing reads as input and produces assembly results.
- * Input file with columns seperated by tabs:
+ * Takes two tab separated file of files containing paired and optional single reads 
+ * as input and produces assembly results.
+ * Input files must have two columns seperated by tabs:
  * SAMPLE and READS
  *
  * Output is of the format [SAMPLE, CONTIGS]
@@ -179,8 +182,26 @@ workflow wShortReadAssemblyList {
  */
 workflow wShortReadAssemblyFile {
     main:
-       Channel.from(file(params.steps.assembly.input)) | splitCsv(sep: '\t', header: true) \
-             | map { it -> [ it.SAMPLE, it.READS, file("NOT_SET")]} | set { reads  }
+       SAMPLE_IDX = 0       
+       SAMPLE_PAIRED_IDX = 1
+       UNPAIRED_IDX = 2
+
+       readsPaired = Channel.empty()
+       if(params.steps.assembly.input.containsKey("paired")) {
+       	 Channel.from(file(params.steps.assembly.input.paired)) | splitCsv(sep: '\t', header: true) \
+             | map { it -> [ it.SAMPLE, it.READS]} | set { readsPaired  }
+       }
+
+       readsSingle = Channel.empty()
+       if(params.steps.assembly.input.containsKey("single")) {
+         Channel.from(file(params.steps.assembly.input.single)) | splitCsv(sep: '\t', header: true) \
+             | map { it -> [ it.SAMPLE, it.READS]} | set { readsSingle  }
+       }
+
+       readsPaired | join(readsSingle, by: SAMPLE_IDX, remainder: true) \
+	| map { sample -> sample[UNPAIRED_IDX] == null ? \
+		[sample[SAMPLE_IDX], sample[SAMPLE_PAIRED_IDX], file("NOT_SET")] : sample } \
+	| set { reads }
 
        _wAssembly(reads, Channel.empty(), Channel.empty())
     emit:
@@ -287,9 +308,10 @@ workflow _wCalculateMegahitResources {
           | join(kmerFrequencies) | pPredictFlavor
 
          PREDICTED_RAM_IDX = 1
+
          pPredictFlavor.out.memory \
           | collectFile(newLine: true, seed: "SAMPLE\tPREDICTED_RAM", storeDir: params.logDir){ item ->
-        	[ "predictedMegahitRAM.tsv", item[SAMPLE_IDX] + '\t' + item[PREDICTED_RAM_IDX]  ]
+        	[ "predictedMegahitRAM." + timestamp + ".tsv", item[SAMPLE_IDX] + '\t' + item[PREDICTED_RAM_IDX]  ]
     	  }
 
          resourceType.doNotPredict | map{ it -> it + "NoPrediction" } \

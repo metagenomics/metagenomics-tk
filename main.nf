@@ -2,7 +2,7 @@ nextflow.enable.dsl=2
 import java.util.regex.*;
 
 include { wSaveSettingsList } from './modules/config/module'
-include { pPublish as pPublishIllumina; pPublish as pPublishOnt } from './modules/utils/processes'
+include { pPublish as pPublishIllumina; pPublish as pPublishOnt; } from './modules/utils/processes'
 include { wShortReadQualityControlFile; wShortReadQualityControlList} from './modules/qualityControl/shortReadQC'
 include { wOntQualityControlFile; wOntQualityControlList} from './modules/qualityControl/ontQC'
 include { wShortReadAssemblyFile; wShortReadAssemblyList } from './modules/assembly/shortReadAssembler'
@@ -15,7 +15,9 @@ include { wAnalyseMetabolitesList; wAnalyseMetabolitesFile } from './modules/met
 include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/mapping.nf'
 include { wFragmentRecruitmentFile; wFragmentRecruitmentList;} from './modules/fragmentRecruitment/module'
 include { wAnnotateFile; wAnnotateList as wAnnotateBinsList; \
-	  wAnnotateList as wAnnotateUnbinnedList; wAnnotateList as wAnnotatePlasmidList } from './modules/annotation/module'
+	  wAnnotateList as wAnnotateUnbinnedList; \
+	  wAnnotateList as wAnnotatePlasmidList; \
+	  wAnnotateList as wAnnotateRecruitedGenomesList; } from './modules/annotation/module'
 include { wCooccurrenceList; wCooccurrenceFile } from './modules/cooccurrence/module'
 include { wPlasmidsList; wPlasmidsPath; } from './modules/plasmids/module'
 include { wInputFile } from './modules/input/module'
@@ -335,6 +337,9 @@ workflow _wAggregate {
 *
 */
 workflow _wConfigurePipeline {
+
+    file(params.tempdir).mkdirs()
+
     // For plasmid detection we need the assembly graph of the assembler
     if(params.steps.containsKey("plasmid")){
        def fastg = [ fastg: true]
@@ -435,8 +440,10 @@ workflow wFullPipeline {
 
     ont.binsStats | mix(illumina.binsStats) | set { binsStats }
 
+    SAMPLE_IDX = 0
+    NOT_BINNED_PATH_IDX = 1
     ont.notBinnedContigs | mix(illumina.notBinnedContigs) 
-       | map { notBinned -> [ notBinned[0], "notBinned", notBinned[1]]} \
+       | map { notBinned -> [ notBinned[SAMPLE_IDX], notBinned[SAMPLE_IDX] + "_notBinned", notBinned[NOT_BINNED_PATH_IDX]]} \
        | set { notBinnedContigs }
 
     ont.binsStats | mix(illumina.binsStats) 
@@ -458,10 +465,10 @@ workflow wFullPipeline {
     wSaveSettingsList(inputSamples | map { it -> it.SAMPLE })
 
     MAX_KMER = 0
-    wPlasmidsList(bins | mix(notBinnedContigs), fastg | mix(gfa | combine(Channel.value(MAX_KMER))) | join(mapping)\
-	, illumina.readsPairSingle, ont.reads, ont.medianQuality)
+    wPlasmidsList(bins | mix(notBinnedContigs), fastg | mix(gfa | combine(Channel.value(MAX_KMER))) | join(mapping) \
+	,illumina.readsPairSingle, ont.reads, ont.medianQuality)
 
-    wMagAttributesList(ont.bins | mix(illumina.bins, wFragmentRecruitmentList.out.genomes))
+    wMagAttributesList(ont.bins | mix(illumina.bins, wFragmentRecruitmentList.out.foundGenomesPerSample ))
 
     mapJoin(wMagAttributesList.out.checkm, binsStats | mix(wFragmentRecruitmentList.out.binsStats), "BIN_ID", "BIN_ID") \
 	| set { binsStats  }
@@ -470,9 +477,11 @@ workflow wFullPipeline {
 
     wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, contigCoverage)
 
+    wAnnotateRecruitedGenomesList(Channel.value("binned"), Channel.value("single"), wFragmentRecruitmentList.out.foundGenomesSeperated, \
+  	wMagAttributesList.out.gtdb, wFragmentRecruitmentList.out.contigCoverage)
+
     wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs, null, contigCoverage)
 
-    SAMPLE_IDX = 0
     BIN_ID_IDX = 1
     PATH_IDX = 2
     wAnnotateBinsList.out.proteins \
