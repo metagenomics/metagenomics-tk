@@ -23,10 +23,10 @@ steps:
         pyani: " -m ANIb "
         representativeAniCutoff: 0.95
   readMapping:
-    bwa:
+    bwa2:
       additionalParams:
-        bwa_index: ""
-        bwa_mem: ""
+        bwa2_index: ""
+        bwa2_mem: ""
     coverm:
         additionalParams: " --min-covered-fraction 0 "
     minimap:

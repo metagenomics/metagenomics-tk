@@ -23,7 +23,19 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 * See “/lib/Utils.groovy” for more information.
 **/
 def constructParametersObject(String tool){ 
-  return params?.steps?.annotation?."$tool".findAll().collect{ Utils.getDockerMount(it.value?.database, params, 'true')}.join(" ")
+  return params?.steps?.annotation?."$tool".findAll({ it.key != "runOnMAGs" }).collect{ Utils.getDockerMount(it.value?.database, params, 'true')}.join(" ")
+}
+
+
+/*
+*
+* This function decides if the MMSeqs taxonomy process should be executed on MAGs.
+*
+*/
+def runMMSeqsTaxonomy(isMMSeqsTaxonomySettingSet, isBinned, runOnBinned) {
+    // True if the MMSeqsTaxonomy setting is set and either the sample is not binned 
+    // or should explicitly run on binned samples 
+    return isMMSeqsTaxonomySettingSet && (!isBinned || runOnBinned)
 }
 
 
@@ -138,7 +150,10 @@ process pMMseqs2_taxonomy {
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", filename) }, \
          pattern: "{*.out,*.html,*.tsv}"
  
-      when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy")
+      when:
+      runMMSeqsTaxonomy(params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy"), \
+	   binType.equals("binned"), \
+           params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy") && params?.steps.annotation.mmseqs2_taxonomy.runOnMAGs)
 
    input:
       val(binType)
@@ -221,11 +236,11 @@ process pResistanceGeneIdentifier {
       tuple val(sample), val(binID), file(fasta)
    
    output:
-      tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}.rgi.tsv"), optional:true, emit: results
-      tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}.rgi-1.csv"), optional:true, emit: resultsGenes
-      tuple val("${sample}"), val("${binID}"), path("${sample}_${binID}.rgi-1.eps"), \
+      tuple val("${sample}"), val("${binID}"), path("${binID}.rgi.tsv"), optional:true, emit: results
+      tuple val("${sample}"), val("${binID}"), path("${binID}.rgi-1.csv"), optional:true, emit: resultsGenes
+      tuple val("${sample}"), val("${binID}"), path("${binID}.rgi-1.eps"), \
 	path("${sample}_${binID}.rgi-1.png"), optional:true, emit: png
-      tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+      tuple val("${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
    shell:
@@ -265,7 +280,7 @@ process pResistanceGeneIdentifier {
    zcat -f !{fasta} | sed 's/*//g' > input.faa
 
    mkdir output
-   OUTPUT_ID=!{sample}_!{binID}.rgi
+   OUTPUT_ID=!{binID}.rgi
    RGI_OUTPUT=output/${OUTPUT_ID}
    # load CARD database and run rgi
    rgi load --card_json ${CARD_JSON} --local
@@ -273,8 +288,8 @@ process pResistanceGeneIdentifier {
                --output_file ${RGI_OUTPUT} --input_type protein --local \
                --alignment_tool DIAMOND --num_threads !{task.cpus} --clean ${ADDITIONAL_RGI_PARAMS}
 
-   RGI_OUT_TMP=!{sample}_!{binID}.rgi.tmp.tsv
-   RGI_OUT=!{sample}_!{binID}.rgi.tsv
+   RGI_OUT_TMP=!{binID}.rgi.tmp.tsv
+   RGI_OUT=!{binID}.rgi.tsv
    # Produce files only if there is an actual output
    if [ $(tail -n +2 ${RGI_OUTPUT}.txt | wc -l) -gt 0 ]; then 
 
@@ -462,8 +477,8 @@ process pProkka {
       tuple val("${sample}"), val("${binID}"), file("*.tbl.gz"), emit: tbl 
       tuple val("${sample}"), val("${binID}"), file("*.sqn.gz"), emit: sqn 
       tuple val("${sample}"), val("${binID}"), file("*.txt"), emit: txt 
-      tuple val("${sample}"), val("${binID}"), file("${sample}_*_prokka.tsv"), emit: tsv 
-      tuple val("${sample}_${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+      tuple val("${sample}"), val("${binID}"), file("*_prokka.tsv"), emit: tsv 
+      tuple val("${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
@@ -554,7 +569,7 @@ workflow _wAnnotation {
              it.value.database?.download?.s5cmd?.params ?: "" ]
       })
 
-      selectedTaxDBs = params?.steps?.annotation?.mmseqs2_taxonomy.findAll().collect({
+      selectedTaxDBs = params?.steps?.annotation?.mmseqs2_taxonomy.findAll({  it.key != "runOnMAGs"  }).collect({
             [it.key, it.value?.params ?: "", \
              it.value?.database?.extractedDBPath ?: "", \
              it.value.database?.download?.source ?: "", \

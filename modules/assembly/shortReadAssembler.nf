@@ -43,6 +43,7 @@ process pPredictFlavor {
     BASEPAIRS_COUNTER=$(zcat !{interleavedReads} !{unpairedReads} | seqkit stats -T | cut -d$'\t' -f 5 | tail -n 1)
     MODEL=!{baseDir}/models/assembler/megahit/default.pkl
     MEMORY=$(cli.py predict -m ${MODEL} -k !{kmerFrequencies} -b ${BASEPAIRS_COUNTER} -d !{nonpareilDiversity} -r ${READS_COUNTER})
+    echo -e "Memory: ${MEMORY}\nBasepairs: ${BASEPAIRS_COUNTER}\nReads: ${READS_COUNTER}" 
     '''
 }
 
@@ -89,11 +90,11 @@ process pMegahit {
 
     tag "Sample: $sample"
 
-    cpus { getNextHigherResource([-9, 137], task.exitStatus, "cpus", task.attempt, \
+    cpus { getNextHigherResource([-9, 137, 247], task.exitStatus, "cpus", task.attempt, \
 	"${memory}", params.steps.assembly.megahit, \
 	params.modules.assembly.process.pMegahit.defaults.flavor, "${sample}") }
 
-    memory { getNextHigherResource([-9, 137], task.exitStatus, "memory", task.attempt, \
+    memory { getNextHigherResource([-9, 137, 247], task.exitStatus, "memory", task.attempt, \
 	"${memory}", params.steps.assembly.megahit, \
 	params.modules.assembly.process.pMegahit.defaults.flavor, "${sample}") + ' GB' }
 

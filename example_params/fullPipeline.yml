@@ -32,9 +32,9 @@ steps:
           mode: 'PREDICT'
           predictMinLabel: 'medium' 
   binning:
-    bwa:
+    bwa2:
       additionalParams: 
-        bwa: "   "
+        bwa2: "   "
         # samtools flags are used to filter resulting bam file
         samtoolsView: "  -F 3584  "
     contigsCoverage:
@@ -67,10 +67,10 @@ steps:
       additionalParams:
         mashSketch: " "
         mashScreen: " "
-        bwa: " "
+        bwa2: " "
         coverm: "  --min-covered-fraction 5  "
         minimap: "  "
-        samtoolsViewBwa: " -F 3584 " 
+        samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
       mashDistCutoff: 0.95
       coveredBasesCutoff: 0.2
@@ -94,10 +94,10 @@ steps:
         pyani: " -m ANIb "
         representativeAniCutoff: 0.95
   readMapping:
-    bwa:
+    bwa2:
       additionalParams:
-        bwa_index: ""
-        bwa_mem: ""
+        bwa2_index: ""
+        bwa2_mem: ""
     coverm:
       additionalParams: " --min-covered-fraction 0 "
   cooccurrence:
@@ -113,10 +113,10 @@ steps:
     SCAPP:
       additionalParams: 
         SCAPP: "  "
-        bwa: "  "
+        bwa2: "  "
         coverm: "  "
         minimap: " "
-        samtoolsViewBwa: " -F 3584 " 
+        samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
     ViralVerifyPlasmid:
       filter: true
@@ -193,6 +193,7 @@ steps:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
           md5sum: d7e627221a1d4584d1c1795cda774cdb
     mmseqs2_taxonomy:
+      runOnMAGs: true
       ncbi_nr:
         params: '-s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --orf-filter-s 1 -e 1e-15 --db-load-mode 3'
         database:

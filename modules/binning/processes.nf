@@ -110,11 +110,11 @@ process pCovermGenomeCoverage {
     run
 
     output:
-    tuple val("${sample}"), path("${sample}_out/mean.tsv"), emit: mean
-    tuple val("${sample}"), path("${sample}_out/trimmed_mean.tsv"), emit: trimmedMean
-    tuple val("${sample}"), path("${sample}_out/count.tsv"), emit: count
-    tuple val("${sample}"), path("${sample}_out/rpkm.tsv"), emit: rpkm
-    tuple val("${sample}"), path("${sample}_out/tpm.tsv"), emit: tpm
+    tuple val("${sample}"), path("${sample}_mean.tsv"), emit: mean
+    tuple val("${sample}"), path("${sample}_trimmed_mean.tsv"), emit: trimmedMean
+    tuple val("${sample}"), path("${sample}_count.tsv"), emit: count
+    tuple val("${sample}"), path("${sample}_rpkm.tsv"), emit: rpkm
+    tuple val("${sample}"), path("${sample}_tpm.tsv"), emit: tpm
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
@@ -261,6 +261,51 @@ process pBwa {
     '''
 }
 
+
+process pBwa2 {
+
+    container "${params.samtools_bwa2_image}"
+
+    label 'large'
+
+    cache 'deep'
+
+    tag "Sample: $sample"
+
+    publishDir params.output, mode: "${params.publishDirMode}", \
+	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
+
+    input:
+    val(run)
+    tuple val(module), val(outputToolDir), val(bwaParams), val(samtoolsViewParams), val(getUnmapped)
+    tuple val(sample), path(contigs), path(pairedReads, stageAs: 'paired.fq.gz'), path(unpairedReads, stageAs: 'unpaired.fq.gz')
+
+    when:
+    run
+
+    output:
+    tuple val("${sample}"), file("${sample}.bam"), optional: true, emit: mappedReads
+    tuple val("${sample}"), file("${sample}_unmapped.fq.gz"), optional: true, emit: unmappedReads
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    shell:
+    getUnmapped = getUnmapped ? "TRUE" : ""
+    '''
+    # Build BWA2 Index
+    bwa-mem2 index !{contigs}
+
+    # Run BWA
+    bwa-mem2 mem !{bwaParams} -p  \
+       -t !{task.cpus} !{contigs} <(cat !{pairedReads} !{unpairedReads}) - \
+      | samtools view !{samtoolsViewParams} -@ !{task.cpus} -S -b - \
+      | samtools sort -l 9 -@ !{task.cpus} - > !{sample}.bam
+
+    # If Fragment Recruitment is selected then reads that could not be mapped should be returned
+    if [[ "!{getUnmapped}" == "TRUE" ]]; then
+        samtools bam2fq -f 4 !{sample}.bam | pigz --best --processes !{task.cpus} > !{sample}_unmapped.fq.gz
+    fi
+    '''
+}
 
 
 process pMetabat {
