@@ -78,14 +78,16 @@ jobs:
         run: |
           VERSION=$(sort -r VERSIONS.txt | tail -n 1)
           bash ./scripts/test_fullPipeline.sh \
-          " --databases=/vol/scratch/databases/ --output=output " \
+          " --databases=/vol/scratch/databases/ --output=output \
+           --smetana_image=pbelmann/metabolomics:0.1.0 --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh  " \
           ./example_params/fullPipelineIlluminaOrONT.yml \
           "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} ${VERSION} || exit 1
 
       - name: Test aggregate workflow based on previous test
         run: |
           bash ./scripts/test_fullPipelineAggregate.sh \
-          " --output=output " ./example_params/fullPipelineAggregate.yml \
+          " --output=output   --smetana_image=pbelmann/metabolomics:0.1.0 \
+           --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh " ./example_params/fullPipelineAggregate.yml \
           "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE} || exit 1
 
       - name: Test if SRA S3 Input module works with ONT data
@@ -186,9 +188,13 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
-      - name: Test Cooccurrence
+      - name: Test cooccurrence graph building
         run: |
           bash ./scripts/test_cooccurrence.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+      - name: Test cooccurrence graph building with edge analysis
+        run: |
+          bash ./scripts/test_cooccurrence.sh " --smetana_image=pbelmann/metabolomics:0.1.0 --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh " \
+                 ./example_params/coocurrenceMetabolom.yml "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
 
 
   fragment_recruitment:
@@ -273,7 +279,8 @@ jobs:
         run: |
           bash ./scripts/test_metabolomics.sh "   -c  test_data/assets/aws.config \
                                                --carveme_image=pbelmann/metabolomics:0.1.0 --steps.metabolomics.beforeProcessScript=/vol/spool/dockerPull.sh \
-                                               --smetana_image=pbelmann/metabolomics:0.1.0 --gapseq_image=pbelmann/metabolomics:0.1.0 --steps.metabolomics.carveme.additionalParams=''  " "" "${WORK_DIR}/${{ github.head_ref }} " "slurm"
+                                               --smetana_image=pbelmann/metabolomics:0.1.0 --gapseq_image=pbelmann/metabolomics:0.1.0 --steps.metabolomics.carveme.additionalParams=''  " \
+                                               "" "${WORK_DIR}/${{ github.head_ref }} " "slurm"
   plasmid:
     timeout-minutes: 800
     needs: [codePolicy]

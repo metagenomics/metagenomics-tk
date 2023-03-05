@@ -101,7 +101,14 @@ steps:
     coverm:
       additionalParams: " --min-covered-fraction 0 "
   cooccurrence:
-    additionalParams: " -t 0.1 -z 80 -o 'correlation' "
+    inference:
+       additionalParams: " -t 0.1 -z 80 -o 'correlation' -w 0.4 "
+    metabolicAnnotation:
+      additionalParams:
+        metabolicEdgeBatches: 20
+        metabolicEdgeReplicates: 3
+        smetana: " --molweight "
+
   plasmid:
     SCAPP:
       additionalParams: 

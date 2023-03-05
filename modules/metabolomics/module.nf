@@ -238,6 +238,8 @@ workflow wAnalyseMetabolitesFile {
      }
 
      _wAnalyseMetabolites(bins, proteins, type)
+  emit:
+     models = _wAnalyseMetabolites.out.model
 }
 
 
@@ -285,6 +287,8 @@ workflow wAnalyseMetabolitesList {
      }
 
      _wAnalyseMetabolites(filteredBins, filteredProteins, type)
+   emit:
+     models = _wAnalyseMetabolites.out.models
 }
 
 
@@ -317,4 +321,6 @@ workflow _wAnalyseMetabolites {
 
         pGapSeq.out.logs | mix(pCarveMe.out.logs) \
             | mix(pMemote.out.logs, pAnalyse.out.logs, pBuildJson.out.logs) | pDumpLogs
+     emit:
+        models = model
 }

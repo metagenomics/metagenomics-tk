@@ -1,0 +1,36 @@
+tempdir: "/tmp"
+summary: false
+output: "output"
+runid: 1
+logLevel: 0
+logDir: log
+scratch: "/vol/scratch"
+publishDirMode: "symlink"
+steps:
+  cooccurrence:
+     input:
+       gtdb: test_data/cooccurrence/gtdb_large.tsv
+       count: test_data/cooccurrence/countsMedium.tsv
+       models: test_data/cooccurrence/models.tsv
+     inference:
+        additionalParams: " -t 0.1 -z 80 -o 'correlation' -w 0.4 "
+     metabolicAnnotation:
+       additionalParams:
+         metabolicEdgeBatches: 20
+         metabolicEdgeReplicates: 3
+         smetana: " --molweight "
+
+
+resources:
+  large:
+    cpus: 28
+    memory: 230
+  medium:
+    cpus: 14
+    memory: 113
+  small:
+    cpus: 7
+    memory: 14
+  tiny:
+    cpus: 1
+    memory: 1
