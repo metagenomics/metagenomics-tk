@@ -153,10 +153,12 @@ workflow wCooccurrenceFile {
        | splitCsv(sep: '\t', header: false, skip: 1) \
        | set {count}
 
-    Channel.from(file(params.steps.cooccurrence.input.models))\
-       | splitCsv(sep: '\t', header: true) \
-       | map { bin -> [bin.BIN_ID, file(bin.PATH)] } | set {models}
-
+    models = Channel.empty()
+    if(params.steps.cooccurrence.input.containsKey("models")){
+      Channel.from(file(params.steps.cooccurrence.input.models))\
+        | splitCsv(sep: '\t', header: true) \
+        | map { bin -> [bin.BIN_ID, file(bin.PATH)] } | set {models}
+    }
     _wCooccurrence(count, Channel.from(file(params.steps.cooccurrence.input.gtdb)), models)
 
 }
