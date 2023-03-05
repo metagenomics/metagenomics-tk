@@ -13,10 +13,10 @@ steps:
        single: test_data/readMapping/single.tsv
        ont: test_data/readMapping/ont.tsv
     mags: test_data/readMapping/mags.tsv
-    bwa:
+    bwa2:
       additionalParams:
-        bwa_index: ""
-        bwa_mem: ""
+        bwa2_index: ""
+        bwa2_mem: ""
     minimap:
       additionalParams:
         minimap_index: ""

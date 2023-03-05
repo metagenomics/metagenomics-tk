@@ -65,9 +65,9 @@ steps:
       additionalParams: " -i 1 "
       quality: "AUTO"
   binning:
-    bwa:
+    bwa2:
       additionalParams: 
-        bwa: " "
+        bwa2: " "
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
     contigsCoverage:
@@ -116,12 +116,12 @@ steps:
       additionalParams:
         mashSketch: " "
         mashScreen: " "
-        bwa: "  "
+        bwa2: "  "
         # We demand that matches should be at least 70 percent to restrict the
         # search space. We further restrict all found matches in 'coveredBasesCutoff' parameter.
         coverm: " --min-covered-fraction 70 "
         minimap: "   "
-        samtoolsViewBwa: " -F 3584 " 
+        samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
        # Mash identity should be at least 95%
       mashDistCutoff: 0.95
@@ -151,10 +151,10 @@ steps:
         pyani: " -m ANIb "
         representativeAniCutoff: 0.95
   readMapping:
-    bwa:
+    bwa2:
       additionalParams:
-        bwa_index: ""
-        bwa_mem: ""
+        bwa2_index: ""
+        bwa2_mem: ""
      # Even low coverage values should be reported
      # because evaluation whether a dataset contains a genome
      # can be done afterwards.
@@ -175,11 +175,11 @@ steps:
   plasmid:
     SCAPP:
       additionalParams:
-        bwa: "  "
+        bwa2: "  "
         SCAPP: "  "
         coverm: " --min-covered-fraction 0 "
         minimap: " "
-        samtoolsViewBwa: " -F 3584 " 
+        samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
     ViralVerifyPlasmid:
       filter: true
@@ -275,13 +275,14 @@ steps:
         download:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
           md5sum: d7e627221a1d4584d1c1795cda774cdb
-          #    mmseqs2_taxonomy:
-          #      ncbi_nr:
-          #        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
-          #        database:
-          #          download:
-          #            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
-          #            md5sum: 184bb8207ee1575cae7756137cde076b
+#    mmseqs2_taxonomy:
+#      runOnMAGs: false
+#      ncbi_nr:
+#        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+#        database:
+#          download:
+#            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
+#            md5sum: 184bb8207ee1575cae7756137cde076b
     keggFromMMseqs2:
       database:
         download:

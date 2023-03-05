@@ -1,12 +1,15 @@
 set -e
 
+ENTRY="wPlasmids"
 OPTIONS=$1
 YAML="${2:-example_params/plasmid.yml}"
-WORK="${3:-work}"
+WORK="${3:-work}_${ENTRY}"
 PROFILE="${4:-standard}"
+LOG_DIR="${WORK}/logs"
 make run_small_full_test WORK_DIR=${WORK} \
         PARAMS_FILE=$YAML \
        	PROFILE="${PROFILE}" \
+	LOG_DIR=${LOG_DIR} \
        	OPTIONS=" $OPTIONS " \
-        ENTRY="wPlasmids"
-make check
+        ENTRY="${ENTRY}"
+make check LOG_DIR=${LOG_DIR}

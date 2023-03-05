@@ -9,4 +9,4 @@ RUN wget -qO- https://github.com/samtools/samtools/releases/download/1.12/samtoo
     make &&\
     make install &&\
     cd .. && rm -rf ${SAMTOOLS}
-COPY --from=bwa-mem2 /usr/local/bin/bwa-mem2 /usr/local/bin 
+COPY --from=bwa-mem2 /usr/local/bin/bwa-mem2*    /usr/local/bin/ 

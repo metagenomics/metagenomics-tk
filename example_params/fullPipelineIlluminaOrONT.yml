@@ -45,9 +45,9 @@ steps:
       additionalParams: " -i 1 "
       quality: "AUTO"
   binning:
-    bwa:
+    bwa2:
       additionalParams: 
-        bwa: "  "
+        bwa2: "  "
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
     contigsCoverage:
@@ -107,8 +107,8 @@ steps:
       additionalParams:
         mashSketch: " "
         mashScreen: " "
-        bwa: " "
-        samtoolsViewBwa: " -F 3584 " 
+        bwa2: " "
+        samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
         coverm: "  --min-covered-fraction 0 "
         minimap: "  "
@@ -120,10 +120,10 @@ steps:
     contigsCoverage:
       additionalParams: ""
   readMapping:
-    bwa:
+    bwa2:
       additionalParams:
-        bwa_index: ""
-        bwa_mem: ""
+        bwa2_index: ""
+        bwa2_mem: ""
     coverm:
       additionalParams: " --min-covered-fraction 0 "
     minimap:
@@ -165,6 +165,7 @@ steps:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
           md5sum: d7e627221a1d4584d1c1795cda774cdb
     mmseqs2_taxonomy:
+      runOnMAGs: false
       ncbi_nr:
         params: '-s 1 --orf-filter-s 1 -e 1e-15'
         database:
@@ -186,8 +187,8 @@ steps:
     SCAPP:
       additionalParams: 
         SCAPP: "  "
-        bwa: "  "
-        samtoolsViewBwa: " -F 3584 " 
+        bwa2: "  "
+        samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
         coverm: "  "
         minimap: " "

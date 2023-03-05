@@ -14,7 +14,11 @@ ifndef WORK_DIR
 endif
 
 ifndef ENTRY
-	override ENTRY = "wPipeline"
+	override ENTRY = "wFullPipeline"
+endif
+
+ifndef LOG_DIR
+	override LOG_DIR = "log"
 endif
 
 ifndef OPTIONS
@@ -74,8 +78,10 @@ nextflow: ## Downloads Nextflow binary
 	wget -qO- https://github.com/nextflow-io/nextflow/releases/download/v${VERSION}/nextflow-${VERSION}-all > nextflow
 	chmod a+x nextflow
 
+
 check: ## Checks if processes did fail and the current nextflow run returns exit code 1. (Useful in a github actions context)
-	bash ./scripts/check_log.sh $$(ls -1 log/trace.* | tail -n 1 ) || (echo "$?"; exit 1)
+	bash ./scripts/check_log.sh $$(ls -1 ${LOG_DIR}/trace.* | tail -n 1 ) || (echo "$?"; exit 1)
+
 
 checkPublisDirMode: ## Check if publishDirMode is set in process
 	! (grep -r publishIR modules/ | grep -v "//" | grep -v params.publishDirMode) || echo "publishDirMode must always be set in process publishDir method"
@@ -107,10 +113,9 @@ dev_wiki: wiki_venv ## Start mkdocs developer session
 
 build_publish_docker:
 	bash ./scripts/buildPublishImage.sh ${COMMIT_START} ${COMMIT_END} ${DOCKER_REPOSITORY}
-
 	
 run_small_full_test: nextflow ## Prepares input files like downloading bins and reads and executes Nextflow. The default configuration it runs the full pipeline locally.
-	./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR}_${ENTRY} -profile ${PROFILE} -resume -entry ${ENTRY} -params-file ${PARAMS_FILE}; exit $$?
+	NXF_HOME=$$PWD/.nextflow ./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR} -profile ${PROFILE} -resume -entry ${ENTRY} -params-file ${PARAMS_FILE} --logDir ${LOG_DIR} ; exit $$?
 
 help: ## Lists available Makefile commands
 	@egrep '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-16s\033[0m %s\n", $$1, $$2}'

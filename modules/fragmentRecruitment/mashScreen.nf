@@ -1,6 +1,8 @@
 nextflow.enable.dsl=2
 
-include { pBowtie2; pMinimap2; pBwa; pGetBinStatistics; pCovermGenomeCoverage; pCovermContigsCoverage; } from  '../binning/processes'
+include { pBowtie2; pMinimap2; pBwa; pBwa2; pGetBinStatistics; \
+	pCovermGenomeCoverage; pCovermContigsCoverage; } from  '../binning/processes'
+
 include { pMashSketchGenome; \
 	  pMashPaste as pMashPasteChunk; \
 	  pMashPaste as pMashPasteFinal; } from  '../dereplication/pasolli/processes'
@@ -328,6 +330,13 @@ workflow _wRunMapping {
 	params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.samtoolsViewBwa, \
 	params.steps.containsKey("fragmentRecruitment")]), mapperInput)
 
+     pBwa2(Channel.value(params?.steps.containsKey("fragmentRecruitment") \
+	&& params.steps?.fragmentRecruitment?.mashScreen?.additionalParams.containsKey("bwa2")), \
+	Channel.value([Utils.getModulePath(params.modules.fragmentRecruitment), \
+        "readMapping/bwa2", params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.bwa2, \
+	params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.samtoolsViewBwa2, \
+	params.steps.containsKey("fragmentRecruitment")]), mapperInput)
+
      ontReads | join(genomesMerged, by: SAMPLE_IDX) \
 	| map { sample -> [sample[SAMPLE_IDX], sample[GENOMES_MERGED_IDX], sample[SAMPLE_2_IDX]] } \
 	| set { minimapInput }
@@ -338,7 +347,7 @@ workflow _wRunMapping {
         params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.samtoolsViewMinimap, \
 	params.steps.containsKey("fragmentRecruitment")]), minimapInput)
 
-      pBowtie2.out.mappedReads | mix(pBwa.out.mappedReads) | set { mappedReads }
+      pBowtie2.out.mappedReads | mix(pBwa.out.mappedReads, pBwa2.out.mappedReads) | set { mappedReads }
 
   emit:
     mappedShortReads = mappedReads

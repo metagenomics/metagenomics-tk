@@ -450,8 +450,10 @@ workflow wFullPipeline {
 
     ont.binsStats | mix(illumina.binsStats) | set { binsStats }
 
+    SAMPLE_IDX = 0
+    NOT_BINNED_PATH_IDX = 1
     ont.notBinnedContigs | mix(illumina.notBinnedContigs) 
-       | map { notBinned -> [ notBinned[0], "notBinned", notBinned[1]]} \
+       | map { notBinned -> [ notBinned[SAMPLE_IDX], notBinned[SAMPLE_IDX] + "_notBinned", notBinned[NOT_BINNED_PATH_IDX]]} \
        | set { notBinnedContigs }
 
     ont.binsStats | mix(illumina.binsStats) 
@@ -490,7 +492,6 @@ workflow wFullPipeline {
 
     wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs, null, contigCoverage)
 
-    SAMPLE_IDX = 0
     BIN_ID_IDX = 1
     PATH_IDX = 2
     wAnnotateBinsList.out.proteins \
