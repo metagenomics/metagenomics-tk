@@ -165,7 +165,13 @@ steps:
         minimap2_index: ""
         minimap2: ""
   cooccurrence:
-    additionalParams: " -t 0.9 -z 40 -o 'correlation' "
+    inference:
+       additionalParams: " -t 0.9 -z 40 -o 'correlation' "
+    metabolicAnnotation:
+      additionalParams:
+        metabolicEdgeBatches: 10
+        metabolicEdgeReplicates: 5
+        smetana: " --molweight "
   plasmid:
     SCAPP:
       additionalParams:

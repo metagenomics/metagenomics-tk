@@ -269,7 +269,7 @@ workflow _wCooccurrence {
 
      //Run Smetana
      pSmetanaEdges(Channel.from(1..params.steps.cooccurrence.metabolicAnnotation.additionalParams.metabolicEdgeReplicates),\
-	batchedFileEdges | join(batchedEdges) | view | map{ model -> model.tail()})
+	batchedFileEdges | join(batchedEdges) | map{ model -> model.tail()})
 
      // Get edge metrics and update the previously creatd network
      METRICS = 6
