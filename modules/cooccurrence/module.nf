@@ -48,7 +48,7 @@ process pBuildNetwork {
 
     output:
     path("community.tsv"), emit: community
-    path("edges_index.tsv"), emit: edges
+    path("edges_index.tsv"), emit: edges, optional: true 
     path("gtdb.tsv"), emit: gtdb
     path("output.graphml"), emit: graph
     path("output_raw.graphml"), emit: graphRaw
@@ -271,8 +271,13 @@ workflow _wCooccurrence {
 	| map { edges -> [edges[BATCH_NAME_1_IDX], edges.tail().flatten().unique()] } \
 	| set { batchedEdges }
 
+     replicates = 1
+     if(params.steps.cooccurrence.containsKey("metabolicAnnotation")){
+          replicates = params.steps.cooccurrence.metabolicAnnotation.additionalParams.metabolicEdgeReplicates
+     }
+
      //Run Smetana
-     pSmetanaEdges(Channel.from(1..params.steps.cooccurrence.metabolicAnnotation.additionalParams.metabolicEdgeReplicates),\
+     pSmetanaEdges(Channel.from(1..replicates),\
 	batchedFileEdges | join(batchedEdges) | map{ model -> model.tail()})
 
      // Get edge metrics and update the previously creatd network

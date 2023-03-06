@@ -12,6 +12,8 @@ paste -d$'\t' classification.tsv binId.tsv > gtdb.tsv
 Rscript /cooccurrence.R create -o $(pwd) -m abundance.tsv  -g gtdb.tsv -c !{task.cpus} !{params.steps.cooccurrence.inference.additionalParams}
 
 # Prepend row number to every line which should allow to batch the computation
-awk -v batches=!{batchSize} \
+if ! [ -s edges.tsv ];then
+  awk -v batches=!{batchSize} \
 	'{ printf("%0.0f\t",(NR/(batches+.001))+.5) ;print $1"\t"$2 }' <(tail -n +2 edges.tsv | sort -t$'\t' -k 1,1) \
 	| sed '1s;^;IDX\tV1\tV2\n;' > edges_index.tsv
+fi
