@@ -119,8 +119,8 @@ process pSmetanaEdges {
 
     container "${params.smetana_image}"
 
-    beforeScript params?.steps.containsKey("metabolomics") \
-	? Utils.getBeforeScript(params?.steps?.cooccurrence?.beforeProcessScript.trim(), params.smetana_image) \
+    beforeScript params?.steps.containsKey("cooccurrence") && params?.steps?.cooccurrence.containsKey("beforeProcessScript") \
+	? Utils.getBeforeScript(params.steps.cooccurrence.beforeProcessScript.trim(), params.smetana_image) \
 	: ""
 
     when params.steps.containsKey("cooccurrence") && params.steps.cooccurrence.containsKey("metabolicAnnotation")
