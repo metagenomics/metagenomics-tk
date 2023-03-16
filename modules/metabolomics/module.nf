@@ -239,7 +239,7 @@ workflow wAnalyseMetabolitesFile {
 
      _wAnalyseMetabolites(bins, proteins, type)
   emit:
-     models = _wAnalyseMetabolites.out.model
+     models = _wAnalyseMetabolites.out.models
 }
 
 

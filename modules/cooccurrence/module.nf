@@ -272,7 +272,7 @@ workflow _wCooccurrence {
 	| set { batchedEdges }
 
      replicates = 1
-     if(params.steps.cooccurrence.containsKey("metabolicAnnotation")){
+     if(params.steps.containsKey("cooccurrence") && params.steps.cooccurrence.containsKey("metabolicAnnotation")){
           replicates = params.steps.cooccurrence.metabolicAnnotation.additionalParams.metabolicEdgeReplicates
      }
 
