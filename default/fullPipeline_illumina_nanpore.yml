@@ -184,31 +184,16 @@ steps:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/pfam-A_35.0.hmm.gz
           md5sum: c80b75bd48ec41760bbca19c70616e36
       additionalParams: " --thr 7 "
-    MobTyper:
-      filter: true
-      minLength: 1000
-      additionalParams: " --min_length 1000  "
-      database:
-        download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20220929.gz
-          md5sum: 21fcaf9c3754a985d1d6875939d71e28
-    Platon:
-      filter: false
-      database:
-        download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/platon_20220929.tar.gz
-          md5sum: f6d1701704396182c6c9daca053eb9d6
-      additionalParams: "   "
     PlasClass:
       filter: true
       # A cutoff of 0.9 for longer (> 2 kb) sequences should pretty much yield only plasmids.
       threshold: 0.9
       additionalParams: "   "
     Filter:
-      method: "AND"
+      method: "OR"
       minLength: 1000 
     PLSDB:
-      sharedKmerThreshold: 30
+      sharedKmerThreshold: 0
       database:
         download:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20220929.tar.bz2
@@ -222,6 +207,14 @@ steps:
      # -v: Maximum p-value to report
         mashSketch: " -S 42 -k 21 -s 1000 "
         mashDist: " -v 0.1 -d 0.1 "
+    MobTyper:
+      filter: true
+      minLength: 1000
+      additionalParams: " --min_length 1000  "
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20220929.gz
+          md5sum: 21fcaf9c3754a985d1d6875939d71e28
   annotation:
     prokka:
       defaultKingdom: false

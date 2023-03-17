@@ -245,6 +245,7 @@ process pFilter {
     output:
     tuple val("${sample}"), val("${binID}"), path("${binID}_filtered.fasta.gz"), emit: plasmids, optional: true
     tuple val("${sample}"), val("${binID}"), path("${binID}_filtered.tsv"), emit: plasmidsTsv, optional: true
+    tuple val("${sample}"), val("${binID}"), path("${binID}_detection_tools.tsv"), emit: detectionTools, optional: true
     tuple val("${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -254,7 +255,10 @@ process pFilter {
     switch(params.steps?.plasmid?.Filter.method) {
       case "OR":
        '''
+       mkdir header
        for file in !{contigHeaderFiles}; do 
+         METHOD="$(echo ${file} | rev | cut -d '_' -f 1 | rev | cut -d '.' -f 1)"
+         csvtk cut -f CONTIG --tabs ${file} | sed -e "2,$ s/$/\tTRUE/g"  -e "1 s/$/\t${METHOD}/g" > header/${file}
     	 csvtk cut -f CONTIG --tabs ${file} | tail -n +2 >> filtered_header.tsv
        done
 
@@ -263,6 +267,9 @@ process pFilter {
 
        if [ -s filtered_header.tsv ]; then
          sort filtered_header.tsv | uniq > filtered_sorted_header.tsv
+
+         csvtk -t join -f 1 <(seqkit fx2tab --name --only-id !{contigs}) header/*  -k --na FALSE > !{binID}_detection_tools.tsv
+
          seqkit grep -f filtered_sorted_header.tsv !{contigs} | seqkit seq --min-len !{MIN_LENGTH} \
          | pigz -c > ${PLASMID_OUT_FASTA}
 

@@ -9,8 +9,7 @@ include { pPlaton as pPlatonCircular; \
           pPlasClass as pPlasClassCircular; \
           pViralVerifyPlasmid as pViralVerifyPlasmidCircular; \
           pViralVerifyPlasmid as pViralVerifyPlasmidLinear; \
-          pMobTyper as pMobTyperLinear; \
-          pMobTyper as pMobTyperCircular;
+          pMobTyper; \
           pFilter as pCircularPlasmidsFilter;
           pFilter as pContigsPlasmidsFilter } from './processes'
 
@@ -78,7 +77,7 @@ process pPLSDB {
 
     output:
     tuple val("${sample}"), val("${binID}"), path("${binID}.tsv"), emit: allHits
-    tuple val("${sample}"), val("${binID}"), path("${binID}_kmerThreshold_*.tsv"), emit: filteredHitsMetadata
+    tuple val("${sample}"), val("${binID}"), path("${binID}_kmerThreshold_*.tsv"), emit: filteredHitsMetadata, optional: true
     tuple val("${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -184,7 +183,7 @@ def getSampleToolKey(sample){
   SAMPLE_IDX = 0
   BIN_ID_IDX = 1
   FILE_IDX = 2
-  return ["${sample[SAMPLE_IDX]}_ttt_${sample[BIN_ID_IDX]}_ttt_${sample[FILE_IDX]}", sample[SAMPLE_IDX], sample[BIN_ID_IDX], sample[FILE_IDX]]
+  return ["${sample[SAMPLE_IDX]}_ttt_${sample[BIN_ID_IDX]}_ttt_${sample[FILE_IDX]}.tsv", sample[SAMPLE_IDX], sample[BIN_ID_IDX], sample[FILE_IDX]]
 }
 
 /*
@@ -195,16 +194,16 @@ workflow _wRunMobTyper {
      samplesContigs
    main:
       // Split input files in chunks
-      _wSplit(samplesContigs, Channel.from(params.modules.plasmids.process.pMobTyper.defaults.inputSize)) | pMobTyperLinear
+      _wSplit(samplesContigs, Channel.from(params.modules.plasmids.process.pMobTyper.defaults.inputSize)) | pMobTyper
 
       // Create per sample and bin id a composite key
       UNIQUE_SAMPLE_KEY_IDX = 0
-      pMobTyperLinear.out.plasmidsStats | map { sample -> getSampleToolKey(sample) } \
+      pMobTyper.out.plasmidsStats | map { sample -> getSampleToolKey(sample) } \
 	| unique { sample -> sample[UNIQUE_SAMPLE_KEY_IDX] } | set { mobTyperStatsChunk }
 
       // Collect all chunks of a specific sample and bin id
       STATS_IDX = 3 
-      pMobTyperLinear.out.plasmidsStats \
+      pMobTyper.out.plasmidsStats \
 	| collectFile(keepHeader: true){ sample -> \
 	[ getSampleToolKey(sample)[UNIQUE_SAMPLE_KEY_IDX], file(sample[STATS_IDX]).text] } \
 	| map { f -> [file(f).name, f] } | set { mobTyperStatsCombined}
@@ -216,7 +215,7 @@ workflow _wRunMobTyper {
 	| map { sample -> sample.remove(COMPOSED_INDEX_IDX); sample } | set { mobTyperStatsFinal }
     emit:
       plasmidsStats = mobTyperStatsFinal
-      logs = pMobTyperLinear.out.logs
+      logs = pMobTyper.out.logs
 }
 
 
@@ -225,7 +224,7 @@ workflow _runNonPlasmidAssemblyAnalysis {
       samplesContigs
     main:
       // Check if Contigs are plasmids
-      samplesContigs | (pPlasClassLinear & _wRunMobTyper & pViralVerifyPlasmidLinear & pPlatonLinear)
+      samplesContigs | (pPlasClassLinear & pViralVerifyPlasmidLinear & pPlatonLinear)
 
       // Check which tools the user has chosen for filtering contigs
       selectedFilterTools = params?.steps?.plasmid.findAll({ tool, options -> {  options instanceof Map && options?.filter } }).collect{it.key}
@@ -234,12 +233,11 @@ workflow _runNonPlasmidAssemblyAnalysis {
       // Collect output
       pPlatonLinear.out.plasmidsStats \
 	| mix(pPlasClassLinear.out.probabilities) \
-	| mix(_wRunMobTyper.out.plasmidsStats) \
 	| mix(pViralVerifyPlasmidLinear.out.plasmidsStats) \
 	| set { plasmidsStats }
 
       if(params?.steps?.plasmid.find{ it.key == "Filter" }?.value){
-      	// Group outputs of multiple tools (e.g. Platon output and MobTyper and Plasclass) and use them for filtering
+      	// Group outputs of multiple tools (e.g. Platon and Plasclass output) and use them for filtering
       	SAMPLE_ID_IDX = 0 
       	BIN_ID_IDX = 1 
       	TOOL_TYPE_IDX = 2 
@@ -258,8 +256,7 @@ workflow _runNonPlasmidAssemblyAnalysis {
       	samplesContigs | set { samplesContigsPlasmids }
       }
 
-      pPlasClassLinear.out.logs | mix(_wRunMobTyper.out.logs) \
-	| mix(pViralVerifyPlasmidLinear.out.logs) | mix(pPlatonLinear.out.logs) | pDumpLogs
+      pPlasClassLinear.out.logs | mix(pViralVerifyPlasmidLinear.out.logs) | mix(pPlatonLinear.out.logs) | pDumpLogs
 
     emit:
       plasmids = samplesContigsPlasmids
@@ -284,7 +281,7 @@ workflow _runCircularAnalysis {
 	| map { plasmids -> [plasmids[SAMPLE_IDX], plasmids[SAMPLE_IDX] + "_plasmid_assembly", plasmids[BIN_IDX]] } \
 	| set { newPlasmids }
 
-       newPlasmids | (pPlasClassCircular & _wRunMobTyper & pViralVerifyPlasmidCircular & pPlatonCircular)
+       newPlasmids | (pPlasClassCircular & pViralVerifyPlasmidCircular & pPlatonCircular)
 
        pBowtie2(Channel.value(params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("SCAPP") \
                && params.steps?.plasmid?.SCAPP?.additionalParams.containsKey("bowtie")), \
@@ -330,12 +327,11 @@ workflow _runCircularAnalysis {
        // Collect output
        pPlatonCircular.out.plasmidsStats \
  	| mix(pPlasClassCircular.out.probabilities) \
-	| mix(_wRunMobTyper.out.plasmidsStats) \
 	| mix(pViralVerifyPlasmidCircular.out.plasmidsStats) \
 	| set { plasmidsStats }
 
        if(params?.steps?.plasmid.find{ it.key == "Filter" }?.value){
-      	// Group outputs of multiple tools (e.g. Platon output and MobTyper and Plasclass) and use them for filtering
+      	// Group outputs of multiple tools (e.g. Platon and Plasclass output) and use them for filtering
       	 SAMPLE_ID_IDX = 0 
       	 BIN_ID_IDX = 1 
       	 TOOL_TYPE_IDX = 2 
@@ -355,7 +351,7 @@ workflow _runCircularAnalysis {
       	 newPlasmids | set { filteredPlasmids }
       }
 
-      pSCAPP.out.logs | mix(pPlasClassCircular.out.logs) | mix(_wRunMobTyper.out.logs)  \
+      pSCAPP.out.logs | mix(pPlasClassCircular.out.logs) \
 	| mix(pViralVerifyPlasmidCircular.out.logs) | mix(pPlatonCircular.out.logs) | pDumpLogs
 
     emit:
@@ -378,11 +374,11 @@ workflow _wPlasmids {
        _runCircularAnalysis(assemblyGraph, illuminaReads, ontReads, ontMedianQuality)
     
        _runNonPlasmidAssemblyAnalysis.out.plasmids \
-	| mix(_runCircularAnalysis.out.plasmids) | set { allPlasmids} 
+	| mix(_runCircularAnalysis.out.plasmids) | set { allPlasmids } 
 
-       allPlasmids | pPLSDB
+       allPlasmids | view | (pPLSDB & _wRunMobTyper)
 
-       pPLSDB.out.logs | pDumpLogs
+       pPLSDB.out.logs | mix(_wRunMobTyper.out.logs) | pDumpLogs
      emit:
        newPlasmids = _runCircularAnalysis.out.plasmids
        newPlasmidsCoverage = _runCircularAnalysis.out.coverage
