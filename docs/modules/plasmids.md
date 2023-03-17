@@ -57,7 +57,6 @@ The read mapper can either be Bowtie or Bwa for Illumina and minimap for long re
             direction LR
                 pa[Platon]
                 vi[ViralVerify]
-                mo[MobTyper]
                 plc[PlasClass]
             end
             D --> fc
@@ -72,7 +71,6 @@ The read mapper can either be Bowtie or Bwa for Illumina and minimap for long re
             direction LR
                 p[Platon]
                 v[ViralVerify]
-                m[MobTyper]
                 pl[PlasClass]
             end
         d[Detected Plasmids]
@@ -85,6 +83,7 @@ The read mapper can either be Bowtie or Bwa for Illumina and minimap for long re
             vf[VFDB]
             ba[BacMet]
             pl[PLSDB]
+            m[MobTyper]
             rgi[RGI]
             ke[KEGG]
             o[...]
