@@ -101,3 +101,7 @@ and afterwards run the the aggregation as described below:
     ---8<--- "../example_params/fullPipelineAggregate.yml"
     ```
 
+### Caveats
+
+* The pipeline breaks if `--stageInMode` is specified with `copy`.
+
