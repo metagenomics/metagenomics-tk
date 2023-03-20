@@ -32,10 +32,11 @@ def constructParametersObject(String tool){
 * This function decides if the MMSeqs taxonomy process should be executed on MAGs.
 *
 */
-def runMMSeqsTaxonomy(isMMSeqsTaxonomySettingSet, isBinned, runOnBinned) {
-    // True if the MMSeqsTaxonomy setting is set and either the sample is not binned 
+def runMMSeqsTaxonomy(isMMSeqsTaxonomySettingSet, isBinned, isPlasmid, runOnBinned) {
+    // True if the MMSeqsTaxonomy setting is set and plasmids are not used as input and 
+    // either the sample is not binned 
     // or should explicitly run on binned samples 
-    return isMMSeqsTaxonomySettingSet && (!isBinned || runOnBinned)
+    return isMMSeqsTaxonomySettingSet && !isPlasmid && (!isBinned || runOnBinned)
 }
 
 
@@ -153,6 +154,7 @@ process pMMseqs2_taxonomy {
       when:
       runMMSeqsTaxonomy(params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy"), \
 	   binType.equals("binned"), \
+	   binType.equals("plasmid"), \
            params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy") && params?.steps.annotation.mmseqs2_taxonomy.runOnMAGs)
 
    input:
