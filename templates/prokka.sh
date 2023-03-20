@@ -25,9 +25,12 @@ PROKKA_COV_TMP_TSV=!{sample}_${BIN_ID}_prokka_cov_tmp.tsv
 PROKKA_TSV=${BIN_ID}_prokka.tsv
 csvtk join -d$'\t' -T -f "locus_tag;ID" ${BIN_PREFIX}.tsv gff.tsv > ${PROKKA_TMP_TSV}
 
-# join prokka tsv with contig coverage tsv
-csvtk join -d$'\t' -T -f "CHR;CONTIG_NAME" ${PROKKA_TMP_TSV} !{metabatCoverage} \
-	| csvtk cut -d$'\t' -T -f -SAMPLE  > ${PROKKA_COV_TMP_TSV}
-csvtk join -d$'\t' -T -f "CONTIG;CHR" !{defaultCoverage} ${PROKKA_COV_TMP_TSV} > ${PROKKA_TSV}
-
+# join prokka tsv with contig coverage tsv if not empty
+if [ -s !{metabatCoverage} ] && [ -s !{defaultCoverage} ]; then 
+	csvtk join -d$'\t' -T -f "CHR;CONTIG_NAME" ${PROKKA_TMP_TSV} !{metabatCoverage} \
+		| csvtk cut -d$'\t' -T -f -SAMPLE  > ${PROKKA_COV_TMP_TSV}
+	csvtk join -d$'\t' -T -f "CONTIG;CHR" !{defaultCoverage} ${PROKKA_COV_TMP_TSV} > ${PROKKA_TSV}
+	else
+	cp ${PROKKA_TMP_TSV} ${PROKKA_TSV}
+fi
 pigz --best --processes !{task.cpus} *gff *.faa *.fna *.ffn *.fsa *.gbk *.sqn *tbl
