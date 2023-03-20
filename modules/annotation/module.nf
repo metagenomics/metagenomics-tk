@@ -509,7 +509,17 @@ workflow wAnnotateFile {
       file(annotationTmpDir).mkdirs()
       projectTableFile | splitCsv(sep: '\t', header: true) \
       | map{ [it.DATASET, it.BIN_ID, file(it.PATH)] } | set { input } 
-      _wAnnotation(Channel.value("out"), Channel.value("param"), input, null, Channel.empty())
+
+      f1 = file(params.tempdir + "/empty1")
+      f1.text = ""
+
+      f2 = file(params.tempdir + "/empty2")
+      f2.text = ""
+
+      input | map { bin -> bin[0]} | unique \
+	| combine(Channel.value([f1,f2])) | set { coverage }
+
+      _wAnnotation(Channel.value("out"), Channel.value("param"), input, null, coverage)
    emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }
