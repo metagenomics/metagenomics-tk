@@ -38,7 +38,6 @@ process pViralVerifyPlasmid {
     tuple val("${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
       file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-
     shell:
     EXTRACTED_DB=params.steps?.plasmid?.ViralVerifyPlasmid?.database?.extractedDBPath ?: ""
     DOWNLOAD_LINK=params.steps?.plasmid?.ViralVerifyPlasmid?.database?.download?.source ?: ""
@@ -129,7 +128,7 @@ process pPlasClass {
 
     label 'medium'
 
-    tag "$sample $binID"
+    tag "Sample: $sample, BinID: $binID"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "PlasClass", filename) }, \
         pattern: "{**.tsv}"
