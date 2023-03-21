@@ -115,7 +115,7 @@ process pCount {
 
     label 'tiny'
 
-    tag "Sample: $sample"
+    tag "Sample: $sample, BinID: $binID"
 
     container "${params.ubuntu_image}"
 
