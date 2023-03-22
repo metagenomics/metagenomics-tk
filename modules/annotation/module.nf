@@ -475,9 +475,9 @@ process pProkka {
       tuple val("${sample}"), val("${binID}"), file("*.fna.gz"), emit: fna 
       tuple val("${sample}"), val("${binID}"), file("*.ffn.gz"), emit: ffn 
       tuple val("${sample}"), val("${binID}"), file("*.fsa.gz"), emit: fsa 
-      tuple val("${sample}"), val("${binID}"), file("*.gbk.gz"), emit: gbk 
+      tuple val("${sample}"), val("${binID}"), file("*.gbk.gz"), optional: true, emit: gbk 
       tuple val("${sample}"), val("${binID}"), file("*.tbl.gz"), emit: tbl 
-      tuple val("${sample}"), val("${binID}"), file("*.sqn.gz"), emit: sqn 
+      tuple val("${sample}"), val("${binID}"), file("*.sqn.gz"), optional: true, emit: sqn
       tuple val("${sample}"), val("${binID}"), file("*.txt"), emit: txt 
       tuple val("${sample}"), val("${binID}"), file("*_prokka.tsv"), emit: tsv 
       tuple val("${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
