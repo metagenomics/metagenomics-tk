@@ -273,7 +273,10 @@ workflow _wBuildNetwork {
     gtdbConcatenated
   main:
      // Run the network inference process
-     method = params.steps.cooccurrence.inference.additionalParams.method
+     method = ""
+     if(params.steps.containsKey("cooccurrence")){
+        method = params.steps.cooccurrence.inference.additionalParams.method
+     }
      graph = Channel.empty()
      edges = Channel.empty()
      if(method == 'spiec-easi'){
