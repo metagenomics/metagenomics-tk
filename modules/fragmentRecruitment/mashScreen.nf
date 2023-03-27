@@ -266,7 +266,7 @@ workflow _wRunMash {
      pMashPasteFinal(params?.steps.containsKey("fragmentRecruitment") &&  params?.steps.fragmentRecruitment.containsKey("mashScreen"), \
 	Channel.value([getModulePath(params.modules.fragmentRecruitment), "mash/paste"]),  pMashPasteChunk.out.sketch | collect(flat: false))
 
-     pMashPasteFinal.out.logs | view | pDumpLogs
+     pMashPasteFinal.out.logs | pDumpLogs
 
      // Screen reads for genomes
      SAMPLE_IDX = 0
