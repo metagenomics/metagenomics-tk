@@ -1,9 +1,11 @@
 # Cooccurrence
 
 The Cooccurrence module builds a cooccurrence network where each node is a MAG
-and every edge represents an association between them. In addition, it is possible to compute 
-multiple metrics for every edge based on genome-scale metabolic models and the
-smetana metrics.
+and every edge represents an association between them. The network can be inferred based on
+correlation or inverse covariance estimation by spiec-easi. Spiec easi is executed multiple times
+based on different parameter settings in order to find the most stable network.
+In addition, it is possible to compute multiple metrics for every edge based on genome-scale
+metabolic models and the smetana metrics. 
 
 ```
 -entry wCooccurrence -params-file example_params/coocurrence.yml
@@ -71,4 +73,8 @@ The following parameters can be configured:
  * edges_index.tsv: Edges of the graph
 
  * edgeAttributes.tsv: Edge attributes of the graph containing metrics computed by Smetana.
+
+### Spiec Easi
+
+ * stability.txt: Network stability estimation
 

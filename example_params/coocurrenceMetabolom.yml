@@ -13,13 +13,15 @@ steps:
        count: test_data/cooccurrence/countsMedium.tsv
        models: test_data/cooccurrence/models.tsv
      inference:
-        additionalParams: " -t 0.1 -z 80 -o 'correlation' -w 0.4 "
+        additionalParams:
+          method: 'spiec-easi'
+          rscript: " --mincovthreshold 0.1 --maxzero 80"
+          timeLimit: "AUTO"
      metabolicAnnotation:
        additionalParams:
-         metabolicEdgeBatches: 20
-         metabolicEdgeReplicates: 3
-         smetana: " --molweight "
-
+         metabolicEdgeBatches: 5
+         metabolicEdgeReplicates: 10
+         smetana: " --flavor bigg "
 
 resources:
   large:

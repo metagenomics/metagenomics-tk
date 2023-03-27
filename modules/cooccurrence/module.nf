@@ -30,7 +30,7 @@ process pVerticalConcat {
 }
 
 
-process pBuildNetwork {
+process pBuildCorrelationNetwork {
 
     label 'large'
 
@@ -38,25 +38,77 @@ process pBuildNetwork {
    
     container "${params.cooccurrence_image}"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "network", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "network/correlation", filename) }
 
-    when params.steps.containsKey("cooccurrence") && params.steps.cooccurrence.containsKey("inference")
+    when params.steps.containsKey("cooccurrence") && params.steps.cooccurrence.containsKey("inference") \
+	&& params.steps.cooccurrence.inference.additionalParams.method == 'correlation'
 
     input:
     file('abundance.tsv')
     file('gtdb.input.tsv')
 
     output:
-    path("community.tsv"), emit: community
-    path("edges_index.tsv"), emit: edges, optional: true 
-    path("gtdb.tsv"), emit: gtdb
-    path("output.graphml"), emit: graph
-    path("output_raw.graphml"), emit: graphRaw
+    tuple path("community.tsv"), emit: community
+    tuple path("edges_index.tsv"), emit: edges, optional: true 
+    tuple path("gtdb.tsv"), emit: gtdb
+    tuple path("stability.txt"), emit: stability, optional: true
+    tuple path("output.graphml"), emit: graph
+    tuple path("output_raw.graphml"), emit: graphRaw
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
-    batchSize = params.steps.cooccurrence.containsKey("metabolicAnnotation") ? params.steps.cooccurrence.metabolicAnnotation.additionalParams.metabolicEdgeBatches : 1
-    template("coocurrenceCreate.sh")
+    batchSize = params.steps.cooccurrence.containsKey("metabolicAnnotation") \
+	? params.steps.cooccurrence.metabolicAnnotation.additionalParams.metabolicEdgeBatches : 1
+    method = params.steps.cooccurrence.inference.additionalParams.method
+    template("coocurrenceCreateCorrelation.sh")
+}
+
+MAX_SPIEC_EASI_RETRIES = 2
+process pBuildSpiecEasiNetwork {
+
+    label 'large'
+
+    cache 'deep'
+
+    tag "nLambda: ${nlambda}"
+
+    time params.steps.containsKey("cooccurrence") ? \
+	Utils.setTimeLimit(params.steps.cooccurrence.inference.additionalParams, \
+	params.modules.cooccurrence.process.pBuildSpiecEasiNetwork.defaults, \
+	params.resources.large) : ""
+
+    maxRetries MAX_SPIEC_EASI_RETRIES
+
+    // Spiec easi can take quite long. In case it takes too long it will resubmit it just once.
+    errorStrategy { if(task.attempt < MAX_SPIEC_EASI_RETRIES){ sleep(Math.pow(2, task.attempt) * 200 as long); return 'retry' } else { return 'ignore'  } }
+   
+    container "${params.cooccurrence_image}"
+
+    publishDir params.output, mode: "${params.publishDirMode}", \
+	saveAs: { filename -> getOutput(params.runid, "network/spiec-easi/nlambda_${nlambda}", filename) }
+
+    when params.steps.containsKey("cooccurrence") && params.steps.cooccurrence.containsKey("inference") \
+	&& params.steps.cooccurrence.inference.additionalParams.method == 'spiec-easi'
+
+    input:
+    each nlambda
+    file('abundance.tsv')
+    file('gtdb.input.tsv')
+
+    output:
+    tuple path("community.tsv"), env(STABILITY), emit: community
+    tuple path("edges_index.tsv"), env(STABILITY), val("${nlambda}"), emit: edges, optional: true 
+    tuple path("gtdb.tsv"), env(STABILITY), emit: gtdb
+    tuple path("stability.txt"), env(STABILITY), emit: stability
+    tuple path("output.graphml"), env(STABILITY), val("${nlambda}"), emit: graph
+    tuple path("output_raw.graphml"), env(STABILITY), val("${nlambda}"), emit: graphRaw
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    shell:
+    batchSize = params.steps.cooccurrence.containsKey("metabolicAnnotation") \
+	? params.steps.cooccurrence.metabolicAnnotation.additionalParams.metabolicEdgeBatches : 1
+    method = 'spiec-easi'
+    template("coocurrenceCreateSpiecEasi.sh")
 }
 
 
@@ -67,7 +119,7 @@ process pUpdateNetwork {
     container "${params.cooccurrence_image}"
 
     publishDir params.output, mode: "${params.publishDirMode}",\
-	saveAs: { filename -> getOutput(params.runid, "network", filename) }
+	saveAs: { filename -> getOutput(params.runid, "network/${params.steps.cooccurrence.inference.additionalParams.method}/final/update", filename) }
 
     when params.steps.containsKey("cooccurrence") && params.steps.cooccurrence.containsKey("metabolicAnnotation")
 
@@ -81,7 +133,7 @@ process pUpdateNetwork {
 
     shell:
     """
-    Rscript /cooccurrence.R update -g !{graph} -e !{attributes} -o .
+    Rscript /cooccurrence.R update --graph !{graph} --edgeattributes !{attributes} --output .
     """
 }
 
@@ -115,7 +167,9 @@ process pSmetanaEdges {
 
     tag "Edges Batch: ${edges}, Repeat: ${repeat}"
 
-    errorStrategy { if(task.attempt <= MAX_SMETANA_RETRIES){ sleep(Math.pow(2, task.attempt) * 200 as long); return 'retry' } else { return 'ignore'  } }
+    maxRetries MAX_SMETANA_RETRIES
+
+    errorStrategy { if(task.attempt < MAX_SMETANA_RETRIES){ sleep(Math.pow(2, task.attempt) * 200 as long); return 'retry' } else { return 'ignore'  } }
 
     container "${params.smetana_image}"
 
@@ -209,6 +263,53 @@ workflow wCooccurrenceList {
 }
 
 
+/*
+* This workflow infers the network based on different methods.
+*
+*/
+workflow _wBuildNetwork {
+  take:
+    abundance
+    gtdbConcatenated
+  main:
+     // Run the network inference process
+     method = params.steps.cooccurrence.inference.additionalParams.method
+     graph = Channel.empty()
+     edges = Channel.empty()
+     if(method == 'spiec-easi'){
+       nlambda = [30, 60, 90, 120, 150, 180, 210]
+       NETWORK_IDX = 0
+       STABILITY_IDX = 1 
+       NLAMBDA_IDX = 2
+       pBuildSpiecEasiNetwork(nlambda, abundance, gtdbConcatenated)
+       pBuildSpiecEasiNetwork.out.edges | max { it[STABILITY_IDX] } | set {bestEdges}
+
+       bestEdges | collectFile(storeDir: params.output + "/" + getOutput(params.runid, \
+	 "network/spiec-easi/final", "")){ network -> ["nlambda_" + network[NLAMBDA_IDX] + "_" + file(network[NETWORK_IDX]).name, network[NETWORK_IDX].text]}
+       bestEdges | map { network -> network[NETWORK_IDX] } | set { edges } 
+
+       pBuildSpiecEasiNetwork.out.graph | max { it -> it[STABILITY_IDX] } | set {bestGraph}
+
+       bestGraph | collectFile(storeDir: params.output + "/" + getOutput(params.runid, \
+	"network/spiec-easi/final", "")){ network -> ["nlambda_" + network[NLAMBDA_IDX] + "_" + file(network[NETWORK_IDX]).name, network[NETWORK_IDX].text]}
+
+       pBuildSpiecEasiNetwork.out.graphRaw | max { it -> it[STABILITY_IDX] } | collectFile(storeDir: params.output + "/" + getOutput(params.runid, \
+	"network/spiec-easi/final", "")){ network -> ["nlambda_" + network[NLAMBDA_IDX] + "_" + file(network[NETWORK_IDX]).name, network[NETWORK_IDX].text]}
+
+       bestGraph | map { network -> network[NETWORK_IDX] } | set { graph } 
+
+     } else if(method == 'cooccurrence') {
+       // We do not need nlambda for cooccurrence
+       pBuildCorrelationNetwork(abundance, gtdbConcatenated)
+       pBuildCorrelationNetwork.out.edges | set { edges }
+       pBuildCorrelationNetwork.out.graph | set { graph }
+     }
+
+  emit:
+    graph
+    edges
+}
+
 workflow _wCooccurrence {
    take: 
      countCh
@@ -225,8 +326,7 @@ workflow _wCooccurrence {
         | pVerticalConcat | collect \
         | pVerticalConcatFinal | set { abundance }
 
-     // Run the network process
-     pBuildNetwork(abundance, gtdbConcatenated)
+     _wBuildNetwork(abundance, gtdbConcatenated)
 
      MODEL_IDX = 0
      MODEL_1_PATH_IDX = 1
@@ -240,7 +340,7 @@ workflow _wCooccurrence {
 
      // Get all edges, map node ids to model paths (e.g. ERR2592252_bin.25 to 
      // /meta_test/medium/cooccurrence/ERR2592252_bin.25.fa.model.xml)
-     pBuildNetwork.out.edges |  splitCsv(header: true, sep: '\t') | map{ bin -> [bin.V1, bin.V2, bin.IDX]} \
+     _wBuildNetwork.out.edges |  splitCsv(header: true, sep: '\t') | map{ bin -> [bin.V1, bin.V2, bin.IDX]} \
 	| combine(models, by: MODEL_IDX) \
         | map { bin -> [bin[MODEL_2_IDX], bin[MODEL_PATH_IDX], bin[BATCH_IDX]]} \
 	| combine(models, by: MODEL_IDX) \
@@ -293,5 +393,5 @@ workflow _wCooccurrence {
 
      pSmetanaEdges.out.logs | pDumpLogs
 
-     pUpdateNetwork(pBuildNetwork.out.graph, edgeAttributes)
+     pUpdateNetwork(_wBuildNetwork.out.graph, edgeAttributes)
 }

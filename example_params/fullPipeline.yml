@@ -102,7 +102,10 @@ steps:
       additionalParams: " --min-covered-fraction 0 "
   cooccurrence:
     inference:
-       additionalParams: " -t 0.1 -z 80 -o 'correlation' -w 0.4 "
+      additionalParams: 
+        method: 'correlation'
+        rscript: " --mincovthreshold 0.1 --maxzero 80 --minweight 0.4 "
+        timeLimit: "AUTO"
     metabolicAnnotation:
       additionalParams:
         metabolicEdgeBatches: 20

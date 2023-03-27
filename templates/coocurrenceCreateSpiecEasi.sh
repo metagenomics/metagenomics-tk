@@ -9,10 +9,13 @@ cut -f 1 gtdb.input.tsv  | rev \
 paste -d$'\t' classification.tsv binId.tsv > gtdb.tsv
 
 # Run the actual R coocurrence script
-Rscript /cooccurrence.R create -o $(pwd) -m abundance.tsv  -g gtdb.tsv -c !{task.cpus} !{params.steps.cooccurrence.inference.additionalParams}
+Rscript /cooccurrence.R create --output $(pwd) --matrix abundance.tsv  --taxonomy gtdb.tsv --cores !{task.cpus} \
+	--method !{method} --nlambda !{nlambda} !{params.steps.cooccurrence.inference.additionalParams.rscript}
+
+STABILITY=$(cat stability.txt)
 
 # Prepend row number to every line which should allow to batch the computation
-if [ ! -s edges.tsv ];then
+if [ $(wc -l < edges.tsv) -gt 1 ]; then
   awk -v batches=!{batchSize} \
 	'{ printf("%0.0f\t",(NR/(batches+.001))+.5) ;print $1"\t"$2 }' <(tail -n +2 edges.tsv | sort -t$'\t' -k 1,1) \
 	| sed '1s;^;IDX\tV1\tV2\n;' > edges_index.tsv
