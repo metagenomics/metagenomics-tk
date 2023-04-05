@@ -294,7 +294,7 @@ steps:
   metabolomics:
      beforeProcessScript: ""
      filter:
-       minCompleteness: 90
+       minCompleteness: 50
        maxContamination: 5
      gapseq:
        additionalParams: ""
