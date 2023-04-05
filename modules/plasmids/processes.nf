@@ -76,12 +76,18 @@ process pViralVerifyPlasmid {
     trap 'if [[ $? == 1 && ! -s unzipped*proteins_circ.fa ]]; then echo "hmmsearch could not detect any protein"; exit 0; fi' EXIT
     viralverify !{ADDITIONAL_PARAMS}  --hmm ${PFAM_FILE} -p -t !{task.cpus} -f unzipped.fasta -o .
 
+    TMP_OUTPUT="!{binID}_viralverifyplasmid_tmp.tsv"
+    FINAL_OUTPUT="!{binID}_viralverifyplasmid.tsv"
+
     if [ -n "$(find . -name '*.csv')" ]; then
       # Filter viral verify output by user provided strings 
       # and add Sample and BinID
       sed  's/,/\t/g' *.csv \
 	| sed -E -n "1p;/${FILTER_STRING}/p" \
-        | sed -e '1 s/^[^\t]*\t/CONTIG\t/' -e '1 s/^/SAMPLE\tBIN_ID\t/g' -e "2,$ s/^/!{sample}\t!{binID}\t/g" > !{binID}_viralverifyplasmid.tsv
+        | sed -e '1 s/^[^\t]*\t/CONTIG\t/' -e '1 s/^/SAMPLE\tBIN_ID\t/g' -e "2,$ s/^/!{sample}\t!{binID}\t/g" > ${TMP_OUTPUT}
+      if [ $(wc -l < ${TMP_OUTPUT}) -gt 1 ]; then
+        mv ${TMP_OUTPUT} ${FINAL_OUTPUT}
+      fi
     fi
     '''
 }
@@ -142,7 +148,7 @@ process pPlasClass {
     tuple val(sample), val(binID), path(assembly)
 
     output:
-    tuple val("${sample}"), val("${binID}"), val("PlasClass"), path("${binID}_plasclass.tsv"), emit: probabilities
+    tuple val("${sample}"), val("${binID}"), val("PlasClass"), path("${binID}_plasclass.tsv"), emit: probabilities, optional: true
     tuple val("${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -256,10 +262,20 @@ process pFilter {
       case "OR":
        '''
        mkdir header
+       mkdir tmp
+       mkdir missing
        for file in !{contigHeaderFiles}; do 
+         TMP_FILE=tmp/${file}
+         FINAL_FILE=header/${file}
+         MISSING_FILE=missing/${file}
          METHOD="$(echo ${file} | rev | cut -d '_' -f 1 | rev | cut -d '.' -f 1)"
-         csvtk cut -f CONTIG --tabs ${file} | sed -e "2,$ s/$/\tTRUE/g"  -e "1 s/$/\t${METHOD}/g" > header/${file}
+         csvtk cut -f CONTIG --tabs ${file} | sed -e "2,$ s/$/\tTRUE/g"  -e "1 s/$/\t${METHOD}/g" > ${TMP_FILE}
     	 csvtk cut -f CONTIG --tabs ${file} | tail -n +2 >> filtered_header.tsv
+         if [ $(wc -l < ${TMP_FILE}) -gt 1 ]; then
+                mv ${TMP_FILE} ${FINAL_FILE}
+         else
+                mv ${TMP_FILE} ${MISSING_FILE}
+         fi
        done
 
        PLASMID_OUT_FASTA=!{binID}_filtered.fasta.gz 
@@ -268,7 +284,12 @@ process pFilter {
        if [ -s filtered_header.tsv ]; then
          sort filtered_header.tsv | uniq > filtered_sorted_header.tsv
 
-         csvtk -t join -f 1 <(seqkit fx2tab --name --only-id !{contigs}) header/*  -k --na FALSE > !{binID}_detection_tools.tsv
+         csvtk -t join -f 1 <(echo "CONTIG"; seqkit fx2tab --name --only-id !{contigs}) header/*  -k --na FALSE > !{binID}_detection_tools.tsv
+
+         for file in $(ls -1 missing/) ; do  
+            MISS_METHOD=$(csvtk cut -f -CONTIG --tabs $file);  
+            sed -i -e "2,$ s/$/\tFALSE/g" -e "1 s/$/\t${MISS_METHOD}/g" !{binID}_detection_tools.tsv
+         done
 
          seqkit grep -f filtered_sorted_header.tsv !{contigs} | seqkit seq --min-len !{MIN_LENGTH} \
          | pigz -c > ${PLASMID_OUT_FASTA}
