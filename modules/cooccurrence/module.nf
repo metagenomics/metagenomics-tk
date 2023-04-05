@@ -301,7 +301,7 @@ workflow _wBuildNetwork {
 
        bestGraph | map { network -> network[NETWORK_IDX] } | set { graph } 
 
-     } else if(method == 'cooccurrence') {
+     } else if(method == 'correlation') {
        // We do not need nlambda for cooccurrence
        pBuildCorrelationNetwork(abundance, gtdbConcatenated)
        pBuildCorrelationNetwork.out.edges | set { edges }
