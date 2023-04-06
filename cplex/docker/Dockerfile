@@ -1,4 +1,4 @@
-FROM python:3.7
+FROM python:3.12.0a7-windowsservercore-ltsc2022
 
 ARG COSDIR=/opt/CPLEX
 
