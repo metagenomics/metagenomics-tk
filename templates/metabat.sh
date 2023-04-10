@@ -7,7 +7,7 @@ shopt -s nullglob
 TEMP_DIR=$(mktemp -d -p .)
 
 BIN_CONTIG_MAPPING=!{sample}_bin_contig_mapping.tsv
-echo -e "BIN_ID\tCONTIG" > ${BIN_CONTIG_MAPPING}
+echo -e "BIN_ID\tCONTIG\tBINNER" > ${BIN_CONTIG_MAPPING}
 for bin in $(find $(basename !{contigs})* -name "bin*.fa"); do
 	BIN_NAME="!{sample}_$(basename ${bin})"
 
@@ -17,9 +17,9 @@ for bin in $(find $(basename !{contigs})* -name "bin*.fa"); do
 	# Append bin id to every header
 	seqkit replace  -p '(.*)' -r "\${1} MAG=${ID}" $bin > ${BIN_NAME}
 
-	# Create bin to contig mapping
+	# Create bin to contig mapping and add the used binner to each line
 	grep ">" ${bin} | sed 's/>//g' \
-		| sed "s/^/${BIN_NAME}\t/g" >> ${BIN_CONTIG_MAPPING}
+		| sed "s/^/${BIN_NAME}\t/g;s/$/\tmetabat/" >> ${BIN_CONTIG_MAPPING}
 done
 
 # return not binned fasta files
