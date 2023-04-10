@@ -153,7 +153,7 @@ MAX_SENSITIVITY = 6
 *
 * The MMseqs2 module taxonomy calls an internal module lca that implements an lowest common ancestor assignment for sequences by querying them against a seqTaxDB.
 * Multiple databases can be searched at the same time. Parts of the query and search database are loaded into the RAM.
-# Huge databases along with to little RAM could lead to errors.
+* Huge databases along with to little RAM could lead to errors.
 * Outputs will be saved in separate directories.
 *
 **/
@@ -343,6 +343,123 @@ process pResistanceGeneIdentifier {
    '''
 }
 
+/**
+ * Prodigal - Protein-coding gene prediction for prokaryotic genomes
+ * @param sample: Sample name
+ * @param contigs: File containing all contigs in a .gz format
+ * @return: Files containing all predicted proteins and genes in .faa and .ffn format
+ *
+ * Mainly used as input for hmmSearch/MagScot as the real annotation is done with Prokka.
+ */
+process pProdigal {
+      // Re-Use the gtdb-tk container for Prodigal to safe space, as it is ancient
+      container "${params.gtdbtk_image}"
+
+      tag "Sample: $sample"
+
+      label 'medium'
+
+      publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "prodigal", filename) }
+
+      params?.steps.annotation.containsKey("prodigal")
+
+   input:
+      tuple val(sample), path(contigs)
+
+   output:
+      tuple val("${sample}"), file("${sample}.prodigal.faa"), emit: prodigal_faa
+      tuple val("${sample}"), file("${sample}.prodigal.ffn"), emit: prodigal_ffn
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+   shell:
+   '''
+   zcat !{contigs} | prodigal !{params.steps?.annotation?.prodigal?.additionalParams} -a !{sample}.prodigal.faa -d !{sample}.prodigal.ffn -o tmpfile
+   '''
+}
+
+
+/**
+ * HMMSearch - Search for protein domains in protein sequences
+ * @param sample: Sample name
+ * @param faaFile: File containing all predicted proteins in .faa format
+ * @return: Files containing all annotated proteins, in all- and top-hits files,
+ * as well as a cut down version of the top-hits file for MagScot.
+ *
+ * Mainly used as input for MagScot.
+ */
+process pHmmSearch {
+
+      // Re-Use the gtdb-tk container for Prodigal to safe space
+      container "${params.gtdbtk_image}"
+
+      containerOptions Utils.getDockerMount(params?.steps?.annotation?.hmmSearch?.database, params)
+
+      tag "Sample: $sample"
+
+      label 'large'
+
+      publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "hmmSearch", filename) }
+
+      when params.steps.containsKey("annotation") && params?.steps.annotation.containsKey("hmmSearch")
+
+   input:
+      tuple val(sample), file(faaFile)
+
+   output:
+      tuple val("${sample}"), file("${sample}.hmm.tigr.hit.tsv"), optional:true, emit: tigr_hits
+      tuple val("${sample}"), file("${sample}.hmm.pfam.hit.tsv"), optional:true, emit: pfam_hits
+      tuple val("${sample}"), file("${sample}.hmm.tigr.out"), optional:true, emit: tigr_out
+      tuple val("${sample}"), file("${sample}.hmm.pfam.out"), optional:true, emit: pfam_out
+      tuple val("${sample}"), file("${sample}.hmm.allhits.tsv"), optional:true, emit: allhits
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+
+   shell:
+   output = getOutput("${sample}", params.runid, "hmmSearch", "")
+   EXTRACTED_DB=params.steps?.annotation?.hmmSearch?.database?.extractedDBPath ?: ""
+   DOWNLOAD_LINK=params.steps?.annotation?.hmmSearch?.database?.download?.source ?: ""
+   MD5SUM=params?.steps?.annotation?.hmmSearch?.database?.download?.md5sum ?: ""
+   S5CMD_PARAMS=params.steps?.annotation?.hmmSearch?.database?.download?.s5cmd?.params ?: ""
+   '''
+   ADDITIONAL_HMMSEARCH_PARAMS="!{params.steps?.annotation?.hmmSearch?.additionalParams}"
+
+   mkdir -p !{params.polished.databases}
+
+   # Check developer documentation
+   GTDB=""
+   if [ -z "!{EXTRACTED_DB}" ]
+   then
+     DATABASE=!{params.databases}/gtdb
+     LOCK_FILE=${DATABASE}/lock.txt
+
+     # Download gtdb if necessary
+     mkdir -p ${DATABASE}
+     flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
+   	--link=!{DOWNLOAD_LINK} \
+   	--httpsCommand="wget -O gtdb.tar.gz !{DOWNLOAD_LINK} && tar xzvf gtdb.tar.gz && rm gtdb.tar.gz" \
+   	--s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} gtdb.tar.gz  && tar xzvf gtdb.tar.gz && rm gtdb.tar.gz " \
+           --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
+   	--s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
+   	--localCommand="tar -xzvf !{DOWNLOAD_LINK} " \
+   	--expectedMD5SUM=!{MD5SUM}
+
+     GTDB=$(readlink -f ${DATABASE}/out/*)
+   else
+     GTDB=!{EXTRACTED_DB}
+   fi
+
+    # Run hmmsearch
+    hmmsearch --cpu !{task.cpus} ${ADDITIONAL_HMMSEARCH_PARAMS} -o !{sample}.hmm.tigr.out --tblout !{sample}.hmm.tigr.hit.tsv ${GTDB}/markers/tigrfam/tigrfam.hmm !{faaFile}
+    hmmsearch --cpu !{task.cpus} ${ADDITIONAL_HMMSEARCH_PARAMS} -o !{sample}.hmm.pfam.out --tblout !{sample}.hmm.pfam.hit.tsv ${GTDB}/markers/pfam/Pfam-A.hmm !{faaFile}
+
+    # Remove header and create all-hits file
+    cat !{sample}.hmm.tigr.hit.tsv | grep -v "^#" | awk '{print $1"\t"$3"\t"$5}' > !{sample}.tigr
+    cat !{sample}.hmm.pfam.hit.tsv | grep -v "^#" | awk '{print $1"\t"$4"\t"$5}' > !{sample}.pfam
+    cat !{sample}.tigr !{sample}.pfam > !{sample}.hmm.allhits.tsv
+   '''
+
+
+}
 
 /**
 *
