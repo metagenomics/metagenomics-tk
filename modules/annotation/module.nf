@@ -350,18 +350,18 @@ process pResistanceGeneIdentifier {
  * @return: Files containing all predicted proteins and genes in .faa and .ffn format
  *
  * Mainly used as input for hmmSearch/MagScot as the real annotation is done with Prokka.
- */
+ **/
 process pProdigal {
       // Re-Use the gtdb-tk container for Prodigal to safe space, as it is ancient
       container "${params.gtdbtk_image}"
 
       tag "Sample: $sample"
 
-      label 'medium'
+      label 'small'
 
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "prodigal", filename) }
 
-      params?.steps.annotation.containsKey("prodigal")
+      when params.steps.containsKey("annotation") && params?.steps.annotation.containsKey("prodigal")
 
    input:
       tuple val(sample), path(contigs)
@@ -386,7 +386,7 @@ process pProdigal {
  * as well as a cut down version of the top-hits file for MagScot.
  *
  * Mainly used as input for MagScot.
- */
+ **/
 process pHmmSearch {
 
       // Re-Use the gtdb-tk container for Prodigal to safe space
@@ -396,7 +396,7 @@ process pHmmSearch {
 
       tag "Sample: $sample"
 
-      label 'large'
+      label 'medium'
 
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "hmmSearch", filename) }
 
