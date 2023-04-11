@@ -43,6 +43,11 @@ steps:
       additionalParams: ""
     metabat:
       additionalParams: " --seed 234234  "
+    magscot:
+      additionalParams: ""
+    metabinner:
+      minContigLength: 500
+      kmerSize: 4
   magAttributes:
     gtdb:
       buffer: 1000
@@ -155,6 +160,14 @@ steps:
       prodigalMode: "meta"
       defaultKingdom: false
       additionalParams: " --mincontiglen 200 "
+    prodigal:
+      additionalParams: " -p meta "
+    hmmSearch:
+      additionalParams: "--noali --notextw --cut_nc"
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_v2_data.tar.gz
+          md5sum: c42a6517bc6c14f517fa2c77121ae465
     mmseqs2:
       kegg:
         params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
