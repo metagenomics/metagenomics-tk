@@ -95,13 +95,26 @@ process pMaxBin {
     '''
 }
 
+
+/**
+ * MAGScoT - Run MAGScoT binning refinement
+ * @param sample: Sample name
+ * @param contigMaps: Individual contig to bin files from binning algorithms
+ * @param allHits: GTDBtk single copy marker identification of all contigs
+ * @param contigs: Path to contigs
+ * @return: Files containing scores, bin-contig mappings, new bins, and not binned contigs
+ *
+ * This process runs the MAGScoT R script on the input contig maps
+ * to compare and refine the binning of multiple other binners.
+ * It outputs several files containing scores, bin-contig mappings, bins, and not binned contigs.
+ **/
 process pMAGScoT {
 
     container "${params.magscot_image}"
 
     tag "Sample: $sample"
 
-    label 'large'
+    label 'medium'
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "magscot", filename) }
 
@@ -109,7 +122,6 @@ process pMAGScoT {
     // does not clash with the Nextflow process call "/bin/bash"
     containerOptions '--entrypoint ""'
 
-    // add missing binner combinations
     when params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")
 
 
@@ -128,7 +140,7 @@ process pMAGScoT {
     # Once in a blue moon Nextflow leaves the header in the file
     # Failsafe to remove header from contigMaps file if it exists
     sed -i '1{/^BIN_ID\tCONTIG\tBINNER$/d;}' !{contigMaps}
-    Rscript /opt/MAGScoT.R -i !{contigMaps} --hmm !{allHits} -o !{sample}_MagScoT
+    Rscript /opt/MAGScoT.R !{params.steps?.binning?.magscot?.additionalParams} -i !{contigMaps} --hmm !{allHits} -o !{sample}_MagScoT
 
     # Create a new binning file according to the naming convention
     echo "Converting MAGScoT binning according to the naming convention"
