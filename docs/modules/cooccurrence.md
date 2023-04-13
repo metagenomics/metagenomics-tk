@@ -2,10 +2,10 @@
 
 The Cooccurrence module builds a cooccurrence network where each node is a MAG
 and every edge represents an association between them. The network can be inferred based on
-correlation or inverse covariance estimation by spiec-easi. Spiec easi is executed multiple times
+correlation or inverse covariance estimation by SPIEC-EASI. SPIEC-EASI is executed multiple times
 based on different parameter settings in order to find the most stable network.
 In addition, it is possible to compute multiple metrics for every edge based on genome-scale
-metabolic models and the smetana metrics. 
+metabolic models and the SMETANA metrics. 
 
 ```
 -entry wCooccurrence -params-file example_params/coocurrence.yml
@@ -49,7 +49,7 @@ metabolic models and the smetana metrics.
     ```TSV
     ---8<--- "../test_data/cooccurrence/gtdb_large.tsv"
     ```
-    GTDB assignmend of all samples that were produced by magAttributes module.
+    GTDB assignment of all samples that were produced by the magAttributes module.
 
 
 === "Model TSV for computing Metabolomics Metrics on Edges"
@@ -60,7 +60,7 @@ metabolic models and the smetana metrics.
 
 The following parameters can be configured:
   
-  * metabolicEdgeBatches: Batches of edges that are provided as input to smetana.
+  * metabolicEdgeBatches: Batches of edges that are provided as input to SMETANA.
      
   * metabolicEdgeReplicates: Number of replicates per edge that should be computed.
 
@@ -72,9 +72,9 @@ The following parameters can be configured:
 
  * edges_index.tsv: Edges of the graph
 
- * edgeAttributes.tsv: Edge attributes of the graph containing metrics computed by Smetana.
+ * edgeAttributes.tsv: Edge attributes of the graph containing metrics computed by SMETANA.
 
-### Spiec Easi
+### SPIEC-EASI
 
  * stability.txt: Network stability estimation
 

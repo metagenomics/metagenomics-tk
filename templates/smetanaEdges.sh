@@ -9,7 +9,7 @@ nl  -nln !{edges} \
 	V1=$(echo $V | cut -f 1 -d " ");
 	V2=$(echo $V | cut -f 2 -d " "); 
 
-	# Run Smetana
+	# Run SMETANA
 	smetana $V1 $V2 !{params.steps.cooccurrence.metabolicAnnotation.additionalParams.smetana} -o $NUM;
 
 	smetana_out="${NUM}_global.tsv";
@@ -20,7 +20,7 @@ nl  -nln !{edges} \
 # Collect edge results
 cat *_out.tsv > edge_attributes.tsv
 
-# Smetana sometimes fails to compute the MRO. If this is the case it should report
+# SMETANA sometimes fails to compute the MRO. If this is the case it should report
 # the exit status and retry the computation
 if grep -q "n/a" edge_attributes.tsv; then
         echo "There is at least one MRO set n/a in the output of Smetana."
