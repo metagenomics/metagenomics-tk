@@ -266,6 +266,7 @@ workflow wAggregatePipeline {
     sraDatasets | map { sra ->  [sra, input + "/" + sra + "/" + runID + "/" ]} \
      | set {sraIDs}
 
+
     // List all files in sample directories
     sraIDs | flatMap { sraID, path -> collectFiles(file(path), sraID)} | set {sraFiles}
     sraFiles | _wAggregateIllumina 
@@ -286,6 +287,13 @@ workflow wAggregatePipeline {
      | map { sraID, bins -> [bins, sraID] } \
      | set { gtdb }
 
+    // Get genome scale metabolic model files
+    BIN_FILE_IDX = 0
+    Pattern modelPattern = Pattern.compile('.*/metabolomics/' + params.modules.metabolomics.version.major + '..*/.*/.*model.xml$' )
+    sraFiles | filter({ sra, path -> modelPattern.matcher(path.toString()).matches()}) \
+     | map { sraID, model -> [sraID, model.name.split(".model.xml")[BIN_FILE_IDX], model]} \
+     | set { models }
+
     recruitedGenomes = _wFragmentRecruitment.out.recruitedGenomes
 
     recruitedGenomesStats =  _wFragmentRecruitment.out.recruitedGenomesStats
@@ -299,7 +307,7 @@ workflow wAggregatePipeline {
 	| set {binsStatsComplete}
 
     _wAggregate(_wAggregateONT.out.ontSamples, _wAggregateONT.out.ontMedianQuality, _wAggregateIllumina.out.illuminaSamples, \
-	_wAggregateIllumina.out.unpairedIlluminaSamples, binsStatsComplete, gtdb)
+	_wAggregateIllumina.out.unpairedIlluminaSamples, binsStatsComplete, gtdb, models)
 
 }
 
@@ -312,6 +320,7 @@ workflow _wAggregate {
      samplesSingle
      binsStats
      gtdb
+     models
    main:
      representativeGenomesTempDir = params.tempdir + "/representativeGenomes"
      file(representativeGenomesTempDir).mkdirs()
@@ -326,7 +335,8 @@ workflow _wAggregate {
 
      wListReadMappingBwa(samplesONT, ontMedianQuality, samplesPaired, samplesSingle, representativesList)
 
-     wCooccurrenceList(wListReadMappingBwa.out.trimmedMean, gtdb)
+     // For the models we do not need the sample name
+     wCooccurrenceList(wListReadMappingBwa.out.trimmedMean, gtdb, models | map { model -> model.tail() })
 }
 
 
@@ -489,5 +499,6 @@ workflow wFullPipeline {
 
     wAnalyseMetabolitesList(binsStats, mapJoin(wMagAttributesList.out.checkm, proteins, "BIN_ID", "BIN_ID"))
 
-    _wAggregate(ont.reads, ont.medianQuality, illumina.readsPair, illumina.readsSingle, binsStats, wMagAttributesList.out.gtdb )
+    _wAggregate(ont.reads, ont.medianQuality, illumina.readsPair, illumina.readsSingle, binsStats, \
+	wMagAttributesList.out.gtdb,  wAnalyseMetabolitesList.out.models)
 }

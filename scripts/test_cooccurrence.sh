@@ -2,7 +2,7 @@ set -e
 
 ENTRY="wCooccurrence"
 OPTIONS=$1
-YAML="${2:-example_params/coocurrence.yml}" 
+YAML="${2:-example_params/cooccurrence.yml}" 
 WORK="${3:-work}_${ENTRY}"
 PROFILE="${4:-standard}"
 LOG_DIR="${WORK}/logs"
