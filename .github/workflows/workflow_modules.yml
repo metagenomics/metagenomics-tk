@@ -199,7 +199,7 @@ jobs:
       - name: Test cooccurrence graph building with edge analysis
         run: |
           bash ./scripts/test_cooccurrence.sh " --smetana_image=pbelmann/metabolomics:0.1.0 --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh " \
-                 ./example_params/coocurrenceMetabolom.yml "${WORK_DIR}" ${PROFILE}  || exit 1
+                 ./example_params/cooccurrenceMetabolom.yml "${WORK_DIR}" ${PROFILE}  || exit 1
 
 
 

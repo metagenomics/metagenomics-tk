@@ -8,7 +8,7 @@ In addition, it is possible to compute multiple metrics for every edge based on 
 metabolic models and the SMETANA metrics. 
 
 ```
--entry wCooccurrence -params-file example_params/coocurrence.yml
+-entry wCooccurrence -params-file example_params/cooccurrence.yml
 ```
 
 ## Input
@@ -16,12 +16,12 @@ metabolic models and the SMETANA metrics.
 === "Command"
 
     ```
-    -entry wCooccurrence -params-file example_params/coocurrence.yml
+    -entry wCooccurrence -params-file example_params/cooccurrence.yml
     ```
 === "Configuration File for Cooccurrence"
 
     ```YAML
-    ---8<--- "../example_params/coocurrence.yml"
+    ---8<--- "../example_params/cooccurrence.yml"
     ```
 
 === "TSV Table"
@@ -36,12 +36,12 @@ metabolic models and the SMETANA metrics.
     ```TSV
     ---8<--- "../test_data/cooccurrence/gtdb.tsv"
     ```
-    GTDB assignmend of all samples that were produced by magAttributes module.
+    GTDB assignment of all samples that were produced by magAttributes module.
 
 === "Configuration File for analyzing edges in Cooccurrence Graph"
 
     ```YAML
-    ---8<--- "../example_params/coocurrenceMetabolom.yml"
+    ---8<--- "../example_params/cooccurrenceMetabolom.yml"
     ```
 
 === "GTDB TSV for analyzing Edges"
