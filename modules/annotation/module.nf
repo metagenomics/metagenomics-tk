@@ -32,10 +32,11 @@ def constructParametersObject(String tool){
 * This function decides if the MMSeqs taxonomy process should be executed on MAGs.
 *
 */
-def runMMSeqsTaxonomy(isMMSeqsTaxonomySettingSet, isBinned, runOnBinned) {
-    // True if the MMSeqsTaxonomy setting is set and either the sample is not binned 
+def runMMSeqsTaxonomy(isMMSeqsTaxonomySettingSet, isBinned, isPlasmid, runOnBinned) {
+    // True if the MMSeqsTaxonomy setting is set and plasmids are not used as input and 
+    // either the sample is not binned 
     // or should explicitly run on binned samples 
-    return isMMSeqsTaxonomySettingSet && (!isBinned || runOnBinned)
+    return isMMSeqsTaxonomySettingSet && !isPlasmid && (!isBinned || runOnBinned)
 }
 
 
@@ -153,6 +154,7 @@ process pMMseqs2_taxonomy {
       when:
       runMMSeqsTaxonomy(params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy"), \
 	   binType.equals("binned"), \
+	   binType.equals("plasmid"), \
            params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy") && params?.steps.annotation.mmseqs2_taxonomy.runOnMAGs)
 
    input:
@@ -626,7 +628,17 @@ workflow wAnnotateFile {
       file(annotationTmpDir).mkdirs()
       projectTableFile | splitCsv(sep: '\t', header: true) \
       | map{ [it.DATASET, it.BIN_ID, file(it.PATH)] } | set { input } 
-      _wAnnotation(Channel.value("out"), Channel.value("param"), input, null, Channel.empty())
+
+      f1 = file(params.tempdir + "/empty1")
+      f1.text = ""
+
+      f2 = file(params.tempdir + "/empty2")
+      f2.text = ""
+
+      input | map { bin -> bin[0]} | unique \
+	| combine(Channel.value([f1,f2])) | set { coverage }
+
+      _wAnnotation(Channel.value("out"), Channel.value("param"), input, null, coverage)
    emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }

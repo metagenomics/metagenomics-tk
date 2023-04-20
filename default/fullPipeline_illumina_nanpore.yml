@@ -165,7 +165,16 @@ steps:
         minimap2_index: ""
         minimap2: ""
   cooccurrence:
-    additionalParams: " -t 0.9 -z 40 -o 'correlation' "
+    inference:
+      additionalParams:
+        method: 'spiec-easi'
+        rscript: " --mincovthreshold 0.9 --maxzero 40"
+        timeLimit: "AUTO"
+    metabolicAnnotation:
+      additionalParams:
+        metabolicEdgeBatches: 5
+        metabolicEdgeReplicates: 10
+        smetana: " --flavor bigg "
   plasmid:
     SCAPP:
       additionalParams:
@@ -285,7 +294,7 @@ steps:
   metabolomics:
      beforeProcessScript: ""
      filter:
-       minCompleteness: 90
+       minCompleteness: 50
        maxContamination: 5
      gapseq:
        additionalParams: ""

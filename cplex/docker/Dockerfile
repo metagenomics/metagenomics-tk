@@ -9,13 +9,17 @@ COPY install.properties /tmp/install.properties
 RUN  chmod u+x /tmp/installer && apt-get update && apt-get install -y default-jre \
   && /tmp/installer -f /tmp/install.properties \
   && apt install -y ncbi-blast+ git r-base-core exonerate libglpk-dev bedtools barrnap bc parallel libcurl4-openssl-dev libsbml5-dev  \
-  && R -e 'install.packages(c("data.table", "stringr", "glpkAPI", "sybil", "getopt", "doParallel", "foreach", "R.utils", "stringi", "CHNOSZ", "jsonlite"))' \
+  && R -e 'install.packages(c("data.table", "stringr", "glpkAPI", "getopt", "doParallel", "foreach", "R.utils", "stringi", "CHNOSZ", "jsonlite"))' \
   && R -e 'if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager"); BiocManager::install("Biostrings")' \
-  && wget https://cran.r-project.org/src/contrib/Archive/sybilSBML/sybilSBML_3.1.2.tar.gz &&  R CMD INSTALL sybilSBML_3.1.2.tar.gz \ 
+  && wget https://cran.r-project.org/src/contrib/Archive/sybil/sybil_2.2.0.tar.gz \
+  && wget https://cran.r-project.org/src/contrib/Archive/sybilSBML/sybilSBML_3.1.2.tar.gz \
+  && R CMD INSTALL sybil_2.2.0.tar.gz \
+  && R CMD INSTALL sybilSBML_3.1.2.tar.gz \
+  && rm sybil_2.2.0.tar.gz sybilSBML_3.1.2.tar.gz \
   && wget https://cran.r-project.org/src/contrib/Archive/cplexAPI/cplexAPI_1.4.0.tar.gz \
   && apt-get remove -y --purge default-jre && apt-get -y --purge autoremove \
   && cd ${COSDIR}/cplex/python/${CPX_PYVERSION}/x86-64_linux \
-  &&      python${CPX_PYVERSION} setup.py install && cd - \ 
+  &&      python${CPX_PYVERSION} setup.py install && cd - \
   && R CMD INSTALL --configure-args=" \
     PKG_CFLAGS='-m64 -fPIC' \
     PKG_CPPFLAGS='-I/opt/CPLEX/cplex/include' \
@@ -35,7 +39,6 @@ RUN  chmod u+x /tmp/installer && apt-get update && apt-get install -y default-jr
    ${COSDIR}/cplex/matlab \
    ${COSDIR}/cplex/readmeUNIX.html \
   && ls -d ${COSDIR}/cplex/python/* | grep -v ${CPX_PYVERSION} | xargs rm -rf
-
 
 ENV CPX_PYVERSION ${CPX_PYVERSION}
 
