@@ -303,7 +303,8 @@ workflow _wCalculateMegahitResources {
          } | set { resourceType }
 
          model = Channel.empty()
-         if(params?.steps?.assembly?.megahit?.additionalParams.contains("meta-sensitive")){
+         if(params.steps.containsKey("assembly") && params.steps.assembly.containsKey("megahit") \
+		&& params?.steps?.assembly?.megahit?.additionalParams.contains("meta-sensitive")){
          	model = Channel.value(file("${baseDir}/models/assembler/megahit/sensitive.pkl"))
 	 } else {
          	model = Channel.value(file("${baseDir}/models/assembler/megahit/default.pkl"))
