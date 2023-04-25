@@ -168,13 +168,13 @@ steps:
     inference:
       additionalParams:
         method: 'spiec-easi'
-        rscript: " --mincovthreshold 0.9 --maxzero 40"
+        rscript: " --mincovthreshold 0.9 --maxzero 60"
         timeLimit: "AUTO"
     metabolicAnnotation:
       additionalParams:
         metabolicEdgeBatches: 5
         metabolicEdgeReplicates: 10
-        smetana: " --flavor bigg "
+        smetana: " --flavor bigg --molweight "
   plasmid:
     SCAPP:
       additionalParams:
