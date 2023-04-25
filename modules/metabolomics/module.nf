@@ -53,7 +53,7 @@ process pGapSeq {
 
 process pMemote {
 
-    label 'tiny'
+    label 'medium'
 
     tag "Sample: $sample, Bin: $id"
 
