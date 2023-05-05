@@ -146,8 +146,8 @@ process pMAGScoT {
     echo "Converting MAGScoT binning according to the naming convention"
     echo -e 'BIN_ID\tCONTIG\tBINNER' > !{sample}_bin_contig_mapping.tsv
 
-    # Remove the header and pipe the remaining lines to xargs for parallel processing
-    sed 1d !{sample}_MagScoT.refined.contig_to_bin.out | xargs -n 2 -P !{task.cpus} sh -c '
+    # Remove the header and pipe the remaining lines to xargs to run the script line by line
+    sed 1d !{sample}_MagScoT.refined.contig_to_bin.out | xargs -n 2 sh -c '
         # Get the first column and separate the number, remove the leading zeros
         binID=$(echo $0 | cut -d"_" -f4 | sed 's/^0*//')
         CONTIG=$1
@@ -168,7 +168,7 @@ process pMAGScoT {
     	BIN_NAME="$(basename ${bin})"
     	echo "Renaming bin: ${BIN_NAME}"
 
-    	# Get id of the bin (e.g get 2 of the bin SAMPLEID_bin.2.fa)
+    	# Get id of the bin (e.g get 2 of the bin SAMPLEID_bin.2.fa.tmp)
     	ID=$(echo ${BIN_NAME} | rev | cut -d '.' -f 3 | rev)
     	echo "Bin id: ${ID}"
 
@@ -302,11 +302,13 @@ workflow _wBinning {
 
      // Re-evaluate binning with MAGScoT
      // ORF detection with Prodigal for MAGScoT
+     CONTIG_MAPPING_IDX = 1
+
      pProdigal(contigs)
      pHmmSearch(pProdigal.out.prodigal_faa)
      pMetabinner.out.binContigMapping | mix(pMetabat.out.binContigMapping) \
      // Collect the joined items into a file, again, based on the same sample
-     | collectFile(keepHeader: false){ item -> ["${item[SAMPLE_IDX]}", item[1].text]} \
+     | collectFile(keepHeader: false){ item -> ["${item[SAMPLE_IDX]}", item[CONTIG_MAPPING_IDX].text]} \
      // Use the map function to restore the original tuple structure of [sample, file],
      // as the collectFile function only returns the file
      | map { f -> [file(f).name, f] } \
