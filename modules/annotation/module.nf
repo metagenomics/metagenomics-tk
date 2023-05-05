@@ -328,7 +328,7 @@ process pProdigal {
 
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "prodigal", filename) }
 
-      when params.steps.containsKey("annotation") && params?.steps.annotation.containsKey("prodigal")
+      when params.steps.containsKey("binning") && params?.steps.binning.containsKey("magscot")
 
    input:
       tuple val(sample), path(contigs)
@@ -340,7 +340,7 @@ process pProdigal {
 
    shell:
    '''
-   zcat !{contigs} | prodigal !{params.steps?.annotation?.prodigal?.additionalParams} -a !{sample}.prodigal.faa -d !{sample}.prodigal.ffn -o tmpfile
+   zcat !{contigs} | prodigal !{params.steps?.binning?.magscot?.prodigal?.additionalParams} -a !{sample}.prodigal.faa -d !{sample}.prodigal.ffn -o tmpfile
    '''
 }
 
@@ -359,7 +359,7 @@ process pHmmSearch {
       // Re-Use the gtdb-tk container for Prodigal to safe space
       container "${params.gtdbtk_image}"
 
-      containerOptions Utils.getDockerMount(params?.steps?.annotation?.hmmSearch?.database, params)
+      containerOptions Utils.getDockerMount(params?.steps?.binning?.magscot?.hmmSearch?.database, params)
 
       tag "Sample: $sample"
 
@@ -367,7 +367,7 @@ process pHmmSearch {
 
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "hmmSearch", filename) }
 
-      when params.steps.containsKey("annotation") && params?.steps.annotation.containsKey("hmmSearch")
+      when params.steps.containsKey("binning") && params?.steps.binning.containsKey("magscot")
 
    input:
       tuple val(sample), file(faaFile)
@@ -383,12 +383,12 @@ process pHmmSearch {
 
    shell:
    output = getOutput("${sample}", params.runid, "hmmSearch", "")
-   EXTRACTED_DB=params.steps?.annotation?.hmmSearch?.database?.extractedDBPath ?: ""
-   DOWNLOAD_LINK=params.steps?.annotation?.hmmSearch?.database?.download?.source ?: ""
-   MD5SUM=params?.steps?.annotation?.hmmSearch?.database?.download?.md5sum ?: ""
-   S5CMD_PARAMS=params.steps?.annotation?.hmmSearch?.database?.download?.s5cmd?.params ?: ""
+   EXTRACTED_DB=params.steps?.binning?.magscot?.hmmSearch?.database?.extractedDBPath ?: ""
+   DOWNLOAD_LINK=params.steps?.binning?.magscot?.hmmSearch?.database?.download?.source ?: ""
+   MD5SUM=params?.steps?.binning?.magscot?.hmmSearch?.database?.download?.md5sum ?: ""
+   S5CMD_PARAMS=params.steps?.binning?.magscot?.hmmSearch?.database?.download?.s5cmd?.params ?: ""
    '''
-   ADDITIONAL_HMMSEARCH_PARAMS="!{params.steps?.annotation?.hmmSearch?.additionalParams}"
+   ADDITIONAL_HMMSEARCH_PARAMS="!{params.steps?.binning?.magscot?.hmmSearch?.additionalParams}"
 
    mkdir -p !{params.polished.databases}
 
