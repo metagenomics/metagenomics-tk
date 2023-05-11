@@ -115,7 +115,7 @@ process pMMseqs2 {
 
     # According to the MMSeqs docs the --split-memory-limit parameter defines the RAM usage for *about* 80 percent of the total RAM consumption.
     # We set the ram limit parameter to 75 percent of the total available RAM to make sure to not run into out of memory errors.
-    RAM_LIMIT="$(awk -v RATIO=75 -v RAM=$(echo !{task.memory} | cut -f 1 -d ' ') 'BEGIN { print int(RAM / 100 * RATIO) }')"
+    RAM_LIMIT="$(awk -v RATIO=75 -v RAM=$(echo !{task.memory} | cut -f 1 -d ' ') 'BEGIN { print int(RAM / 100 * RATIO) }')G"
 
     mkdir tmp
     # Only mmseqs2 databases can be used for every kind of search. Inputs have to be converted first.
