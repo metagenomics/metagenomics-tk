@@ -112,6 +112,8 @@ process pMMseqs2 {
           # If an extracted database is present use that path. 
           MMSEQS2_DATABASE_DIR="!{EXTRACTED_DB}"
    fi
+    MMSEQS_HEADER="query,target,pident,alnlen,mismatch,gapopen,qstart,qend,tstart,tend,evalue,bits,qlen,tlen,qcov,tcov"
+    OUTPUT_TSV="!{sample}_!{binType}.!{dbType}.blast.tsv"
 
     mkdir tmp
     # Only mmseqs2 databases can be used for every kind of search. Inputs have to be converted first.
@@ -121,8 +123,12 @@ process pMMseqs2 {
     mmseqs touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
     mmseqs search queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database tmp !{parameters} --threads !{task.cpus}
     # mmseqs2 searches produce output databases. These have to be converted to a more useful format. The blast -outfmt 6 in this case.
-    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database !{sample}_!{binType}.!{dbType}.blast.tsv --threads !{task.cpus}
-   '''
+    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database ${OUTPUT_TSV} \
+	--threads !{task.cpus} --format-output ${MMSEQS_HEADER}
+
+    # Add header
+    sed  -i "1i $(echo ${MMSEQS_HEADER} | tr ',' '\t')" ${OUTPUT_TSV}
+    '''
 }
 
 /**
