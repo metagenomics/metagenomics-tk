@@ -112,6 +112,8 @@ process pMMseqs2 {
           # If an extracted database is present use that path. 
           MMSEQS2_DATABASE_DIR="!{EXTRACTED_DB}"
    fi
+    MMSEQS_HEADER="query,target,pident,alnlen,mismatch,gapopen,qstart,qend,tstart,tend,evalue,bits,qlen,tlen,qcov,tcov"
+    OUTPUT_TSV="!{sample}_!{binType}.!{dbType}.blast.tsv"
 
     # According to the MMSeqs docs the --split-memory-limit parameter defines the RAM usage for *about* 80 percent of the total RAM consumption.
     # We set the ram limit parameter to 75 percent of the total available RAM to make sure to not run into out of memory errors.
@@ -126,8 +128,12 @@ process pMMseqs2 {
     mmseqs search queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database tmp !{parameters} \
 	--threads !{task.cpus} --split-memory-limit ${RAM_LIMIT}
     # mmseqs2 searches produce output databases. These have to be converted to a more useful format. The blast -outfmt 6 in this case.
-    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database !{sample}_!{binType}.!{dbType}.blast.tsv --threads !{task.cpus}
-   '''
+    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database ${OUTPUT_TSV} \
+	--threads !{task.cpus} --format-output ${MMSEQS_HEADER}
+
+    # Add header
+    sed  -i "1i $(echo ${MMSEQS_HEADER} | tr ',' '\t')" ${OUTPUT_TSV}
+    '''
 }
 
 /**

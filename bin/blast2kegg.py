@@ -24,13 +24,12 @@ with open (sys.argv[2]+"/genes_pathway.list", "r") as pathFile:
         kegg[row[0]].append(row[1])
 
 def searchAppend(line):
-
-    result = [line[0],line[1]]
+    result = [line["query"],line["target"]]
     ko = []
     pathway = []
 
-    if line[1] in kegg:
-        for elem in kegg[line[1]]:
+    if line["target"] in kegg:
+        for elem in kegg[line["target"]]:
             if elem.startswith("ko:"):
                 ko.append(elem)
             if elem.startswith("path:"):
@@ -46,12 +45,12 @@ def searchAppend(line):
 
 
 
-diamond_input = open(sys.argv[1])
-read_tsv = csv.reader(diamond_input, delimiter="\t")
+blast_input = open(sys.argv[1])
+read_tsv = csv.DictReader(blast_input, delimiter="\t")
 
 for row in read_tsv:
     searchAppend(row)
-diamond_input.close()
+blast_input.close()
 
 with open(sys.argv[3], 'wt') as out_file:
     tsv_writer = csv.writer(out_file, delimiter='\t')
