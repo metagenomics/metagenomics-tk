@@ -1,9 +1,10 @@
 contigs="!{binID}_contigs.fa"
 PLASCLASS_OUT=out.tsv
 SEQUENCE_PROBABILITIES=sequence_length.tsv
-FINAL_OUTPUT=!{binID}_plasclass.tsv
+FINAL_OUTPUT=!{binID}_chunk_!{start}_!{stop}_plasClass.tsv
 
-pigz  -f -d -c !{assembly} > ${contigs}
+seqkit range -r !{start}:!{stop} !{assembly} > ${contigs}
+
 classify_fasta.py -f ${contigs} -o ${SEQUENCE_PROBABILITIES} -p !{task.cpus} !{params.steps.plasmid.PlasClass.additionalParams}
 
 # If sequences could be found then add additional information
