@@ -136,7 +136,7 @@ steps:
     contigsCoverage:
       additionalParams: " --min-covered-fraction 0 "
   dereplication:
-    pasolli:
+    bottomUpClustering:
       # stricter MIMAG medium quality
       minimumCompleteness: 50
       maximumContamination: 5
