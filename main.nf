@@ -10,7 +10,7 @@ include { wOntAssemblyFile; wOntAssemblyList } from './modules/assembly/ontAssem
 include { wShortReadBinningList } from './modules/binning/shortReadBinning'
 include { wLongReadBinningList } from './modules/binning/ontBinning'
 include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
-include { wDereplicateFile; wDereplicateList} from './modules/dereplication/pasolli/module'
+include { wDereplicateFile; wDereplicateList} from './modules/dereplication/bottomUpClustering/module'
 include { wAnalyseMetabolitesList; wAnalyseMetabolitesFile } from './modules/metabolomics/module'
 include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/mapping.nf'
 include { wFragmentRecruitmentFile; wFragmentRecruitmentList;} from './modules/fragmentRecruitment/module'
@@ -50,7 +50,7 @@ def mapJoin(channel_a, channel_b, key_a, key_b){
 }
 
 workflow wDereplication {
-   wDereplicateFile(Channel.from(file(params?.steps?.dereplication?.pasolli?.input)))
+   wDereplicateFile(Channel.from(file(params?.steps?.dereplication?.bottomUpClustering?.input)))
 }
 
 workflow wShortReadAssembly {
@@ -336,7 +336,7 @@ workflow _wAggregate {
      wListReadMappingBwa(samplesONT, ontMedianQuality, samplesPaired, samplesSingle, representativesList)
 
      // For the models we do not need the sample name
-     wCooccurrenceList(wListReadMappingBwa.out.trimmedMean, gtdb, models | map { model -> model.tail() })
+     wCooccurrenceList(wListReadMappingBwa.out.trimmedMeanMatrix, gtdb, models | map { model -> model.tail() })
 }
 
 

@@ -9,7 +9,7 @@ scratch: "/vol/scratch"
 publishDirMode: "symlink"
 steps:
   dereplication:
-    pasolli:
+    bottomUpClustering:
       minimumCompleteness: 0
       maximumContamination: 5000
       ANIBuffer: 20
