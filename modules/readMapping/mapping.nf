@@ -4,6 +4,8 @@ nextflow.enable.dsl=2
 include { pMinimap2Index as pMinimap2IndexLong; \
           pMapMinimap2 as pMapMinimap2Long; } from './processes'
 
+include { pDumpLogs } from '../utils/processes'
+
 include { pCovermGenomeCoverage; } from '../binning/processes'
 
 def getModulePath(module){
@@ -12,13 +14,56 @@ def getModulePath(module){
           module.version.patch
 }
 
-def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + params.modules.readMapping.name + '/' + 
+def getOutput(RUNID, TOOL, filename){
+    return 'AGGREGATED/' + RUNID + '/' + params.modules.readMapping.name + '/' + 
          params.modules.readMapping.version.major + "." + 
          params.modules.readMapping.version.minor + "." + 
          params.modules.readMapping.version.patch +
          '/' + TOOL + '/' + filename
 }
+
+process pVerticalConcatFinal {
+
+    label 'tiny'
+
+    cache 'deep'
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "abundanceMatrix", filename) }
+
+    when params.steps.containsKey("readMapping")
+
+    input:
+    file('sample?')
+
+    output:
+    path("abundance.tsv")
+
+    shell:
+    template("verticalConcat.sh")
+}
+
+
+process pVerticalConcat {
+
+    label 'tiny'
+
+    cache 'deep'
+
+    when params.steps.containsKey("readMapping")
+
+    input:
+    file('sample?')
+
+    output:
+    path("abundance.tsv")
+
+    shell:
+    template("verticalConcat.sh")
+}
+
+
+
+
 
 process pBwaIndex {
     container "${params.bwa_image}"
@@ -52,13 +97,15 @@ process pMapBwa {
     label 'large'
     container "${params.samtools_bwa_image}"
     when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa")
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sampleID}", params.runid ,"bwa", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid ,"bwa", filename) }
     input:
       tuple val(sampleID), path(sample, stageAs: "sample*"), path(representatives), path(index, stageAs: "*") 
     output:
       tuple val("${sampleID}"), path("*bam"), path("*bai"), emit: alignment
-      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+      tuple val("${sampleID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
     shell:
+    output = getOutput(params.runid, "bwa", "")
     template('bwa.sh')
 }
 
@@ -67,13 +114,17 @@ process pMapBwa2 {
     label 'large'
     container "${params.samtools_bwa2_image}"
     when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa2")
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sampleID}", params.runid ,"bwa2", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid ,"bwa2", filename) }
     input:
       tuple val(sampleID), path(sample, stageAs: "sample*"), path(representatives), path(index, stageAs: "*") 
+
     output:
       tuple val("${sampleID}"), path("*bam"), path("*bai"), emit: alignment
-      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+      tuple val("${sampleID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+
     shell:
+    output = getOutput(params.runid, "bwa2", "")
     template('bwa2.sh')
 }
 
@@ -149,6 +200,24 @@ workflow wListReadMappingBwa {
      _wReadMappingBwa(samplesONT, ontMedianQuality, samplesPaired, samplesSingle, genomes)
    emit:
      trimmedMean = _wReadMappingBwa.out.trimmedMean
+     trimmedMeanMatrix = _wReadMappingBwa.out.trimmedMeanMatrix
+}
+
+workflow _wCreateMatrix {
+   take:
+     countColumn
+   main:
+     COLLECT_BUFFER=10000
+
+     // Collect abundance/ count information of every sample
+     countColumn | combine(countColumn | count )  \
+	| filter({ sample, abundance, count -> count > 1 }) \
+	| map { sample, abundance, count -> file(abundance) }\
+        | buffer( size: COLLECT_BUFFER, remainder: true ) \
+        | pVerticalConcat | collect \
+        | pVerticalConcatFinal | set { abundanceMatrix }
+    emit:
+      abundanceMatrix
 }
 
 
@@ -218,10 +287,16 @@ workflow _wReadMappingBwa {
 
      ALIGNMENT_INDEX = 2
      pCovermGenomeCoverage(Channel.value(params.steps?.readMapping?.find{ it.key == "coverm" }?.value), \
+	Channel.value("AGGREGATED"), \
 	Channel.value([getModulePath(params.modules.readMapping), \
 	"genomeCoverage", params.steps?.readMapping?.coverm?.additionalParams]), \
 	covermBWAInput | mix(covermMinimapInput))
 
+     pMapBwa2.out.logs | mix(pMapBwa.out.logs) \
+	| mix(pMapMinimap2Long.out.logs) | mix(pCovermGenomeCoverage.out.logs) | pDumpLogs
+
+     _wCreateMatrix(pCovermGenomeCoverage.out.trimmedMean)
    emit:
      trimmedMean = pCovermGenomeCoverage.out.trimmedMean
+     trimmedMeanMatrix = _wCreateMatrix.out.abundanceMatrix
 }

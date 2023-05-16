@@ -5,7 +5,7 @@ include { pBowtie2; pMinimap2; pBwa; pBwa2; pGetBinStatistics; \
 
 include { pMashSketchGenome; \
 	  pMashPaste as pMashPasteChunk; \
-	  pMashPaste as pMashPasteFinal; } from  '../dereplication/pasolli/processes'
+	  pMashPaste as pMashPasteFinal; } from  '../dereplication/bottomUpClustering/processes'
 include { pDumpLogs } from '../utils/processes'
 
 
@@ -415,7 +415,6 @@ workflow _wGetStatistics {
 
      foundGenomesInGroup | pSaveMatchedGenomes
 
-     pSaveMatchedGenomes.out.logs | pDumpLogs
 
      pGenomeContigMapping.out.mapping | join(mappedShortReads, by: SAMPLE_IDX) \
         | combine(Channel.from("stats")) | join(foundGenomesInGroup, by: SAMPLE_IDX) \
@@ -446,10 +445,13 @@ workflow _wGetStatistics {
 
      ALIGNMENT_INDEX = 2
      pCovermGenomeCoverage(Channel.value(params?.steps?.fragmentRecruitment.find{ it.key == "genomeCoverage"}?.value), \
+        Channel.value(""), \
 	Channel.value([getModulePath(params.modules.fragmentRecruitment), \
 	"genomeCoverage", params?.steps?.fragmentRecruitment?.genomeCoverage?.additionalParams]), \
 	 minimapMappedReadsCovInput | mix(mappedShortReadsCovInput) \
 	| map { sample -> sample.addAll(ALIGNMENT_INDEX, emptyFile); sample })
+
+     pSaveMatchedGenomes.out.logs | mix(pCovermGenomeCoverage.out.logs) | pDumpLogs
 
   emit:
      foundGenomesPerSample = foundGenomesInGroup 

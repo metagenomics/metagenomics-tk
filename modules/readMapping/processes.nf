@@ -1,5 +1,13 @@
 
+include { pDumpLogs } from '../utils/processes'
 
+def getOutput(RUNID, TOOL, filename){
+    return 'AGGREGATED/' + RUNID + '/' + params.modules.readMapping.name + '/' + 
+         params.modules.readMapping.version.major + "." + 
+         params.modules.readMapping.version.minor + "." + 
+         params.modules.readMapping.version.patch +
+         '/' + TOOL + '/' + filename
+}
 
 process pMinimap2Index {
 
@@ -32,7 +40,7 @@ process pMapMinimap2 {
     when:
     run
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sampleID}", params.runid ,"minimap", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid ,"minimap", filename) }
 
     input:
       val(run)
@@ -40,9 +48,11 @@ process pMapMinimap2 {
 
     output:
       tuple val("${sampleID}"), path("*bam"), path("*bam.bai"), emit: alignment
-      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+      tuple val("${sampleID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput(params.runid, "minimap", "")
     template('minimap2.sh')
 }
 
