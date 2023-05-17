@@ -116,6 +116,7 @@ process pCovermGenomeCoverage {
     tuple val("${sample}"), path("${sample}_trimmed_mean.tsv"), emit: trimmedMean
     tuple val("${sample}"), path("${sample}_count.tsv"), emit: count
     tuple val("${sample}"), path("${sample}_rpkm.tsv"), emit: rpkm
+    tuple val("${sample}"), path("${sample}_relative_abundance.tsv"), emit: relativeAbundance
     tuple val("${sample}"), path("${sample}_tpm.tsv"), emit: tpm
     tuple val("${sample}"), val(output), \
 	val(params.LOG_LEVELS.INFO), file(".command.sh"), \

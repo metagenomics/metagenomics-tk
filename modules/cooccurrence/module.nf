@@ -236,9 +236,9 @@ def fixModelID(modelName){
 * Input:
 *  * The count channel must contain entries of the format: [sampleid,  /path/to/abundance/file]
 *    Abundance file must contain the following to columns:
-*    Genome  SAMPLE_NAME
-*    test1_bin.1     61.92912
-*    test2_bin.2     115.32025
+*    Genome  SAMPLE_NAME1 SAMPLE_NAME2 ....
+*    test1_bin.1     61.92912	21.
+*    test2_bin.2     115.32025	123.
 *  
 *  * The gtdb channel contains gtdb assignments of every sample.
 *   

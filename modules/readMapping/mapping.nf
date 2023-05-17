@@ -28,12 +28,13 @@ process pVerticalConcatFinal {
 
     cache 'deep'
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "abundanceMatrix", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "abundanceMatrix", "${name}") }
 
     when params.steps.containsKey("readMapping")
 
     input:
     file('sample?')
+    val(name)
 
     output:
     path("abundance.tsv")
@@ -199,13 +200,32 @@ workflow wListReadMappingBwa {
    main:
      _wReadMappingBwa(samplesONT, ontMedianQuality, samplesPaired, samplesSingle, genomes)
    emit:
-     trimmedMean = _wReadMappingBwa.out.trimmedMean
      trimmedMeanMatrix = _wReadMappingBwa.out.trimmedMeanMatrix
+     relativeAbundanceMatrix = _wReadMappingBwa.out.relativeAbundanceMatrix
+}
+
+workflow _wCreateTrimmedMeanMatrix {
+  take:
+    countColumn
+  main:
+    _wCreateMatrix(countColumn, Channel.value("trimmedMeanMatrix.tsv"))
+  emit:
+    trimmedMeanMatrix = _wCreateMatrix.out.abundanceMatrix
+}
+
+workflow _wCreateRelativeAbundanceMatrix {
+  take:
+    countColumn
+  main:
+    _wCreateMatrix(countColumn, Channel.value("relativeAbundanceMatrix.tsv"))
+  emit:
+    relativeAbundanceMatrix = _wCreateMatrix.out.abundanceMatrix
 }
 
 workflow _wCreateMatrix {
    take:
      countColumn
+     name
    main:
      COLLECT_BUFFER=10000
 
@@ -214,8 +234,8 @@ workflow _wCreateMatrix {
 	| filter({ sample, abundance, count -> count > 1 }) \
 	| map { sample, abundance, count -> file(abundance) }\
         | buffer( size: COLLECT_BUFFER, remainder: true ) \
-        | pVerticalConcat | collect \
-        | pVerticalConcatFinal | set { abundanceMatrix }
+        | pVerticalConcat | collect | set { chunks }
+     pVerticalConcatFinal(chunks, name) | set { abundanceMatrix }
     emit:
       abundanceMatrix
 }
@@ -295,8 +315,9 @@ workflow _wReadMappingBwa {
      pMapBwa2.out.logs | mix(pMapBwa.out.logs) \
 	| mix(pMapMinimap2Long.out.logs) | mix(pCovermGenomeCoverage.out.logs) | pDumpLogs
 
-     _wCreateMatrix(pCovermGenomeCoverage.out.trimmedMean)
+     _wCreateTrimmedMeanMatrix(pCovermGenomeCoverage.out.trimmedMean)
+     _wCreateRelativeAbundanceMatrix(pCovermGenomeCoverage.out.relativeAbundance)
    emit:
-     trimmedMean = pCovermGenomeCoverage.out.trimmedMean
-     trimmedMeanMatrix = _wCreateMatrix.out.abundanceMatrix
+     trimmedMeanMatrix = _wCreateTrimmedMeanMatrix.out.trimmedMeanMatrix
+     relativeAbundanceMatrix = _wCreateRelativeAbundanceMatrix.out.relativeAbundanceMatrix
 }
