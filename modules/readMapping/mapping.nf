@@ -174,8 +174,6 @@ workflow wFileReadMappingBwa {
      }   
 
      _wReadMappingBwa(ontReads, ontMedianQuality, paired, single, genomesList)
-   emit:
-     trimmedMean = _wReadMappingBwa.out.trimmedMean
 }
 
 /*
