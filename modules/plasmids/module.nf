@@ -317,7 +317,7 @@ workflow _runCircularAnalysis {
 
        pBowtie2.out.mappedReads | mix(pBwa.out.mappedReads, pBwa2.out.mappedReads) \
 	| combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) \
-	| mix(pMinimap2.out.mappedReads | join(Channel.value(ontMedianQuality), by: SAMPLE_IDX)) \
+	| mix(pMinimap2.out.mappedReads | join(ontMedianQuality, by: SAMPLE_IDX)) \
 	| set { covermInput  }
 
        pCovermContigsCoverage(Channel.value(true), Channel.value([Utils.getModulePath(params?.modules?.plasmids) \
