@@ -159,7 +159,7 @@ steps:
      # because evaluation whether a dataset contains a genome
      # can be done afterwards.
     coverm:
-      additionalParams: " --min-covered-fraction 0 "
+      additionalParams: " --min-covered-fraction 60 "
     minimap2:
       additionalParams:
         minimap2_index: ""
