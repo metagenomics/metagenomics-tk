@@ -56,6 +56,19 @@ steps:
       additionalParams: ""
     metabat:
       additionalParams: " --seed 234234  "
+    metabinner:
+      minContigLength: 500
+      kmerSize: 4
+    magscot:
+      additionalParams: ""
+      prodigal:
+        additionalParams: " -p meta "
+      hmmSearch:
+        additionalParams: "--noali --notextw --cut_nc"
+        database:
+          download:
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_v2_data.tar.gz
+            md5sum: c42a6517bc6c14f517fa2c77121ae465
   binningONT:
     minimap:
       additionalParams: 
