@@ -24,9 +24,6 @@ where
  *  /shared/directory/test is a directory that is shared between multiple machines.
  * PROFILE can be either `standard` (local use) or `slurm` depending on which environment the pipeline should be executed.
 
-**Note!** Metabolomics part is currently excluded from full pipeline run.
-
-
 ### Input
 
 === "Command"
