@@ -145,10 +145,10 @@ def collectModuleFiles(dir, sra, modules){
    def fileList = [];
    def moduleList = []
    params.modules.eachWithIndex { v, k -> moduleList.add(v.getKey() + "/" + v.getValue().version.major + ".") }
-   def moduleDir = file(dir + "/" + module.name + "/")
 
    // iterate  over all specified modules
    for(module in modules){
+     def moduleDir = file(dir + "/" + module.name + "/")
      // Check if the module exists
      if(moduleDir.exists()){
        // collect all files
