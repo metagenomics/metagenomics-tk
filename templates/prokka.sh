@@ -25,17 +25,23 @@ PROKKA_COV_TMP_TSV=!{sample}_${BIN_ID}_prokka_cov_tmp.tsv
 PROKKA_TSV=${BIN_ID}_prokka.tsv
 csvtk join -d$'\t' -T -f "locus_tag;ID" ${BIN_PREFIX}.tsv gff.tsv > ${PROKKA_TMP_TSV}
 
-# join prokka tsv with contig coverage tsv if not empty
+# join prokka tsv with contig coverage tsv if not empty, if empty the AnnotationFile module was called directly
+# and the default coverage file is used, as contig information is not available
 if [ -s !{metabatCoverage} ] && [ -s !{defaultCoverage} ]; then 
 	csvtk join -d$'\t' -T -f "CHR;CONTIG_NAME" ${PROKKA_TMP_TSV} !{metabatCoverage} \
 		| csvtk cut -d$'\t' -T -f -SAMPLE  > ${PROKKA_COV_TMP_TSV}
 	csvtk join -d$'\t' -T -f "CONTIG;CHR" !{defaultCoverage} ${PROKKA_COV_TMP_TSV} > ${PROKKA_TSV}
+	# Create SAMPLE, BIN_ID and CONTIG ids file
+  csvtk -t cut -f SAMPLE,CONTIG,locus_tag $PROKKA_TSV > prokka_tags_tmp.tsv
 	else
 	cp ${PROKKA_TMP_TSV} ${PROKKA_TSV}
+	csvtk -t cut -f locus_tag $PROKKA_TSV > prokka_tags_tmp.tsv
+	# A dumy c tag is used as a placeholer, as contig information is not available
+	while read line; do
+    echo -e "!{sample}\tc\t$line" >> prokka_tags_tmp_dump.tsv
+  done < prokka_tags_tmp.tsv
+  mv prokka_tags_tmp_dump.tsv prokka_tags_tmp.tsv
 fi
-
-# Create SAMPLE, BIN_ID and CONTIG ids file
-csvtk -t cut -f SAMPLE,CONTIG,locus_tag $PROKKA_TSV > prokka_tags_tmp.tsv
 
 # Generate a sed script with substitution commands for each line in the prokka_tmp.tsv file
 while read line; do
@@ -47,8 +53,8 @@ while read line; do
     echo "s/$oldTag/$newTag/g"
 done < <(tail -n +2 prokka_tags_tmp.tsv) > sed_script.sed
 
-# Find all files with the specified extensions and apply the sed script to each file
-find . -type f \( -name "*.faa" -o -name "*.ffn" -o -name "*.gbk" -o -name "*.gff" -o -name "*.sqn" -o -name "*.tbl" \) -exec sed -i -f sed_script.sed {} +
+# Find all files with the specified extensions and apply the sed script to each file separately
+find . -type f \( -name "*.faa" -o -name "*.ffn" -o -name "*.gbk" -o -name "*.gff" -o -name "*.sqn" -o -name "*.tbl" \) -exec sh -c 'sed -i -f sed_script.sed "$1"' _ {} \;
 
 # compress files individually to avoid errors if optional files are missing
 for file in *; do
