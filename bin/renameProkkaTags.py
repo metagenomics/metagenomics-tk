@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+# This script reads a prokka_tags_tmp.tsv file and generates a dictionary with old tags as keys and new tags as values.
+# It finds all files with the specified extensions and applies the substitutions to each file separately.
+#
+# Usage: python renameProkkaTags.py <BIN_PREFIX>
+
+from __future__ import print_function
+from multiprocessing import Pool
+import os
+import re
+import sys
+
+# Read the BIN_PREFIX value from the command line arguments
+BIN_PREFIX = sys.argv[1]
+
+# Read the prokka_tags_tmp.tsv file and generate a dictionary with old tags as keys and new tags as values
+with open("prokka_tags_tmp.tsv", "r") as f:
+    next(f)  # skip header
+    tag_dict = {}
+    for line in f:
+        fields = line.strip().split("\t")
+        old_tag = fields[2]
+        new_tag = "{}_{}_{}".format(BIN_PREFIX, fields[1].replace(fields[0] + '_', ''), fields[2])
+        tag_dict[old_tag] = new_tag
+
+# Define a function to apply the substitutions to a file
+def apply_substitutions(args):
+    file_path, tag_dict = args
+    with open(file_path, "r") as f:
+        content = f.read()
+    for old_tag, new_tag in tag_dict.items():
+        content = re.sub(old_tag, new_tag, content)
+    with open(file_path, "w") as f:
+        f.write(content)
+
+# Find all files with the specified extensions and apply the substitutions to each file separately
+file_paths = []
+for root, dirs, files in os.walk("."):
+    for file_name in files:
+        if file_name.endswith((".faa", ".ffn", ".gbk", ".gff", ".sqn", ".tbl")):
+            file_path = os.path.join(root, file_name)
+            file_paths.append(file_path)
+
+# Use a multiprocessing Pool to parallelize the calls to the apply_substitutions function
+pool = Pool()
+pool.map(apply_substitutions, [(file_path, tag_dict) for file_path in file_paths])
+pool.close()
+pool.join()

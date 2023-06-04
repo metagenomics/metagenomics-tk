@@ -43,18 +43,9 @@ if [ -s !{metabatCoverage} ] && [ -s !{defaultCoverage} ]; then
   mv prokka_tags_tmp_dump.tsv prokka_tags_tmp.tsv
 fi
 
-# Generate a sed script with substitution commands for each line in the prokka_tmp.tsv file
-while read line; do
-    # Extract the new tag from the current line
-    newTag=$(echo -e "$line" | awk -v prefix="$BIN_PREFIX" -F '\t' '{gsub($1"_", "", $2); print prefix"_"$2"_"$3}')
-    # Extract the old tag from the current line
-    oldTag=$(echo -e "$line" | cut -f3)
-    # Add a substitution command to the sed script
-    echo "s/$oldTag/$newTag/g"
-done < <(tail -n +2 prokka_tags_tmp.tsv) > sed_script.sed
-
-# Find all files with the specified extensions and apply the sed script to each file separately
-find . -type f \( -name "*.faa" -o -name "*.ffn" -o -name "*.gbk" -o -name "*.gff" -o -name "*.sqn" -o -name "*.tbl" \) -exec sh -c 'sed -i -f sed_script.sed "$1"' _ {} \;
+# This script reads a prokka_tags_tmp.tsv file and generates a dictionary with old tags as keys and new tags as values.
+# It finds all files with the specified extensions and applies the substitutions to each file separately.
+renameProkkaTags.py $BIN_PREFIX
 
 # compress files individually to avoid errors if optional files are missing
 for file in *; do
