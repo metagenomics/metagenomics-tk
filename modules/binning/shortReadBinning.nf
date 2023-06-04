@@ -139,7 +139,7 @@ process pMAGScoT {
     '''
     # Once in a blue moon Nextflow leaves the header in the file
     # Failsafe to remove header from contigMaps file if it exists
-    sed -i '1{/^BIN_ID\tCONTIG\tBINNER$/d;}' !{contigMaps}
+    sed -i '/^BIN_ID\tCONTIG\tBINNER$/d' !{contigMaps}
     Rscript /opt/MAGScoT.R !{params.steps?.binning?.magscot?.additionalParams} -i !{contigMaps} --hmm !{allHits} -o !{sample}_MagScoT
 
     # Create a new binning file according to the naming convention
