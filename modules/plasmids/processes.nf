@@ -38,7 +38,6 @@ process pViralVerifyPlasmid {
     tuple val("${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
       file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-
     shell:
     EXTRACTED_DB=params.steps?.plasmid?.ViralVerifyPlasmid?.database?.extractedDBPath ?: ""
     DOWNLOAD_LINK=params.steps?.plasmid?.ViralVerifyPlasmid?.database?.download?.source ?: ""
@@ -129,7 +128,7 @@ process pPlasClass {
 
     label 'medium'
 
-    tag "$sample $binID"
+    tag "Sample: $sample, BinID: $binID"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "PlasClass", filename) }, \
         pattern: "{**.tsv}"
@@ -139,12 +138,13 @@ process pPlasClass {
     container "${params.PlasClass_image}"
 
     input:
-    tuple val(sample), val(binID), path(assembly)
+    tuple val(sample), val(binID), path(assembly), val(start), val(stop)
 
     output:
-    tuple val("${sample}"), val("${binID}"), val("PlasClass"), path("${binID}_plasclass.tsv"), emit: probabilities
-    tuple val("${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
-        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+    tuple val("${binID}_chunk_${start}_${stop}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+      file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+    tuple val("${sample}"), val("${binID}"), val("PlasClass"), \
+	path("${binID}_chunk_${start}_${stop}_plasClass.tsv"), emit: probabilities
 
     shell:
     output = getOutput("${sample}", params.runid, "PlasClass", "")

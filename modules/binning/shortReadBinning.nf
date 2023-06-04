@@ -4,6 +4,8 @@ include { pGetBinStatistics as pGetBinStatistics; \
 	pCovermContigsCoverage; pCovermGenomeCoverage; pBowtie2; pMetabat; pBwa; pBwa2 } from './processes'
 include { pProdigal; pHmmSearch } from '../annotation/module'
 
+include { pDumpLogs } from '../utils/processes'
+
 def getModulePath(module){
     return module.name + '/' + module.version.major + "." +
           module.version.minor + "." +
@@ -329,11 +331,13 @@ workflow _wBinning {
 
      ALIGNMENT_INDEX = 2
      pCovermGenomeCoverage(Channel.value(params?.steps?.binning.find{ it.key == "genomeCoverage"}?.value), \
+        Channel.value(""), \
 	Channel.value([getModulePath(params.modules.binning), \
 	"genomeCoverage", params?.steps?.binning?.genomeCoverage?.additionalParams]), \
 	mappedReads | join(bins, by: SAMPLE_IDX) \
 	| map { sample -> sample.addAll(ALIGNMENT_INDEX, emptyFile); sample } | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)))
 
+     pCovermGenomeCoverage.out.logs | pDumpLogs
 
      // Ensure that in case just one bin is produced that it still is a list
      bins | map({ it -> it[1] = aslist(it[1]); it  }) | set{ binsList }

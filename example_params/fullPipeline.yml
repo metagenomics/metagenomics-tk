@@ -93,7 +93,7 @@ steps:
     contigsCoverage:
       additionalParams: ""
   dereplication:
-    pasolli:
+    bottomUpClustering:
       minimumCompleteness: 0
       maximumContamination: 5000
       ANIBuffer: 20
@@ -114,7 +114,17 @@ steps:
     coverm:
       additionalParams: " --min-covered-fraction 0 "
   cooccurrence:
-    additionalParams: " -t 0.1 -z 80 -o 'correlation' "
+    inference:
+      additionalParams: 
+        method: 'correlation'
+        rscript: " --mincovthreshold 0.1 --maxzero 80 --minweight 0.4 "
+        timeLimit: "AUTO"
+    metabolicAnnotation:
+      additionalParams:
+        metabolicEdgeBatches: 20
+        metabolicEdgeReplicates: 3
+        smetana: " --molweight "
+
   plasmid:
     SCAPP:
       additionalParams: 

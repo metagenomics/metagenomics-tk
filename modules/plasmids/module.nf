@@ -5,12 +5,10 @@ include { pCovermContigsCoverage; pBowtie2; pMinimap2; pBwa; pBwa2} from '../bin
 
 include { pPlaton as pPlatonCircular; \
           pPlaton as pPlatonLinear; \
-          pPlasClass as pPlasClassLinear; \
-          pPlasClass as pPlasClassCircular; \
           pViralVerifyPlasmid as pViralVerifyPlasmidCircular; \
           pViralVerifyPlasmid as pViralVerifyPlasmidLinear; \
-          pMobTyper as pMobTyperLinear; \
-          pMobTyper as pMobTyperCircular;
+          pMobTyper; \
+          pPlasClass; \
           pFilter as pCircularPlasmidsFilter;
           pFilter as pContigsPlasmidsFilter } from './processes'
 
@@ -22,13 +20,15 @@ def getBasePath(SAMPLE, RUNID, TOOL){
           '/' + TOOL
 }
 
+
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return  getBasePath(SAMPLE, RUNID, TOOL) + '/' + filename
 }
 
+
 process pSCAPP {
 
-    label 'medium'
+    label 'large'
 
     tag "Sample: $sample"
 
@@ -115,7 +115,7 @@ process pCount {
 
     label 'tiny'
 
-    tag "Sample: $sample"
+    tag "Sample: $sample, BinID: $binID"
 
     container "${params.ubuntu_image}"
 
@@ -126,7 +126,6 @@ process pCount {
     tuple val("${sample}"), val("${binID}"), path(plasmids), env(COUNT) 
 
     shell:
-    output = getOutput("${sample}", params.runid, "SCAPP", "")
     '''
     COUNT=$(seqkit stats -T !{plasmids} | cut -d$'\t' -f 4 | tail -n 1)
     '''
@@ -138,23 +137,25 @@ process pCount {
 * It creates a list of indices of chunks of the input file based on the input parameters.
 */
 def splitFilesIndex(seqCount, chunkSize, sample){
-  def chunk=seqCount.intdiv(chunkSize)
+  int chunk=seqCount.intdiv(chunkSize)
   if(seqCount.mod(chunkSize) != 0){
       chunk = chunk + 1
   }
   def chunks = []
   for(def n : 1..chunk){
-      start = (n-1) * chunkSize + 1
+      int start = (n-1) * chunkSize + 1
      
-      end = n * chunkSize
+      int end = n * chunkSize
     
       if(end > seqCount){
           end=seqCount
       }
       chunks.add(sample + [start, end])
   }
+
   return chunks
 }
+
 
 /*
 * 
@@ -171,10 +172,9 @@ workflow _wSplit {
     FILE_IDX = 2
     COUNT_IDX=3
     CHUNK_SIZE_IDX=4
-    input | pCount | combine(chunkSize) \
-	| flatMap { sample -> \
+    input | pCount | combine(chunkSize) | flatMap { sample -> \
 	splitFilesIndex(Integer.parseInt(sample[COUNT_IDX]), sample[CHUNK_SIZE_IDX], [sample[SAMPLE_IDX], sample[BIN_ID_IDX], sample[FILE_IDX]]) } \
-	|  set { chunks }
+	| set { chunks }
   emit:
     chunks
 }
@@ -187,6 +187,7 @@ def getSampleToolKey(sample){
   return ["${sample[SAMPLE_IDX]}_ttt_${sample[BIN_ID_IDX]}_ttt_${sample[FILE_IDX]}", sample[SAMPLE_IDX], sample[BIN_ID_IDX], sample[FILE_IDX]]
 }
 
+
 /*
 * This method tries to adjust the size of the input file for mobtyper in way that it does not run out of memory.
 */
@@ -195,28 +196,59 @@ workflow _wRunMobTyper {
      samplesContigs
    main:
       // Split input files in chunks
-      _wSplit(samplesContigs, Channel.from(params.modules.plasmids.process.pMobTyper.defaults.inputSize)) | pMobTyperLinear
+     _wSplit(samplesContigs, Channel.from(params.modules.plasmids.process.pMobTyper.defaults.inputSize)) | pMobTyper
+     _wCollectChunks(pMobTyper.out.plasmidsStats)
 
-      // Create per sample and bin id a composite key
-      UNIQUE_SAMPLE_KEY_IDX = 0
-      pMobTyperLinear.out.plasmidsStats | map { sample -> getSampleToolKey(sample) } \
-	| unique { sample -> sample[UNIQUE_SAMPLE_KEY_IDX] } | set { mobTyperStatsChunk }
+   emit:
+     plasmidsStats = _wCollectChunks.out.plasmidsStats
+     logs = pMobTyper.out.logs
 
-      // Collect all chunks of a specific sample and bin id
-      STATS_IDX = 3 
-      pMobTyperLinear.out.plasmidsStats \
+}
+
+
+/*
+* This method tries to adjust the size of the input file for plasClass in way that it does not run out of memory.
+*/
+workflow _wRunPlasClass {
+   take:
+     samplesContigs
+   main:
+      // Split input files in chunks
+      _wSplit(samplesContigs, Channel.from(params.modules.plasmids.process.pPlasClass.defaults.inputSize)) | pPlasClass
+
+      _wCollectChunks(pPlasClass.out.probabilities)
+
+    emit:
+      probabilities = _wCollectChunks.out.plasmidsStats
+      logs = pPlasClass.out.logs
+}
+
+/*
+* This method collects the chunked outputs of tools where the inputs have been split.
+*/
+workflow _wCollectChunks {
+  take:
+    chunks
+  main:
+    // Create per sample and bin id a composite key
+    UNIQUE_SAMPLE_KEY_IDX = 0
+    chunks | map { sample -> getSampleToolKey(sample) } \
+	| unique { sample -> sample[UNIQUE_SAMPLE_KEY_IDX] } | set { statsChunk }
+
+    // Collect all chunks of a specific sample and bin id
+    STATS_IDX = 3 
+    chunks \
 	| collectFile(keepHeader: true){ sample -> \
 	[ getSampleToolKey(sample)[UNIQUE_SAMPLE_KEY_IDX], file(sample[STATS_IDX]).text] } \
-	| map { f -> [file(f).name, f] } | set { mobTyperStatsCombined}
+	| map { f -> [file(f).name, f] } | set { statsCombined}
 
-      // get initial ids such as sample and bin id and remove composite key
-      UNIQUE_CHUNK_IDX = 0
-      COMPOSED_INDEX_IDX = 0
-      mobTyperStatsChunk | join(mobTyperStatsCombined, by: UNIQUE_CHUNK_IDX) \
-	| map { sample -> sample.remove(COMPOSED_INDEX_IDX); sample } | set { mobTyperStatsFinal }
-    emit:
-      plasmidsStats = mobTyperStatsFinal
-      logs = pMobTyperLinear.out.logs
+    // get initial ids such as sample and bin id and remove composite key
+    UNIQUE_CHUNK_IDX = 0
+    COMPOSED_INDEX_IDX = 0
+    statsChunk | join(statsCombined, by: UNIQUE_CHUNK_IDX) \
+	| map { sample -> sample.remove(COMPOSED_INDEX_IDX); sample } | set { statsFinal }
+  emit:
+    plasmidsStats = statsFinal
 }
 
 
@@ -225,7 +257,7 @@ workflow _runNonPlasmidAssemblyAnalysis {
       samplesContigs
     main:
       // Check if Contigs are plasmids
-      samplesContigs | (pPlasClassLinear & _wRunMobTyper & pViralVerifyPlasmidLinear & pPlatonLinear)
+      samplesContigs | (_wRunPlasClass & _wRunMobTyper & pViralVerifyPlasmidLinear & pPlatonLinear)
 
       // Check which tools the user has chosen for filtering contigs
       selectedFilterTools = params?.steps?.plasmid.findAll({ tool, options -> {  options instanceof Map && options?.filter } }).collect{it.key}
@@ -233,7 +265,7 @@ workflow _runNonPlasmidAssemblyAnalysis {
 
       // Collect output
       pPlatonLinear.out.plasmidsStats \
-	| mix(pPlasClassLinear.out.probabilities) \
+	| mix(_wRunPlasClass.out.probabilities) \
 	| mix(_wRunMobTyper.out.plasmidsStats) \
 	| mix(pViralVerifyPlasmidLinear.out.plasmidsStats) \
 	| set { plasmidsStats }
@@ -258,7 +290,7 @@ workflow _runNonPlasmidAssemblyAnalysis {
       	samplesContigs | set { samplesContigsPlasmids }
       }
 
-      pPlasClassLinear.out.logs | mix(_wRunMobTyper.out.logs) \
+      _wRunPlasClass.out.logs | mix(_wRunMobTyper.out.logs) \
 	| mix(pViralVerifyPlasmidLinear.out.logs) | mix(pPlatonLinear.out.logs) | pDumpLogs
 
     emit:
@@ -284,7 +316,7 @@ workflow _runCircularAnalysis {
 	| map { plasmids -> [plasmids[SAMPLE_IDX], plasmids[SAMPLE_IDX] + "_plasmid_assembly", plasmids[BIN_IDX]] } \
 	| set { newPlasmids }
 
-       newPlasmids | (pPlasClassCircular & _wRunMobTyper & pViralVerifyPlasmidCircular & pPlatonCircular)
+       newPlasmids | (_wRunPlasClass & _wRunMobTyper & pViralVerifyPlasmidCircular & pPlatonCircular)
 
        pBowtie2(Channel.value(params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("SCAPP") \
                && params.steps?.plasmid?.SCAPP?.additionalParams.containsKey("bowtie")), \
@@ -329,7 +361,7 @@ workflow _runCircularAnalysis {
 
        // Collect output
        pPlatonCircular.out.plasmidsStats \
- 	| mix(pPlasClassCircular.out.probabilities) \
+ 	| mix(_wRunPlasClass.out.probabilities) \
 	| mix(_wRunMobTyper.out.plasmidsStats) \
 	| mix(pViralVerifyPlasmidCircular.out.plasmidsStats) \
 	| set { plasmidsStats }
@@ -355,7 +387,7 @@ workflow _runCircularAnalysis {
       	 newPlasmids | set { filteredPlasmids }
       }
 
-      pSCAPP.out.logs | mix(pPlasClassCircular.out.logs) | mix(_wRunMobTyper.out.logs)  \
+      pSCAPP.out.logs | mix(_wRunPlasClass.out.logs) | mix(_wRunMobTyper.out.logs)  \
 	| mix(pViralVerifyPlasmidCircular.out.logs) | mix(pPlatonCircular.out.logs) | pDumpLogs
 
     emit:

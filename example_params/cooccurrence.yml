@@ -8,9 +8,15 @@ scratch: "/vol/scratch"
 publishDirMode: "symlink"
 steps:
   cooccurrence:
-     gtdb: test_data/cooccurrence/gtdb.tsv
-     count: test_data/cooccurrence/counts.tsv 
-     additionalParams: " -t 0.1 -z 80 -o 'correlation' "
+    input:
+      gtdb: test_data/cooccurrence/gtdb.tsv
+      count: test_data/cooccurrence/counts.tsv 
+    inference:
+       additionalParams: 
+         method: 'correlation'
+         rscript: " --mincovthreshold 0.1 --maxzero 80 --minweight 0.4 "
+         timeLimit: "AUTO"
+
 resources:
   large:
     cpus: 28

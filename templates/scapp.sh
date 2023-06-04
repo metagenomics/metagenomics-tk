@@ -13,7 +13,7 @@ fi
 
 # Make sure that exit code 1 is also accepted due to known SCAPP bug:
 # https://github.com/Shamir-Lab/SCAPP/issues/26
-trap 'if [[ $? == 1 ]]; then echo OK; exit 0; fi' EXIT
+trap 'if [[ $? == 1 ]]; then echo "No plasmid could be detected"; exit 0; fi' EXIT
 
 scapp -g ${GRAPH} -k !{maxKmer} -p !{task.cpus} !{params.steps.plasmid.SCAPP.additionalParams.SCAPP} -b !{bam} -o .
 

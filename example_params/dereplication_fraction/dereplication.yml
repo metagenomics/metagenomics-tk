@@ -7,7 +7,7 @@ scratch: "/vol/scratch"
 publishDirMode: "symlink"
 steps:
   dereplication:
-    pasolli:
+    bottomUpClustering:
       input: "test_data/dereplication/input.tsv"
       minimumCompleteness: 0
       maximumContamination: 5000
