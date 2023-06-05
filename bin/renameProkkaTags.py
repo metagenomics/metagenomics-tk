@@ -23,15 +23,19 @@ with open("prokka_tags_tmp.tsv", "r") as f:
         new_tag = "{}_{}_{}".format(BIN_PREFIX, fields[1].replace(fields[0] + '_', ''), fields[2])
         tag_dict[old_tag] = new_tag
 
-# Define a function to apply the substitutions to a file
+
+# Apply the substitutions to a file
 def apply_substitutions(args):
     file_path, tag_dict = args
-    with open(file_path, "r") as f:
-        content = f.read()
-    for old_tag, new_tag in tag_dict.items():
-        content = re.sub(old_tag, new_tag, content)
-    with open(file_path, "w") as f:
-        f.write(content)
+    # Read the file line by line and apply the substitutions.
+    # Faster than reading the whole file into memory,
+    # as the whole file content is copied multiple times when using the replace function.
+    with open(file_path, "r") as f_in, open(file_path + ".tmp", "w") as f_out:
+        for line in f_in:
+            for old_tag, new_tag in tag_dict.items():
+                line = line.replace(old_tag, new_tag)
+            f_out.write(line)
+    os.replace(file_path + ".tmp", file_path)
 
 # Find all files with the specified extensions and apply the substitutions to each file separately
 file_paths = []
