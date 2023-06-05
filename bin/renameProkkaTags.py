@@ -35,7 +35,7 @@ def apply_substitutions(args):
             for old_tag, new_tag in tag_dict.items():
                 line = line.replace(old_tag, new_tag)
             f_out.write(line)
-    os.replace(file_path + ".tmp", file_path)
+    os.rename(file_path + ".tmp", file_path)
 
 # Find all files with the specified extensions and apply the substitutions to each file separately
 file_paths = []
