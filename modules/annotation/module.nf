@@ -113,13 +113,18 @@ process pMMseqs2 {
           MMSEQS2_DATABASE_DIR="!{EXTRACTED_DB}"
    fi
 
+    # According to the MMSeqs docs the --split-memory-limit parameter defines the RAM usage for *about* 80 percent of the total RAM consumption.
+    # We set the ram limit parameter to 75 percent of the total available RAM to make sure to not run into out of memory errors.
+    RAM_LIMIT="$(awk -v RATIO=75 -v RAM=$(echo !{task.memory} | cut -f 1 -d ' ') 'BEGIN { print int(RAM / 100 * RATIO) }')G"
+
     mkdir tmp
     # Only mmseqs2 databases can be used for every kind of search. Inputs have to be converted first.
     mmseqs createdb !{fasta} queryDB
     # Load all indices into memory to increase searching speed
     mmseqs touchdb --threads !{task.cpus} queryDB
     mmseqs touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
-    mmseqs search queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database tmp !{parameters} --threads !{task.cpus}
+    mmseqs search queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database tmp !{parameters} \
+	--threads !{task.cpus} --split-memory-limit ${RAM_LIMIT}
     # mmseqs2 searches produce output databases. These have to be converted to a more useful format. The blast -outfmt 6 in this case.
     mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database !{sample}_!{binType}.!{dbType}.blast.tsv --threads !{task.cpus}
    '''
