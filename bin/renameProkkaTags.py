@@ -9,21 +9,28 @@ from multiprocessing import Pool
 import os
 import re
 import sys
+import csv
 
 # Read the BIN_PREFIX value from the command line arguments
 BIN_PREFIX = sys.argv[1]
+# Number of CPUs to use for parallelization, if not specified use 2 CPUs
+CPUS = int(sys.argv[2]) if len(sys.argv) > 2 else 2
 locus_tag_prefix = ""
 
 # Read the prokka_tags_tmp.tsv file and generate a dictionary with old tags as keys and new tags as values
+# Example of the prokka_tags_tmp.tsv file:
+#
+# SAMPLE  CONTIG  locus_tag
+# test1   test1_19_0ea371 BLGMGGNG_00001
+#
 with open("prokka_tags_tmp.tsv", "r") as f:
-    next(f)  # skip header
     tag_dict = {}
-    for line in f:
-        fields = line.strip().split("\t")
-        old_tag = fields[2]
-        new_tag = "{}_{}_{}".format(BIN_PREFIX, fields[1].replace(fields[0] + '_', ''), fields[2])
+    reader = csv.DictReader(f, delimiter='\t')
+    for line in reader:
+        old_tag = line['locus_tag']
+        new_tag = "{}_{}_{}".format(BIN_PREFIX, line['CONTIG'].replace(line['SAMPLE'] + '_', ''), line['locus_tag'])
         tag_dict[old_tag] = new_tag
-    locus_tag_prefix = fields[2].split("_")[0]
+    locus_tag_prefix = line['locus_tag'].split("_")[0]
 
 
 # Apply the substitutions to a file
@@ -51,7 +58,7 @@ for root, dirs, files in os.walk("."):
             file_paths.append(file_path)
 
 # Use a multiprocessing Pool to parallelize the calls to the apply_substitutions function
-pool = Pool()
+pool = Pool(processes=CPUS)
 pool.map(apply_substitutions, [(file_path, tag_dict) for file_path in file_paths])
 pool.close()
 pool.join()

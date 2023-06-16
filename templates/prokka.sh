@@ -37,15 +37,12 @@ if [ -s !{metabatCoverage} ] && [ -s !{defaultCoverage} ]; then
 	cp ${PROKKA_TMP_TSV} ${PROKKA_TSV}
 	csvtk -t cut -f locus_tag $PROKKA_TSV > prokka_tags_tmp.tsv
 	# A dumy c tag is used as a placeholer, as contig information is not available
-	while read line; do
-    echo -e "!{sample}\tc\t$line" >> prokka_tags_tmp_dump.tsv
-  done < prokka_tags_tmp.tsv
-  mv prokka_tags_tmp_dump.tsv prokka_tags_tmp.tsv
+	sed -i "s/^/!{sample}\tc\t/g" prokka_tags_tmp.tsv 
 fi
 
 # This script reads a prokka_tags_tmp.tsv file and generates a dictionary with old tags as keys and new tags as values.
 # It finds all files with the specified extensions and applies the substitutions to each file separately.
-renameProkkaTags.py $BIN_PREFIX
+renameProkkaTags.py $BIN_PREFIX !{task.cpus}
 
 # compress files individually to avoid errors if optional files are missing
 for file in *; do
