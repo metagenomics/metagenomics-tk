@@ -37,7 +37,8 @@ if [ -s !{metabatCoverage} ] && [ -s !{defaultCoverage} ]; then
 	cp ${PROKKA_TMP_TSV} ${PROKKA_TSV}
 	csvtk -t cut -f locus_tag $PROKKA_TSV > prokka_tags_tmp.tsv
 	# A dumy c tag is used as a placeholer, as contig information is not available
-	sed -i "s/^/!{sample}\tc\t/g" prokka_tags_tmp.tsv 
+	sed -i "s/^/!{sample}\tc\t/g" prokka_tags_tmp.tsv
+	sed -i '1s/.*/SAMPLE\tCONTIG\tlocus_tag/' prokka_tags_tmp.tsv
 fi
 
 # This script reads a prokka_tags_tmp.tsv file and generates a dictionary with old tags as keys and new tags as values.
