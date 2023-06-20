@@ -143,12 +143,16 @@ workflow wCooccurrence {
 */
 def collectModuleFiles(dir, sra, modules){
    def fileList = [];
-   def moduleList = []
+   def moduleList = [];
+   def binRefining = false;
+   def moduleName = "";
+
    params.modules.eachWithIndex { v, k -> moduleList.add(v.getKey() + "/" + v.getValue().version.major + ".") }
 
    // iterate  over all specified modules
    for(module in modules){
      def moduleDir = file(dir + "/" + module.name + "/")
+     moduleName = module.name
      // Check if the module exists
      if(moduleDir.exists()){
        // collect all files
@@ -157,10 +161,20 @@ def collectModuleFiles(dir, sra, modules){
            def found = moduleList.any {  item ==~ '.*' +  it + '.*'  }
            if(found){
               fileList.add([sra, item]);
+              // check if a bin refining step was performed
+              binRefining = item.contains("magscot") || binRefining
            }
        }
      }
    }
+
+   if (moduleName == "binning" && binRefining) {
+       // Iterate over all entry's of the fileList and remove every entry that contains "metabat" or "metabinner" files,
+       // if a bin refining step was performed, as only the refined bins are needed.
+       int path = 1;
+       fileList = fileList.findAll { !it[path].toString().contains("metabat") && !it[path].toString().contains("metabinner") }
+   }
+   
    return fileList;
 }
 
