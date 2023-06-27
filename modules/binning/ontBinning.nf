@@ -3,6 +3,8 @@ nextflow.enable.dsl=2
 include { pGetBinStatistics as pGetBinStatistics; \
 	pCovermContigsCoverage; pCovermGenomeCoverage; pMinimap2; pMetabat } from './processes'
 
+include { pDumpLogs } from '../utils/processes'
+
 def getModulePath(module){
     return module.name + '/' + module.version.major + "." +
           module.version.minor + "." +
@@ -201,10 +203,13 @@ workflow _wBinning {
 
      ALIGNMENT_INDEX = 2
      pCovermGenomeCoverage(Channel.value(params?.steps?.binningONT.find{ it.key == "genomeCoverage"}?.value), \
+        Channel.value(""),
 	Channel.value([getModulePath(params.modules.binningONT), \
 	"genomeCoverage", params?.steps?.binningONT?.genomeCoverage?.additionalParams]), \
 	mappedReads | join(bins, by: SAMPLE_IDX) \
 	| map { sample -> sample.addAll(ALIGNMENT_INDEX, emptyFile); sample } | join(medianQuality, by: SAMPLE_IDX) )
+
+     pCovermGenomeCoverage.out.logs | pDumpLogs
 
      pMetabat.out.notBinned | mix(pMetaCoAG.out.notBinned) | set { notBinned }
 

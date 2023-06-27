@@ -1,0 +1,38 @@
+tempdir: "/tmp"
+summary: false
+output: "output"
+runid: 1
+logLevel: 0
+logDir: log
+scratch: "/vol/scratch"
+publishDirMode: "symlink"
+steps:
+  cooccurrence:
+     input:
+       gtdb: test_data/cooccurrence/gtdb_large.tsv
+       count: test_data/cooccurrence/countsMedium.tsv
+       models: test_data/cooccurrence/models.tsv
+     inference:
+        additionalParams:
+          method: 'spiec-easi'
+          rscript: " --mincovthreshold 0.1 --maxzero 80"
+          timeLimit: "AUTO"
+     metabolicAnnotation:
+       additionalParams:
+         metabolicEdgeBatches: 5
+         metabolicEdgeReplicates: 10
+         smetana: " --flavor bigg "
+
+resources:
+  large:
+    cpus: 28
+    memory: 230
+  medium:
+    cpus: 14
+    memory: 113
+  small:
+    cpus: 7
+    memory: 14
+  tiny:
+    cpus: 1
+    memory: 1

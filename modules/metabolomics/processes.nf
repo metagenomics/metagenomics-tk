@@ -30,7 +30,7 @@ process pCarveMe {
       val(mode)
 
     output:
-      tuple val("${sample}"), val("${id}"), path("${id}.xml"), optional: true, emit: model
+      tuple val("${sample}"), val("${id}"), path("${id}.model.xml"), optional: true, emit: model
       tuple val("${id}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -39,11 +39,11 @@ process pCarveMe {
 
     if(mode == "proteins")
        '''
-       carve !{mag} -o !{id}.xml !{params.steps.metabolomics.carveme.additionalParams}
+       carve !{mag} -o !{id}.model.xml !{params.steps.metabolomics.carveme.additionalParams}
        '''
     else if(mode == "genome")
        '''
-       carve --dna !{mag} -o !{id}.xml !{params.steps.metabolomics.carveme.additionalParams}
+       carve --dna !{mag} -o !{id}.model.xml !{params.steps.metabolomics.carveme.additionalParams}
        '''
      else
         error "Invalid mode: ${mode}"

@@ -31,7 +31,7 @@ process pPredictFlavor {
     container "${params.assemblerResourceEstimator_image}"
 
     input:
-    tuple val(sample), path(interleavedReads), path(unpairedReads), val(nonpareilDiversity), path(kmerFrequencies)
+    tuple val(sample), path(interleavedReads), path(unpairedReads), val(nonpareilDiversity), path(kmerFrequencies), path(model)
 
     output:
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
@@ -41,8 +41,7 @@ process pPredictFlavor {
     '''
     READS_COUNTER=$(zcat !{interleavedReads} !{unpairedReads} | awk '{s++}END{print s/4}')
     BASEPAIRS_COUNTER=$(zcat !{interleavedReads} !{unpairedReads} | seqkit stats -T | cut -d$'\t' -f 5 | tail -n 1)
-    MODEL=!{baseDir}/models/assembler/megahit/default.pkl
-    MEMORY=$(cli.py predict -m ${MODEL} -k !{kmerFrequencies} -b ${BASEPAIRS_COUNTER} -d !{nonpareilDiversity} -r ${READS_COUNTER})
+    MEMORY=$(cli.py predict -m !{model} -k !{kmerFrequencies} -b ${BASEPAIRS_COUNTER} -d !{nonpareilDiversity} -r ${READS_COUNTER})
     echo -e "Memory: ${MEMORY}\nBasepairs: ${BASEPAIRS_COUNTER}\nReads: ${READS_COUNTER}" 
     '''
 }
@@ -92,11 +91,11 @@ process pMegahit {
 
     cpus { getNextHigherResource([-9, 137, 247], task.exitStatus, "cpus", task.attempt, \
 	"${memory}", params.steps.assembly.megahit, \
-	params.modules.assembly.process.pMegahit.defaults.flavor, "${sample}") }
+	params.resources.large, "${sample}") }
 
     memory { getNextHigherResource([-9, 137, 247], task.exitStatus, "memory", task.attempt, \
 	"${memory}", params.steps.assembly.megahit, \
-	params.modules.assembly.process.pMegahit.defaults.flavor, "${sample}") + ' GB' }
+	params.resources.large, "${sample}") + ' GB' }
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "megahit", filename) }
 
@@ -297,15 +296,23 @@ workflow _wCalculateMegahitResources {
          SAMPLE_IDX = 0
          NONPAREIL_METRICS_IDX = 1
  
-         // figure if whether resources should be predicted or not
+         // figure out whether resources should be predicted or not
          readsList | branch {
         	predict: params?.steps?.assembly?.megahit?.resources?.RAM?.mode == "PREDICT"
         	doNotPredict: params?.steps?.assembly?.megahit?.resources?.RAM?.mode == "DEFAULT"
          } | set { resourceType }
+
+         model = Channel.empty()
+         if(params.steps.containsKey("assembly") && params.steps.assembly.containsKey("megahit") \
+		&& params?.steps?.assembly?.megahit?.additionalParams.contains("meta-sensitive")){
+         	model = Channel.value(file("${baseDir}/models/assembler/megahit/sensitive.pkl"))
+	 } else {
+         	model = Channel.value(file("${baseDir}/models/assembler/megahit/default.pkl"))
+	 }
    
          resourceType.predict | join(nonpareil | splitCsv(header: true, sep: '\t') \
 	  | map{ it -> [it[SAMPLE_IDX], it[NONPAREIL_METRICS_IDX].diversity]  }) \
-          | join(kmerFrequencies) | pPredictFlavor
+          | join(kmerFrequencies) | combine(model) | pPredictFlavor
 
          PREDICTED_RAM_IDX = 1
 
