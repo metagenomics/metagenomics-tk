@@ -12,6 +12,7 @@ jobs:
           " -c /vol/spool/aws.config --databases=/vol/scratch/databases/  --logDir s3://toolkit-dev-benchmark \
            --carveme_image=pbelmann/metabolomics:0.1.0 --steps.metabolomics.beforeProcessScript=/vol/spool/dockerPull.sh \
            --smetana_image=pbelmann/metabolomics:0.1.0 --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh \
+           --steps.fragmentRecruitment.mashScreen.genomes=/vol/spool/toolkit/gtdb/paths.tsv \
            --steps.metabolomics.carveme.additionalParams='' " \
           ./default/fullPipeline_illumina_nanpore.yml "" slurm || exit 1
 

@@ -65,6 +65,8 @@ and the nonpareil diversity index in order to be able to predict the memory peak
 resources in order to run the assembler are thereby fitted to the resources that are actually needed for a specific dataset. If this
 mode is enabled then Nonpareil and jellyfish that are part of the quality control module are automatically executed before the assembler run.  
 
+Please note that this mode is only tested for Megahit with default parameters and the meta-sensitive mode (`--presets meta-sensitive`).
+
 ```
   resources:
     RAM: 

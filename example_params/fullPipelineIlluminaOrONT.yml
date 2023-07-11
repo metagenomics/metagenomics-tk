@@ -88,7 +88,7 @@ steps:
         lineage_set: " " 
         qa: "  "
   dereplication:
-    pasolli:
+    bottomUpClustering:
       minimumCompleteness: 0
       maximumContamination: 5000
       ANIBuffer: 20

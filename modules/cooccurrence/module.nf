@@ -204,7 +204,6 @@ process pSmetanaEdges {
 workflow wCooccurrenceFile {
   main: 
     Channel.from(file(params.steps.cooccurrence.input.count))\
-       | splitCsv(sep: '\t', header: false, skip: 1) \
        | set {count}
 
     models = Channel.empty()
@@ -237,9 +236,9 @@ def fixModelID(modelName){
 * Input:
 *  * The count channel must contain entries of the format: [sampleid,  /path/to/abundance/file]
 *    Abundance file must contain the following to columns:
-*    Genome  SAMPLE_NAME
-*    test1_bin.1     61.92912
-*    test2_bin.2     115.32025
+*    Genome  SAMPLE_NAME1 SAMPLE_NAME2 ....
+*    test1_bin.1     61.92912	21.
+*    test2_bin.2     115.32025	123.
 *  
 *  * The gtdb channel contains gtdb assignments of every sample.
 *   
@@ -249,7 +248,7 @@ def fixModelID(modelName){
 */
 workflow wCooccurrenceList {
   take:
-    count
+    abundanceMatrix
     gtdb
     models
   main:
@@ -259,7 +258,7 @@ workflow wCooccurrenceList {
     MODEL_NAME_IDX = 0
     MODEL_PATH_IDX = 1
     models | map { model -> [fixModelID(model[MODEL_NAME_IDX]), model[MODEL_PATH_IDX]]} | set { fixedModel }
-    _wCooccurrence(count, gtdbConcatenated, fixedModel)
+    _wCooccurrence(abundanceMatrix, gtdbConcatenated, fixedModel)
 }
 
 
@@ -315,21 +314,18 @@ workflow _wBuildNetwork {
 
 workflow _wCooccurrence {
    take: 
-     countCh
+     abundance
      gtdbConcatenated
      models
    main:
-     COLLECT_BUFFER=10000
 
-     // Collect abundance/ count information of every sample
-     countCh | combine(countCh | count )  \
-	| filter({ sample, abundance, count -> count > 1 }) \
-	| map { sample, abundance, count -> file(abundance) }\
-        | buffer( size: COLLECT_BUFFER, remainder: true ) \
-        | pVerticalConcat | collect \
-        | pVerticalConcatFinal | set { abundance }
-
-     _wBuildNetwork(abundance, gtdbConcatenated)
+     graph = Channel.empty()
+     edges = Channel.empty()
+     if(params.steps.containsKey("cooccurrence")){
+       _wBuildNetwork(abundance, gtdbConcatenated)
+       _wBuildNetwork.out.edges | set { edges }
+       _wBuildNetwork.out.graph | set { graph }
+     }
 
      MODEL_IDX = 0
      MODEL_1_PATH_IDX = 1
@@ -343,7 +339,7 @@ workflow _wCooccurrence {
 
      // Get all edges, map node ids to model paths (e.g. ERR2592252_bin.25 to 
      // /meta_test/medium/cooccurrence/ERR2592252_bin.25.fa.model.xml)
-     _wBuildNetwork.out.edges |  splitCsv(header: true, sep: '\t') | map{ bin -> [bin.V1, bin.V2, bin.IDX]} \
+     edges |  splitCsv(header: true, sep: '\t') | map{ bin -> [bin.V1, bin.V2, bin.IDX]} \
 	| combine(models, by: MODEL_IDX) \
         | map { bin -> [bin[MODEL_2_IDX], bin[MODEL_PATH_IDX], bin[BATCH_IDX]]} \
 	| combine(models, by: MODEL_IDX) \
@@ -353,8 +349,12 @@ workflow _wCooccurrence {
      // Create batches of edges in separate files
      MODEL_FILES = 2
      BATCH_NAME_IDX = 1
-     rowEdges | collectFile(){ edge -> [ "edges_" + edge[BATCH_IDX], edge.take(MODEL_FILES).join('\t') + '\n' ] } \
+
+     batchedFileEdges = Channel.empty()
+     if(params.steps.containsKey("cooccurrence") && params.steps.cooccurrence.containsKey("metabolicAnnotation")){
+       rowEdges | collectFile(){ edge -> [ "edges_" + edge[BATCH_IDX], edge.take(MODEL_FILES).join('\t') + '\n' ] } \
 	| map { f -> [f.name.split('_')[BATCH_NAME_IDX], f] } | set{batchedFileEdges}
+     }
 
      // Create Maps between Model Name, Model Path and BinId
      MODEL_NAME_IDX = 0
@@ -384,17 +384,20 @@ workflow _wCooccurrence {
 	batchedFileEdges | join(batchedEdges) | map{ model -> model.tail()})
 
      // Get edge metrics and update the previously creatd network
-     METRICS = 6
-     pSmetanaEdges.out.edgeAttributes | splitCsv(sep: '\t', skip: 1) \
-	| combine(modelNameToBinIdMap, by: MODEL_NAME_IDX) \
-	| combine(modelNameToBinIdMap | map { model -> model.reverse()}, by: MODEL_NAME_1_IDX) \
-	| map { edge -> edge.takeRight(METRICS) } \
-	| collectFile(storeDir: params.output + "/" + getOutput(params.runid, "smetana", ""), \
-	seed: ["medium", "size", "mip", "mro", "V1", "V2"].join('\t'), \
-	newLine: true){ line -> ['edgeAttributes.tsv', line.join("\t")] } \
-	| set { edgeAttributes } 
+     edgeAttributes = Channel.empty()
+     if(params.steps.containsKey("cooccurrence") && params.steps.cooccurrence.containsKey("metabolicAnnotation")){
+         METRICS = 6
+         pSmetanaEdges.out.edgeAttributes | splitCsv(sep: '\t', skip: 1) \
+	  | combine(modelNameToBinIdMap, by: MODEL_NAME_IDX) \
+	  | combine(modelNameToBinIdMap | map { model -> model.reverse()}, by: MODEL_NAME_1_IDX) \
+	  | map { edge -> edge.takeRight(METRICS) } \
+	  | collectFile(storeDir: params.output + "/" + getOutput(params.runid, "smetana", ""), \
+	   seed: ["medium", "size", "mip", "mro", "V1", "V2"].join('\t'), \
+	   newLine: true){ line -> ['edgeAttributes.tsv', line.join("\t")] } \
+	  | set { edgeAttributes } 
+     }
 
      pSmetanaEdges.out.logs | pDumpLogs
 
-     pUpdateNetwork(_wBuildNetwork.out.graph, edgeAttributes)
+     pUpdateNetwork(graph, edgeAttributes)
 }
