@@ -83,6 +83,8 @@ process pKMC {
 
     container "${params.kmc_image}"
 
+    time params.steps.containsKey("qc") && params?.steps?.qc.containsKey("kmc") ? Utils.setTimeLimit(params.steps.qc.kmc, params.modules.qc.process.kmc.defaults, params.resources.small) : ""
+
     when params.steps.containsKey("qc") && params?.steps?.qc.containsKey("kmc")
 
     input:
