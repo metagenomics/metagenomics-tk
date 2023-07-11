@@ -378,16 +378,16 @@ workflow _wConfigurePipeline {
        }
     }
 
-    // If memory resources should be predicted by megahit then nonpareil and jellyfish
+    // If memory resources should be predicted by megahit then nonpareil and kmc
     // must be enabled
     if(params.steps?.assembly?.megahit?.resources?.RAM?.mode == "PREDICT"){
 	if(!params.steps?.qc.containsKey("nonpareil")){
           def nonpareil = [ nonpareil: [additionalParams: " -v 10 -r 1234 "]]
           params.steps.qc.putAll(nonpareil) 
         }
-	if(!params.steps?.qc.containsKey("jellyfish")){
-          def jellyfish = [ jellyfish: [additionalParams: [ count: " -m 21 -s 100M ", histo: " "]]]
-          params.steps.qc.putAll(jellyfish) 
+	if(!params.steps?.qc.containsKey("kmc")){
+          def kmc = [ kmc: [additionalParams: [ count: " -sm -cs10000 ", histo: " "]]]
+          params.steps.qc.putAll(kmc) 
         }
     }
 }

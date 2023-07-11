@@ -72,30 +72,58 @@ process pNonpareil {
 
 
 
-process pJellyFish {
 
-    label 'medium'
+process pKMC {
+
+    label 'small'
 
     tag "Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "jellyfish", filename) }
 
-    container "${params.jellyfish_image}"
+    container "${params.kmc_image}"
 
-    when params.steps.containsKey("qc") && params?.steps?.qc.containsKey("jellyfish")
+    when params.steps.containsKey("qc") && params?.steps?.qc.containsKey("kmc")
 
     input:
     tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz'), path(unpairedReads)
 
     output:
-    tuple val("${sample}"), path("*.histo.tsv"), emit: histogram
+    tuple val("${sample}"), path("*.21.histo.tsv"), path("*.13.histo.tsv"), emit: histogram
+    tuple val("${sample}"), path("*.json"), emit: details
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
 
     shell:
     '''
-    jellyfish count !{params.steps.qc.jellyfish.additionalParams.count}   -t !{task.cpus} <(zcat !{interleavedReads} !{unpairedReads}) -o !{sample}.jf
-    echo -e "FREQUENCY\tCOUNT\tSAMPLE" > !{sample}.histo.tsv
-    jellyfish histo !{params.steps.qc.jellyfish.additionalParams.histo}  !{sample}.jf | sed -e 's/ /\t/g' -e "s/$/\t!{sample}/g" >> !{sample}.histo.tsv
+    mkdir work
+    cat !{interleavedReads} !{unpairedReads} > input.fq.gz
+
+    kmc -j!{sample}.13.kmc.json !{params.steps.qc.kmc.additionalParams.count} -m$(echo !{task.memory} | cut -d ' ' -f 1) -t!{task.cpus} -ci2 -k13  input.fq.gz 13mers work
+    kmc_tools -t!{task.cpus} transform !{params.steps.qc.jellyfish.additionalParams.histo}  13mers histogram !{sample}.13.histo.tmp.tsv
+
+    rm -rf 13mers
+
+    kmc -j!{sample}.21.kmc.json !{params.steps.qc.kmc.additionalParams.count} -m$(echo !{task.memory} | cut -d ' ' -f 1) -t!{task.cpus} -ci2 -k21 input.fq.gz 21mers work
+    kmc_tools -t!{task.cpus} transform !{params.steps.qc.jellyfish.additionalParams.histo}  21mers histogram !{sample}.21.histo.tmp.tsv
+
+    rm -rf 21mers
+
+    echo -e "FREQUENCY\tCOUNT\tSAMPLE" > !{sample}.21.histo.tsv
+    cat !{sample}.21.json | jq -r '.Stats."#k-mers_below_min_threshold"' \
+	| sed 's/^/1\t/g' \
+	| sed  -e 's/ /\t/g' -e "s/$/\t!{sample}/g" >> !{sample}.21.histo.tsv
+
+    sed  -e 's/ /\t/g' -e "s/$/\t!{sample}/g" !{sample}.21.histo.tmp.tsv >> !{sample}.21.histo.tsv
+    sed -i '/\t0\t/d' !{sample}.21.histo.tsv
+
+
+    echo -e "FREQUENCY\tCOUNT\tSAMPLE" > !{sample}.13.histo.tsv
+    cat !{sample}.13.kmc.json | jq -r '.Stats."#k-mers_below_min_threshold"' \
+	| sed 's/^/1\t/g' \
+	| sed  -e 's/ /\t/g' -e "s/$/\t!{sample}/g" >> !{sample}.13.histo.tsv
+
+    sed  -e 's/ /\t/g' -e "s/$/\t!{sample}/g" !{sample}.13.histo.tmp.tsv >> !{sample}.13.histo.tsv
+    sed -i '/\t0\t/d' !{sample}.13.histo.tsv
     '''
 }
 
@@ -169,10 +197,11 @@ workflow _wFastqSplit {
              pFastpSplit.out.readsPair | mix(pFastpSplitDownload.out.readsPair) | set {readsPair}
              pFastpSplit.out.readsSingle | mix(pFastpSplitDownload.out.readsSingle) | set {readsSingle}
 
-             readsPair | join(readsSingle) | (pNonpareil & pJellyFish)
+             readsPair | join(readsSingle) | (pNonpareil & pKMC)
+
       emit:
         nonpareilIndex = pNonpareil.out.nonpareilIndex
-        kmerFrequencies =  pJellyFish.out.histogram 
+        kmerFrequencies = pKMC.out.histogram 
         readsPair = readsPair
         readsSingle = readsSingle
 }

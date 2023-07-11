@@ -30,14 +30,12 @@ steps:
        timeLimit: "AUTO"
     nonpareil:
       additionalParams: " -v 10 -r 1234 "
-    jellyfish:
+    kmc:
       additionalParams:
-        # --counter-len is the counter length in bits.
-        # -s is the size of the hash
-        # -m k-mer length
-        # -m, --conter-len and -s  determine the RAM peak usage which can be tested by using jellyfish mem.
-        # --disk writes intermediate results to disk
-        count: " -m 21 --counter-len 9 -s 30G --disk  "
+        # Computes k-mer distribution based on k-mer length 13 and 21
+        #  -sm - use strict memory mode (memory limit from -m<n> switch will not be exceeded)
+        #  -cs<value> - maximal value of a counter
+        count: " -sm -cs10000 "
         histo: " "
 
   qcONT:
