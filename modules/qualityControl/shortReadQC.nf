@@ -101,12 +101,12 @@ process pKMC {
     cat !{interleavedReads} !{unpairedReads} > input.fq.gz
 
     kmc -j!{sample}.13.kmc.json !{params.steps.qc.kmc.additionalParams.count} -m$(echo !{task.memory} | cut -d ' ' -f 1) -t!{task.cpus} -ci2 -k13  input.fq.gz 13mers work
-    kmc_tools -t!{task.cpus} transform !{params.steps.qc.jellyfish.additionalParams.histo}  13mers histogram !{sample}.13.histo.tmp.tsv
+    kmc_tools -t!{task.cpus} transform !{params.steps.qc.kmc.additionalParams.histo}  13mers histogram !{sample}.13.histo.tmp.tsv
 
     rm -rf 13mers
 
     kmc -j!{sample}.21.kmc.json !{params.steps.qc.kmc.additionalParams.count} -m$(echo !{task.memory} | cut -d ' ' -f 1) -t!{task.cpus} -ci2 -k21 input.fq.gz 21mers work
-    kmc_tools -t!{task.cpus} transform !{params.steps.qc.jellyfish.additionalParams.histo}  21mers histogram !{sample}.21.histo.tmp.tsv
+    kmc_tools -t!{task.cpus} transform !{params.steps.qc.kmc.additionalParams.histo}  21mers histogram !{sample}.21.histo.tmp.tsv
 
     rm -rf 21mers
 
