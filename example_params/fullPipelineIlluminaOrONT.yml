@@ -23,7 +23,7 @@ steps:
        additionalParams: " -v 10 -r 1234 "
     kmc:
       timeLimit: "AUTO"
-       additionalParams: 
+      additionalParams: 
          count: " -sm -ci2 -cs10000  "
          histo: " "
   assembly:
