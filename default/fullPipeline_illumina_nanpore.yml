@@ -154,11 +154,12 @@ steps:
       additionalParams:
         bwa2_index: ""
         bwa2_mem: ""
-     # Even low coverage values should be reported
-     # because evaluation whether a dataset contains a genome
-     # can be done afterwards.
+     # This module produces two abundance tables.
+     # One table is based on relative abundance and the second one on the trimmed mean.
+     # Just using relative abundance makes it difficult to tell if a genome is part of a dataset.
+     # Thats why it makes sense to set at leat a low min covered fraction parameter.
     coverm:
-      additionalParams: " --min-covered-fraction 0 "
+      additionalParams: " --min-covered-fraction 30 "
     minimap2:
       additionalParams:
         minimap2_index: ""
