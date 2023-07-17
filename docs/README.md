@@ -24,9 +24,6 @@ where
  *  /shared/directory/test is a directory that is shared between multiple machines.
  * PROFILE can be either `standard` (local use) or `slurm` depending on which environment the pipeline should be executed.
 
-**Note!** Metabolomics part is currently excluded from full pipeline run.
-
-
 ### Input
 
 === "Command"
@@ -100,4 +97,8 @@ and afterwards run the the aggregation as described below:
     ```YAML
     ---8<--- "../example_params/fullPipelineAggregate.yml"
     ```
+
+### Caveats
+
+* The pipeline breaks if `--stageInMode` is specified with `copy`.
 

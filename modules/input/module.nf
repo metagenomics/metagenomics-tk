@@ -56,6 +56,8 @@ process pGetMetadata {
 
     errorStrategy 'retry'
 
+    time '3m'
+
     tag "Accession: $sraid"
 
     maxForks 3
@@ -84,6 +86,8 @@ process pGetSRAIDs {
     container "${params.pysradb_image}"
 
     errorStrategy 'retry'
+
+    time '3m'
 
     maxForks 4
 

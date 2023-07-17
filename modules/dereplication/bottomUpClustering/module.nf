@@ -19,9 +19,9 @@ process pMashDist {
 
     label 'large'
 
-    when params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli")
+    when params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("bottomUpClustering")
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "pasolli/mash/dist", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "bottomUpClustering/mash/dist", filename) }
 
     input:
     path sketches, stageAs: 'sketch*.msh'
@@ -33,7 +33,7 @@ process pMashDist {
     shell:
     '''
     mash paste final_sketch !{sketches}
-    mash dist !{params.steps.dereplication.pasolli.additionalParams.mash_dist} -p !{task.cpus} final_sketch.msh final_sketch.msh | cut -f 1,2,3 > distances.tsv
+    mash dist !{params.steps.dereplication.bottomUpClustering.additionalParams.mash_dist} -p !{task.cpus} final_sketch.msh final_sketch.msh | cut -f 1,2,3 > distances.tsv
     '''
 }
 
@@ -45,7 +45,7 @@ process pClusterDistances {
 
     container "${params.python_env_image}"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "pasolli/clusterMashDist", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "bottomUpClustering/clusterMashDist", filename) }
 
     label 'medium'
 
@@ -56,7 +56,7 @@ process pClusterDistances {
     shell:
     '''
     mkdir out
-    cluster.py -i distances.tsv !{params.steps.dereplication.pasolli.additionalParams.cluster} -o out
+    cluster.py -i distances.tsv !{params.steps.dereplication.bottomUpClustering.additionalParams.cluster} -o out
     '''
 }
 
@@ -69,7 +69,7 @@ process pSelectRepresentative {
 
     container "${params.python_env_image}"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "pasolli/selectedRepresentatives", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "bottomUpClustering/selectedRepresentatives", filename) }
 
     label 'medium'
 
@@ -96,7 +96,7 @@ process pANIb {
     containerOptions " --entrypoint='' "
 
     when:
-    params.steps.dereplication.pasolli.method.contains("ANI")
+    params.steps.dereplication.bottomUpClustering.method.contains("ANI")
 
     output:
     path("*.out/out.tsv"), emit: identity 
@@ -104,7 +104,7 @@ process pANIb {
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
-    output = getOutput(params.runid, "pasolli/ANIb", "") 
+    output = getOutput(params.runid, "bottomUpClustering/ANIb", "") 
     template 'anib.sh'
 }
 
@@ -125,10 +125,10 @@ process pTETRA {
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     when:
-    params.steps.dereplication.pasolli.method.contains("TETRA")
+    params.steps.dereplication.bottomUpClustering.method.contains("TETRA")
 
     shell:
-    def output = getOutput(params.runid, "pasolli/TETRA", "logs") 
+    def output = getOutput(params.runid, "bottomUpClustering/TETRA", "logs") 
     template 'tetra.sh'
 }
 
@@ -136,7 +136,7 @@ process pGetCluster {
 
     label 'tiny'
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "pasolli/clusters", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "bottomUpClustering/clusters", filename) }
 
     container "${params.python_env_image}"
 
@@ -154,7 +154,7 @@ process pGetCluster {
     '''
     mkdir out
     cat <(echo "GENOME_A\tGENOME_B\tANI")  <(sed 's/ /\t/g' !{ani_values}) > ani_values.tsv
-    get_final_cluster.py -i !{genomeAttributes} -c !{cluster} -r ani_values.tsv -o . -a !{params.steps.dereplication.pasolli.additionalParams.representativeAniCutoff}
+    get_final_cluster.py -i !{genomeAttributes} -c !{cluster} -r ani_values.tsv -o . -a !{params.steps.dereplication.bottomUpClustering.additionalParams.representativeAniCutoff}
     '''
 }
 
@@ -165,7 +165,7 @@ process pFinalize {
     val finalized
     file cluster 
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "pasolli/clusters", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "bottomUpClustering/clusters", filename) }
 
     output:
     file 'clusters.tsv' 
@@ -202,7 +202,7 @@ process pSANS {
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
-    output = getOutput(params.runid, "pasolli/sans", "") 
+    output = getOutput(params.runid, "bottomUpClustering/sans", "") 
     '''
     mkdir input
     # get ID from list of genomes
@@ -224,7 +224,7 @@ process pGetSansClusterRepresentatives {
 
     label 'tiny'
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "pasolli/sans", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "bottomUpClustering/sans", filename) }
 
     container "${params.python_env_image}"
 
@@ -352,7 +352,7 @@ workflow _wDereplicate {
    take:
      genomesTableFile
    main:
-     defaultMashBuffer = params?.steps?.dereplication?.pasolli?.mashBuffer ?: 500
+     defaultMashBuffer = params?.steps?.dereplication?.bottomUpClustering?.mashBuffer ?: 500
 
      genomesTableFile | splitCsv(sep: '\t', header: true) | set { genomesTablePreprocessing }
 
@@ -366,18 +366,18 @@ workflow _wDereplicate {
 	| map { it -> it[MAGS_IDX]} | set { genomesTable }
 
      // filter genomes by contamination and completeness
-     genomesTable | filter({ it.COMPLETENESS.toFloat() >= params?.steps?.dereplication?.pasolli?.minimumCompleteness }) \
-       | filter({ it.CONTAMINATION.toFloat() <= params?.steps?.dereplication?.pasolli?.maximumContamination }) \
+     genomesTable | filter({ it.COMPLETENESS.toFloat() >= params?.steps?.dereplication?.bottomUpClustering?.minimumCompleteness }) \
+       | filter({ it.CONTAMINATION.toFloat() <= params?.steps?.dereplication?.bottomUpClustering?.maximumContamination }) \
        | map { line -> [line.BIN_ID, file(line.PATH)] } | set { mashSketchInput } 
 
-    pMashSketchGenome(params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli"), \
-	Channel.value(params?.steps?.dereplication?.pasolli?.additionalParams?.mash_sketch) , mashSketchInput)
+    pMashSketchGenome(params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("bottomUpClustering"), \
+	Channel.value(params?.steps?.dereplication?.bottomUpClustering?.additionalParams?.mash_sketch) , mashSketchInput)
 
      // concatenate (paste) multiple sketches in parallel and compute distance
      pMashSketchGenome.out.sketch | buffer(size: defaultMashBuffer, remainder: true) | set { mashPasteInput }
 
-    pMashPaste(params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("pasolli"), \
-	Channel.value([Utils.getModulePath(params.modules.dereplication), "pasolli/mash/paste"]),  mashPasteInput)
+    pMashPaste(params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("bottomUpClustering"), \
+	Channel.value([Utils.getModulePath(params.modules.dereplication), "bottomUpClustering/mash/paste"]),  mashPasteInput)
   
      pMashPaste.out.sketch | collect(flat: false) | pMashDist
 
@@ -398,7 +398,7 @@ workflow _wDereplicate {
      } |  set { result }
 
      // Buffer Mags for ANI comparison and run ANI tool 
-     defaultANIBuffer = params?.steps?.dereplication?.pasolli?.ANIBuffer ?: 20
+     defaultANIBuffer = params?.steps?.dereplication?.bottomUpClustering?.ANIBuffer ?: 20
      result.mag1 | map(it -> file(it)) | buffer(size: defaultANIBuffer, remainder: true) | set { mag1 }
      result.mag2 | map(it -> file(it)) | buffer(size: defaultANIBuffer, remainder: true) | set { mag2 }
      pANIb(mag1, mag2)

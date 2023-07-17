@@ -63,7 +63,9 @@ The highest possible cpu/memory value is restricted by the highest cpu/memory va
 Memory cosumption of an assembler varies based on diversity and size of the dataset. We trained a machine learning model on kmer frequencies
 and the nonpareil diversity index in order to be able to predict the memory peak consumption of megahit in our full pipeline mode. The required
 resources in order to run the assembler are thereby fitted to the resources that are actually needed for a specific dataset. If this
-mode is enabled then Nonpareil and jellyfish that are part of the quality control module are automatically executed before the assembler run.  
+mode is enabled then Nonpareil and kmc that are part of the quality control module are automatically executed before the assembler run.  
+
+Please note that this mode is only tested for Megahit with default parameters and the meta-sensitive mode (`--presets meta-sensitive`).
 
 ```
   resources:

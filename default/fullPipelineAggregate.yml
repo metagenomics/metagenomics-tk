@@ -1,0 +1,65 @@
+tempdir: "tmp"
+summary: false
+output: "output"
+input: "fullPipelineOutput"
+logDir: log
+runid: 1
+logLevel: 1
+scratch: "/vol/scratch"
+publishDirMode: "symlink"
+steps:
+  dereplication:
+    pasolli:
+      # stricter MIMAG medium quality
+      minimumCompleteness: 50
+      maximumContamination: 5
+      ANIBuffer: 20
+      mashBuffer: 2000
+      method: 'ANI'
+      additionalParams:
+        mash_sketch: ""
+        mash_dist: ""
+        # cluster cutoff
+        cluster: " -c 0.05 "
+        pyani: " -m ANIb "
+        representativeAniCutoff: 0.95
+  readMapping:
+    bwa2:
+      additionalParams:
+        bwa2_index: ""
+        bwa2_mem: ""
+     # This module produces two abundance tables.
+     # One table is based on relative abundance and the second one on the trimmed mean.
+     # Just using relative abundance makes it difficult to tell if a genome is part of a dataset.
+     # Thats why it makes sense to set at leat a low min covered fraction parameter.
+    coverm:
+      additionalParams: " --min-covered-fraction 30 "
+    minimap2:
+      additionalParams:
+        minimap2_index: ""
+        minimap2: ""
+  cooccurrence:
+    inference:
+      additionalParams:
+        method: 'spiec-easi'
+        rscript: " --mincovthreshold 0.9 --maxzero 60"
+        timeLimit: "AUTO"
+    metabolicAnnotation:
+      additionalParams:
+        metabolicEdgeBatches: 5
+        metabolicEdgeReplicates: 10
+        smetana: " --flavor bigg --molweight "
+
+resources:
+  large:
+    cpus: 28
+    memory: 230
+  medium:
+    cpus: 14
+    memory: 113
+  small:
+    cpus: 7
+    memory: 14
+  tiny:
+    cpus: 1
+    memory: 1

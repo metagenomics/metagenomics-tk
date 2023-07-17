@@ -30,14 +30,13 @@ steps:
        timeLimit: "AUTO"
     nonpareil:
       additionalParams: " -v 10 -r 1234 "
-    jellyfish:
+    kmc:
+      timeLimit: "AUTO"
       additionalParams:
-        # --counter-len is the counter length in bits.
-        # -s is the size of the hash
-        # -m k-mer length
-        # -m, --conter-len and -s  determine the RAM peak usage which can be tested by using jellyfish mem.
-        # --disk writes intermediate results to disk
-        count: " -m 21 --counter-len 9 -s 30G --disk  "
+        # Computes k-mer distribution based on k-mer length 13 and 21
+        #  -sm - use strict memory mode (memory limit from -m<n> switch will not be exceeded)
+        #  -cs<value> - maximal value of a counter
+        count: " -sm -cs10000 "
         histo: " "
 
   qcONT:
@@ -136,7 +135,7 @@ steps:
     contigsCoverage:
       additionalParams: " --min-covered-fraction 0 "
   dereplication:
-    pasolli:
+    bottomUpClustering:
       # stricter MIMAG medium quality
       minimumCompleteness: 50
       maximumContamination: 5
@@ -155,17 +154,27 @@ steps:
       additionalParams:
         bwa2_index: ""
         bwa2_mem: ""
-     # Even low coverage values should be reported
-     # because evaluation whether a dataset contains a genome
-     # can be done afterwards.
+     # This module produces two abundance tables.
+     # One table is based on relative abundance and the second one on the trimmed mean.
+     # Just using relative abundance makes it difficult to tell if a genome is part of a dataset.
+     # Thats why it makes sense to set at leat a low min covered fraction parameter.
     coverm:
-      additionalParams: " --min-covered-fraction 0 "
+      additionalParams: " --min-covered-fraction 30 "
     minimap2:
       additionalParams:
         minimap2_index: ""
         minimap2: ""
   cooccurrence:
-    additionalParams: " -t 0.9 -z 40 -o 'correlation' "
+    inference:
+      additionalParams:
+        method: 'spiec-easi'
+        rscript: " --mincovthreshold 0.9 --maxzero 60"
+        timeLimit: "AUTO"
+    metabolicAnnotation:
+      additionalParams:
+        metabolicEdgeBatches: 5
+        metabolicEdgeReplicates: 10
+        smetana: " --flavor bigg --molweight "
   plasmid:
     SCAPP:
       additionalParams:
@@ -278,7 +287,7 @@ steps:
   metabolomics:
      beforeProcessScript: ""
      filter:
-       minCompleteness: 90
+       minCompleteness: 50
        maxContamination: 5
      gapseq:
        additionalParams: ""

@@ -31,19 +31,21 @@ process pPredictFlavor {
     container "${params.assemblerResourceEstimator_image}"
 
     input:
-    tuple val(sample), path(interleavedReads), path(unpairedReads), val(nonpareilDiversity), path(kmerFrequencies)
+    val(modelType)
+    tuple val(sample), path(interleavedReads), path(unpairedReads), val(nonpareilDiversity), path(kmerFrequencies21), path(kmerFrequencies13), path(model)
 
     output:
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     tuple val("${sample}"), env(MEMORY), emit: memory
+    tuple val("${sample}"), path("*.tsv"), emit: details
 
     shell:
+    error = modelType == "sensitive" ? 12 : 5
     '''
-    READS_COUNTER=$(zcat !{interleavedReads} !{unpairedReads} | awk '{s++}END{print s/4}')
-    BASEPAIRS_COUNTER=$(zcat !{interleavedReads} !{unpairedReads} | seqkit stats -T | cut -d$'\t' -f 5 | tail -n 1)
-    MODEL=!{baseDir}/models/assembler/megahit/default.pkl
-    MEMORY=$(cli.py predict -m ${MODEL} -k !{kmerFrequencies} -b ${BASEPAIRS_COUNTER} -d !{nonpareilDiversity} -r ${READS_COUNTER})
-    echo -e "Memory: ${MEMORY}\nBasepairs: ${BASEPAIRS_COUNTER}\nReads: ${READS_COUNTER}" 
+    zcat !{interleavedReads} !{unpairedReads} | seqkit stats --all -T > seqkit.stats.tsv
+    BASEPAIRS_COUNTER=$(cut -d$'\t' -f 5 seqkit.stats.tsv | tail -n 1)
+    GC_CONTENT=$(cut -d$'\t' -f 16 seqkit.stats.tsv | tail -n 1)
+    MEMORY=$(cli.py predict -m !{model} -k21 !{kmerFrequencies21} -k13 !{kmerFrequencies13} -e !{error} -b ${BASEPAIRS_COUNTER} -g ${GC_CONTENT} -d !{nonpareilDiversity} -o .)
     '''
 }
 
@@ -92,11 +94,11 @@ process pMegahit {
 
     cpus { getNextHigherResource([-9, 137, 247], task.exitStatus, "cpus", task.attempt, \
 	"${memory}", params.steps.assembly.megahit, \
-	params.modules.assembly.process.pMegahit.defaults.flavor, "${sample}") }
+	params.resources.large, "${sample}") }
 
     memory { getNextHigherResource([-9, 137, 247], task.exitStatus, "memory", task.attempt, \
 	"${memory}", params.steps.assembly.megahit, \
-	params.modules.assembly.process.pMegahit.defaults.flavor, "${sample}") + ' GB' }
+	params.resources.large, "${sample}") + ' GB' }
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "megahit", filename) }
 
@@ -297,15 +299,28 @@ workflow _wCalculateMegahitResources {
          SAMPLE_IDX = 0
          NONPAREIL_METRICS_IDX = 1
  
-         // figure if whether resources should be predicted or not
+         // figure out whether resources should be predicted or not
          readsList | branch {
         	predict: params?.steps?.assembly?.megahit?.resources?.RAM?.mode == "PREDICT"
         	doNotPredict: params?.steps?.assembly?.megahit?.resources?.RAM?.mode == "DEFAULT"
          } | set { resourceType }
+
+         model = Channel.empty()
+         modelType = Channel.empty()
+         if(params.steps.containsKey("assembly") && params.steps.assembly.containsKey("megahit") \
+		&& params?.steps?.assembly?.megahit?.additionalParams.contains("meta-sensitive")){
+         	model = Channel.value(file("${baseDir}/models/assembler/megahit/sensitive.pkl"))
+		modelType = Channel.value("sensitive")
+	 } else {
+		modelType = Channel.value("default")
+         	model = Channel.value(file("${baseDir}/models/assembler/megahit/default.pkl"))
+	 }
    
          resourceType.predict | join(nonpareil | splitCsv(header: true, sep: '\t') \
 	  | map{ it -> [it[SAMPLE_IDX], it[NONPAREIL_METRICS_IDX].diversity]  }) \
-          | join(kmerFrequencies) | pPredictFlavor
+          | join(kmerFrequencies) | combine(model) | map { dataset -> dataset.flatten() } | set { predictFlavorInput }
+         
+         pPredictFlavor(modelType, predictFlavorInput)
 
          PREDICTED_RAM_IDX = 1
 

@@ -32,10 +32,11 @@ def constructParametersObject(String tool){
 * This function decides if the MMSeqs taxonomy process should be executed on MAGs.
 *
 */
-def runMMSeqsTaxonomy(isMMSeqsTaxonomySettingSet, isBinned, runOnBinned) {
-    // True if the MMSeqsTaxonomy setting is set and either the sample is not binned 
+def runMMSeqsTaxonomy(isMMSeqsTaxonomySettingSet, isBinned, isPlasmid, runOnBinned) {
+    // True if the MMSeqsTaxonomy setting is set and plasmids are not used as input and 
+    // either the sample is not binned 
     // or should explicitly run on binned samples 
-    return isMMSeqsTaxonomySettingSet && (!isBinned || runOnBinned)
+    return isMMSeqsTaxonomySettingSet && !isPlasmid && (!isBinned || runOnBinned)
 }
 
 
@@ -111,6 +112,12 @@ process pMMseqs2 {
           # If an extracted database is present use that path. 
           MMSEQS2_DATABASE_DIR="!{EXTRACTED_DB}"
    fi
+    MMSEQS_HEADER="query,target,pident,alnlen,mismatch,gapopen,qstart,qend,tstart,tend,evalue,bits,qlen,tlen,qcov,tcov"
+    OUTPUT_TSV="!{sample}_!{binType}.!{dbType}.blast.tsv"
+
+    # According to the MMSeqs docs the --split-memory-limit parameter defines the RAM usage for *about* 80 percent of the total RAM consumption.
+    # We set the ram limit parameter to 75 percent of the total available RAM to make sure to not run into out of memory errors.
+    RAM_LIMIT="$(awk -v RATIO=75 -v RAM=$(echo !{task.memory} | cut -f 1 -d ' ') 'BEGIN { print int(RAM / 100 * RATIO) }')G"
 
     mkdir tmp
     # Only mmseqs2 databases can be used for every kind of search. Inputs have to be converted first.
@@ -118,10 +125,15 @@ process pMMseqs2 {
     # Load all indices into memory to increase searching speed
     mmseqs touchdb --threads !{task.cpus} queryDB
     mmseqs touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
-    mmseqs search queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database tmp !{parameters} --threads !{task.cpus}
+    mmseqs search queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database tmp !{parameters} \
+	--threads !{task.cpus} --split-memory-limit ${RAM_LIMIT}
     # mmseqs2 searches produce output databases. These have to be converted to a more useful format. The blast -outfmt 6 in this case.
-    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database !{sample}_!{binType}.!{dbType}.blast.tsv --threads !{task.cpus}
-   '''
+    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database ${OUTPUT_TSV} \
+	--threads !{task.cpus} --format-output ${MMSEQS_HEADER}
+
+    # Add header
+    sed  -i "1i $(echo ${MMSEQS_HEADER} | tr ',' '\t')" ${OUTPUT_TSV}
+    '''
 }
 
 /**
@@ -153,6 +165,7 @@ process pMMseqs2_taxonomy {
       when:
       runMMSeqsTaxonomy(params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy"), \
 	   binType.equals("binned"), \
+	   binType.equals("plasmid"), \
            params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy") && params?.steps.annotation.mmseqs2_taxonomy.runOnMAGs)
 
    input:
@@ -509,7 +522,17 @@ workflow wAnnotateFile {
       file(annotationTmpDir).mkdirs()
       projectTableFile | splitCsv(sep: '\t', header: true) \
       | map{ [it.DATASET, it.BIN_ID, file(it.PATH)] } | set { input } 
-      _wAnnotation(Channel.value("out"), Channel.value("param"), input, null, Channel.empty())
+
+      f1 = file(params.tempdir + "/empty1")
+      f1.text = ""
+
+      f2 = file(params.tempdir + "/empty2")
+      f2.text = ""
+
+      input | map { bin -> bin[0]} | unique \
+	| combine(Channel.value([f1,f2])) | set { coverage }
+
+      _wAnnotation(Channel.value("out"), Channel.value("param"), input, null, coverage)
    emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }

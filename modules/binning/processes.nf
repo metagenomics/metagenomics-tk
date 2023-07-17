@@ -91,6 +91,7 @@ process pCovermContigsCoverage {
 }
 
 
+
 process pCovermGenomeCoverage {
 
     label 'small'
@@ -98,11 +99,12 @@ process pCovermGenomeCoverage {
     tag "Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", \
-	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}" , "${outputToolDir}", filename) }, \
-        pattern: "{**.tsv,**.sh,**.out,**.err,**.log}"
+	saveAs: { filename -> getOutput("${prefixOutput}", params.runid, "${module}" , "${outputToolDir}", filename) }, \
+        pattern: "{**.tsv}"
 
     input:
     val(run)
+    val(prefix)
     tuple val(module), val(outputToolDir), val(covermParams)
     tuple val(sample), file(mapping), file(index), file(list_of_representatives), val(medianQuality)
 
@@ -114,14 +116,19 @@ process pCovermGenomeCoverage {
     tuple val("${sample}"), path("${sample}_trimmed_mean.tsv"), emit: trimmedMean
     tuple val("${sample}"), path("${sample}_count.tsv"), emit: count
     tuple val("${sample}"), path("${sample}_rpkm.tsv"), emit: rpkm
+    tuple val("${sample}"), path("${sample}_relative_abundance.tsv"), emit: relativeAbundance
     tuple val("${sample}"), path("${sample}_tpm.tsv"), emit: tpm
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+    tuple val("${sample}"), val(output), \
+	val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
     DO_NOT_ESTIMATE_QUALITY = -1 
     MEDIAN_QUALITY=Double.parseDouble(medianQuality)
     percentIdentity = MEDIAN_QUALITY != DO_NOT_ESTIMATE_QUALITY ? \
 	" --min-read-percent-identity "+Utils.getMappingIdentityParam(MEDIAN_QUALITY) : " "
+    prefixOutput = prefix.trim() ? prefix : sample
+    output = getOutput(prefixOutput, params.runid, module, outputToolDir, "")
     template('coverm.sh')
 }
 
