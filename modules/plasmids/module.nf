@@ -412,7 +412,7 @@ workflow _wPlasmids {
        _runNonPlasmidAssemblyAnalysis.out.plasmids \
 	| mix(_runCircularAnalysis.out.plasmids) | set { allPlasmids } 
 
-       allPlasmids | view | (pPLSDB & _wRunMobTyper)
+       allPlasmids | (pPLSDB & _wRunMobTyper)
 
        pPLSDB.out.logs | mix(_wRunMobTyper.out.logs) | pDumpLogs
      emit:
