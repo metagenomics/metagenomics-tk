@@ -87,7 +87,7 @@ process pGetSRAIDs {
 
     errorStrategy 'retry'
 
-    time '3m'
+    time '10m'
 
     maxForks 4
 
@@ -105,17 +105,27 @@ process pGetSRAIDs {
 
     shell:
     '''
-    pysradb metadata !{sraid} --saveto unfiltered_output.tsv
     TAB=`echo -e "\t"`
-    cut -f 1,20 unfiltered_output.tsv | grep -e "$(printf '\t')!{sraid}$" -e "^!{sraid}$(printf '\t')" \
-	| sed -r '/^\s*$/d'  > containsIDTest.txt
-    if [ -s containsIDTest.txt ]; then
+    count=1
+    # Retry pysradb 3 times in case it can not find the correct id
+    while [ $count -le 4 ]
+    do
+      pysradb metadata !{sraid} --saveto unfiltered_output.tsv
+      cut -f 1,20 unfiltered_output.tsv | grep -e "$(printf '\t')!{sraid}$" -e "^!{sraid}$(printf '\t')" \
+  	  | sed -r '/^\s*$/d'  > containsIDTest.txt
+
+      if [ -s containsIDTest.txt ]; then
         echo "run_accession" > output.tsv
 	cut -f 2 containsIDTest.txt >> output.tsv
-    else 
+        unset NOT_FOUND_ID
+        break;
+      else 
+	echo "No result for ID !{sraid} found. Number of attempt: ${count}";
+        sleep 2
         NOT_FOUND_ID=!{sraid}
-	echo "No result for ID !{sraid} found.";
-    fi
+        ((count++)) 
+      fi
+    done
     '''
 }
 
