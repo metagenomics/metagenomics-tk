@@ -150,7 +150,7 @@ process pPlasClass {
     tuple val("${binID}_chunk_${start}_${stop}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
       file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
     tuple val("${sample}"), val("${binID}"), val("PlasClass"), \
-	path("${binID}_chunk_${start}_${stop}_plasClass.tsv"), emit: probabilities
+	path("${binID}_chunk_${start}_${stop}_plasClass.tsv"), emit: probabilities, optional: true
 
     shell:
     output = getOutput("${sample}", params.runid, "PlasClass", "")
