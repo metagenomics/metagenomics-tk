@@ -19,9 +19,10 @@ steps:
        timeLimit: "AUTO"
     nonpareil:
        additionalParams: " -v 10 -r 1234 "
-    jellyfish:
+    kmc:
+       timeLimit: "AUTO"
        additionalParams: 
-         count: " -m 21 -s 100M "
+         count: " -sm -cs10000 "
          histo: " "
   assembly:
     megahit:

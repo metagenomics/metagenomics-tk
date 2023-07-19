@@ -78,7 +78,7 @@ process pPLSDB {
 
     output:
     tuple val("${sample}"), val("${binID}"), path("${binID}.tsv"), emit: allHits
-    tuple val("${sample}"), val("${binID}"), path("${binID}_kmerThreshold_*.tsv"), emit: filteredHitsMetadata
+    tuple val("${sample}"), val("${binID}"), path("${binID}_kmerThreshold_*.tsv"), emit: filteredHitsMetadata, optional: true
     tuple val("${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -184,7 +184,7 @@ def getSampleToolKey(sample){
   SAMPLE_IDX = 0
   BIN_ID_IDX = 1
   FILE_IDX = 2
-  return ["${sample[SAMPLE_IDX]}_ttt_${sample[BIN_ID_IDX]}_ttt_${sample[FILE_IDX]}", sample[SAMPLE_IDX], sample[BIN_ID_IDX], sample[FILE_IDX]]
+  return ["${sample[SAMPLE_IDX]}_ttt_${sample[BIN_ID_IDX]}_ttt_${sample[FILE_IDX]}.tsv", sample[SAMPLE_IDX], sample[BIN_ID_IDX], sample[FILE_IDX]]
 }
 
 
@@ -271,7 +271,7 @@ workflow _runNonPlasmidAssemblyAnalysis {
 	| set { plasmidsStats }
 
       if(params?.steps?.plasmid.find{ it.key == "Filter" }?.value){
-      	// Group outputs of multiple tools (e.g. Platon output and MobTyper and Plasclass) and use them for filtering
+      	// Group outputs of multiple tools (e.g. Platon and Plasclass output) and use them for filtering
       	SAMPLE_ID_IDX = 0 
       	BIN_ID_IDX = 1 
       	TOOL_TYPE_IDX = 2 
@@ -349,7 +349,7 @@ workflow _runCircularAnalysis {
 
        pBowtie2.out.mappedReads | mix(pBwa.out.mappedReads, pBwa2.out.mappedReads) \
 	| combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) \
-	| mix(pMinimap2.out.mappedReads | join(Channel.value(ontMedianQuality), by: SAMPLE_IDX)) \
+	| mix(pMinimap2.out.mappedReads | join(ontMedianQuality, by: SAMPLE_IDX)) \
 	| set { covermInput  }
 
        pCovermContigsCoverage(Channel.value(true), Channel.value([Utils.getModulePath(params?.modules?.plasmids) \
@@ -367,7 +367,7 @@ workflow _runCircularAnalysis {
 	| set { plasmidsStats }
 
        if(params?.steps?.plasmid.find{ it.key == "Filter" }?.value){
-      	// Group outputs of multiple tools (e.g. Platon output and MobTyper and Plasclass) and use them for filtering
+      	// Group outputs of multiple tools (e.g. Platon and Plasclass output) and use them for filtering
       	 SAMPLE_ID_IDX = 0 
       	 BIN_ID_IDX = 1 
       	 TOOL_TYPE_IDX = 2 
@@ -410,11 +410,11 @@ workflow _wPlasmids {
        _runCircularAnalysis(assemblyGraph, illuminaReads, ontReads, ontMedianQuality)
     
        _runNonPlasmidAssemblyAnalysis.out.plasmids \
-	| mix(_runCircularAnalysis.out.plasmids) | set { allPlasmids} 
+	| mix(_runCircularAnalysis.out.plasmids) | set { allPlasmids } 
 
-       allPlasmids | pPLSDB
+       allPlasmids | (pPLSDB & _wRunMobTyper)
 
-       pPLSDB.out.logs | pDumpLogs
+       pPLSDB.out.logs | mix(_wRunMobTyper.out.logs) | pDumpLogs
      emit:
        newPlasmids = _runCircularAnalysis.out.plasmids
        newPlasmidsCoverage = _runCircularAnalysis.out.coverage

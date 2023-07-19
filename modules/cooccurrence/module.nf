@@ -48,12 +48,12 @@ process pBuildCorrelationNetwork {
     file('gtdb.input.tsv')
 
     output:
-    tuple path("community.tsv"), emit: community
-    tuple path("edges_index.tsv"), emit: edges, optional: true 
-    tuple path("gtdb.tsv"), emit: gtdb
-    tuple path("stability.txt"), emit: stability, optional: true
-    tuple path("output.graphml"), emit: graph
-    tuple path("output_raw.graphml"), emit: graphRaw
+    path("community.tsv"), emit: community
+    path("edges_index.tsv"), emit: edges, optional: true 
+    path("gtdb.tsv"), emit: gtdb
+    path("stability.txt"), emit: stability, optional: true
+    path("output.graphml"), emit: graph
+    path("output_raw.graphml"), emit: graphRaw
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:

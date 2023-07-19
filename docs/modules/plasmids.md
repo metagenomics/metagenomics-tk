@@ -46,52 +46,7 @@ The read mapper can either be Bowtie or Bwa for Illumina and minimap for long re
     ---8<--- "../test_data/plasmid/input_contigs.tsv"
     ```
 
-=== "Graph"
 
-    ```mermaid
-    flowchart TD
-        A[Metaspades or Megahit] --> C[Assembly graph] 
-        subgraph circ [Circular Plasmids]
-            C --> D[SCAPP]
-            subgraph fc [User selected combination of tools for filtering contigs using logical OR or AND]
-            direction LR
-                pa[Platon]
-                vi[ViralVerify]
-                mo[MobTyper]
-                plc[PlasClass]
-            end
-            D --> fc
-            D --> ca[Contig Abundance]
-            D --> ga[Gene Abundance]
-            fc --> ap[Filtered Assembled Plasmids]
-        end
-        subgraph luc [Linear or Circular Plasmids]
-        gac[Gene Abundance] 
-        c[Contigs]
-            subgraph fl [User selected combination of tools for filtering contigs using logical OR or AND]
-            direction LR
-                p[Platon]
-                v[ViralVerify]
-                m[MobTyper]
-                pl[PlasClass]
-            end
-        d[Detected Plasmids]
-        c --> cac[Contig Abundance]
-        end
-        A --> c --> fl
-        fl --> d
-    
-        subgraph an [Annotation Module]
-            vf[VFDB]
-            ba[BacMet]
-            pl[PLSDB]
-            rgi[RGI]
-            ke[KEGG]
-            o[...]
-        end
-        luc --> an
-        circ --> an
-    ```
 
 ### Databases
 

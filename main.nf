@@ -140,16 +140,30 @@ workflow wCooccurrence {
    wCooccurrenceFile()
 }
 
-def collectFiles(dir, sra){
+/*
+* This method collects files of the modules specifified by the "modules" parameter.  
+* `dir` is the the path to the sra id
+* `sra` is the SRA ID
+*/
+def collectModuleFiles(dir, sra, modules){
    def fileList = [];
    def moduleList = []
    params.modules.eachWithIndex { v, k -> moduleList.add(v.getKey() + "/" + v.getValue().version.major + ".") }
-   
-   dir.eachFileRecurse { item ->
-           found = moduleList.any {  item ==~ '.*' +  it + '.*'  }
+
+   // iterate  over all specified modules
+   for(module in modules){
+     def moduleDir = file(dir + "/" + module.name + "/")
+     // Check if the module exists
+     if(moduleDir.exists()){
+       // collect all files
+       moduleDir.eachFileRecurse { item ->
+           // make sure that only the module outputs of the specified version are collected.
+           def found = moduleList.any {  item ==~ '.*' +  it + '.*'  }
            if(found){
               fileList.add([sra, item]);
            }
+       }
+     }
    }
    return fileList;
 }
@@ -252,7 +266,6 @@ workflow _wFragmentRecruitment {
      recruitedGenomesStats = recruitedGenomesStats
 }
 
-
 /*
 * This workflow entry point allows to aggregate information of different samples.
 * It will perform analysis steps such as dereplication, read mapping and co-occurrence.
@@ -270,16 +283,20 @@ workflow wAggregatePipeline {
     sraDatasets | map { sra ->  [sra, input + "/" + sra + "/" + runID + "/" ]} \
      | set {sraIDs}
 
-
     // List all files in sample directories
-    sraIDs | flatMap { sraID, path -> collectFiles(file(path), sraID)} | set {sraFiles}
-    sraFiles | _wAggregateIllumina 
-    sraFiles | _wAggregateONT
-    sraFiles | _wFragmentRecruitment
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.qc])} | set { qcFiles }
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binning]) } | mix(qcFiles) | _wAggregateIllumina 
+
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binningONT])} | set { binningONTFiles }
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.qcONT])} | mix(binningONTFiles) | _wAggregateONT
+
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.fragmentRecruitment])} |  _wFragmentRecruitment
+
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.magAttributes])} | set { selectedSRAMagAttributes}
 
     // get Checkm results
     Pattern checkmPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_checkm_.*.tsv$')
-    sraFiles | filter({ sra, path -> checkmPattern.matcher(path.toString()).matches()}) \
+     selectedSRAMagAttributes | filter({ sra, path -> checkmPattern.matcher(path.toString()).matches()}) \
      | splitCsv(header: ["SAMPLE", "BIN_ID", "Marker lineage", "# genomes", "# markers", \
           "# marker sets", "0", "1", "2", "3", "4", "5+", "COMPLETENESS", "CONTAMINATION", "HETEROGENEITY"], sep: '\t') \
      | map { sra, bins -> bins} \
@@ -287,14 +304,15 @@ workflow wAggregatePipeline {
 
     // get gtdbtk summary files
     Pattern gtdbPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_combined.tsv$' )
-    sraFiles | filter({ sra, path -> gtdbPattern.matcher(path.toString()).matches()}) \
+    selectedSRAMagAttributes | filter({ sra, path -> gtdbPattern.matcher(path.toString()).matches()}) \
      | map { sraID, bins -> [bins, sraID] } \
      | set { gtdb }
 
     // Get genome scale metabolic model files
     BIN_FILE_IDX = 0
     Pattern modelPattern = Pattern.compile('.*/metabolomics/' + params.modules.metabolomics.version.major + '..*/.*/.*model.xml$' )
-    sraFiles | filter({ sra, path -> modelPattern.matcher(path.toString()).matches()}) \
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.metabolomics])} \
+     | filter({ sra, path -> modelPattern.matcher(path.toString()).matches()}) \
      | map { sraID, model -> [sraID, model.name.split(".model.xml")[BIN_FILE_IDX], model]} \
      | set { models }
 
@@ -303,15 +321,17 @@ workflow wAggregatePipeline {
     recruitedGenomesStats =  _wFragmentRecruitment.out.recruitedGenomesStats
 
     mapJoin(_wAggregateIllumina.out.illuminaBinStats | mix(_wAggregateONT.out.ontBinStats) \
-	| mix(recruitedGenomesStats), checkm, "BIN_ID", "BIN_ID") \
-	| set {checkmBinStats}
+        | mix(recruitedGenomesStats), checkm, "BIN_ID", "BIN_ID") \
+        | set {checkmBinStats}
 
     mapJoin(checkmBinStats, _wAggregateIllumina.out.illuminaBins | mix(_wAggregateONT.out.ontBins) \
-	| mix(recruitedGenomes), "BIN_ID", "BIN_ID") \
-	| set {binsStatsComplete}
+        | mix(recruitedGenomes), "BIN_ID", "BIN_ID") \
+        | set {binsStatsComplete}
+
+    _wAggregateIllumina.out.illuminaSamples | mix(_wAggregateONT.out.ontSamples) | view { sra, path -> "Files detected of SRA ID $sra" }
 
     _wAggregate(_wAggregateONT.out.ontSamples, _wAggregateONT.out.ontMedianQuality, _wAggregateIllumina.out.illuminaSamples, \
-	_wAggregateIllumina.out.unpairedIlluminaSamples, binsStatsComplete, gtdb, models)
+        _wAggregateIllumina.out.unpairedIlluminaSamples, binsStatsComplete, gtdb, models)
 
 }
 
@@ -362,16 +382,16 @@ workflow _wConfigurePipeline {
        }
     }
 
-    // If memory resources should be predicted by megahit then nonpareil and jellyfish
+    // If memory resources should be predicted by megahit then nonpareil and kmc
     // must be enabled
     if(params.steps?.assembly?.megahit?.resources?.RAM?.mode == "PREDICT"){
 	if(!params.steps?.qc.containsKey("nonpareil")){
           def nonpareil = [ nonpareil: [additionalParams: " -v 10 -r 1234 "]]
           params.steps.qc.putAll(nonpareil) 
         }
-	if(!params.steps?.qc.containsKey("jellyfish")){
-          def jellyfish = [ jellyfish: [additionalParams: [ count: " -m 21 -s 100M ", histo: " "]]]
-          params.steps.qc.putAll(jellyfish) 
+	if(!params.steps?.qc.containsKey("kmc")){
+          def kmc = [ kmc: [additionalParams: [ count: " -sm -cs10000 ", histo: " "]]]
+          params.steps.qc.putAll(kmc) 
         }
     }
 }

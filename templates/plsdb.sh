@@ -34,20 +34,24 @@ mash sketch -i !{params.steps.plasmid.PLSDB.additionalParams.mashSketch} -o quer
 mash dist ${PLSDB}/plsdb.msh query.msh -p !{task.cpus} !{params.steps.plasmid.PLSDB.additionalParams.mashDist} > !{binID}.tsv
 
 # filter matches by user defined threshold
+MATCHES_RAW=matches.tsv
 sort -rgk 5,5 !{binID}.tsv | sed 's/\/.*$//g' \
-     | awk -v threshold=!{params.steps.plasmid.PLSDB.sharedKmerThreshold} '($5+0 > threshold) {print $0}' > matches.tsv
+     | awk -v threshold=!{params.steps.plasmid.PLSDB.sharedKmerThreshold} '($5+0 > threshold) {print $0}' > ${MATCHES_RAW}
 
 OUTPUT=!{binID}_kmerThreshold_!{params.steps.plasmid.PLSDB.sharedKmerThreshold}.tsv
 
 # extract metadata of matches from plsdb
+MATCHES_CONTENT=matches_detailed.tsv
 while IFS=$"\t" read line ; do 
 	hit=$(echo "$line" | cut -f 1); 
 	grep -w $hit ${PLSDB}/plsdb.tsv \
 		| sed "s/^/${line}\t/g" \
 		| sed "s/^/!{sample}\t!{binID}\t/g" ; 
-done <matches.tsv  > matches_detailed.tsv 
+done <${MATCHES_RAW} > ${MATCHES_CONTENT}
 
-# add mash query, reference, p-value and distance fields
-cat <(head -n 1 ${PLSDB}/plsdb.tsv \
+if [ -s ${MATCHES_CONTENT} ]; then
+  # add mash query, reference, p-value and distance fields
+  cat <(head -n 1 ${PLSDB}/plsdb.tsv \
 	| sed "s/^/MASH_REFERENCE\tMASH_QUERY\tMASH_DISTANCE\tMASH_P_VALUE\tMASH_MATCHING_HASHES\t/g"  \
-	| sed 's/^/SAMPLE\tBIN_ID\t/g') matches_detailed.tsv > ${OUTPUT}
+	| sed 's/^/SAMPLE\tBIN_ID\t/g') ${MATCHES_CONTENT} > ${OUTPUT}
+fi
