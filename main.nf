@@ -73,7 +73,11 @@ workflow wReadMapping {
    wFileReadMappingBwa()
 }
 
-
+workflow wGetModuleVersions {
+        params.modules.each { println "$it.value.name: $it.value.version.major" \
+       + "." + "$it.value.version.minor" \
+       + "." + "$it.value.version.patch" }
+}
 
 workflow wSRATable {
    SAMPLE_IDX = 0
