@@ -39,20 +39,20 @@ Changes to the version numbers reflect updates to the config or the output folde
 The toolkit consists of many modules that can be used in different combinations and
 because of this flexibility, we had to come up with a detailed versioning system. We version each module separately, as well as the pipeline itself.
 
-Module version numbers are updated when a module-specific input parameter is updated or the output folder or file structure is changed.
-All module version numbers can be retrieved by running the toolkit with the `wGetModuleVersion` entrypoint and should be reported on the release page. 
+Module MAJOR version numbers are updated when a module-specific input parameter is updated or the output folder or file structure is changed.
+All module version numbers can be retrieved by running the toolkit with the `wGetModuleVersion` entry point and should be reported on the release page. 
 
 The module version number is incorporated in the output directory (see [output specification](pipeline_specification.md)) 
-for easier parsing of the output directory. In the following we give examples when to increment which part of of the version identifier:
+for easier parsing of the output directory. In the following we give examples when to increment which part of the version identifier:
 
 Given a version number MAJOR.MINOR.PATCH, increment the:
 
   * MAJOR version when you make incompatible changes, as for example modifying the output structure. A script that was build to parse the output structure must be adapted then.
-  * MINOR version when you add functionality in a backwards compatible manner. One example is adding an additional tool to the module. 
+  * MINOR version when you add functionality in a backward compatible manner. One example is adding an additional tool to the module. 
   * PATCH version when you make backwards compatible bug fixes. This is necessary when you for example increment the docker container version number that fixes a bug or increases the
     speed of the tool.
 
-The pipeline specific version number defined in the mainifest part of the nextflow.config should be changed
+The pipeline specific version number defined in the manifest part of the nextflow.config should be changed
 if either any module specific version number is incremented or any module-independent parameter (e.g. `tempdir`) or output structure is changed. 
 
 ## Testing
