@@ -13,6 +13,8 @@ steps:
         paired: test_data/fragmentRecruitment/paired.tsv
         single: test_data/fragmentRecruitment/single.tsv
       genomes: test_data/fragmentRecruitment/mags.tsv
+      unzip:
+        timeLimit: "AUTO"
       additionalParams:
         mashSketch: " "
         mashScreen: " "

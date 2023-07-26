@@ -65,6 +65,8 @@ steps:
   fragmentRecruitment:
     mashScreen:
       genomes: test_data/fragmentRecruitment/mags.tsv
+      unzip:
+        timeLimit: "AUTO"
       additionalParams:
         mashSketch: " "
         mashScreen: " "
