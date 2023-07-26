@@ -469,6 +469,12 @@ process pUnzip {
 
   tag "Genome: ${x.baseName}"
 
+  when params?.steps.containsKey("fragmentRecruitment") && params.steps.fragmentRecruitment.containsKey("mashScreen")
+
+  time params?.steps.containsKey("fragmentRecruitment") \
+	&& params.steps.fragmentRecruitment.containsKey("mashScreen") \
+	? Utils.setTimeLimit(params.steps.fragmentRecruitment.mashScreen.unzip, params.modules.fragmentRecruitment.process.unzip.defaults, params.resources.tiny) : ""
+
   cache 'deep'
 
   input:
