@@ -16,6 +16,7 @@ concurrency:
 env:
   WORK_DIR: "/vol/spool/${{ github.head_ref }}"
   PROFILE: "slurm"
+  PR_NUMBER: ${{ github.event.number }}
 jobs:
   full_pipeline:
     timeout-minutes: 2500
@@ -201,7 +202,20 @@ jobs:
           bash ./scripts/test_cooccurrence.sh " --smetana_image=pbelmann/metabolomics:0.1.0 --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh " \
                  ./example_params/cooccurrenceMetabolom.yml "${WORK_DIR}" ${PROFILE}  || exit 1
 
-
+  cplex_docker:
+    timeout-minutes: 800
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Test if cplex docker container can be build
+        run: |
+          cp /vol/spool/cos_installer-test.bin cplex/docker/ \
+                && cd cplex/docker \
+                && docker build -t cplextest:${PR_NUMBER} .
+      - name: Cleanup image
+        if: always()
+        run: |
+          docker images --format "{{.Repository}}:{{.Tag}}" | grep cplextest:${PR_NUMBER} | xargs -I {} docker rmi {}
 
   fragment_recruitment:
     timeout-minutes: 800
