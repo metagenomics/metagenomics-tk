@@ -6,6 +6,7 @@ include { pPublish as pPublishIllumina; pPublish as pPublishOnt; } from './modul
 include { wShortReadQualityControlFile; wShortReadQualityControlList} from './modules/qualityControl/shortReadQC'
 include { wOntQualityControlFile; wOntQualityControlList} from './modules/qualityControl/ontQC'
 include { wShortReadAssemblyFile; wShortReadAssemblyList } from './modules/assembly/shortReadAssembler'
+include { wHybridAssemblyList } from './modules/assembly/hybridAssembler'
 include { wOntAssemblyFile; wOntAssemblyList } from './modules/assembly/ontAssembler'
 include { wShortReadBinningList } from './modules/binning/shortReadBinning'
 include { wLongReadBinningList } from './modules/binning/ontBinning'
@@ -452,6 +453,35 @@ workflow _wProcessOnt {
       medianQuality = medianQuality
 }
 
+workflow _wProcessHybrid {
+    take:
+      reads
+    main:
+      //Illumina QC:
+      illuminaReads = reads  | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]}
+      wShortReadQualityControlList(illuminaReads)
+      wShortReadQualityControlList.out.readsPair \
+ 	| join(wShortReadQualityControlList.out.readsSingle) | set { qcReads }
+
+      //ONT QC:
+      ontReads = reads | map { it -> [ it.SAMPLE, it.ONT ]}
+      wOntQualityControlList(ontReads)
+      wOntQualityControlList.out.reads | set { ontQCReads }
+      wOntQualityControlList.out.medianQuality | set { medianQuality }
+
+      //combine qc-ed ont and illumina reads and medianQuality:
+      combinedReads = ontReads.join(qcReads).join(medianQuality)
+      
+      combinedReads.view()
+
+      //Run Assembly:
+      wHybridAssemblyList(combinedReads)
+
+    emit:
+      reads = combinedReads
+      medianQuality = medianQuality
+}
+
 /*
 * 
 * Main workflow entrypoint. Takes list of files containing reads as input and produces assembly, binning, dereplication and metabolomics 
@@ -471,6 +501,8 @@ workflow wFullPipeline {
     illumina = _wProcessIllumina(inputSamples | filter({ sample -> sample.TYPE == 'ILLUMINA' }) | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} )
 
     ont = _wProcessOnt(inputSamples | filter({ sample -> sample.TYPE == 'OXFORD_NANOPORE' }) | map { it -> [ it.SAMPLE, it.READS ]} )
+
+    hybrid = _wProcessHybrid(inputSamples | filter({ sample -> sample.TYPE == 'HYBRID' }))
 
     ont.binsStats | mix(illumina.binsStats) | set { binsStats }
 
