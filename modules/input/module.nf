@@ -302,6 +302,26 @@ workflow _wOntReads {
          fastqs
 }
 
+workflow _wHybridReads {
+       main:
+         Channel.fromPath(params.input.hybrid.path) \
+                | set { idsFromPath }
+
+         if(params.input.hybrid.watch){
+            Channel.watchPath(params.input.hybrid.path, 'create,modify') \
+                | set {idsFromWatch}
+
+            idsFromWatch | mix(idsFromPath) | set { files }
+         } else {
+            idsFromPath | set {files}
+         }
+
+         files |  splitCsv(sep: '\t', header: true)  | unique | set { fastqs }
+       emit:
+         fastqs
+}
+
+
 workflow _wSRANCBI {
        main:
          MAX_LENGTH=12
@@ -407,6 +427,14 @@ workflow wInputFile {
                 | set { ontChannel }
 
         fastqs | mix(ontChannel) | set { fastqs }
+    }
+
+    if("hybrid" in inputTypes) {
+        _wHybridReads().fastqs \
+                | map { data -> data["TYPE"] = "HYBRID"; data } \
+                | set { hybridChannel }
+
+        fastqs | mix(hybridChannel) | set { fastqs }
     }
   emit:
     data = fastqs
