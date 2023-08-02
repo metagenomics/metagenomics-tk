@@ -91,7 +91,7 @@ process pKMC {
     tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz'), path(unpairedReads)
 
     output:
-    tuple val("${sample}"), path("*.21.histo.tsv"), path("*.13.histo.tsv"), emit: histogram
+    tuple val("${sample}"), path("*.71.histo.tsv"), path("*.21.histo.tsv"), path("*.13.histo.tsv"), emit: histogram
     tuple val("${sample}"), path("*.json"), emit: details
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
 
@@ -109,6 +109,11 @@ process pKMC {
     kmc_tools -t!{task.cpus} transform !{params.steps.qc.kmc.additionalParams.histo}  21mers histogram !{sample}.21.histo.tmp.tsv
 
     rm -rf 21mers
+
+    kmc -j!{sample}.71.kmc.json !{params.steps.qc.kmc.additionalParams.count} -m$(echo !{task.memory} | cut -d ' ' -f 1) -t!{task.cpus} -ci2 -k71 input.fq.gz 71mers work
+    kmc_tools -t!{task.cpus} transform !{params.steps.qc.kmc.additionalParams.histo}  71mers histogram !{sample}.71.histo.tmp.tsv
+
+    rm -rf 71mers
 
     echo -e "FREQUENCY\tCOUNT\tSAMPLE" > !{sample}.21.histo.tsv
     cat !{sample}.21.json | jq -r '.Stats."#k-mers_below_min_threshold"' \
