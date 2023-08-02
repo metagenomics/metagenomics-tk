@@ -40,7 +40,7 @@ process pPredictFlavor {
     tuple val("${sample}"), path("*.tsv"), emit: details
 
     shell:
-    error = modelType == "sensitive" ? 9 : 5
+    error = modelType == "sensitive" ? 9 : 4
     '''
     zcat !{interleavedReads} !{unpairedReads} | seqkit stats --all -T > seqkit.stats.tsv
     BASEPAIRS_COUNTER=$(cut -d$'\t' -f 5 seqkit.stats.tsv | tail -n 1)
