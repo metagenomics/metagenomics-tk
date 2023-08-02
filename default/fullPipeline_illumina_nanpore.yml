@@ -37,7 +37,7 @@ steps:
         #  -sm - use strict memory mode (memory limit from -m<n> switch will not be exceeded)
         #  -cs<value> - maximal value of a counter
         count: " -sm -cs10000 "
-        histo: " "
+        histo: " -cx50000 "
 
   qcONT:
     porechop:
