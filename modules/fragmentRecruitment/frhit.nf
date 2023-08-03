@@ -19,7 +19,7 @@ def getAggregatedOutput(RUNID, TOOL, filename){
 
 process pFrHit {
 
-    label 'large'
+    label 'highmemLarge'
 
     tag "$sample"
 
@@ -84,7 +84,7 @@ process pUnzip {
 
 process pCombinedAlignmentAnalysis {
 
-    label 'medium'
+    label 'highmemMedium'
 
     when params.steps.containsKey("fragmentRecruitment")
 

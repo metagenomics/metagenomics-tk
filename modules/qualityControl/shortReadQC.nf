@@ -11,7 +11,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 
 process pFastpSplit {
 
-    label 'medium'
+    label 'highmemMedium'
 
     tag "Sample: $sample"
 
@@ -23,7 +23,7 @@ process pFastpSplit {
 
     container "${params.fastp_image}"
 
-    time params.steps.containsKey("qc") ? Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastp.defaults, params.resources.medium) : ""
+    time params.steps.containsKey("qc") ? Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastp.defaults, params.resources.highmemMedium) : ""
 
     input:
     tuple val(sample), path(read1, stageAs: "read1.fq.gz"), path(read2, stageAs: "read2.fq.gz")
@@ -133,7 +133,7 @@ process pKMC {
 
 process pFastpSplitDownload {
 
-    label 'medium'
+    label 'highmemMedium'
 
     tag "Sample: $sample"
 
@@ -141,7 +141,7 @@ process pFastpSplitDownload {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
 
-    time params.steps.containsKey("qc") ? Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastpDownload.defaults, params.resources.medium) : ""
+    time params.steps.containsKey("qc") ? Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastpDownload.defaults, params.resources.highmemMedium) : ""
 
     when params?.steps.containsKey("qc") && params?.steps?.qc.containsKey("fastp")
 

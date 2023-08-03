@@ -63,15 +63,22 @@ steps:
       database:
         extractedDBPath: '/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB'
 resources:
-  large:
+  highmemLarge:
     cpus: 28
     memory: 230
-  medium:
+  highmemMedium:
     cpus: 14
     memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
   small:
     cpus: 7
     memory: 14
   tiny:
     cpus: 1
     memory: 1
+

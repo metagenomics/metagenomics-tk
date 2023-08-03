@@ -62,7 +62,7 @@ process pMMseqs2 {
  
       tag "Sample: $sample, Database: $dbType"
 
-      label 'large'
+      label 'highmemLarge'
 
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2/${dbType}", filename) }, \
          pattern: "{**.blast.tsv}"
@@ -157,7 +157,7 @@ process pMMseqs2_taxonomy {
  
       tag "Sample: $sample, Database_taxonomy: $dbType"
 
-      label 'large'
+      label 'highmemLarge'
 
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", filename) }, \
          pattern: "{*.out,*.html,*.tsv}"

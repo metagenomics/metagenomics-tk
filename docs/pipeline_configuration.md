@@ -227,7 +227,7 @@ multiple jobs on a node. However not all possible combinations of profiles and d
 
 The toolkit uses the following machine types (flavours) for running tools. All flavours can be optionally
 adjusted by modifying the cpus and memory (in GB) parameters. If for example the largest flavour is not available
-in the infrastructure, `cpus` and `memory` parameters can be modified to fit the medium flavour. If larger
+in the infrastructure, `cpus` and `memory` parameters can be modified to fit the highmemMedium flavour. If larger
 flavours are available, it makes especially sense to increase the `cpus` and `memory` values of the `large`
 flavour to speed up for example assembly and read mapping.
 
@@ -235,18 +235,24 @@ Example Configuration:
 
 ```
 resources:
+  highmemLarge:
+    cpus: 28
+    memory: 230
+  highmemMedium:
+    cpus: 14
+    memory: 113
   large:
     cpus: 28
-    memory: 265
+    memory: 58
   medium:
     cpus: 14
-    memory: 128
+    memory: 29
   small:
     cpus: 7
-    memory: 16
+    memory: 14
   tiny:
     cpus: 1
-    memory: 2
+    memory: 1
 ```
 
 Additional flavours can be defined that can be used by methods that dynamically compute resources on tool error (see assembly module section).
@@ -258,18 +264,24 @@ resources:
   xlarge:
     cpus: 56
     memory: 512
+  highmemLarge:
+    cpus: 28
+    memory: 230
+  highmemMedium:
+    cpus: 14
+    memory: 113
   large:
     cpus: 28
-    memory: 256
+    memory: 58
   medium:
     cpus: 14
-    memory: 128
+    memory: 29
   small:
     cpus: 7
-    memory: 16
+    memory: 14
   tiny:
     cpus: 1
-    memory: 2
+    memory: 1
 ```
 
 The full pipeline mode is able to predict the memory consumption of some assemblers (see assembly module section).

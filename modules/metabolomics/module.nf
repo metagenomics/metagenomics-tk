@@ -53,7 +53,7 @@ process pGapSeq {
 
 process pMemote {
 
-    label 'medium'
+    label 'highmemMedium'
 
     tag "Sample: $sample, Bin: $id"
 
@@ -85,7 +85,7 @@ process pMemote {
 
 process pSmetanaDetailed {
 
-    label 'large'
+    label 'highmemLarge'
 
     tag "Sample: $sample"
 
@@ -116,7 +116,7 @@ process pSmetanaDetailed {
 
 process pSmetanaGlobal {
 
-    label 'large'
+    label 'highmemLarge'
 
     tag "Sample: $sample"
 
