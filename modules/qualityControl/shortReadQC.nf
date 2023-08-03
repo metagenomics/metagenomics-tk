@@ -115,6 +115,14 @@ process pKMC {
 
     rm -rf 71mers
 
+    echo -e "FREQUENCY\tCOUNT\tSAMPLE" > !{sample}.71.histo.tsv
+    cat !{sample}.71.json | jq -r '.Stats."#k-mers_below_min_threshold"' \
+	| sed 's/^/1\t/g' \
+	| sed  -e 's/ /\t/g' -e "s/$/\t!{sample}/g" >> !{sample}.71.histo.tsv
+
+    sed  -e 's/ /\t/g' -e "s/$/\t!{sample}/g" !{sample}.71.histo.tmp.tsv >> !{sample}.71.histo.tsv
+    sed -i '/\t0\t/d' !{sample}.71.histo.tsv
+
     echo -e "FREQUENCY\tCOUNT\tSAMPLE" > !{sample}.21.histo.tsv
     cat !{sample}.21.json | jq -r '.Stats."#k-mers_below_min_threshold"' \
 	| sed 's/^/1\t/g' \
