@@ -10,6 +10,7 @@ include { wHybridAssemblyList } from './modules/assembly/hybridAssembler'
 include { wOntAssemblyFile; wOntAssemblyList } from './modules/assembly/ontAssembler'
 include { wShortReadBinningList } from './modules/binning/shortReadBinning'
 include { wLongReadBinningList } from './modules/binning/ontBinning'
+include { wHybridBinningList } from './modules/binning/hybridBinning'
 include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
 include { wDereplicateFile; wDereplicateList} from './modules/dereplication/bottomUpClustering/module'
 include { wAnalyseMetabolitesList; wAnalyseMetabolitesFile } from './modules/metabolomics/module'
@@ -471,11 +472,12 @@ workflow _wProcessHybrid {
 
       //combine qc-ed ont and illumina reads and medianQuality:
       combinedReads = ontReads.join(qcReads).join(medianQuality)
-      
-      combinedReads.view()
 
       //Run Assembly:
       wHybridAssemblyList(combinedReads)
+
+      //Run Binning:
+      wHybridBinningList(wHybridAssemblyList.out.contigs, combinedReads)
 
     emit:
       reads = combinedReads
