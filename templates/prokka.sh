@@ -31,15 +31,20 @@ if [ -s !{metabatCoverage} ] && [ -s !{defaultCoverage} ]; then
 	csvtk join -d$'\t' -T -f "CHR;CONTIG_NAME" ${PROKKA_TMP_TSV} !{metabatCoverage} \
 		| csvtk cut -d$'\t' -T -f -SAMPLE  > ${PROKKA_COV_TMP_TSV}
 	csvtk join -d$'\t' -T -f "CONTIG;CHR" !{defaultCoverage} ${PROKKA_COV_TMP_TSV} > ${PROKKA_TSV}
-	# Create SAMPLE, BIN_ID and CONTIG ids file
-  csvtk -t cut -f SAMPLE,CONTIG,locus_tag $PROKKA_TSV > prokka_tags_tmp.tsv
-	else
+
+	# Create SAMPLE and CONTIG ids file
+	csvtk -t cut -f SAMPLE,CONTIG,locus_tag $PROKKA_TSV > prokka_tags_tmp.tsv
+else
 	cp ${PROKKA_TMP_TSV} ${PROKKA_TSV}
 	csvtk -t cut -f locus_tag $PROKKA_TSV > prokka_tags_tmp.tsv
+
 	# A dumy c tag is used as a placeholer, as contig information is not available
 	sed -i "s/^/!{sample}\tc\t/g" prokka_tags_tmp.tsv
 	sed -i '1s/.*/SAMPLE\tCONTIG\tlocus_tag/' prokka_tags_tmp.tsv
 fi
+
+# Add BIN_ID column
+sed -i -e "1s/^/BIN_ID\t/" -e "2,$ s/^/${BIN_ID}\t/" ${PROKKA_TSV}
 
 # This script reads a prokka_tags_tmp.tsv file and generates a dictionary with old tags as keys and new tags as values.
 # It finds all files with the specified extensions and applies the substitutions to each file separately.
