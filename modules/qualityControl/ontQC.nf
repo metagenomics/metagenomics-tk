@@ -86,8 +86,6 @@ process pPorechopDownload {
     '''
 }
 
-
-
 process pNanoPlot {
 
     label 'small'
@@ -120,6 +118,33 @@ process pNanoPlot {
 }
 
 
+process pBbduk {
+
+    label 'small'
+
+    tag "Sample: $sample"
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "bbduk", filename) }
+
+    when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("bbduk")
+
+    container "${params.bbmap_image}"
+
+    input:
+    tuple val(sample), path(reads, stageAs: "reads.fq.gz")
+
+    output:
+    tuple val("${sample}"), path("bbduk.fq.gz"), emit: reads
+    tuple val("${sample}"), path("bbduk_fail.fq.gz"), emit: failed_reads
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    shell:
+    '''
+    bbduk.sh in=reads.fq.gz out=bbduk.fq.gz outm=bbduk_fail.fq.gz entropy=0.5 entropywindow=50 entropyk=5
+    '''
+}
+
+
 
 workflow _wONTFastq {
        take:
@@ -136,7 +161,10 @@ workflow _wONTFastq {
              samples.download | pPorechopDownload
 
              pPorechop.out.reads | mix(pPorechopDownload.out.reads)  | set { reads }
-             reads | pNanoPlot
+
+             reads | pBbduk
+             pBbduk.out.reads | set { reads }
+             pBbduk.out.reads | pNanoPlot
       emit:
         reads = reads
         medianQuality = pNanoPlot.out.medianQuality
