@@ -1,4 +1,4 @@
-nextflow.enable.dsl=2
+include { wSaveSettingsList } from '../config/module'
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.qcONT.name + '/' + 
@@ -179,8 +179,12 @@ workflow wOntQualityControlFile {
      main:
         Channel.from(file(params.steps.qcONT.input)) 
             | splitCsv(sep: '\t', header: true) \
-            | map { it -> [ it.SAMPLE, it.READS ]} \
-	    | _wONTFastq | set { results }
+            | map { it -> [ it.SAMPLE, it.READS ]} | set { reads }
+
+	_wONTFastq(reads) | set { results }
+
+        SAMPLE_IDX = 0
+        wSaveSettingsList(reads | map { it -> it[SAMPLE_IDX] })
     emit:
       reads = results.reads
 }

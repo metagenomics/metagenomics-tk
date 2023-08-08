@@ -1,4 +1,4 @@
-nextflow.enable.dsl=2
+include { wSaveSettingsList } from '../config/module'
 
 include { pDumpLogs } from '../utils/processes'
 
@@ -531,6 +531,9 @@ workflow wAnnotateFile {
 
       input | map { bin -> bin[0]} | unique \
 	| combine(Channel.value([f1,f2])) | set { coverage }
+
+      DATASET_IDX = 0
+      wSaveSettingsList(input | map { it -> it[DATASET_IDX] })
 
       _wAnnotation(Channel.value("out"), Channel.value("param"), input, null, coverage)
    emit:

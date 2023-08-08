@@ -237,6 +237,10 @@ workflow wAnalyseMetabolitesFile {
          Channel.value("genome") | set { type }
      }
 
+     SAMPLE_IDX = 0
+     wSaveSettingsList(bins | mix(proteins) |  map { it[SAMPLE_IDX] } \
+	| unique | map { it -> it[SAMPLE_IDX] })
+
      _wAnalyseMetabolites(bins, proteins, type)
   emit:
      models = _wAnalyseMetabolites.out.models
