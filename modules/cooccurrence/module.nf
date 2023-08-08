@@ -1,5 +1,3 @@
-nextflow.enable.dsl=2
-
 include { pDumpLogs } from '../utils/processes'
 
 def getOutput(RUNID, TOOL, filename){
@@ -212,6 +210,7 @@ workflow wCooccurrenceFile {
         | splitCsv(sep: '\t', header: true) \
         | map { bin -> [bin.BIN_ID, file(bin.PATH)] } | set {models}
     }
+
     _wCooccurrence(count, Channel.from(file(params.steps.cooccurrence.input.gtdb)), models)
 
 }

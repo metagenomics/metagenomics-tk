@@ -1,4 +1,4 @@
-nextflow.enable.dsl=2
+include { wSaveSettingsList } from '../config/module'
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.qc.name + '/' + 
@@ -262,8 +262,12 @@ workflow wShortReadQualityControlFile {
        if(!params.steps.qc.interleaved){
          Channel.from(file(params.steps.qc.input)) \
             | splitCsv(sep: '\t', header: true) \
-            | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} \
-	    | _wFastqSplit | set { results }
+            | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} | set { reads }
+
+	 _wFastqSplit(reads) | set { results }
+   
+         SAMPLE_IDX = 0
+         wSaveSettingsList(reads | map { it -> it[SAMPLE_IDX] })
        }
     emit:
       readsPair = results.readsPair

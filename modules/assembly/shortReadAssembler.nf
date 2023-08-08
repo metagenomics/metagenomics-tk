@@ -1,4 +1,4 @@
-nextflow.enable.dsl=2
+include { wSaveSettingsList } from '../config/module'
 
 import java.lang.Math;
 
@@ -206,6 +206,8 @@ workflow wShortReadAssemblyFile {
 	| map { sample -> sample[UNPAIRED_IDX] == null ? \
 		[sample[SAMPLE_IDX], sample[SAMPLE_PAIRED_IDX], file("NOT_SET")] : sample } \
 	| set { reads }
+
+        wSaveSettingsList(reads | map { it -> it[SAMPLE_IDX] })
 
        _wAssembly(reads, Channel.empty(), Channel.empty())
     emit:
