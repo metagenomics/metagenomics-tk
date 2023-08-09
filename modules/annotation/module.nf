@@ -71,7 +71,7 @@ process pMMseqs2 {
 
    input:
       val(binType)
-      tuple val(sample), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
+      tuple val(sample), file(fasta), file(contig2GeneMapping), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
       tuple val("${dbType}"), val("${sample}"), val("${binType}"), path("${sample}_${binType}.${dbType}.blast.tsv"), emit: blast
@@ -113,6 +113,7 @@ process pMMseqs2 {
           MMSEQS2_DATABASE_DIR="!{EXTRACTED_DB}"
    fi
     MMSEQS_HEADER="query,target,pident,alnlen,mismatch,gapopen,qstart,qend,tstart,tend,evalue,bits,qlen,tlen,qcov,tcov"
+    OUTPUT_TMP_TSV="!{sample}_!{binType}.!{dbType}.blast.tmp.tsv"
     OUTPUT_TSV="!{sample}_!{binType}.!{dbType}.blast.tsv"
 
     # According to the MMSeqs docs the --split-memory-limit parameter defines the RAM usage for *about* 80 percent of the total RAM consumption.
@@ -128,11 +129,18 @@ process pMMseqs2 {
     mmseqs search queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database tmp !{parameters} \
 	--threads !{task.cpus} --split-memory-limit ${RAM_LIMIT}
     # mmseqs2 searches produce output databases. These have to be converted to a more useful format. The blast -outfmt 6 in this case.
-    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database ${OUTPUT_TSV} \
+    mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database ${OUTPUT_TMP_TSV} \
 	--threads !{task.cpus} --format-output ${MMSEQS_HEADER}
 
     # Add header
-    sed  -i "1i $(echo ${MMSEQS_HEADER} | tr ',' '\t')" ${OUTPUT_TSV}
+    sed  -i "1i $(echo ${MMSEQS_HEADER} | tr ',' '\t')" ${OUTPUT_TMP_TSV}
+
+    # Add BIN_ID and SAMPLE column
+    csvtk -t -T join -f "locus_tag;query" \
+	<(csvtk -t -T concat !{contig2GeneMapping} | csvtk -t -T cut -f SAMPLE,BIN_ID,CONTIG,locus_tag) ${OUTPUT_TMP_TSV} > ${OUTPUT_TSV}
+
+    # use "query" column name instead of "locus_tag"
+    sed -i -e "1s/locus_tag/query/" ${OUTPUT_TSV}
     '''
 }
 
@@ -601,9 +609,15 @@ workflow _wAnnotation {
       })
 
       PATH_IDX=2
+
+      // Create contig to gene mapping
+      pProkka.out.tsv | map{ [it[SAMPLE_IDX], it[PATH_IDX]] } | groupTuple() | set { contig2GeneMapping }
+
       // Run all amino acid outputs against all databases
       // Collect by sample name to bundle searches and avoid calls with small input files
-      combinedMMseqs = pProkka.out.faa | map{ [it[SAMPLE_IDX], it[PATH_IDX]] }| groupTuple() | combine(Channel.from(selectedDBs))
+      pProkka.out.faa | map{ [it[SAMPLE_IDX], it[PATH_IDX]] } | groupTuple() \
+	| combine(contig2GeneMapping, by: SAMPLE_IDX) | combine(Channel.from(selectedDBs)) | set { combinedMMseqs }
+
       pMMseqs2(sourceChannel, combinedMMseqs)
       combinedMMseqsTax = pProkka.out.faa | map{ [it[SAMPLE_IDX], it[PATH_IDX]] }| groupTuple() | combine(Channel.from(selectedTaxDBs))
       pMMseqs2_taxonomy(sourceChannel, combinedMMseqsTax)

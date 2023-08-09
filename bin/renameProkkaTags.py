@@ -53,7 +53,7 @@ def apply_substitutions(args):
 file_paths = []
 for root, dirs, files in os.walk("."):
     for file_name in files:
-        if file_name.endswith((".faa", ".ffn", ".gbk", ".gff", ".sqn", ".tbl")):
+        if file_name.endswith((".faa", ".ffn", ".gbk", ".gff", ".sqn", ".tbl", "_prokka.tsv")):
             file_path = os.path.join(root, file_name)
             file_paths.append(file_path)
 
