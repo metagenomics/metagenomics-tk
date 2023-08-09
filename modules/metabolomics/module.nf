@@ -1,4 +1,5 @@
 include { pDumpLogs } from '../utils/processes'
+include { wSaveSettingsList } from '../config/module'
 
 include { pCarveMe } from './processes'
 
