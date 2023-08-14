@@ -173,8 +173,8 @@ steps:
         params: '-s 1 --orf-filter-s 1 -e 1e-15'
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
-            md5sum: 184bb8207ee1575cae7756137cde076b
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
+            md5sum: 3c8f12c5c2dc55841a14dd30a0a4c718
     keggFromBlast:
       database:
         extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 
