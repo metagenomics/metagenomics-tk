@@ -132,15 +132,18 @@ process pMMseqs2 {
     mmseqs convertalis queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.results.database ${OUTPUT_TMP_TSV} \
 	--threads !{task.cpus} --format-output ${MMSEQS_HEADER}
 
-    # Add header
-    sed  -i "1i $(echo ${MMSEQS_HEADER} | tr ',' '\t')" ${OUTPUT_TMP_TSV}
+    # Try only if the output file is not empty, csvtk will fail otherwise
+    if [ -s ${OUTPUT_TMP_TSV}  ]; then
+        # Add header
+        sed  -i "1i $(echo ${MMSEQS_HEADER} | tr ',' '\t')" ${OUTPUT_TMP_TSV}
 
-    # Add BIN_ID and SAMPLE column
-    csvtk -t -T join -f "locus_tag;query" \
-	<(csvtk -t -T concat !{contig2GeneMapping} | csvtk -t -T cut -f SAMPLE,BIN_ID,CONTIG,locus_tag) ${OUTPUT_TMP_TSV} > ${OUTPUT_TSV}
+        # Add BIN_ID and SAMPLE column
+        csvtk -t -T join -f "locus_tag;query" \
+	    <(csvtk -t -T concat !{contig2GeneMapping} | csvtk -t -T cut -f SAMPLE,BIN_ID,CONTIG,locus_tag) ${OUTPUT_TMP_TSV} > ${OUTPUT_TSV}
 
-    # use "query" column name instead of "locus_tag"
-    sed -i -e "1s/locus_tag/query/" ${OUTPUT_TSV}
+        # use "query" column name instead of "locus_tag"
+        sed -i -e "1s/locus_tag/query/" ${OUTPUT_TSV}
+    fi
     '''
 }
 
@@ -178,12 +181,12 @@ process pMMseqs2_taxonomy {
 
    input:
       val(binType)
-      tuple val(sample), file(fasta), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
+      tuple val(sample), file(fasta), val(dbType), val(parameters), val(ramMode), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
-      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.taxonomy.tsv"), emit: taxonomy
-      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.krakenStyleTaxonomy.out"), emit: krakenStyleTaxonomy
-      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.krona.html"), emit: kronaHtml
+      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.taxonomy.tsv"), optional:true, emit: taxonomy
+      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.krakenStyleTaxonomy.out"), optional:true, emit: krakenStyleTaxonomy
+      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.krona.html"), optional:true, emit: kronaHtml
       tuple val("${sample}_${binType}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -226,9 +229,13 @@ process pMMseqs2_taxonomy {
     mkdir tmp
     # Only mmseqs2 databases can be used for every kind of search. Inputs have to be converted first.
     mmseqs createdb !{fasta} queryDB
-    # Load all indices into memory to increase searching speed
-    mmseqs touchdb --threads !{task.cpus} queryDB
-    mmseqs touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
+    // If the ramMode is set to true, the whole database will be loaded into the RAM. Don't forget to set the MMseqs2 parameter accordingly (--db-load-mode 3).
+    if !{ramMode}
+    then
+        # Load all indices into memory to increase searching speed
+        mmseqs touchdb --threads !{task.cpus} queryDB
+        mmseqs touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
+    fi
     # Define taxonomies
     mmseqs taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database tmp !{parameters} --threads !{task.cpus}
     # mmseqs2 searches produce output databases. These have to be converted to more useful formats.
@@ -605,6 +612,7 @@ workflow _wAnnotation {
 
       selectedTaxDBs = params?.steps?.annotation?.mmseqs2_taxonomy.findAll({  it.key != "runOnMAGs"  }).collect({
             [it.key, it.value?.params ?: "", \
+             it.value?.ramMode ?: "", \
              it.value?.database?.extractedDBPath ?: "", \
              it.value.database?.download?.source ?: "", \
              it.value.database?.download?.md5sum ?: "", \
