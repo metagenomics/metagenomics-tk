@@ -41,6 +41,15 @@ steps:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
             md5sum: d7e627221a1d4584d1c1795cda774cdb
         additionalParams: ""
+      mmseqs2_taxonomy:
+        runOnMAGs: false
+        gtdb:
+          params: '-s 1 --orf-filter-s 1 -e 1e-15'
+          ramMode: 'false'
+          database:
+            download:
+              source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
+              md5sum: 3c8f12c5c2dc55841a14dd30a0a4c718
       prokka:
         prodigalMode: "meta"
         defaultKingdom: false

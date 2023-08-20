@@ -33,7 +33,8 @@ MMseqs2 needs a combination of different data, index and dbtype files as "one" d
 See [MMseqs2 database](https://github.com/soedinglab/mmseqs2/wiki#mmseqs2-database-format) for more information.
 As multiple and in most cases, big files are used, tar and [zstd](https://github.com/facebook/zstd) are utilized to compress and transport files.
 Input databases have to be compressed by these and need to end with `.tar.zst`. Naming inside an archive is irrelevant, as databases are picked automatically.
-Multiple databases per one archive are not supported, one archive, one database.
+Multiple databases per one archive are not supported, one archive, one database. If the database also includes a taxonomy 
+as described [here](https://github.com/soedinglab/mmseqs2/wiki#creating-a-seqtaxdb), it can also be used for taxonomic classifications with MMseqs2 - Taxonomy.
 
 #### KEGGFromBlast
 KeGGFromBlast is only executed if genes are searched against a KEGG database. There must be a `kegg` identifier (see example configuration file) in the annotation section.
