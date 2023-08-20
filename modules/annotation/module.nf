@@ -74,7 +74,7 @@ process pMMseqs2 {
       tuple val(sample), file(fasta), file(contig2GeneMapping), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
-      tuple val("${dbType}"), val("${sample}"), val("${binType}"), path("${sample}_${binType}.${dbType}.blast.tsv"), emit: blast
+      tuple val("${dbType}"), val("${sample}"), val("${binType}"), path("${sample}_${binType}.${dbType}.blast.tsv"), optional:true, emit: blast
       tuple val("${sample}_${binType}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -229,7 +229,7 @@ process pMMseqs2_taxonomy {
     mkdir tmp
     # Only mmseqs2 databases can be used for every kind of search. Inputs have to be converted first.
     mmseqs createdb !{fasta} queryDB
-    // If the ramMode is set to true, the whole database will be loaded into the RAM. Don't forget to set the MMseqs2 parameter accordingly (--db-load-mode 3).
+    # If the ramMode is set to true, the whole database will be loaded into the RAM. Do not forget to set the MMseqs2 parameter accordingly, --db-load-mode 3.
     if !{ramMode}
     then
         # Load all indices into memory to increase searching speed
