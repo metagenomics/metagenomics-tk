@@ -40,12 +40,11 @@ process pPredictFlavor {
     tuple val("${sample}"), path("*.tsv"), emit: details
 
     shell:
-    error = modelType == "sensitive" ? 9 : 4
+    error = modelType == "sensitive" ?12 : 5
     '''
     zcat !{interleavedReads} !{unpairedReads} | seqkit stats --all -T > seqkit.stats.tsv
-    BASEPAIRS_COUNTER=$(cut -d$'\t' -f 5 seqkit.stats.tsv | tail -n 1)
     GC_CONTENT=$(cut -d$'\t' -f 16 seqkit.stats.tsv | tail -n 1)
-    MEMORY=$(cli.py predict -m !{model} -k21 !{kmerFrequencies21} -k71 !{kmerFrequencies71} -k13 !{kmerFrequencies13} -e !{error} -b ${BASEPAIRS_COUNTER} -g ${GC_CONTENT} -d !{nonpareilDiversity} -o .)
+    MEMORY=$(cli.py predict -m !{model} -k21 !{kmerFrequencies21} -k71 !{kmerFrequencies71} -k13 !{kmerFrequencies13} -e !{error} -g ${GC_CONTENT} -d !{nonpareilDiversity} -o .)
     echo -e "SAMPLE\tMEMORY" > !{sample}_ram_prediction.tsv
     echo -e "!{sample}\t${MEMORY}" >> !{sample}_ram_prediction.tsv
     '''

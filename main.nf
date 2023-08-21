@@ -388,8 +388,9 @@ workflow _wConfigurePipeline {
           def nonpareil = [ nonpareil: [additionalParams: " -v 10 -r 1234 "]]
           params.steps.qc.putAll(nonpareil) 
         }
+
 	if(!params.steps?.qc.containsKey("kmc")){
-          def kmc = [ kmc: [additionalParams: [ count: " -sm -cs10000 ", histo: " "]]]
+          def kmc = [ kmc: [additionalParams: [ count: " -sm -cs10000 ", histo: " -cx50000 "]]]
           params.steps.qc.putAll(kmc) 
         }
     }
