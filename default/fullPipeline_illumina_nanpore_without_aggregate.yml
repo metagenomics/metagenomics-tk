@@ -94,8 +94,8 @@ steps:
       buffer: 1000
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_v2_data.tar.gz
-          md5sum: c42a6517bc6c14f517fa2c77121ae465
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
+          md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
       additionalParams: " --min_af 0.65 --scratch_dir . "
     # checkm lineage_wf
     checkm:
@@ -174,6 +174,18 @@ steps:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
             md5sum: 184bb8207ee1575cae7756137cde076b
+    mmseqs2_taxonomy:
+      # Run taxonomy classification on MAGs and unbinable contigs or just the later
+      runOnMAGs: false
+      gtdb:
+        # High sensitivity mode parameters only work for quality MAGs, for unbinable contigs use default parameters
+        params: ' --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies  --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 '
+        # Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params
+        ramMode: false
+        database:
+          download:
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
+            md5sum: 3c8f12c5c2dc55841a14dd30a0a4c718
     rgi:
       # --include_loose includes matches of more distant homologs of AMR genes which may also report spurious partial matches
       # --include_nudge Partial ORFs may do not pass curated bitscore cut-offs or novel samples may contain divergent alleles, so nudging 
