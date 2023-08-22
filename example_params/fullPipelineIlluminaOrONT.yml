@@ -75,8 +75,8 @@ steps:
       buffer: 1000
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_v2_data.tar.gz
-          md5sum: c42a6517bc6c14f517fa2c77121ae465
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
+          md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
       additionalParams: " --min_af 0.65 --scratch_dir . "
     checkm:
       database:
@@ -171,14 +171,14 @@ steps:
       runOnMAGs: false
       gtdb:
         params: '-s 1 --orf-filter-s 1 -e 1e-15'
-        ramMode: 'false'
+        ramMode: false
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
             md5sum: 3c8f12c5c2dc55841a14dd30a0a4c718
       ncbi_nr:
         params: '-s 1 --orf-filter-s 1 -e 1e-15'
-        ramMode: 'false'
+        ramMode: false
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
