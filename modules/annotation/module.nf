@@ -612,7 +612,7 @@ workflow _wAnnotation {
 
       selectedTaxDBs = params?.steps?.annotation?.mmseqs2_taxonomy.findAll({  it.key != "runOnMAGs"  }).collect({
             [it.key, it.value?.params ?: "", \
-             it.value?.ramMode ?: "", \
+             it.value?.ramMode ? "true" : "false", \
              it.value?.database?.extractedDBPath ?: "", \
              it.value.database?.download?.source ?: "", \
              it.value.database?.download?.md5sum ?: "", \
