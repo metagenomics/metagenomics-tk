@@ -1,4 +1,4 @@
-nextflow.enable.dsl=2
+include { wSaveSettingsList } from '../config/module'
 
 include { pDumpLogs } from '../utils/processes'
 include { pCovermContigsCoverage; pBowtie2; pMinimap2; pBwa; pBwa2} from '../binning/processes'
@@ -93,6 +93,8 @@ workflow wPlasmidsPath {
 		| splitCsv(sep: '\t', header: true) \
 		| map {it -> [ it.DATASET, it.BIN_ID, it.PATH ]} | set {samplesContigs}
 
+         DATASET_IDX = 0
+         wSaveSettingsList(samplesContigs | map { it -> it[DATASET_IDX] })
          _wPlasmids(samplesContigs, Channel.empty(), Channel.empty(), Channel.empty(), Channel.empty())
 }
 

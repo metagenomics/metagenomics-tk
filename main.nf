@@ -40,8 +40,6 @@ if(! params.skipVersionCheck){
 }
 
 
-
-
 def mapJoin(channel_a, channel_b, key_a, key_b){
     channel_a \
         | map{ it -> [it[key_a], it] } \
@@ -50,6 +48,7 @@ def mapJoin(channel_a, channel_b, key_a, key_b){
 }
 
 workflow wDereplication {
+   wSaveSettingsList(Channel.value("AGGREGATED"))
    wDereplicateFile(Channel.from(file(params?.steps?.dereplication?.bottomUpClustering?.input)))
 }
 
@@ -108,10 +107,6 @@ workflow wSRATable {
    pPublishOnt(params.logDir, ontFile)
 }
 
-workflow wDereplicationPath {
-   wDereplicatePath()
-}
-
 workflow wPlasmids {
    wPlasmidsPath()
 }
@@ -137,6 +132,7 @@ workflow wMetabolomics {
 }
 
 workflow wCooccurrence {
+   wSaveSettingsList(Channel.value("AGGREGATED"))
    wCooccurrenceFile()
 }
 
@@ -274,6 +270,9 @@ workflow _wFragmentRecruitment {
 workflow wAggregatePipeline {
     def input = params.input
     def runID = params.runid
+
+    // Save config File
+    wSaveSettingsList(Channel.value("AGGREGATED"))
 
     // List all available SRAIDs
     Channel.from(file(input).list()) | filter({ path -> !(path ==~ /.*summary$/) && !(path ==~ /null$/) }) \

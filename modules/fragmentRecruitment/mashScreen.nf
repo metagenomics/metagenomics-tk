@@ -1,4 +1,4 @@
-nextflow.enable.dsl=2
+include { wSaveSettingsList } from '../config/module'
 
 include { pBowtie2; pMinimap2; pBwa; pBwa2; pGetBinStatistics; \
 	pCovermGenomeCoverage; pCovermContigsCoverage; } from  '../binning/processes'
@@ -136,6 +136,9 @@ workflow wMashScreenFile {
      	Channel.from(file(params.steps.fragmentRecruitment.mashScreen.samples.ont)) | splitCsv(sep: '\t', header: true) \
              | map { line -> [ line.SAMPLE, file(line.READS)]} | set { ontReads  }
      }
+ 
+     SAMPLE_IDX = 0
+     wSaveSettingsList(ontReads | mix(singleReads) | mix(pairedReads) | map { it -> it[SAMPLE_IDX] } | unique)
 
      _wMashScreen(pairedReads, singleReads, ontReads, Channel.empty())
 }

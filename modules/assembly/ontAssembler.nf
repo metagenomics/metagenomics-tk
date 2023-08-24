@@ -1,4 +1,4 @@
-nextflow.enable.dsl=2
+include { wSaveSettingsList } from '../config/module'
 
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
@@ -105,8 +105,12 @@ workflow wOntAssemblyList {
 workflow wOntAssemblyFile {
     main:
        Channel.from(file(params.steps.assemblyONT.input)) | splitCsv(sep: '\t', header: true) \
-             | map { it -> [ it.SAMPLE, it.READS, file("NOT_SET")]} \
-             | _wOntAssembly
+             | map { it -> [ it.SAMPLE, it.READS, file("NOT_SET")]} | set { reads }
+       
+       _wOntAssembly(reads)
+
+       SAMPLE_IDX = 0
+       wSaveSettingsList(reads | map { it -> it[SAMPLE_IDX] })
     emit:
       contigs = _wOntAssembly.out.contigs
 }

@@ -1,4 +1,4 @@
-nextflow.enable.dsl=2
+include { wSaveSettingsList } from '../config/module'
 
 import java.lang.Math;
 
@@ -32,7 +32,7 @@ process pPredictFlavor {
 
     input:
     val(modelType)
-    tuple val(sample), path(interleavedReads), path(unpairedReads), val(nonpareilDiversity), path(kmerFrequencies21), path(kmerFrequencies13), path(model)
+    tuple val(sample), path(interleavedReads), path(unpairedReads), val(nonpareilDiversity), path(kmerFrequencies71), path(kmerFrequencies21), path(kmerFrequencies13), path(model)
 
     output:
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
@@ -40,12 +40,14 @@ process pPredictFlavor {
     tuple val("${sample}"), path("*.tsv"), emit: details
 
     shell:
-    error = modelType == "sensitive" ? 12 : 5
+    error = modelType == "sensitive" ? 9 : 4
     '''
     zcat !{interleavedReads} !{unpairedReads} | seqkit stats --all -T > seqkit.stats.tsv
     BASEPAIRS_COUNTER=$(cut -d$'\t' -f 5 seqkit.stats.tsv | tail -n 1)
     GC_CONTENT=$(cut -d$'\t' -f 16 seqkit.stats.tsv | tail -n 1)
-    MEMORY=$(cli.py predict -m !{model} -k21 !{kmerFrequencies21} -k13 !{kmerFrequencies13} -e !{error} -b ${BASEPAIRS_COUNTER} -g ${GC_CONTENT} -d !{nonpareilDiversity} -o .)
+    MEMORY=$(cli.py predict -m !{model} -k21 !{kmerFrequencies21} -k71 !{kmerFrequencies71} -k13 !{kmerFrequencies13} -e !{error} -b ${BASEPAIRS_COUNTER} -g ${GC_CONTENT} -d !{nonpareilDiversity} -o .)
+    echo -e "SAMPLE\tMEMORY" > !{sample}_ram_prediction.tsv
+    echo -e "!{sample}\t${MEMORY}" >> !{sample}_ram_prediction.tsv
     '''
 }
 
@@ -204,6 +206,8 @@ workflow wShortReadAssemblyFile {
 	| map { sample -> sample[UNPAIRED_IDX] == null ? \
 		[sample[SAMPLE_IDX], sample[SAMPLE_PAIRED_IDX], file("NOT_SET")] : sample } \
 	| set { reads }
+
+        wSaveSettingsList(reads | map { it -> it[SAMPLE_IDX] })
 
        _wAssembly(reads, Channel.empty(), Channel.empty())
     emit:

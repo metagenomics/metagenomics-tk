@@ -23,7 +23,7 @@ steps:
        timeLimit: "AUTO"
        additionalParams: 
          count: " -sm -cs10000 "
-         histo: " "
+         histo: " -cx50000 "
   assembly:
     megahit:
       additionalParams: " --min-contig-len 200 "

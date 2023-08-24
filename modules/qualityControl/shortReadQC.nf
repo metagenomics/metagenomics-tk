@@ -1,4 +1,4 @@
-nextflow.enable.dsl=2
+include { wSaveSettingsList } from '../config/module'
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.qc.name + '/' + 
@@ -91,7 +91,7 @@ process pKMC {
     tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz'), path(unpairedReads)
 
     output:
-    tuple val("${sample}"), path("*.21.histo.tsv"), path("*.13.histo.tsv"), emit: histogram
+    tuple val("${sample}"), path("*.71.histo.tsv"), path("*.21.histo.tsv"), path("*.13.histo.tsv"), emit: histogram
     tuple val("${sample}"), path("*.json"), emit: details
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
 
@@ -101,14 +101,27 @@ process pKMC {
     cat !{interleavedReads} !{unpairedReads} > input.fq.gz
 
     kmc -j!{sample}.13.kmc.json !{params.steps.qc.kmc.additionalParams.count} -m$(echo !{task.memory} | cut -d ' ' -f 1) -t!{task.cpus} -ci2 -k13  input.fq.gz 13mers work
-    kmc_tools -t!{task.cpus} transform !{params.steps.qc.kmc.additionalParams.histo}  13mers histogram !{sample}.13.histo.tmp.tsv
+    kmc_tools -t!{task.cpus} transform 13mers histogram !{sample}.13.histo.tmp.tsv !{params.steps.qc.kmc.additionalParams.histo}
 
     rm -rf 13mers
 
     kmc -j!{sample}.21.kmc.json !{params.steps.qc.kmc.additionalParams.count} -m$(echo !{task.memory} | cut -d ' ' -f 1) -t!{task.cpus} -ci2 -k21 input.fq.gz 21mers work
-    kmc_tools -t!{task.cpus} transform !{params.steps.qc.kmc.additionalParams.histo}  21mers histogram !{sample}.21.histo.tmp.tsv
+    kmc_tools -t!{task.cpus} transform 21mers histogram !{sample}.21.histo.tmp.tsv !{params.steps.qc.kmc.additionalParams.histo}
 
     rm -rf 21mers
+
+    kmc -j!{sample}.71.kmc.json !{params.steps.qc.kmc.additionalParams.count} -m$(echo !{task.memory} | cut -d ' ' -f 1) -t!{task.cpus} -ci2 -k71 input.fq.gz 71mers work
+    kmc_tools -t!{task.cpus} transform 71mers histogram !{sample}.71.histo.tmp.tsv !{params.steps.qc.kmc.additionalParams.histo}
+
+    rm -rf 71mers
+
+    echo -e "FREQUENCY\tCOUNT\tSAMPLE" > !{sample}.71.histo.tsv
+    cat !{sample}.71.json | jq -r '.Stats."#k-mers_below_min_threshold"' \
+	| sed 's/^/1\t/g' \
+	| sed  -e 's/ /\t/g' -e "s/$/\t!{sample}/g" >> !{sample}.71.histo.tsv
+
+    sed  -e 's/ /\t/g' -e "s/$/\t!{sample}/g" !{sample}.71.histo.tmp.tsv >> !{sample}.71.histo.tsv
+    sed -i '/\t0\t/d' !{sample}.71.histo.tsv
 
     echo -e "FREQUENCY\tCOUNT\tSAMPLE" > !{sample}.21.histo.tsv
     cat !{sample}.21.json | jq -r '.Stats."#k-mers_below_min_threshold"' \
@@ -249,8 +262,12 @@ workflow wShortReadQualityControlFile {
        if(!params.steps.qc.interleaved){
          Channel.from(file(params.steps.qc.input)) \
             | splitCsv(sep: '\t', header: true) \
-            | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} \
-	    | _wFastqSplit | set { results }
+            | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} | set { reads }
+
+	 _wFastqSplit(reads) | set { results }
+   
+         SAMPLE_IDX = 0
+         wSaveSettingsList(reads | map { it -> it[SAMPLE_IDX] })
        }
     emit:
       readsPair = results.readsPair

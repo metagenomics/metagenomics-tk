@@ -1,4 +1,4 @@
-nextflow.enable.dsl=2
+include { wSaveSettingsList } from '../config/module'
 
 
 include { pMinimap2Index as pMinimap2IndexLong; \
@@ -172,6 +172,10 @@ workflow wFileReadMappingBwa {
        ont | map { sample -> [sample.SAMPLE, sample.READS] } | set {ontReads}
        ont | map { sample -> [sample.SAMPLE, sample.MEDIAN_PHRED] } | set {ontMedianQuality}
      }   
+
+     SAMPLE_IDX = 0
+     wSaveSettingsList(paired | mix(single) \
+	| mix(ontReads) | map { it -> it[SAMPLE_IDX] })
 
      _wReadMappingBwa(ontReads, ontMedianQuality, paired, single, genomesList)
 }
