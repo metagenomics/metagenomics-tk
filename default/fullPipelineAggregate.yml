@@ -9,6 +9,10 @@ scratch: "/vol/scratch"
 publishDirMode: "symlink"
 steps:
   dereplication:
+    # Set to true is bin refinement was used in short read runs.
+    # Only refined short read bins will be used for dereplication.
+    # Has no impact on nanopore bins.
+    useOnlyBinRefinement: false
     pasolli:
       # stricter MIMAG medium quality
       minimumCompleteness: 50
