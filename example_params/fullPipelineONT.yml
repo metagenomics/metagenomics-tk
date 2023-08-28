@@ -186,8 +186,8 @@ steps:
         ramMode: false
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
-            md5sum: 184bb8207ee1575cae7756137cde076b
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2023-04-29_mmseqs_taxonomy.tar.zst
+            md5sum: 79b9fb6b3dada41e602d70e12e7351c2
 resources:
   large:
     cpus: 28
