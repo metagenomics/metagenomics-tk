@@ -71,6 +71,7 @@ steps:
     contigsCoverage:
       additionalParams: ""
   dereplication:
+    useOnlyBinRefinement: false
     bottomUpClustering:
       minimumCompleteness: 0
       maximumContamination: 5000

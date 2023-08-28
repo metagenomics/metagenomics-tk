@@ -149,6 +149,7 @@ steps:
     contigsCoverage:
       additionalParams: " --min-covered-fraction 0 "
   dereplication:
+    useOnlyBinRefinement: false
     bottomUpClustering:
       # stricter MIMAG medium quality
       minimumCompleteness: 50
