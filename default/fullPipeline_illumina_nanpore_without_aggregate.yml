@@ -172,8 +172,8 @@ steps:
         params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
-            md5sum: 184bb8207ee1575cae7756137cde076b
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2023-04-29_mmseqs_taxonomy.tar.zst
+            md5sum: 79b9fb6b3dada41e602d70e12e7351c2
     mmseqs2_taxonomy:
       # Run taxonomy classification on MAGs and unbinable contigs or just the later
       runOnMAGs: false
@@ -200,7 +200,55 @@ steps:
         download:
           source: s3://databases_internal/kegg-links-mirror-2021-01.tar.gz
           md5sum: 69538151ecf4128f4cb1e0ac21ff55b3
-
+  plasmid:
+    SCAPP:
+      additionalParams:
+        bwa2: "  "
+        SCAPP: "  "
+        coverm: " --min-covered-fraction 0 "
+        minimap: " "
+        samtoolsViewBwa2: " -F 3584 " 
+        samtoolsViewMinimap: " " 
+    ViralVerifyPlasmid:
+      filter: true
+      # Select sequences that are labeled as uncertain or plasmid id ViralVerifies output
+      filterString: "Uncertain - plasmid or chromosomal|Plasmid"
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/pfam-A_35.0.hmm.gz
+          md5sum: c80b75bd48ec41760bbca19c70616e36
+      additionalParams: " --thr 7 "
+    PlasClass:
+      filter: true
+      # A cutoff of 0.9 for longer (> 2 kb) sequences should pretty much yield only plasmids.
+      threshold: 0.9
+      additionalParams: "   "
+    Filter:
+      method: "OR"
+      minLength: 1000 
+    PLSDB:
+      sharedKmerThreshold: 0
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20220929.tar.bz2
+          md5sum: 13c1078e6cd6a46e3f508c24ca07cc18
+      additionalParams:
+     # Parameters according to plsdb paper
+     # -s: Sketch size
+     # -k: k-mer size
+     # -S: Seed to provide to the hash function
+     # -d: Maximum distance to report
+     # -v: Maximum p-value to report
+        mashSketch: " -S 42 -k 21 -s 1000 "
+        mashDist: " -v 0.1 -d 0.1 "
+    MobTyper:
+      filter: true
+      minLength: 1000
+      additionalParams: " --min_length 1000  "
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20220929.gz
+          md5sum: 21fcaf9c3754a985d1d6875939d71e28
   metabolomics:
      beforeProcessScript: ""
      filter:
