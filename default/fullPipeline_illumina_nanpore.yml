@@ -275,10 +275,10 @@ steps:
           md5sum: d7e627221a1d4584d1c1795cda774cdb
     mmseqs2_taxonomy:
       # Run taxonomy classification on MAGs and unbinable contigs or just the later
-      runOnMAGs: false
+      runOnMAGs: true
       gtdb:
         # High sensitivity mode parameters only work for quality MAGs, for unbinable contigs use default parameters
-        params: ' --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 '
+        params: ' --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 5 -e 0.001 --e-profile 0.01 '
         # Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params
         ramMode: false
         database:
