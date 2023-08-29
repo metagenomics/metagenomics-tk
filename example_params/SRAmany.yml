@@ -16,4 +16,3 @@ input:
       prefix: "/vol1/fastq/"
       watch: false
 steps:
-

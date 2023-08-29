@@ -67,7 +67,7 @@ process pMashPaste {
 
     container "${params.mash_image}"
 
-    label 'large'
+    label 'highmemLarge'
 
     publishDir params.output, mode: "${params.publishDirMode}", \
 	saveAs: { filename -> getAggregatedOutput(params.runid, "${module}", "${outputToolDir}", filename) }, \

@@ -50,7 +50,7 @@ process pCheckM {
 
     beforeScript "mkdir -p ${params.polished.databases}"
 
-    label 'medium'
+    label 'highmemMedium'
 
     input:
     tuple val(sample), val(ending), path(bins) 
@@ -75,7 +75,7 @@ process pGtdbtk {
 
     container "${params.gtdbtk_image}"
 
-    label 'medium'
+    label 'highmemMedium'
 
     tag "Sample: $sample"
 

@@ -29,7 +29,7 @@ def getMetaflyeQualityParam(medianQuality) {
 */
 process pMetaflye {
 
-    label 'large'
+    label 'highmemLarge'
 
     tag "Sample: $sample"
 

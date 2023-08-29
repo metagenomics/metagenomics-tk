@@ -28,7 +28,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 
 process pSCAPP {
 
-    label 'large'
+    label 'highmemLarge'
 
     tag "Sample: $sample"
 
@@ -57,7 +57,7 @@ process pSCAPP {
 
 process pPLSDB {
 
-    label 'medium'
+    label 'highmemMedium'
 
     tag "$sample $binID"
 

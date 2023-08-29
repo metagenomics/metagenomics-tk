@@ -150,7 +150,7 @@ You can use the setTimeLimit helper method to add a user configurable time limit
 Example:
 
 ```
-time Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastp.defaults, params.mediumDefault)
+time Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastp.defaults, params.resources.highmemMedium)
 ```
 
 

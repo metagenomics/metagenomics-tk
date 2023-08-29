@@ -68,7 +68,7 @@ process pVerticalConcat {
 
 process pBwaIndex {
     container "${params.bwa_image}"
-    label 'large'
+    label 'highmemLarge'
     when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa")
     input:
       path(representatives)
@@ -82,7 +82,7 @@ process pBwaIndex {
 
 process pBwa2Index {
     container "${params.bwa2_image}"
-    label 'large'
+    label 'highmemLarge'
     when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa2")
     input:
       path(representatives)
@@ -95,7 +95,7 @@ process pBwa2Index {
 }
 
 process pMapBwa {
-    label 'large'
+    label 'highmemLarge'
     container "${params.samtools_bwa_image}"
     when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa")
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid ,"bwa", filename) }
@@ -112,7 +112,7 @@ process pMapBwa {
 
 
 process pMapBwa2 {
-    label 'large'
+    label 'highmemLarge'
     container "${params.samtools_bwa2_image}"
     when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa2")
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid ,"bwa2", filename) }

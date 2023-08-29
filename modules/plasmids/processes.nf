@@ -94,7 +94,7 @@ process pViralVerifyPlasmid {
 
 process pMobTyper {
 
-    label 'medium'
+    label 'highmemMedium'
 
     tag "Sample: $sample, BinID: $binID"
 
@@ -132,7 +132,7 @@ process pMobTyper {
 
 process pPlasClass {
 
-    label 'medium'
+    label 'highmemMedium'
 
     tag "Sample: $sample, BinID: $binID"
 
@@ -161,7 +161,7 @@ process pPlasClass {
 
 process pPlaton {
 
-    label 'medium'
+    label 'highmemMedium'
 
     tag "Sample: $sample, BinId: $binID"
 

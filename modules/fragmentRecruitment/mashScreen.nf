@@ -27,7 +27,7 @@ def getModulePath(module){
 
 process pMashScreen {
 
-    label 'medium'
+    label 'highmemMedium'
 
     tag "Sample: $sample"
 
