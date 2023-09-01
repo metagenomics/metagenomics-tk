@@ -243,6 +243,13 @@ jobs:
           bash ./scripts/test_annotation.sh \
             "     --steps.annotation.mmseqs.kegg.database.extractedDBPath=/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB --steps.annotation.keggFromBlast.database.extractedDBPath=/vol/spool/toolkit/kegg_2021-01/ --databases=/vol/scratch/databases/ " "" \
             "${WORK_DIR}" ${PROFILE}  || exit 1
+
+  annotation_database_tests_part_1:
+    timeout-minutes: 2200
+    needs: [codePolicy]
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - uses: actions/checkout@v2
       - name: Test rgi against different database configurations
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/card_20221209/card.json" \
@@ -273,6 +280,13 @@ jobs:
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/kegg_yaml_database_tests" \
                                MODULE_DB_TEST_SKIP_TESTS="https"
 
+
+  annotation_database_tests_part_2:
+    timeout-minutes: 2200
+    needs: [codePolicy]
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - uses: actions/checkout@v2
       - name: Test mmseqs2 against different database configurations
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB" \
