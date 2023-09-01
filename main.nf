@@ -366,7 +366,8 @@ workflow _wAggregate {
      // As there is no bin refinement part in the aggregation .yml file, the collectModuleFiles function will not filter the redundant bins.
      // Therefore, we need to filter the bins here, as in most cases only the refined bins should be used.
      // If nevertheless all bins should be used, the parameter "useOnlyBinRefinement" can be used to disable this filter.
-     if (params.steps.dereplication.useOnlyBinRefinement) {
+
+     if (params?.steps?.dereplication?.useOnlyBinRefinement) {
         binsStats = binsStats.filter { it.PATH.toString().contains("magscot") || it.PATH.toString().contains("binningONT") }
      }
 
