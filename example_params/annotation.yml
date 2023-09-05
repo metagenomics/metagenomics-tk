@@ -44,7 +44,7 @@ steps:
       mmseqs2_taxonomy:
         runOnMAGs: false
         gtdb:
-          params: '-s 1 --orf-filter-s 1 -e 1e-15'
+          params: ' --orf-filter-s 1 -e 1e-15'
           ramMode: false
           database:
             download:
