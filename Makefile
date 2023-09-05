@@ -52,6 +52,7 @@ ifndef MODULE_DB_TEST_EXTRACTED
 	override MODULE_DB_TEST_YML_SCRIPT = "./scripts/test_plasmids.sh" 
 	override MODULE_DB_TEST_GENERATED_YML_DIR = "plasmid_yaml_database_tests"
 	override MODULE_DB_TEST_SKIP_TESTS = ""
+	override MODULE_DB_TEST_REMOVE_DB = "no"
 endif
 
 runDatabaseTest: ## Run database tests
@@ -59,7 +60,7 @@ runDatabaseTest: ## Run database tests
 		${MODULE_DB_TEST_HTTPS} ${MODULE_DB_TEST_PATH} ${MODULE_DB_TEST_S3PATH} ${MODULE_DB_TEST_S3_DIRECTORY_PATH} \
 		${MODULE_DB_TEST_S5CMD_COMMAND} ${MODULE_DB_TEST_CREDENTIALS} ${MODULE_DB_TEST_GENERATED_YML} \
 		${MODULE_DB_TEST_YML} ${MODULE_DB_TEST_YML_PATH} ${MODULE_DB_TEST_YML_SCRIPT} ${MODULE_DB_TEST_GENERATED_YML_DIR} \
-		${MODULE_DB_TEST_SKIP_TESTS}
+		${MODULE_DB_TEST_SKIP_TESTS} ${MODULE_DB_TEST_REMOVE_DB}
 
 .PHONY: list clean test_clean run_small_full_test check changelog python_version_check checkPublisDirMode
 
