@@ -197,7 +197,7 @@ process pMMseqs2_taxonomy {
    output = getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", "")
    // The maximum possible sensitivity is reduced each time the process is retried.
    // The reason for this behaviour is a bug that occurs at higher sensitivity levels.
-   sensitivity = MAX_SENSITIVITY - task.attempt - 1
+   sensitivity = MAX_SENSITIVITY - task.attempt + 1
    '''
    mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part
