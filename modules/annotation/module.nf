@@ -403,30 +403,7 @@ process pHmmSearch {
    '''
    ADDITIONAL_HMMSEARCH_PARAMS="!{params.steps?.binning?.magscot?.hmmSearch?.additionalParams}"
 
-   mkdir -p !{params.polished.databases}
-
-   # Check developer documentation
-   GTDB=""
-   if [ -z "!{EXTRACTED_DB}" ]
-   then
-     DATABASE=!{params.databases}/gtdb
-     LOCK_FILE=${DATABASE}/lock.txt
-
-     # Download gtdb if necessary
-     mkdir -p ${DATABASE}
-     flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
-   	--link=!{DOWNLOAD_LINK} \
-   	--httpsCommand="wget -O gtdb.tar.gz !{DOWNLOAD_LINK} && tar xzvf gtdb.tar.gz && rm gtdb.tar.gz" \
-   	--s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} gtdb.tar.gz  && tar xzvf gtdb.tar.gz && rm gtdb.tar.gz " \
-           --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
-   	--s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
-   	--localCommand="tar -xzvf !{DOWNLOAD_LINK} " \
-   	--expectedMD5SUM=!{MD5SUM}
-
-     GTDB=$(readlink -f ${DATABASE}/out/*)
-   else
-     GTDB=!{EXTRACTED_DB}
-   fi
+   GTDB=$(gtdb_download.sh !{EXTRACTED_DB} !{DOWNLOAD_LINK} !{S5CMD_PARAMS} !{task.cpus} !{params.polished.databases} !{MD5SUM})
 
     # Run hmmsearch
     hmmsearch --cpu !{task.cpus} ${ADDITIONAL_HMMSEARCH_PARAMS} -o !{sample}.hmm.tigr.out --tblout !{sample}.hmm.tigr.hit.tsv ${GTDB}/markers/tigrfam/tigrfam.hmm !{faaFile}
