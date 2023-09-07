@@ -47,7 +47,7 @@ process pMetabinner {
 
     tag "Sample: $sample"
 
-    label 'large'
+    label 'highmemLarge'
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metabinner", filename) }
 
@@ -74,7 +74,7 @@ process pMaxBin {
 
     container "${params.maxbin_image}"
 
-    label 'large'
+    label 'highmemLarge'
 
     tag "$sample"
 

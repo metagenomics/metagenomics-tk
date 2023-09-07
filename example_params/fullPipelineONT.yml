@@ -39,8 +39,8 @@ steps:
       buffer: 1000
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_v2_data.tar.gz
-          md5sum: c42a6517bc6c14f517fa2c77121ae465
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
+          md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
       additionalParams: " --min_af 0.65 --scratch_dir . "
     checkm:
       database:
@@ -55,6 +55,8 @@ steps:
   fragmentRecruitment:
     mashScreen:
       genomes: test_data/fragmentRecruitment/mags.tsv
+      unzip:
+        timeLimit: "AUTO"
       additionalParams:
         mashSketch: " "
         mashScreen: " "
@@ -172,19 +174,33 @@ steps:
           md5sum: d7e627221a1d4584d1c1795cda774cdb
     mmseqs2_taxonomy:
       runOnMAGs: false
-      ncbi_nr:
-        params: '-s 1 --orf-filter-s 1 -e 1e-15'
+      gtdb:
+        params: ' --orf-filter-s 1 -e 1e-15'
+        ramMode: false
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
-            md5sum: 184bb8207ee1575cae7756137cde076b
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
+            md5sum: 3c8f12c5c2dc55841a14dd30a0a4c718
+      ncbi_nr:
+        params: ' --orf-filter-s 1 -e 1e-15'
+        ramMode: false
+        database:
+          download:
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2023-04-29_mmseqs_taxonomy.tar.zst
+            md5sum: 79b9fb6b3dada41e602d70e12e7351c2
 resources:
-  large:
+  highmemLarge:
     cpus: 28
     memory: 230
-  medium:
+  highmemMedium:
     cpus: 14
     memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
   small:
     cpus: 7
     memory: 14

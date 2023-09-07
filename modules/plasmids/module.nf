@@ -1,4 +1,4 @@
-nextflow.enable.dsl=2
+include { wSaveSettingsList } from '../config/module'
 
 include { pDumpLogs } from '../utils/processes'
 include { pCovermContigsCoverage; pBowtie2; pMinimap2; pBwa; pBwa2} from '../binning/processes'
@@ -28,7 +28,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 
 process pSCAPP {
 
-    label 'large'
+    label 'highmemLarge'
 
     tag "Sample: $sample"
 
@@ -57,7 +57,7 @@ process pSCAPP {
 
 process pPLSDB {
 
-    label 'medium'
+    label 'highmemMedium'
 
     tag "$sample $binID"
 
@@ -93,6 +93,8 @@ workflow wPlasmidsPath {
 		| splitCsv(sep: '\t', header: true) \
 		| map {it -> [ it.DATASET, it.BIN_ID, it.PATH ]} | set {samplesContigs}
 
+         DATASET_IDX = 0
+         wSaveSettingsList(samplesContigs | map { it -> it[DATASET_IDX] })
          _wPlasmids(samplesContigs, Channel.empty(), Channel.empty(), Channel.empty(), Channel.empty())
 }
 
@@ -257,7 +259,7 @@ workflow _runNonPlasmidAssemblyAnalysis {
       samplesContigs
     main:
       // Check if Contigs are plasmids
-      samplesContigs | (_wRunPlasClass & _wRunMobTyper & pViralVerifyPlasmidLinear & pPlatonLinear)
+      samplesContigs | (_wRunPlasClass & pViralVerifyPlasmidLinear & pPlatonLinear)
 
       // Check which tools the user has chosen for filtering contigs
       selectedFilterTools = params?.steps?.plasmid.findAll({ tool, options -> {  options instanceof Map && options?.filter } }).collect{it.key}
@@ -266,7 +268,6 @@ workflow _runNonPlasmidAssemblyAnalysis {
       // Collect output
       pPlatonLinear.out.plasmidsStats \
 	| mix(_wRunPlasClass.out.probabilities) \
-	| mix(_wRunMobTyper.out.plasmidsStats) \
 	| mix(pViralVerifyPlasmidLinear.out.plasmidsStats) \
 	| set { plasmidsStats }
 
@@ -290,7 +291,7 @@ workflow _runNonPlasmidAssemblyAnalysis {
       	samplesContigs | set { samplesContigsPlasmids }
       }
 
-      _wRunPlasClass.out.logs | mix(_wRunMobTyper.out.logs) \
+      _wRunPlasClass.out.logs \
 	| mix(pViralVerifyPlasmidLinear.out.logs) | mix(pPlatonLinear.out.logs) | pDumpLogs
 
     emit:
@@ -316,7 +317,7 @@ workflow _runCircularAnalysis {
 	| map { plasmids -> [plasmids[SAMPLE_IDX], plasmids[SAMPLE_IDX] + "_plasmid_assembly", plasmids[BIN_IDX]] } \
 	| set { newPlasmids }
 
-       newPlasmids | (_wRunPlasClass & _wRunMobTyper & pViralVerifyPlasmidCircular & pPlatonCircular)
+       newPlasmids | (_wRunPlasClass & pViralVerifyPlasmidCircular & pPlatonCircular)
 
        pBowtie2(Channel.value(params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("SCAPP") \
                && params.steps?.plasmid?.SCAPP?.additionalParams.containsKey("bowtie")), \
@@ -362,7 +363,6 @@ workflow _runCircularAnalysis {
        // Collect output
        pPlatonCircular.out.plasmidsStats \
  	| mix(_wRunPlasClass.out.probabilities) \
-	| mix(_wRunMobTyper.out.plasmidsStats) \
 	| mix(pViralVerifyPlasmidCircular.out.plasmidsStats) \
 	| set { plasmidsStats }
 
@@ -387,7 +387,7 @@ workflow _runCircularAnalysis {
       	 newPlasmids | set { filteredPlasmids }
       }
 
-      pSCAPP.out.logs | mix(_wRunPlasClass.out.logs) | mix(_wRunMobTyper.out.logs)  \
+      pSCAPP.out.logs | mix(_wRunPlasClass.out.logs)  \
 	| mix(pViralVerifyPlasmidCircular.out.logs) | mix(pPlatonCircular.out.logs) | pDumpLogs
 
     emit:

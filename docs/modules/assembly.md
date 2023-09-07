@@ -53,14 +53,14 @@ The output is a gzipped fasta file containing contigs.
 
 ### Error Handling
 
-On error with exit codes ([-9, 137]) (e.g. due to memory restrictions), the tool is executed again with higher cpu and memory values.
-The memory and cpu values are computed by the formula 2^(number of attempts) * (cpu/memory value of the assigned or predicted flavor).
+On error with exit codes ([-9, 137, 247]) (e.g. due to memory restrictions), the tool is executed again with higher cpu and memory values.
+The memory and cpu values are in case of a retry selected based on the flavor with the next higher memory value.
 The highest possible cpu/memory value is restricted by the highest cpu/memory value of all flavors defined in the resource section 
 (see global [configuration](../pipeline_configuration.md) section). 
 
 ### Peak memory usage prediction
 
-Memory cosumption of an assembler varies based on diversity and size of the dataset. We trained a machine learning model on kmer frequencies
+Memory cosumption of an assembler varies based on diversity. We trained a machine learning model on kmer frequencies
 and the nonpareil diversity index in order to be able to predict the memory peak consumption of megahit in our full pipeline mode. The required
 resources in order to run the assembler are thereby fitted to the resources that are actually needed for a specific dataset. If this
 mode is enabled then Nonpareil and kmc that are part of the quality control module are automatically executed before the assembler run.  

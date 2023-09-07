@@ -1,4 +1,4 @@
-nextflow.enable.dsl=2
+include { wSaveSettingsList } from '../config/module'
 
 include { pDumpLogs } from '../utils/processes'
 include { pProkka; _wCreateProkkaInput } from '../annotation/module'
@@ -50,7 +50,7 @@ process pCheckM {
 
     beforeScript "mkdir -p ${params.polished.databases}"
 
-    label 'medium'
+    label 'highmemMedium'
 
     input:
     tuple val(sample), val(ending), path(bins) 
@@ -75,7 +75,7 @@ process pGtdbtk {
 
     container "${params.gtdbtk_image}"
 
-    label 'medium'
+    label 'highmemMedium'
 
     tag "Sample: $sample"
 
@@ -131,6 +131,7 @@ workflow wCMSeqWorkflowFile {
       alignments
    main:
       wMagAttributesFile(genomes)
+
       
       //prepare alignment inputs for CMSeq:
       alignments | splitCsv(sep: '\t', header: true)  \
@@ -140,6 +141,9 @@ workflow wCMSeqWorkflowFile {
       genomes | splitCsv(sep: '\t', header: true) \
        | map { sample -> [sample.DATASET, file(sample.PATH).getName(), file(sample.PATH)] } \
        | set { genomesForProkka }
+
+      DATASET_IDX = 0 
+      wSaveSettingsList(samplesContigs | map { it -> it[DATASET_IDX] })
 
       _wCreateProkkaInput(genomesForProkka, wMagAttributesFile.out.gtdb)
 
@@ -174,7 +178,10 @@ workflow wMagAttributesFile {
      DATASET_IDX = 0
      mags | splitCsv(sep: '\t', header: true) \
        | map { sample -> [sample.DATASET, file(sample.PATH)] } \
-       | groupTuple(by: DATASET_IDX) | _wMagAttributes
+       | groupTuple(by: DATASET_IDX) | set { mags }
+  
+     _wMagAttributes(mags)
+     wSaveSettingsList(mags | map { it -> it[DATASET_IDX] })
    emit:
      checkm = _wMagAttributes.out.checkm
      gtdb = _wMagAttributes.out.gtdb

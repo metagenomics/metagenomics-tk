@@ -16,6 +16,7 @@ concurrency:
 env:
   WORK_DIR: "/vol/spool/${{ github.head_ref }}"
   PROFILE: "slurm"
+  PR_NUMBER: ${{ github.event.number }}
 jobs:
   full_pipeline:
     timeout-minutes: 2500
@@ -132,11 +133,11 @@ jobs:
       
       - name: Test GTDB runs against different database parameters
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/gtdbtk_v2_data/release207_v2" \
-                               MODULE_DB_TEST_MD5SUM="c42a6517bc6c14f517fa2c77121ae465" \
-                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_v2_data.tar.gz" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/gtdbtk_v2_data.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/gtdbtk_v2_data.tar.gz" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/gtdbtk_v2_data/*" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/gtdbtk_r214_data/release214" \
+                               MODULE_DB_TEST_MD5SUM="390e16b3f7b0c4463eb7a3b2149261d9" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/gtdbtk_r214_data.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/gtdbtk_r214_data.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/gtdbtk_r214_data/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/gtdb \
@@ -201,7 +202,20 @@ jobs:
           bash ./scripts/test_cooccurrence.sh " --smetana_image=pbelmann/metabolomics:0.1.0 --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh " \
                  ./example_params/cooccurrenceMetabolom.yml "${WORK_DIR}" ${PROFILE}  || exit 1
 
-
+  cplex_docker:
+    timeout-minutes: 800
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Test if cplex docker container can be build
+        run: |
+          cp /vol/spool/cos_installer-test.bin cplex/docker/ \
+                && cd cplex/docker \
+                && docker build -t cplextest:${PR_NUMBER} .
+      - name: Cleanup image
+        if: always()
+        run: |
+          docker images --format "{{.Repository}}:{{.Tag}}" | grep cplextest:${PR_NUMBER} | xargs -I {} docker rmi {}
 
   fragment_recruitment:
     timeout-minutes: 800
@@ -229,6 +243,13 @@ jobs:
           bash ./scripts/test_annotation.sh \
             "     --steps.annotation.mmseqs.kegg.database.extractedDBPath=/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB --steps.annotation.keggFromBlast.database.extractedDBPath=/vol/spool/toolkit/kegg_2021-01/ --databases=/vol/scratch/databases/ " "" \
             "${WORK_DIR}" ${PROFILE}  || exit 1
+
+  annotation_database_tests_part_1:
+    timeout-minutes: 2200
+    needs: [codePolicy]
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - uses: actions/checkout@v2
       - name: Test rgi against different database configurations
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/card_20221209/card.json" \
@@ -259,6 +280,13 @@ jobs:
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/kegg_yaml_database_tests" \
                                MODULE_DB_TEST_SKIP_TESTS="https"
 
+
+  annotation_database_tests_part_2:
+    timeout-minutes: 2200
+    needs: [codePolicy]
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - uses: actions/checkout@v2
       - name: Test mmseqs2 against different database configurations
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB" \

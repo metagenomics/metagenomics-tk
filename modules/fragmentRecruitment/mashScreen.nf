@@ -1,4 +1,4 @@
-nextflow.enable.dsl=2
+include { wSaveSettingsList } from '../config/module'
 
 include { pBowtie2; pMinimap2; pBwa; pBwa2; pGetBinStatistics; \
 	pCovermGenomeCoverage; pCovermContigsCoverage; } from  '../binning/processes'
@@ -27,7 +27,7 @@ def getModulePath(module){
 
 process pMashScreen {
 
-    label 'medium'
+    label 'highmemMedium'
 
     tag "Sample: $sample"
 
@@ -136,6 +136,9 @@ workflow wMashScreenFile {
      	Channel.from(file(params.steps.fragmentRecruitment.mashScreen.samples.ont)) | splitCsv(sep: '\t', header: true) \
              | map { line -> [ line.SAMPLE, file(line.READS)]} | set { ontReads  }
      }
+ 
+     SAMPLE_IDX = 0
+     wSaveSettingsList(ontReads | mix(singleReads) | mix(pairedReads) | map { it -> it[SAMPLE_IDX] } | unique)
 
      _wMashScreen(pairedReads, singleReads, ontReads, Channel.empty())
 }
@@ -468,6 +471,12 @@ process pUnzip {
   container "${params.ubuntu_image}"
 
   tag "Genome: ${x.baseName}"
+
+  when params?.steps.containsKey("fragmentRecruitment") && params.steps.fragmentRecruitment.containsKey("mashScreen")
+
+  time params?.steps.containsKey("fragmentRecruitment") \
+	&& params.steps.fragmentRecruitment.containsKey("mashScreen") \
+	? Utils.setTimeLimit(params.steps.fragmentRecruitment.mashScreen.unzip, params.modules.fragmentRecruitment.process.unzip.defaults, params.resources.tiny) : ""
 
   cache 'deep'
 

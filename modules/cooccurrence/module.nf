@@ -1,5 +1,3 @@
-nextflow.enable.dsl=2
-
 include { pDumpLogs } from '../utils/processes'
 
 def getOutput(RUNID, TOOL, filename){
@@ -32,7 +30,7 @@ process pVerticalConcat {
 
 process pBuildCorrelationNetwork {
 
-    label 'large'
+    label 'highmemLarge'
 
     cache 'deep'
    
@@ -66,7 +64,7 @@ process pBuildCorrelationNetwork {
 MAX_SPIEC_EASI_RETRIES = 2
 process pBuildSpiecEasiNetwork {
 
-    label 'large'
+    label 'highmemLarge'
 
     cache 'deep'
 
@@ -75,7 +73,7 @@ process pBuildSpiecEasiNetwork {
     time params.steps.containsKey("cooccurrence") ? \
 	Utils.setTimeLimit(params.steps.cooccurrence.inference.additionalParams, \
 	params.modules.cooccurrence.process.pBuildSpiecEasiNetwork.defaults, \
-	params.resources.large) : ""
+	params.resources.highmemLarge) : ""
 
     maxRetries MAX_SPIEC_EASI_RETRIES
 
@@ -161,7 +159,7 @@ process pVerticalConcatFinal {
 MAX_SMETANA_RETRIES = 10
 process pSmetanaEdges {
 
-    label 'large'
+    label 'highmemLarge'
 
     cache 'deep'
 
@@ -212,6 +210,7 @@ workflow wCooccurrenceFile {
         | splitCsv(sep: '\t', header: true) \
         | map { bin -> [bin.BIN_ID, file(bin.PATH)] } | set {models}
     }
+
     _wCooccurrence(count, Channel.from(file(params.steps.cooccurrence.input.gtdb)), models)
 
 }
