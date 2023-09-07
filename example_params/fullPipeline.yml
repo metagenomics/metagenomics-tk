@@ -52,8 +52,8 @@ steps:
         additionalParams: "--noali --notextw --cut_nc"
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_v2_data.tar.gz
-            md5sum: c42a6517bc6c14f517fa2c77121ae465
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
+            md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
     metabinner:
       minContigLength: 500
       kmerSize: 4
