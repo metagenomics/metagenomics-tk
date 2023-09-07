@@ -146,6 +146,11 @@ process pMAGScoT {
     echo "Converting MAGScoT binning according to the naming convention"
     echo -e 'BIN_ID\tCONTIG\tBINNER' > !{sample}_bin_contig_mapping.tsv
 
+    # Use head to get the first line, awk to print the first field (the filename),
+    # and sed to remove everything up to and including the last dot (.) in the filename, leaving only the file extension.
+    # Export the variable to use it in the xargs commands subshell further down
+    export EXT=$(head -n 1 !{contigMaps} | awk '{print $1}' | sed 's/.*\\.//')
+
     # Remove the header and pipe the remaining lines to xargs to run the script line by line
     sed 1d !{sample}_MagScoT.refined.contig_to_bin.out | xargs -n 2 sh -c '
         # Get the first column and separate the number, remove the leading zeros
@@ -153,7 +158,7 @@ process pMAGScoT {
         CONTIG=$1
         # Create a file with the contigs for each bin for reconstruction with seqkit
         echo $CONTIG >> !{sample}_bin.$binID.lst
-        echo "!{sample}_bin.$binID\t$CONTIG\tMAGScot" >> !{sample}_bin_contig_mapping.tsv
+        echo "!{sample}_bin.$binID.$EXT\t$CONTIG\tMAGScot" >> !{sample}_bin_contig_mapping.tsv
     '
     echo "Done converting"
     # Reconstructing the bins from the converted MAGScoT output list
@@ -353,9 +358,17 @@ workflow _wBinning {
      pMetabat.out.binContigMapping | join(mappedReads, by: SAMPLE_IDX) \
 	| combine(Channel.from("metabat")) | join(pMetabat.out.bins, by: SAMPLE_IDX) \
 	| set { metabatBinStatisticsInput }
+	pMAGScoT.out.binContigMapping | join(mappedReads, by: SAMPLE_IDX) \
+    | combine(Channel.from("magscot")) | join(pMAGScoT.out.bins, by: SAMPLE_IDX) \
+    | set { magscotBinStatisticsInput }
 
-     metabatBinStatisticsInput | mix(metabinnerBinStatisticsInput) \
-	| combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) | set {binStatsInput}
+     // Only use the MAGScoT bin statistics if the user has selected the refinement step
+     if (params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")) {
+        magscotBinStatisticsInput | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) | set {binStatsInput}
+     } else {
+        metabatBinStatisticsInput | mix(metabinnerBinStatisticsInput) \
+        | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) | set {binStatsInput}
+     }
 
      pGetBinStatistics(Channel.value(getModulePath(params.modules.binning)), binStatsInput)
 
