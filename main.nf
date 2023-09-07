@@ -144,7 +144,6 @@ workflow wCooccurrence {
 def collectModuleFiles(dir, sra, modules){
    def fileList = [];
    def moduleList = [];
-   def binRefining = false;
    def moduleName = "";
 
    params.modules.eachWithIndex { v, k -> moduleList.add(v.getKey() + "/" + v.getValue().version.major + ".") }
@@ -161,18 +160,9 @@ def collectModuleFiles(dir, sra, modules){
            def found = moduleList.any {  item ==~ '.*' +  it + '.*'  }
            if(found){
               fileList.add([sra, item]);
-              // check if a bin refining step was performed
-              binRefining = item.contains("magscot") || binRefining
            }
        }
      }
-   }
-
-   if (moduleName == "binning" && binRefining) {
-       // Iterate over all entry's of the fileList and remove every entry that contains "metabat" or "metabinner" files,
-       // if a bin refining step was performed, as only the refined bins are needed.
-       int path = 1;
-       fileList = fileList.findAll { !it[path].toString().contains("metabat") && !it[path].toString().contains("metabinner") }
    }
    
    return fileList;
@@ -223,8 +213,18 @@ workflow _wAggregateONT {
 
 workflow _wAggregateIllumina { 
     take:
-      sraFiles
+      binningFiles
+      qcFiles
     main:
+      // [test2, /vol/spool/peter/meta-omics-toolkit/output/test2/1/binning/0.5.0/magscot]
+      FILE_PATH_IDX = 1
+      binningFiles | filter( path -> path[FILE_PATH_IDX].endsWith("magscot")) | map { it -> "magscot" } | unique | ifEmpty("no_magscot") | set { isMagscot }
+
+      Pattern magscotPattern = Pattern.compile('.*/binning/' + params.modules.binning.version.major + '..*/magscot/.*$')
+      binningFiles | combine(isMagscot) | filter( binningFile -> binningFile[2] == "magscot" ? magscotPattern.matcher(binningFile[1].toString()).matches() : true ) \
+        | map { binFile -> [binFile[0], binFile[1]] } \
+	| mix(qcFiles) | set { sraFiles }
+
       // get Illumina paired Fastq files
       Pattern illuminaPattern = Pattern.compile('.*/qc/' + params.modules.qc.version.major + '..*/.*/.*interleaved.qc.fq.gz$')
       sraFiles | filter({ sra, path -> illuminaPattern.matcher(path.toString()).matches()}) \
@@ -245,6 +245,7 @@ workflow _wAggregateIllumina {
       Pattern illuminaBinsStatsPattern = Pattern.compile('.*/binning/' + params.modules.binning.version.major + '..*/.*/.*_bins_stats.tsv$')
       sraFiles | filter({ sra, path -> illuminaBinsStatsPattern.matcher(path.toString()).matches()}) \
        | splitCsv(header: true, sep: '\t') | map { sra, bins -> bins } | set{illuminaBinStats}
+ 
     emit:
       illuminaSamples = illuminaSamples
       unpairedIlluminaSamples = unpairedIlluminaSamples
@@ -298,7 +299,9 @@ workflow wAggregatePipeline {
 
     // List all files in sample directories
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.qc])} | set { qcFiles }
-    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binning]) } | mix(qcFiles) | _wAggregateIllumina 
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binning]) } | set { binningFiles } 
+
+    _wAggregateIllumina(binningFiles, qcFiles)
 
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binningONT])} | set { binningONTFiles }
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.qcONT])} | mix(binningONTFiles) | _wAggregateONT
@@ -361,10 +364,6 @@ workflow _wAggregate {
    main:
      representativeGenomesTempDir = params.tempdir + "/representativeGenomes"
      file(representativeGenomesTempDir).mkdirs()
-
-     // As there is no bin refinement part in the aggregation .yml file, the collectModuleFiles function will not filter the redundant bins.
-     // Therefore, we need to filter the bins here, as in most cases only the refined bins should be used.
-     // If nevertheless all bins should be used, the parameter "useOnlyBinRefinement" can be used to disable this filter.
 
      if (params?.steps?.dereplication?.useOnlyBinRefinement) {
         binsStats = binsStats.filter { it.PATH.toString().contains("magscot") || it.PATH.toString().contains("binningONT") }
