@@ -222,7 +222,7 @@ workflow _wAggregateIllumina {
       FILE_PATH_IDX = 1
       IS_MAGSCOT = "magscot"
       IS_NOT_MAGSCOT = "no_magscot"
-      binningFiles | filter( path -> path[FILE_PATH_IDX].endsWith("mags)) | map { it -> IS_MAGSCOT } \
+      binningFiles | filter( path -> path[FILE_PATH_IDX].endsWith(IS_MAGSCOT)) | map { it -> IS_MAGSCOT } \
 	| unique | ifEmpty(IS_NOT_MAGSCOT) | set { isMagscot }
 
       // If magscot was used then get all files that are placed in the magscot folder. If magscot was not used then get all binning related files
@@ -231,7 +231,7 @@ workflow _wAggregateIllumina {
       SAMPLE_IDX = 0
       Pattern magscotPattern = Pattern.compile('.*/binning/' + params.modules.binning.version.major + '..*/magscot/.*$')
       binningFiles | combine(isMagscot) \
-	| filter( binningFile -> binningFile[MAGSCOT_FLAG] == "magscot" ? magscotPattern.matcher(binningFile[BINNING_FILE_PATH].toString()).matches() : true ) \
+	| filter( binningFile -> binningFile[MAGSCOT_FLAG] == IS_MAGSCOT ? magscotPattern.matcher(binningFile[BINNING_FILE_PATH].toString()).matches() : true ) \
         | map { binFile -> [binFile[SAMPLE_IDX], binFile[BINNING_FILE_PATH]] } \
 	| mix(qcFiles) | set { sraFiles }
 
