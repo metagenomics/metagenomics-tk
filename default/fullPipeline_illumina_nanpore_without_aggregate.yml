@@ -73,10 +73,24 @@ steps:
       additionalParams: " --min-covered-fraction 0 "
     genomeCoverage:
       additionalParams: " --min-covered-fraction 0 "
-
+    # Primary binning tool
     metabat:
       # Set --seed positive numbers to reproduce the result exactly. Otherwise, random seed will be set each time.
       additionalParams: " --seed 234234  "
+    # Secondary binning tool for use with MAGscot
+    metabinner:
+      minContigLength: 500
+      kmerSize: 4
+    magscot:
+      additionalParams: ""
+      prodigal:
+        additionalParams: " -p meta "
+      hmmSearch:
+        additionalParams: "--noali --notextw --cut_nc"
+        database:
+          download:
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
+            md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
   binningONT:
     minimap:
       additionalParams: 
