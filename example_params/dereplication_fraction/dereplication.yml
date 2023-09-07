@@ -7,7 +7,6 @@ scratch: "/vol/scratch"
 publishDirMode: "symlink"
 steps:
   dereplication:
-    useOnlyBinRefinement: false
     bottomUpClustering:
       input: "test_data/dereplication/input.tsv"
       minimumCompleteness: 0
