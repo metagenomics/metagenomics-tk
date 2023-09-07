@@ -9,7 +9,6 @@ scratch: "/vol/scratch"
 publishDirMode: "symlink"
 steps:
   dereplication:
-    useOnlyBinRefinement: true
     bottomUpClustering:
       minimumCompleteness: 0
       maximumContamination: 5000

@@ -102,7 +102,6 @@ steps:
         lineage_set: " " 
         qa: "  "
   dereplication:
-    useOnlyBinRefinement: false
     bottomUpClustering:
       minimumCompleteness: 0
       maximumContamination: 5000
