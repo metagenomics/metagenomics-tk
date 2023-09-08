@@ -61,7 +61,7 @@ def getMaxAvailableResource(type){
 
 /*
 * 
-* This closue returns the next higher cpu or memory value for specified exit codes of a failed tool run (e.g. due to memory restrictions).
+* This closure returns the next higher cpu or memory value for specified exit codes of a failed tool run (e.g. due to memory restrictions).
 * If the exit code is expected, this closure returns the next higher cpu/memory value based on the
 * flavor with the next higher memory value.
 * Initial CPU and memory values can be set by providing a predicted memory value. Based on the predicted memory value the next higher memory label
