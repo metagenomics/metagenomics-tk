@@ -114,7 +114,7 @@ process pMAGScoT {
 
     tag "Sample: $sample"
 
-    label 'medium'
+    label 'small'
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "magscot", filename) }
 
