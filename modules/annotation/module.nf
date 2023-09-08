@@ -423,7 +423,7 @@ process pHmmSearch {
    '''
    ADDITIONAL_HMMSEARCH_PARAMS="!{params.steps?.binning?.magscot?.hmmSearch?.additionalParams}"
 
-   GTDB=$(gtdb_download.sh !{EXTRACTED_DB} !{DOWNLOAD_LINK} !{S5CMD_PARAMS} !{task.cpus} !{params.polished.databases} !{MD5SUM})
+   GTDB=$(gtdb_download.sh "!{EXTRACTED_DB}" "!{DOWNLOAD_LINK}" "!{S5CMD_PARAMS}" "!{task.cpus}" "!{params.polished.databases}" "!{MD5SUM}")
 
     # Run hmmsearch
     hmmsearch --cpu !{task.cpus} ${ADDITIONAL_HMMSEARCH_PARAMS} -o !{sample}.hmm.tigr.out --tblout !{sample}.hmm.tigr.hit.tsv ${GTDB}/markers/tigrfam/tigrfam.hmm !{faaFile}
