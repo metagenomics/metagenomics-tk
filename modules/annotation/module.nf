@@ -423,16 +423,18 @@ process pHmmSearch {
    '''
    ADDITIONAL_HMMSEARCH_PARAMS="!{params.steps?.binning?.magscot?.hmmSearch?.additionalParams}"
 
-   GTDB=$(gtdb_download.sh "!{EXTRACTED_DB}" "!{DOWNLOAD_LINK}" "!{S5CMD_PARAMS}" "!{task.cpus}" "!{params.polished.databases}" "!{MD5SUM}")
+   gtdb_download.sh "!{EXTRACTED_DB}" "!{DOWNLOAD_LINK}" "!{S5CMD_PARAMS}" "!{task.cpus}" "!{params.polished.databases}" "!{MD5SUM}"
 
-    # Run hmmsearch
-    hmmsearch --cpu !{task.cpus} ${ADDITIONAL_HMMSEARCH_PARAMS} -o !{sample}.hmm.tigr.out --tblout !{sample}.hmm.tigr.hit.tsv ${GTDB}/markers/tigrfam/tigrfam.hmm !{faaFile}
-    hmmsearch --cpu !{task.cpus} ${ADDITIONAL_HMMSEARCH_PARAMS} -o !{sample}.hmm.pfam.out --tblout !{sample}.hmm.pfam.hit.tsv ${GTDB}/markers/pfam/Pfam-A.hmm !{faaFile}
+   GTDB=$(cat gtdbPath.txt)
 
-    # Remove header and create all-hits file
-    cat !{sample}.hmm.tigr.hit.tsv | grep -v "^#" | awk '{print $1"\t"$3"\t"$5}' > !{sample}.tigr
-    cat !{sample}.hmm.pfam.hit.tsv | grep -v "^#" | awk '{print $1"\t"$4"\t"$5}' > !{sample}.pfam
-    cat !{sample}.tigr !{sample}.pfam > !{sample}.hmm.allhits.tsv
+   # Run hmmsearch
+   hmmsearch --cpu !{task.cpus} ${ADDITIONAL_HMMSEARCH_PARAMS} -o !{sample}.hmm.tigr.out --tblout !{sample}.hmm.tigr.hit.tsv ${GTDB}/markers/tigrfam/tigrfam.hmm !{faaFile}
+   hmmsearch --cpu !{task.cpus} ${ADDITIONAL_HMMSEARCH_PARAMS} -o !{sample}.hmm.pfam.out --tblout !{sample}.hmm.pfam.hit.tsv ${GTDB}/markers/pfam/Pfam-A.hmm !{faaFile}
+
+   # Remove header and create all-hits file
+   cat !{sample}.hmm.tigr.hit.tsv | grep -v "^#" | awk '{print $1"\t"$3"\t"$5}' > !{sample}.tigr
+   cat !{sample}.hmm.pfam.hit.tsv | grep -v "^#" | awk '{print $1"\t"$4"\t"$5}' > !{sample}.pfam
+   cat !{sample}.tigr !{sample}.pfam > !{sample}.hmm.allhits.tsv
    '''
 
 
