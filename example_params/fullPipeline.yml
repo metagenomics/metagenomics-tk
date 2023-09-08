@@ -44,19 +44,6 @@ steps:
       additionalParams: ""
     metabat:
       additionalParams: " --seed 234234  "
-    magscot:
-      additionalParams: ""
-      prodigal:
-        additionalParams: " -p meta "
-      hmmSearch:
-        additionalParams: "--noali --notextw --cut_nc"
-        database:
-          download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
-            md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
-    metabinner:
-      minContigLength: 500
-      kmerSize: 4
   magAttributes:
     gtdb:
       buffer: 1000
