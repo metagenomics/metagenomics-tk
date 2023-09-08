@@ -4,7 +4,7 @@ mkdir output
 ls -1 !{bins} | xargs -I {} readlink -f {} > bin.path
 paste -d$'\t' bin.path <(for p in $(cat bin.path); do basename $p; done) > input.tsv
 
-GTDB=$(gtdb_download.sh !{EXTRACTED_DB} !{DOWNLOAD_LINK} !{S5CMD_PARAMS} !{task.cpus} !{params.polished.databases} !{MD5SUM})
+GTDB=$(gtdb_download.sh "!{EXTRACTED_DB}" "!{DOWNLOAD_LINK}" "!{S5CMD_PARAMS}" "!{task.cpus}" "!{params.polished.databases}" "!{MD5SUM})"
 
 export GTDBTK_DATA_PATH=${GTDB}
 gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus} \
