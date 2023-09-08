@@ -29,4 +29,4 @@ else
      GTDB=${EXTRACTED_DB}
 fi
 
-echo $GTDB
+echo $GTDB > gtdbPath.txt
