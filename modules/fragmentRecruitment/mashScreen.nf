@@ -464,13 +464,12 @@ workflow _wGetStatistics {
      contigCoverage = pCovermContigsCoverage.out.coverage
 }
 
-process pUnzip {
+
+process pUnzipGroup {
 
   label 'tiny'
 
   container "${params.ubuntu_image}"
-
-  tag "Genome: ${x.baseName}"
 
   when params?.steps.containsKey("fragmentRecruitment") && params.steps.fragmentRecruitment.containsKey("mashScreen")
 
@@ -484,16 +483,14 @@ process pUnzip {
   path x
 
   output:
-  path("out/${x.baseName}${concatEnding}")
+  path("*")
 
   script:
-  ending = file(x).name.substring(file(x).name.lastIndexOf(".")) 
-  concatEnding =  ending == ".gz" ? "" : ending 
   """
-  mkdir out
-  < $x zcat --force > out/${x.baseName}${concatEnding}
+  gunzip -d -k -f  *
   """
 }
+
 
 workflow _wMashScreen {
    take: 
@@ -512,8 +509,16 @@ workflow _wMashScreen {
      if(params?.steps.containsKey("fragmentRecruitment") \
 	&& params?.steps.fragmentRecruitment.containsKey("mashScreen") \
 	&& params?.steps.fragmentRecruitment.mashScreen.containsKey("genomes")){
+
+       // Some tools can not handle gzipped files. Unzip genomes before fragment recruitment
        Channel.fromPath(params?.steps.fragmentRecruitment?.mashScreen?.genomes) | splitCsv(sep: '\t', header: true) \
-         | map { line -> file(line.PATH)} | pUnzip | set { genomes }
+         | map { line -> file(line.PATH)} | branch { zipped: file(it).name.endsWith(".gz")
+                                                     unzipped: !file(it).name.endsWith(".gz")} | set { magsRawChoice }
+
+       BUFFER = 1000
+       magsRawChoice.zipped | buffer( size: BUFFER, remainder: true ) | pUnzipGroup \
+	| flatten | mix(magsRawChoice.unzipped) \
+	| view | set { genomes }
      }
 
      UNIQUE_IDX=0
