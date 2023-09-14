@@ -3,8 +3,7 @@ include { wSaveSettingsList } from '../config/module'
 include { pBowtie2; pMinimap2; pBwa; pBwa2; pGetBinStatistics; \
 	pCovermGenomeCoverage; pCovermContigsCoverage; } from  '../binning/processes'
 
-include { pMashSketchGenome; \
-	  pMashPaste as pMashPasteChunk; \
+include { pMashPaste as pMashPasteChunk; \
 	  pMashPaste as pMashPasteFinal; } from  '../dereplication/bottomUpClustering/processes'
 include { pDumpLogs } from '../utils/processes'
 
@@ -252,16 +251,16 @@ workflow _wRunMash {
    take:
      sampleReads
      singleReads
-     genomesMap
+     genomes
    main:
      BUFFER_SKETCH = 1000
      PATH_IDX = 0
 
-     pMashSketchGenome(params?.steps.containsKey("fragmentRecruitment") &&  params?.steps.fragmentRecruitment.containsKey("mashScreen"), \
-	Channel.value(params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.mashSketch), genomesMap)
+     pMashSketchGenomeGroup(params?.steps.containsKey("fragmentRecruitment") &&  params?.steps.fragmentRecruitment.containsKey("mashScreen"), \
+	Channel.value(params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.mashSketch), genomes | buffer(size: BUFFER_SKETCH, remainder: true))
 
      // Combine sketches
-     pMashSketchGenome.out.sketch  | toSortedList | flatten | buffer(size: BUFFER_SKETCH, remainder: true) | set { mashPasteInput }
+     pMashSketchGenomeGroup.out.sketches | flatten | toSortedList | flatten | buffer(size: BUFFER_SKETCH, remainder: true) | set { mashPasteInput }
 
      pMashPasteChunk(params?.steps.containsKey("fragmentRecruitment") &&  params?.steps.fragmentRecruitment.containsKey("mashScreen"), \
 	Channel.value([getModulePath(params.modules.fragmentRecruitment), "mash/paste"]),  mashPasteInput)
@@ -480,15 +479,47 @@ process pUnzipGroup {
   cache 'deep'
 
   input:
-  path x
+  path(x, stageAs: "input/*")
 
   output:
-  path("*")
+  path("*", type: "file")
 
-  script:
-  """
-  gunzip -d -k -f  *
-  """
+  shell:
+  '''
+  for f in input/*; do  
+	cp $f . ; 
+	name=$(basename $f); 
+	if gzip -t $name; then 
+		gunzip  -d $name ;
+	fi 
+  done
+  '''
+}
+
+
+process pMashSketchGenomeGroup {
+
+    container "${params.mash_image}"
+
+    label 'tiny'
+
+    when:
+    run
+
+    input:
+    val(run)
+    val(mashSketchParams)
+    path(x)
+
+    output:
+    path("*.msh"), emit: sketches
+
+    shell:
+    '''
+    for f in * ; do  
+    	mash sketch !{mashSketchParams} $f -o $(basename $f).msh
+    done
+    '''
 }
 
 
@@ -510,15 +541,12 @@ workflow _wMashScreen {
 	&& params?.steps.fragmentRecruitment.containsKey("mashScreen") \
 	&& params?.steps.fragmentRecruitment.mashScreen.containsKey("genomes")){
 
-       // Some tools can not handle gzipped files. Unzip genomes before fragment recruitment
-       Channel.fromPath(params?.steps.fragmentRecruitment?.mashScreen?.genomes) | splitCsv(sep: '\t', header: true) \
-         | map { line -> file(line.PATH)} | branch { zipped: file(it).name.endsWith(".gz")
-                                                     unzipped: !file(it).name.endsWith(".gz")} | set { magsRawChoice }
 
        BUFFER = 1000
-       magsRawChoice.zipped | buffer( size: BUFFER, remainder: true ) | pUnzipGroup \
-	| flatten | mix(magsRawChoice.unzipped) \
-	| view | set { genomes }
+       // Some tools can not handle gzipped files. Unzip genomes before fragment recruitment
+       Channel.fromPath(params?.steps.fragmentRecruitment?.mashScreen?.genomes) | splitCsv(sep: '\t', header: true) \
+         | map { line -> file(line.PATH)} | buffer( size: BUFFER, remainder: true ) | pUnzipGroup \
+	 |  flatten | set { genomes }
      }
 
      UNIQUE_IDX=0
@@ -529,7 +557,7 @@ workflow _wMashScreen {
      genomes | map { genome -> [file(genome).name, genome] } | set { genomesMap }
 
      // Run mash and return matched genomes per sample
-     _wRunMash(sampleReads | mix(ontReads), singleReads, genomesMap)
+     _wRunMash(sampleReads | mix(ontReads), singleReads, genomes)
 
      // Concatenate genomes per sample and map reads per sample against concatenated genomes via Bowtie 
      _wRunMapping(_wRunMash.out.mashScreenFilteredOutput, sampleReads, singleReads, ontReads, genomesMap)
