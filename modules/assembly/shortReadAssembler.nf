@@ -216,15 +216,15 @@ workflow wShortReadAssemblyFile {
 *
 */
 def setMinLabel(assembler, labelMap, memoryLabelMap, sortedMemorySet, nextHigherMemoryIndex){
-       label = memoryLabelMap[sortedMemorySet[nextHigherMemoryIndex]]
+       def label = memoryLabelMap[sortedMemorySet[nextHigherMemoryIndex]]
 
-       cpus =  labelMap[label]["cpus"]
-       memory =  labelMap[label]["memory"]
-       minLabel = assembler.resources.RAM.predictMinLabel
+       def cpus =  labelMap[label]["cpus"]
+       def memory =  labelMap[label]["memory"]
+       def minLabel = assembler.resources.RAM.predictMinLabel
 
        if(minLabel in labelMap.keySet()) {
-           minLabelCpus = labelMap[minLabel]["cpus"]
-           minLabelMemory = labelMap[minLabel]["memory"]
+           def minLabelCpus = labelMap[minLabel]["cpus"]
+           def minLabelMemory = labelMap[minLabel]["memory"]
             if(minLabelCpus > cpus || minLabelMemory > memory){
 	        return ["cpus": minLabelCpus, "memory": minLabelMemory];
 	    } else {
