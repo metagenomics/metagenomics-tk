@@ -13,7 +13,7 @@ then
     --link=!{DOWNLOAD_LINK} \
     --httpsCommand=" wget -qO- !{DOWNLOAD_LINK} | tar --strip-components=1  -xvz " \
     --s3FileCommand=" s5cmd !{S5CMD_PARAMS} cat !{DOWNLOAD_LINK} | tar --strip-components=1 -xvz " \
-    --s3DirectoryCommand=" s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mob_suite.tar.gz && tar --strip-components=1 -xvz mob_suite.tar.gz && rm mob_suite.tar.gz " \
+    --s3DirectoryCommand=" s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} . " \
     --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
     --localCommand="tar --strip-components=1  -xzvf !{DOWNLOAD_LINK} " \
     --expectedMD5SUM=!{MD5SUM}
