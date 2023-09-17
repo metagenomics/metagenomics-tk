@@ -297,11 +297,11 @@ process pResistanceGeneIdentifier {
         mkdir -p ${DATABASE}
         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
          --link=!{DOWNLOAD_LINK} \
-         --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | tar -xv " \
+         --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | tar -xvj " \
          --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus}  !{DOWNLOAD_LINK} . " \
-         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | tar -xv " \
+         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | tar -xvj " \
 	 --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
-         --localCommand="tar -xvf !{DOWNLOAD_LINK}" \
+         --localCommand="tar -xvjf !{DOWNLOAD_LINK}" \
          --expectedMD5SUM=!{MD5SUM}
 
          CARD_JSON="$(readlink -f ${DATABASE}/out/card.json)"
