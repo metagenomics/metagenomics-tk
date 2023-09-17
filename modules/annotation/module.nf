@@ -396,7 +396,7 @@ process pHmmSearch {
 
       tag "Sample: $sample"
 
-      label 'small'
+      label 'highmemMedium'
 
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "hmmSearch", filename) }
 
