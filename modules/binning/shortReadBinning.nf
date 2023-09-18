@@ -309,6 +309,8 @@ workflow _wBinning {
      // ORF detection with Prodigal for MAGScoT
      CONTIG_MAPPING_IDX = 1
 
+    magscot_input = Channel.empty()
+    if (params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")) {
      pProdigal(contigs)
      pHmmSearch(pProdigal.out.prodigal_faa)
      pMetabinner.out.binContigMapping | mix(pMetabat.out.binContigMapping) \
@@ -320,7 +322,8 @@ workflow _wBinning {
      // Join the binContigMapping files with the hmmsearch allHits output and contigs
      | join(pHmmSearch.out.allhits, by: SAMPLE_IDX) | join(contigs, by: SAMPLE_IDX) \
      | set { magscot_input }
-     pMAGScoT(magscot_input)
+    }
+    pMAGScoT(magscot_input)
 
     // Only use MAGScoT bins if the user has selected the refinement step
     if (params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")) {
