@@ -535,17 +535,21 @@ workflow wFullPipeline {
 
     wMagAttributesList(ont.bins | mix(illumina.bins, wFragmentRecruitmentList.out.foundGenomesPerSample ))
 
-    mapJoin(wMagAttributesList.out.checkm, binsStats | mix(wFragmentRecruitmentList.out.binsStats), "BIN_ID", "BIN_ID") \
-	| set { binsStats  }
+    mapJoin(wMagAttributesList.out.checkm, binsStats  | mix(wFragmentRecruitmentList.out.binsStats), "BIN_ID", "BIN_ID") \
+	 |  set { binsStats  }
+     
+    wAnnotatePlasmidList(Channel.value("plasmid"), Channel.value("meta"), \
+    wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage, wPlasmidsList.out.newPlasmids | map { it[SAMPLE_IDX], 1 })
 
-    wAnnotatePlasmidList(Channel.value("plasmid"), Channel.value("meta"), wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage)
+    ont.bins | mix(illumina.bins) | map { sample, bins -> [sample, bins.size()] } | set { binsCounter }
+    wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, contigCoverage, binsCounter)
 
-    wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, contigCoverage)
-
+    wFragmentRecruitmentList.out.foundGenomesPerSample | map { sample, genomes -> [sample, genomes.size()] } | set { recruitedGenomesCounter }
     wAnnotateRecruitedGenomesList(Channel.value("binned"), Channel.value("single"), wFragmentRecruitmentList.out.foundGenomesSeperated, \
-  	wMagAttributesList.out.gtdb, wFragmentRecruitmentList.out.contigCoverage)
+    wMagAttributesList.out.gtdb, wFragmentRecruitmentList.out.contigCoverage, recruitedGenomesCounter)
 
-    wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs, null, contigCoverage)
+    wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs, null, \
+    contigCoverage, notBinnedContigs | map { it -> [it[SAMPLE_IDX], 1] })
 
     BIN_ID_IDX = 1
     PATH_IDX = 2
