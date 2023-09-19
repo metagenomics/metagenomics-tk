@@ -468,6 +468,8 @@ process pUnzipGroup {
 
   label 'tiny'
 
+  fair true
+
   container "${params.ubuntu_image}"
 
   when params?.steps.containsKey("fragmentRecruitment") && params.steps.fragmentRecruitment.containsKey("mashScreen")
@@ -502,6 +504,8 @@ process pMashSketchGenomeGroup {
     container "${params.mash_image}"
 
     label 'tiny'
+
+    fair true
 
     when:
     run
