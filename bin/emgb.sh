@@ -81,7 +81,7 @@ function getBins {
 	bins=$(find $BINS_DIR -name "*_bin.*.fa" -exec readlink -f {} \; | tail -n 1 | rev | cut -f 1 -d '/' | rev | cut -d '.' -f 1 | sed 's/^/  -bin-id-prefix /g')
 	json=" -json-gz $(pwd)/${NAME}.bins.json.gz "
  
-	$cmd="$checkm $gtdbtk $bins. $json"
+	cmd="$checkm $gtdbtk $bins. $json"
 
 	if [ ! -z "$DEBUG_CHECK" ]
 	then
