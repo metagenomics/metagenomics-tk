@@ -96,11 +96,11 @@ process pMMseqs2 {
          # If a database is present at the given path, checksums are compared, if they are identical the download will be omitted.  
          flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE}/!{dbType} \
             --link=!{DOWNLOAD_LINK} \
-            --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -d | tar -xv " \
-            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -d | tar -xv " \
+            --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -d -c | tar -xv " \
+            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -d -c | tar -xv " \
             --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
 	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
-            --localCommand="zstd -T!{task.cpus} -d !{DOWNLOAD_LINK} | tar -xv " \
+            --localCommand="zstd -T!{task.cpus} -c -d !{DOWNLOAD_LINK} | tar -xv " \
             --expectedMD5SUM=!{MD5SUM}
           
           # Path of the newly downloaded database. A mmseqs2 database consists out of multiple files,
@@ -214,11 +214,11 @@ process pMMseqs2_taxonomy {
             # If a database is present at the given path, checksums are compared, if they are identical the download will be omitted.
             flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE}/!{dbType} \
                --link=!{DOWNLOAD_LINK} \
-               --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -d | tar -xv " \
-               --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -d | tar -xv " \
+               --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -c -d | tar -xv " \
+               --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -c -d | tar -xv " \
                --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
    	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
-               --localCommand="zstd -T!{task.cpus} -d !{DOWNLOAD_LINK} | tar -xv " \
+               --localCommand="zstd -T!{task.cpus} -c -d !{DOWNLOAD_LINK} | tar -xv " \
                --expectedMD5SUM=!{MD5SUM}
 
              # Path of the newly downloaded database. A mmseqs2 database consists out of multiple files,
