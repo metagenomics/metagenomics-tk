@@ -208,7 +208,7 @@ process pPlaton {
 	--link=!{DOWNLOAD_LINK} \
 	--httpsCommand="wget -qO- !{DOWNLOAD_LINK} | tar -xvz " \
 	--s3FileCommand="s5cmd !{S5CMD_PARAMS} cat !{DOWNLOAD_LINK} | tar -xvz  " \
-	--s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
+	--s3DirectoryCommand="mkdir db && cd db && s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
 	--s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
 	--localCommand="tar xzvf !{DOWNLOAD_LINK} " \
 	--expectedMD5SUM=!{MD5SUM}
