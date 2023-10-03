@@ -1,4 +1,4 @@
-# Meta-Omics-Toolkit
+# Metagenomics-Toolkit
 
 ## Documentation
 

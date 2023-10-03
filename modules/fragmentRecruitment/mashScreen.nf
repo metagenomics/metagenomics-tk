@@ -468,6 +468,8 @@ process pUnzipGroup {
 
   label 'tiny'
 
+  fair true
+
   container "${params.ubuntu_image}"
 
   when params?.steps.containsKey("fragmentRecruitment") && params.steps.fragmentRecruitment.containsKey("mashScreen")
@@ -502,6 +504,8 @@ process pMashSketchGenomeGroup {
     container "${params.mash_image}"
 
     label 'tiny'
+
+    fair true
 
     when:
     run
@@ -541,8 +545,7 @@ workflow _wMashScreen {
 	&& params?.steps.fragmentRecruitment.containsKey("mashScreen") \
 	&& params?.steps.fragmentRecruitment.mashScreen.containsKey("genomes")){
 
-
-       BUFFER = 1000
+       BUFFER = 500
        // Some tools can not handle gzipped files. Unzip genomes before fragment recruitment
        Channel.fromPath(params?.steps.fragmentRecruitment?.mashScreen?.genomes) | splitCsv(sep: '\t', header: true) \
          | map { line -> file(line.PATH)} | buffer( size: BUFFER, remainder: true ) | pUnzipGroup \

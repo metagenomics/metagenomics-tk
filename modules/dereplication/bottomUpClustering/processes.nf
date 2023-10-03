@@ -40,6 +40,8 @@ process pMashSketchGenome {
 
     tag "Bin: ${binid}"
 
+    fair true
+
     when:
     run
 

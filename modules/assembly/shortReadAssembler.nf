@@ -72,15 +72,15 @@ def getNextHigherResource = { exitCodes, exitStatus, resourceType, attempt, memo
 
                       // Check if Megahit failed based on a known exit code
                       if(exitStatus in exitCodes ){
-     		         currentResource = getResources(memory, tool, defaults, sample, attempt);
-                         currentResourceType = currentResource[resourceType];
+     		         def currentResource = getResources(memory, tool, defaults, sample, attempt);
+                         def currentResourceType = currentResource[resourceType];
 
                          return currentResourceType;
                       } else {
                          // if the exit code is not known then the memory value should not be increased
                          FLAVOR_INDEX_CONSTANT_TO_ADD = 0
-                         currentResource = getResources(memory, tool, defaults, sample, FLAVOR_INDEX_CONSTANT_TO_ADD);
-                         currentResourceType = currentResource[resourceType];
+                         def currentResource = getResources(memory, tool, defaults, sample, FLAVOR_INDEX_CONSTANT_TO_ADD);
+                         def currentResourceType = currentResource[resourceType];
 
                          return currentResourceType;
                       }
@@ -246,25 +246,25 @@ def setMinLabel(assembler, labelMap, memoryLabelMap, sortedMemorySet, nextHigher
 def getResources(predictedMemory, assembler, defaults, sample, attempt){
 
      // get map of memory values and flavor names (e.g. key: 256, value: large)
-     memoryLabelMap = params.resources.findAll().collectEntries( { [it.value.memory, it.key] });
+     def memoryLabelMap = params.resources.findAll().collectEntries( { [it.value.memory, it.key] });
 
      // Get map of resources with label as key
-     labelMap = params.resources.findAll()\
+     def labelMap = params.resources.findAll()\
 		.collectEntries( { [it.key, ["memory" : it.value.memory, "cpus" : it.value.cpus ] ] })
 
      // get memory values as list
-     memorySet = memoryLabelMap.keySet().sort()
+     def memorySet = memoryLabelMap.keySet().sort()
 
      switch(assembler.resources.RAM.mode){
        case 'PREDICT':
-     	  predictedMemoryCeil = Math.ceil(Float.parseFloat(predictedMemory))
+     	  def predictedMemoryCeil = Math.ceil(Float.parseFloat(predictedMemory))
 
           // add predicted memory to list and sort to get next index of next higher resource label memory
-     	  updatedMemorySet = memorySet + predictedMemoryCeil
-     	  sortedUpdatedMemorySet = updatedMemorySet.sort()
-     	  predictedMemoryIndex = sortedUpdatedMemorySet.findIndexOf({ it == predictedMemoryCeil })
+     	  def updatedMemorySet = memorySet + predictedMemoryCeil
+     	  def sortedUpdatedMemorySet = updatedMemorySet.sort()
+     	  def predictedMemoryIndex = sortedUpdatedMemorySet.findIndexOf({ it == predictedMemoryCeil })
           
-     	  nextHigherMemoryIndex = predictedMemoryIndex + attempt + 1
+     	  def nextHigherMemoryIndex = predictedMemoryIndex + attempt + 1
 
      	  if(nextHigherMemoryIndex  >= sortedUpdatedMemorySet.size()){
              // In case it is already the highest possible memory setting
@@ -272,9 +272,9 @@ def getResources(predictedMemory, assembler, defaults, sample, attempt){
              println("Warning: Predicted Memory " + predictedMemoryCeil \
 		+ " of the dataset " + sample + " is greater or equal to the flavour with the largest RAM specification.")
 
-             label = memoryLabelMap[memorySet[memorySet.size() -1]];
-             cpus =  labelMap[label]["cpus"];
-             ram =  labelMap[label]["memory"];
+             def label = memoryLabelMap[memorySet[memorySet.size() -1]];
+             def cpus =  labelMap[label]["cpus"];
+             def ram =  labelMap[label]["memory"];
 
 	     return ["cpus": cpus, "memory": ram];
 	  } else {
@@ -282,24 +282,24 @@ def getResources(predictedMemory, assembler, defaults, sample, attempt){
                // flavor with the minimum memory value should be provided
 	       switch(assembler.resources.RAM.predictMinLabel) {
         	  case "AUTO":
-       			label = memoryLabelMap[sortedUpdatedMemorySet[nextHigherMemoryIndex]];
-		        cpus = labelMap[label]["cpus"];
-		        memory = labelMap[label]["memory"];
+       			def label = memoryLabelMap[sortedUpdatedMemorySet[nextHigherMemoryIndex]];
+		        def cpus = labelMap[label]["cpus"];
+		        def memory = labelMap[label]["memory"];
 			return ["cpus": cpus, "memory": memory];
          	  default:
-	    		minLabel = setMinLabel(assembler, labelMap, memoryLabelMap, sortedUpdatedMemorySet, nextHigherMemoryIndex);
+	    		def minLabel = setMinLabel(assembler, labelMap, memoryLabelMap, sortedUpdatedMemorySet, nextHigherMemoryIndex);
                         return minLabel
        	       }
        	  }
           break;
        case 'DEFAULT':
           // If the memory value is not predicted do the following
-          defaultCpus = defaults.cpus
-          defaultMemory = defaults.memory
+          def defaultCpus = defaults.cpus
+          def defaultMemory = defaults.memory
 
-     	  defaultMemoryIndex = memorySet.findIndexOf({ it == defaultMemory })
+     	  def defaultMemoryIndex = memorySet.findIndexOf({ it == defaultMemory })
 
- 	  nextHigherMemoryIndex = defaultMemoryIndex + attempt
+ 	  def nextHigherMemoryIndex = defaultMemoryIndex + attempt
 
      	  if(defaultMemoryIndex >= memorySet.size()){
              // In case it is already the highest possible memory setting
@@ -307,15 +307,15 @@ def getResources(predictedMemory, assembler, defaults, sample, attempt){
              println("Warning: Predicted Memory " + predictedMemoryCeil \
 		+ " of the dataset " + sample + " is greater or equal to the flavour with the largest RAM specification.")
 
-             label = memoryLabelMap[memorySet[memorySet.size()-1]]
-             cpus =  labelMap[label]["cpus"]
-             ram =  labelMap[label]["memory"]
+             def label = memoryLabelMap[memorySet[memorySet.size()-1]]
+             def cpus =  labelMap[label]["cpus"]
+             def ram =  labelMap[label]["memory"]
 
 	     return ["cpus": cpus, "memory": ram];
 	  } else {
-       	     label = memoryLabelMap[memorySet[nextHigherMemoryIndex]];
-             cpus = labelMap[label]["cpus"];
-             memory = labelMap[label]["memory"];
+       	     def label = memoryLabelMap[memorySet[nextHigherMemoryIndex]];
+             def cpus = labelMap[label]["cpus"];
+             def memory = labelMap[label]["memory"];
 	     return ["cpus": cpus, "memory": memory];
        	  }
 

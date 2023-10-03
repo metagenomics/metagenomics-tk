@@ -396,7 +396,7 @@ process pHmmSearch {
 
       tag "Sample: $sample"
 
-      label 'small'
+      label 'highmemMedium'
 
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "hmmSearch", filename) }
 
@@ -651,7 +651,10 @@ workflow wAnnotateFile {
       DATASET_IDX = 0
       wSaveSettingsList(input | map { it -> it[DATASET_IDX] })
 
-      _wAnnotation(Channel.value("out"), Channel.value("param"), input, null, coverage)
+      input |  map { sample, bin, path -> [sample, bin] } |  groupTuple(by: DATASET_IDX) \
+	|  map { sample, bins -> [sample, bins.size()] } | set { fastaCounter }
+
+      _wAnnotation(Channel.value("out"), Channel.value("param"), input, null, coverage, fastaCounter)
    emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }
@@ -668,10 +671,11 @@ workflow wAnnotateList {
       fasta
       gtdb
       contigCoverage
+      fastaCounter
    main:
       annotationTmpDir = params.tempdir + "/annotation"
       file(annotationTmpDir).mkdirs()
-      _wAnnotation(sourceChannel, prodigalMode, fasta, gtdb, contigCoverage)
+      _wAnnotation(sourceChannel, prodigalMode, fasta, gtdb, contigCoverage, fastaCounter)
     emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
       proteins = _wAnnotation.out.prokka_faa
@@ -694,6 +698,7 @@ workflow _wAnnotation {
       fasta
       gtdb
       contigCoverage
+      fastaCounter
    main:
       SAMPLE_IDX=0
 
@@ -722,16 +727,22 @@ workflow _wAnnotation {
 
       PATH_IDX=2
 
+      // The following groupTuple operators need a counter for the expected number of bins or fasta files of a sample.
+      // This allows groupTuple to not block until all samples are processed.
+
       // Create contig to gene mapping
-      pProkka.out.tsv | map{ [it[SAMPLE_IDX], it[PATH_IDX]] } | groupTuple() | set { contig2GeneMapping }
+      pProkka.out.tsv | map { [it[SAMPLE_IDX], it[PATH_IDX]] } | combine(fastaCounter, by:SAMPLE_IDX) \
+	|  map { sample, path, size -> tuple( groupKey(sample, size), path ) } | groupTuple() | set { contig2GeneMapping }
 
       // Run all amino acid outputs against all databases
       // Collect by sample name to bundle searches and avoid calls with small input files
-      pProkka.out.faa | map{ [it[SAMPLE_IDX], it[PATH_IDX]] } | groupTuple() \
-	| combine(contig2GeneMapping, by: SAMPLE_IDX) | combine(Channel.from(selectedDBs)) | set { combinedMMseqs }
+      pProkka.out.faa | map { [it[SAMPLE_IDX], it[PATH_IDX]] } | combine(fastaCounter, by:SAMPLE_IDX) \
+	| map { sample, path, size -> tuple( groupKey(sample, size), path ) }  | groupTuple() | set { groupedProkkaFaa }
+
+      groupedProkkaFaa | combine(contig2GeneMapping, by: SAMPLE_IDX) | combine(Channel.from(selectedDBs)) | set { combinedMMseqs }
 
       pMMseqs2(sourceChannel, combinedMMseqs)
-      combinedMMseqsTax = pProkka.out.faa | map{ [it[SAMPLE_IDX], it[PATH_IDX]] }| groupTuple() | combine(Channel.from(selectedTaxDBs))
+      combinedMMseqsTax = groupedProkkaFaa | combine(Channel.from(selectedTaxDBs))
       pMMseqs2_taxonomy(sourceChannel, combinedMMseqsTax)
       DB_TYPE_IDX = 0
       pMMseqs2.out.blast | filter({ result -> result[DB_TYPE_IDX] == "kegg" }) \
