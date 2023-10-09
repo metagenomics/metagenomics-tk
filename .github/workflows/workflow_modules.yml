@@ -49,7 +49,7 @@ jobs:
       - name: Test EMGB import tools
         run: |
           ./bin/emgb.sh --output=output/test1 --runid=1 --binsdir=$(find output/test1/ -name "metabat") \
-                   --blastdb=bacmet20_predicted --name=test1
+                        --workdir="${WORK_DIR}_wFullPipeline" --blastdb=bacmet20_predicted --name=test1
 
       - name: Test Full Pipeline run that ends with magAttributes
         run: |

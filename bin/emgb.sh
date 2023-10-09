@@ -106,7 +106,7 @@ help()
 	echo "              -- (e.g. the folder name of BLAST_DB: output/test1/1/annotation/0.3.0/mmseqs2/BLAST_DB)"
 	echo "              -- (Examples: bacmet20_predicted, ncbi_nr)"
 	echo "  --db        -- emgb specific kegg database"
-	echo "  --workdir   -- Absolute path to Nextflow work directory"
+	echo "  --workdir   -- absolute path to Nextflow work directory"
 	echo "  --help      -- help page"
 	echo "  --debug     -- print commands before running"
 	echo "  --version   -- version of this script"
