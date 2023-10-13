@@ -147,8 +147,6 @@ process pMMseqs2 {
     '''
 }
 
-MAX_SENSITIVITY = 6
-
 /**
 *
 * The MMseqs2 module taxonomy calls an internal module lca that implements an lowest common ancestor assignment for sequences by querying them against a seqTaxDB.
@@ -183,7 +181,7 @@ process pMMseqs2_taxonomy {
 
    input:
       val(binType)
-      tuple val(sample), file(fasta), val(dbType), val(parameters), val(ramMode), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
+      tuple val(sample), file(fasta), val(dbType), val(parameters), val(ramMode), val(initialMaxSensitivity) val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
       tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.taxonomy.tsv"), optional:true, emit: taxonomy
@@ -197,7 +195,8 @@ process pMMseqs2_taxonomy {
    output = getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", "")
    // The maximum possible sensitivity is reduced each time the process is retried.
    // The reason for this behaviour is a bug that occurs at higher sensitivity levels.
-   sensitivity = MAX_SENSITIVITY - task.attempt + 1
+   sensitivityRaw = initialMaxSensitivity - task.attempt + 1
+   sensitivity = sensitivityRaw < 1 ? 1 : sensitivityRaw
    '''
    mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part
@@ -242,7 +241,7 @@ process pMMseqs2_taxonomy {
         mmseqs touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
     fi
     # Define taxonomies
-    mmseqs taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database tmp !{parameters}  --start-sens 3 --sens-steps 1 -s !{sensitivity} --threads !{task.cpus}
+    mmseqs taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database tmp !{parameters}  --start-sens 1 --sens-steps 1 -s !{sensitivity} --threads !{task.cpus}
     # mmseqs2 searches produce output databases. These have to be converted to more useful formats.
     mmseqs createtsv queryDB !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.taxonomy.tsv --threads !{task.cpus}
     mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.krakenStyleTaxonomy.out
@@ -719,6 +718,7 @@ workflow _wAnnotation {
       selectedTaxDBs = params?.steps?.annotation?.mmseqs2_taxonomy.findAll({  it.key != "runOnMAGs"  }).collect({
             [it.key, it.value?.params ?: "", \
              it.value?.ramMode ? "true" : "false", \
+             it.value?.initialMaxSensitivity ?: "", \
              it.value?.database?.extractedDBPath ?: "", \
              it.value.database?.download?.source ?: "", \
              it.value.database?.download?.md5sum ?: "", \
