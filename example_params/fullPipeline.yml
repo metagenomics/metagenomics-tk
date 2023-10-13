@@ -211,13 +211,11 @@ steps:
       database:
         extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 
   metabolomics:
-     beforeProcessScript: ""
-     input:
-       bins: "test_data/metabolomics/input.tsv" 
+     beforeProcessScript: /vol/spool/dockerPull.sh
      filter:
        minCompleteness: 49
        maxContamination: 5
-     gapseq:
+     carveme:
        additionalParams: ""
      smetana:
        global: false
