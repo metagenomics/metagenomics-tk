@@ -181,7 +181,7 @@ process pMMseqs2_taxonomy {
 
    input:
       val(binType)
-      tuple val(sample), file(fasta), val(dbType), val(parameters), val(ramMode), val(initialMaxSensitivity) val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
+      tuple val(sample), file(fasta), val(dbType), val(parameters), val(ramMode), val(initialMaxSensitivity), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
       tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.taxonomy.tsv"), optional:true, emit: taxonomy
