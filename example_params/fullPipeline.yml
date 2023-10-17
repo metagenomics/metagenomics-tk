@@ -200,16 +200,10 @@ steps:
           md5sum: d7e627221a1d4584d1c1795cda774cdb
     mmseqs2_taxonomy:
       runOnMAGs: true
-      gtdb:
-        params: ' --orf-filter-s 1 -e 1e-15'
-        ramMode: false
-        database:
-          download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
-            md5sum: 3c8f12c5c2dc55841a14dd30a0a4c718
       ncbi_nr:
         params: ' --orf-filter-s 1 -e 1e-15'
         ramMode: false
+        initialMaxSensitivity: 1
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2023-04-29_mmseqs_taxonomy.tar.zst
@@ -218,13 +212,11 @@ steps:
       database:
         extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 
   metabolomics:
-     beforeProcessScript: ""
-     input:
-       bins: "test_data/metabolomics/input.tsv" 
+     beforeProcessScript: /vol/spool/dockerPull.sh
      filter:
        minCompleteness: 49
        maxContamination: 5
-     gapseq:
+     carveme:
        additionalParams: ""
      smetana:
        global: false

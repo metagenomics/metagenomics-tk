@@ -539,7 +539,7 @@ workflow wFullPipeline {
 	 |  set { binsStats  }
      
     wAnnotatePlasmidList(Channel.value("plasmid"), Channel.value("meta"), \
-    wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage, wPlasmidsList.out.newPlasmids | map { it[SAMPLE_IDX], 1 })
+    wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage, wPlasmidsList.out.newPlasmids | map { [it[SAMPLE_IDX], 1] })
 
     ont.bins | mix(illumina.bins) | map { sample, bins -> [sample, bins.size()] } | set { binsCounter }
     wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, contigCoverage, binsCounter)

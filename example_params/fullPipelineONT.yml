@@ -177,6 +177,7 @@ steps:
       gtdb:
         params: ' --orf-filter-s 1 -e 1e-15'
         ramMode: false
+        initialMaxSensitivity: 1
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
@@ -184,6 +185,7 @@ steps:
       ncbi_nr:
         params: ' --orf-filter-s 1 -e 1e-15'
         ramMode: false
+        initialMaxSensitivity: 1
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2023-04-29_mmseqs_taxonomy.tar.zst

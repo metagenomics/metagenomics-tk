@@ -78,19 +78,6 @@ steps:
       # Set --seed positive numbers to reproduce the result exactly. Otherwise, random seed will be set each time.
       additionalParams: " --seed 234234  "
     # Secondary binning tool for use with MAGscot
-    metabinner:
-      minContigLength: 500
-      kmerSize: 4
-    magscot:
-      additionalParams: ""
-      prodigal:
-        additionalParams: " -p meta "
-      hmmSearch:
-        additionalParams: "--noali --notextw --cut_nc"
-        database:
-          download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
-            md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
   binningONT:
     minimap:
       additionalParams: 
@@ -193,9 +180,10 @@ steps:
       runOnMAGs: true
       gtdb:
         # High sensitivity mode parameters only work for quality MAGs, for unbinable contigs use default parameters
-        params: ' --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies  --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 -e 0.001 --e-profile 0.01 '
+        params: ' --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies  --max-seqs 300 --max-accept 50 --cov-mode 0 -e 0.001 --e-profile 0.01 '
         # Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params
         ramMode: false
+        initialMaxSensitivity: 6
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz

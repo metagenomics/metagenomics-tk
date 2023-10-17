@@ -257,7 +257,7 @@ def getResources(predictedMemory, assembler, defaults, sample, attempt){
 
      switch(assembler.resources.RAM.mode){
        case 'PREDICT':
-     	  def predictedMemoryCeil = Math.ceil(Float.parseFloat(predictedMemory))
+     	  def predictedMemoryCeil = (int)Math.ceil(Float.parseFloat(predictedMemory))
 
           // add predicted memory to list and sort to get next index of next higher resource label memory
      	  def updatedMemorySet = memorySet + predictedMemoryCeil

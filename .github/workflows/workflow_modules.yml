@@ -43,8 +43,13 @@ jobs:
         run: |
           VERSION=$(sort VERSIONS.txt | tail -n 1)
           bash ./scripts/test_fullPipeline.sh \
-          " --databases=/vol/scratch/databases/      " \
+          " --databases=/vol/scratch/databases/   --output=output   " \
           "" "${WORK_DIR}" ${PROFILE} ${VERSION} || exit 1
+
+      - name: Test EMGB import tools
+        run: |
+          ./bin/emgb.sh --output=output/test1 --runid=1 --binsdir=$(find output/test1/ -name "metabat") \
+                        --workdir="${WORK_DIR}_wFullPipeline" --blastdb=bacmet20_predicted --name=test1
 
       - name: Test Full Pipeline run that ends with magAttributes
         run: |
@@ -98,8 +103,6 @@ jobs:
         run: |
           bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config     "  \
           ./example_params/fullPipelineSRAQCONT.yml "${WORK_DIR}" ${PROFILE} || exit 1
-
-
 
   mag_attributes:
     timeout-minutes: 800
