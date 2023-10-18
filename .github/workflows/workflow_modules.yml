@@ -43,7 +43,7 @@ jobs:
         run: |
           VERSION=$(sort VERSIONS.txt | tail -n 1)
           bash ./scripts/test_fullPipeline.sh \
-        " --carveme_image=pbelmann/metabolomics:0.1.0  --smetana_image=pbelmann/metabolomics:0.1.0  --databases=/vol/scratch/databases/   --output=output   " \
+          " --carveme_image=pbelmann/metabolomics:0.1.0  --smetana_image=pbelmann/metabolomics:0.1.0  --databases=/vol/scratch/databases/   --output=output   " \
           "" "${WORK_DIR}" ${PROFILE} ${VERSION} || exit 1
 
       - name: Test EMGB import tools
