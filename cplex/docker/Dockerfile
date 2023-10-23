@@ -1,4 +1,4 @@
-FROM python:3.7-bullseye
+FROM quay.io/metagenomics/toolkit-python:3.7-1
 
 ARG COSDIR=/opt/CPLEX
 
