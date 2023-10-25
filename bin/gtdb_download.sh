@@ -17,9 +17,9 @@ then
      mkdir -p ${DATABASE}
      flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
    	--link=${DOWNLOAD_LINK} \
-   	--httpsCommand="wget -O gtdb.tar.gz ${DOWNLOAD_LINK} && tar xzvf gtdb.tar.gz && rm gtdb.tar.gz" \
-   	--s3FileCommand="s5cmd ${S5CMD_PARAMS} cp --concurrency ${CPUS} ${DOWNLOAD_LINK} gtdb.tar.gz  && tar xzvf gtdb.tar.gz && rm gtdb.tar.gz " \
-           --s3DirectoryCommand="s5cmd ${S5CMD_PARAMS} cp --concurrency ${CPUS} ${DOWNLOAD_LINK} . " \
+   	--httpsCommand="wget -qO- ${DOWNLOAD_LINK} | tar xvz " \
+   	--s3FileCommand="s5cmd ${S5CMD_PARAMS} cat ${DOWNLOAD_LINK} | tar xzv " \
+           --s3DirectoryCommand="s5cmd ${S5CMD_PARAMS} cp ${DOWNLOAD_LINK} . " \
    	--s5cmdAdditionalParams="${S5CMD_PARAMS}" \
    	--localCommand="tar -xzvf ${DOWNLOAD_LINK} " \
    	--expectedMD5SUM=${MD5SUM}

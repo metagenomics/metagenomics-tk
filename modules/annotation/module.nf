@@ -96,11 +96,11 @@ process pMMseqs2 {
          # If a database is present at the given path, checksums are compared, if they are identical the download will be omitted.  
          flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE}/!{dbType} \
             --link=!{DOWNLOAD_LINK} \
-            --httpsCommand="wget -O mmseqs.!{dbType}.tar.zst !{DOWNLOAD_LINK}  && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
-            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
-            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
+            --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -d -c | tar -xv " \
+            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -d -c | tar -xv " \
+            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
 	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
-            --localCommand="zstd -T!{task.cpus} -d !{DOWNLOAD_LINK} -o mmseqs.!{dbType}.tar && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
+            --localCommand="zstd -T!{task.cpus} -c -d !{DOWNLOAD_LINK} | tar -xv " \
             --expectedMD5SUM=!{MD5SUM}
           
           # Path of the newly downloaded database. A mmseqs2 database consists out of multiple files,
@@ -213,11 +213,11 @@ process pMMseqs2_taxonomy {
             # If a database is present at the given path, checksums are compared, if they are identical the download will be omitted.
             flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE}/!{dbType} \
                --link=!{DOWNLOAD_LINK} \
-               --httpsCommand="wget -O mmseqs.!{dbType}.tar.zst !{DOWNLOAD_LINK}  && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
-               --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus}  !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
-               --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
+               --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -c -d | tar -xv " \
+               --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -c -d | tar -xv " \
+               --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
    	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
-               --localCommand="zstd -T!{task.cpus} -d !{DOWNLOAD_LINK} -o mmseqs.!{dbType}.tar && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
+               --localCommand="zstd -T!{task.cpus} -c -d !{DOWNLOAD_LINK} | tar -xv " \
                --expectedMD5SUM=!{MD5SUM}
 
              # Path of the newly downloaded database. A mmseqs2 database consists out of multiple files,
@@ -296,11 +296,11 @@ process pResistanceGeneIdentifier {
         mkdir -p ${DATABASE}
         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
          --link=!{DOWNLOAD_LINK} \
-         --httpsCommand="wget -O data !{DOWNLOAD_LINK} && tar -xvf data && rm data" \
+         --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | tar -xvj " \
          --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus}  !{DOWNLOAD_LINK} . " \
-         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} data && tar -xvf data  && rm data" \
+         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | tar -xvj " \
 	 --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
-         --localCommand="tar -xvf !{DOWNLOAD_LINK}" \
+         --localCommand="tar -xvjf !{DOWNLOAD_LINK}" \
          --expectedMD5SUM=!{MD5SUM}
 
          CARD_JSON="$(readlink -f ${DATABASE}/out/card.json)"
@@ -494,9 +494,9 @@ process pKEGGFromBlast {
         mkdir -p ${DATABASE}
         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
          --link=!{DOWNLOAD_LINK} \
-         --httpsCommand="wget -O kegg.tar.gz !{DOWNLOAD_LINK} && tar -xzvf kegg.tar.gz && rm kegg.tar.gz " \
+         --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | tar -xz " \
          --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
-         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} kegg.tar.gz && tar -xzvf kegg.tar.gz && rm kegg.tar.gz " \
+         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat !{DOWNLOAD_LINK} | tar -xz " \
 	 --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
          --localCommand="tar -xzvf !{DOWNLOAD_LINK} " \
          --expectedMD5SUM=!{MD5SUM}
