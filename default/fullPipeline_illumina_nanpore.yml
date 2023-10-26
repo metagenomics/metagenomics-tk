@@ -1,5 +1,6 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: true
 input:
   SRA:
     pattern:
@@ -239,7 +240,6 @@ steps:
             source: s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst
             md5sum: 0d20db97b3e7ee6571ca1fd5ad3a87f1
             s5cmd:
-              keyfile: /vol/spool/keyfile
               params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
       vfdb:
         params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
