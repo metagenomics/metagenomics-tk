@@ -21,9 +21,9 @@ then
   mkdir -p ${DATABASE}
   flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
 	--link=$DOWNLOAD_LINK \
-	--httpsCommand="wget -O out.tar.bz2 $DOWNLOAD_LINK && tar xjvf out.tar.bz2 && rm out.tar.bz2" \
-	--s3FileCommand="s5cmd !{S5CMD_PARAMS} cp ${DOWNLOAD_LINK} out.tar.bz2 && tar xjvf out.tar.bz2 && rm out.tar.bz2" \
-	--s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp ${DOWNLOAD_LINK} . " \
+	--httpsCommand="wget -qO- $DOWNLOAD_LINK | tar xjv " \
+	--s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} ${DOWNLOAD_LINK} |  tar xjv " \
+	--s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} ${DOWNLOAD_LINK} . " \
 	--s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
 	--localCommand="tar xjvf ${DOWNLOAD_LINK} " \
 	--expectedMD5SUM=${MD5SUM}
