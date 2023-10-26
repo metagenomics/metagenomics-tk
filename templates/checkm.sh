@@ -12,6 +12,12 @@ then
 
   echo '{"dataRoot": "!{params.databases}/checkm/out", "remoteManifestURL": "https://data.ace.uq.edu.au/public/CheckM_databases/", "manifestType": "CheckM", "remoteManifestName": ".dmanifest", "localManifestName": ".dmanifest"}' > /tmp/DATA_CONFIG
 
+  if [ ! -z "!{S3_checkm_ACCESS}" ]
+  then
+    export AWS_ACCESS_KEY_ID=!{S3_checkm_ACCESS}
+    export AWS_SECRET_ACCESS_KEY=!{S3_checkm_SECRET}
+  fi
+
   # Download checkm database if necessary
   mkdir -p ${DATABASE}
   flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \

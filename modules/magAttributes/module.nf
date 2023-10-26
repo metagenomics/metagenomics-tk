@@ -41,6 +41,8 @@ process pCheckM {
 
     tag "Sample: $sample"
 
+    secret { "${S3_checkm_ACCESS}"!="" ? ["S3_checkm_ACCESS", "S3_checkm_SECRET"] : [] } 
+
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }, \
       pattern: "{**.tsv}"
 
@@ -66,8 +68,9 @@ process pCheckM {
     DOWNLOAD_LINK=params?.steps?.magAttributes?.checkm?.database?.download?.source ?: ""
     MD5SUM=params.steps?.magAttributes?.checkm?.database?.download?.md5sum ?: ""
     EXTRACTED_DB=params.steps?.magAttributes?.checkm?.database?.extractedDBPath ?: ""
+    S3_checkm_ACCESS=params?.steps?.magAttributes?.checkm?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm_ACCESS" : ""
+    S3_checkm_SECRET=params?.steps?.magAttributes?.checkm?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm_SECRET" : ""
     template 'checkm.sh'
-    
 }
 
 
@@ -78,6 +81,8 @@ process pGtdbtk {
     label 'highmemMedium'
 
     tag "Sample: $sample"
+
+    secret { "${S3_gtdb_ACCESS}"!="" ? ["S3_gtdb_ACCESS", "S3_gtdb_SECRET"] : [] } 
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }, \
       pattern: "{**.tsv,**.tree}"
@@ -107,6 +112,8 @@ process pGtdbtk {
     MD5SUM=params.steps?.magAttributes?.gtdb?.database?.download?.md5sum ?: ""
     EXTRACTED_DB=params.steps?.magAttributes?.gtdb?.database?.extractedDBPath ?: ""
     GTDB_PARAMS=params.steps.magAttributes.gtdb.additionalParams ?: ""
+    S3_gtdb_ACCESS=params?.steps?.magAttributes?.gtdb?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_gtdb_ACCESS" : ""
+    S3_gtdb_SECRET=params?.steps?.magAttributes?.gtdb?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_gtdb_SECRET" : ""
     template 'gtdb.sh'
 }
 

@@ -7,6 +7,14 @@ if [ -z "!{EXTRACTED_DB}" ]
 then
    DATABASE=!{params.databases}/mob_typer
    LOCK_FILE=${DATABASE}/checksum.txt
+
+   # Check if access and secret keys are necessary for s5cmd
+   if [ ! -z "!{S3_MobTyper_ACCESS}" ]
+   then
+        export AWS_ACCESS_KEY_ID=!{S3_MobTyper_ACCESS}
+        export AWS_SECRET_ACCESS_KEY=!{S3_MobTyper_SECRET}
+   fi
+
    # Download plsdb database if necessary
    mkdir -p ${DATABASE}
    flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
