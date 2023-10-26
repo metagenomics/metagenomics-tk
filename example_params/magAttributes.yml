@@ -3,6 +3,7 @@ summary: true
 output: "output"
 logDir: log
 runid: 1
+s3SignIn: true
 logLevel: 1
 scratch: "/vol/scratch"
 publishDirMode: "symlink"
