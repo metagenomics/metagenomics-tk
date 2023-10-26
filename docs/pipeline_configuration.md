@@ -26,20 +26,19 @@
  * `skipVersionCheck`: The toolkit is regurarly tested against a set of Nextflow versions. Setting the `--skipVersionCheck` allows you to use the toolkit with Nextflow versions
    that were not tested.
 
+ * `s3NoSignIn`: If your data is publicly accessible via S3, then you will have to set the `s3NoSignIn` parameter to `true`.
+
 ## S3 Configuration
 
-All modules inputs and outputs can be used in conjunction with S3.
-You will have to create a configuration file that can be provided to nextflow with " -c " Parameter.
-Please note that for using databases you have to provide an additional aws credentials file (see database section). 
+All module inputs and outputs can be used in conjunction with S3.
+If you want to set a custom S3 configuration setting (i.e. custom S3 endpoint), you will have to modify the aws client parameters 
+with " -c ".
 
+Example:
 ```
 aws {
-  accessKey = 'xxx'
-  secretKey = 'xxx'
-
     client {
       s_3_path_style_access = true
-      connectionTimeout = 120000
       maxParallelTransfers = 28 
       maxErrorRetry = 10
       protocol = 'HTTPS'
@@ -48,6 +47,17 @@ aws {
     }
 }
 ```
+
+In addition you will have to set a Nextflow Secret with the following keys:
+
+```
+nextflow secrets set S3_ACCESS xxxxxxxxx
+nextflow secrets set S3_SECRET xxxxxxxxx
+```
+
+`S3_ACCESS` corresponds to the aws S3 access key id and `S3_SECRET` is the aws S3 secret key.
+If your data is publicly available then you have to set `s3SignIn:` to `false` in your config file.
+Please note that for using databases you have to provide an additional aws credentials file (see database section). 
 
 ## Configuration of input parameters of the full pipeline mode
 
@@ -166,9 +176,10 @@ database:
 
 ### S3 Download
 
-You can specify an S3 link and configure the S3 call via the `s5cmd.params` and `s5cmd.keyfile` parameter.
+You can specify an S3 link and configure the S3 call via the `s5cmd.params parameter.
 The `s5cmd.params` parameter allows you to set any setting available of the [s5cmd](https://github.com/peak/s5cmd) commandline tool. 
-Via the `s5cmd.kefile` parameter you can provide the path to a credentials file in case your S3 database link is not public.
+If you need credentials to access your databases, you can set them via the Nextflow secrets mechanism. The correct key name for 
+for the access and secret key can be found in the corresponding database section.
 
 In the following example the compressed file will be downloaded and extracted.
 
@@ -183,7 +194,6 @@ database:
 ```
 
 If your database is already extracted and available via S3, you can specify the S3 link using a wildcard as in the next example.
-Example for a not publicly available uncompressed database:
 
 ```
 database:
@@ -192,15 +202,6 @@ database:
     md5sum: 77180f6a02769e7eec6b8c22d3614d2e 
     s5cmd:
       params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
-      keyfile: /vol/spool/credentials
-```
-
-Your credentials file should follow the AWS credentials pattern and in case you want to use the slurm mode, be placed in a shared directory as all nodes need access:
-
-```
-[default]
-aws_access_key_id=XXXXXXXX
-aws_secret_access_key=XXXXXX
 ```
 
 ### Updating Database MD5SUMs 
