@@ -17,29 +17,27 @@ s3File="$5"
 s3Directory="$6"
 # Example: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
 s5cmdCommand="$7"
-# Example: /vol/path/to/credentials
-s5cmdKey="$8"
 # Example: "/vol/spool/peter/meta-omics-toolkit/generated_yamls/"
-basePath="$9"
+basePath="$8"
 # Example: example_params/plasmid.yml
-yamlToTest="${10}"
+yamlToTest="${9}"
 # Example: ".steps.plasmid.PLSDB.database=env(database)"
-yamlKey="${11}"
+yamlKey="${10}"
 # Example: "./scripts/test_plasmids.sh"
-scriptToTest="${12}"
+scriptToTest="${11}"
 # Example: "/vol/spool/peter/meta-omics-toolkit/plasmid_yaml_database_tests"
-workDirBasePath="${13}"
+workDirBasePath="${12}"
 # Example: https,s3File
-skipTests="${14}"
+skipTests="${13}"
 # Example: true
-deleteScratchDir="${15:-no}"
+deleteScratchDir="${14:-no}"
 
 mkdir -p ${basePath}
 
 # Create all possible yaml configuration files
 bash ./scripts/createDatabaseYML.sh "${extractedPath}" "${md5sum}" "${https}" \
 	"${compressedPath}" "${s3File}" "${s3Directory}"  \
-	"${s5cmdCommand}" "${s5cmdKey}" \
+	"${s5cmdCommand}" \
 	"${basePath}" "${yamlToTest}" "${yamlKey}" "${skipTests}"
 
 # Run tests on all configuration files

@@ -7,11 +7,10 @@ compressedPath="$4"
 s3File="$5"
 s3Directory="$6"
 s5cmdCommand="$7"
-s5cmdKey="$8"
-basePath="$9"
-yamlToTest="${10}"
-yamlKey="${11}"
-skipTests="${12}"
+basePath="$8"
+yamlToTest="${9}"
+yamlKey="${10}"
+skipTests="${11}"
 
 if [[ -z "$skipTests" ]] || [[ "extracted" != *"$skipTests"* ]]; then
 database="{extractedDBPath: ${extractedPath} }" \
@@ -29,12 +28,12 @@ database="{download: {source: ${compressedPath}, md5sum: ${md5sum}} }" \
 fi
 
 if [[ -z "$skipTests" ]] || [[ "s3File" != *"$skipTests"* ]]; then
-database="{download: {source: ${s3File}, md5sum: ${md5sum}, s5cmd: { params: ${s5cmdCommand}, keyfile: ${s5cmdKey} }}}" \
+database="{download: {source: ${s3File}, md5sum: ${md5sum}, s5cmd: { params: ${s5cmdCommand} }}}" \
 	yq ${yamlKey} ${yamlToTest} > ${basePath}/s3File.yml
 fi
 
 if [[ -z "$skipTests" ]] || [[ "s3Directory" != *"$skipTests"* ]]; then
-database="{download: {source: ${s3Directory}, md5sum: ${md5sum}, s5cmd: { params: ${s5cmdCommand}, keyfile: ${s5cmdKey} }}}" \
+database="{download: {source: ${s3Directory}, md5sum: ${md5sum}, s5cmd: { params: ${s5cmdCommand} }}}" \
 	yq ${yamlKey} ${yamlToTest} > ${basePath}/s3Directory.yml
 fi
 
