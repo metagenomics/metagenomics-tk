@@ -211,8 +211,8 @@ process pMMseqs2_taxonomy {
    // The maximum possible sensitivity is reduced each time the process is retried.
    // The reason for this behaviour is a bug that occurs at higher sensitivity levels.
    sensitivity = MAX_SENSITIVITY - task.attempt + 1
-   S3_DB_ACCESS=params.steps?.annotation?.mmseqs2_taxonomy?."${dbType}"?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_TAX_${dbType}_ACCESS" : ""
-   S3_DB_SECRET=params.steps?.annotation?.mmseqs2_taxonomy?."${dbType}"?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_TAX_${dbType}_SECRET" : ""
+   S3_TAX_DB_ACCESS=params.steps?.annotation?.mmseqs2_taxonomy?."${dbType}"?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_TAX_${dbType}_ACCESS" : ""
+   S3_TAX_DB_SECRET=params.steps?.annotation?.mmseqs2_taxonomy?."${dbType}"?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_TAX_${dbType}_SECRET" : ""
    '''
    mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part
@@ -224,10 +224,10 @@ process pMMseqs2_taxonomy {
             LOCK_FILE=${DATABASE}/!{dbType}/lock.txt
 
 	    # Check if access and secret keys are necessary for s5cmd
-            if [ ! -z "!{S3_DB_ACCESS}" ]
+            if [ ! -z "!{S3_TAX_DB_ACCESS}" ]
             then
-               export AWS_ACCESS_KEY_ID=!{S3_DB_ACCESS}
-               export AWS_SECRET_ACCESS_KEY=!{S3_DB_SECRET}
+               export AWS_ACCESS_KEY_ID=!{S3_TAX_DB_ACCESS}
+               export AWS_SECRET_ACCESS_KEY=!{S3_TAX_DB_SECRET}
             fi
 
             # Create and try to lock the given “LOCK_FILE”. If the file is locked no other process will download the same database simultaneously
@@ -460,7 +460,7 @@ process pHmmSearch {
    '''
    ADDITIONAL_HMMSEARCH_PARAMS="!{params.steps?.binning?.magscot?.hmmSearch?.additionalParams}"
 
-   gtdb_download.sh "!{EXTRACTED_DB}" "!{DOWNLOAD_LINK}" "!{S5CMD_PARAMS}" "!{task.cpus}" "!{params.polished.databases}" "!{MD5SUM}" "!{S3_gtdb_ACCESS}" "!{S3_gtdb_SECRET}" 
+   gtdb_download.sh "!{EXTRACTED_DB}" "!{DOWNLOAD_LINK}" "!{S5CMD_PARAMS}" "!{task.cpus}" "!{params.polished.databases}" "!{MD5SUM}" "!{S3_gtdb_ACCESS}" "!{S3_gtdb_SECRET}" || exit 1 
 
    GTDB=$(cat gtdbPath.txt)
 
