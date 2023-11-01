@@ -282,6 +282,7 @@ steps:
         params: ' --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies --max-seqs 300 --max-accept 50 --cov-mode 0 -e 0.001 --e-profile 0.01 '
         # Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params
         ramMode: false
+        initialMaxSensitivity: 6
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
