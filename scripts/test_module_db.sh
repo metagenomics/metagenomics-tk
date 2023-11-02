@@ -49,8 +49,8 @@ for yml in ${basePath}/* ; do
 	bash ${scriptToTest} " --databases=${databaseDir} " ${yml} "${workDir}" "slurm" || exit 1
 	# Cleanup scratch directory
         if [[ "$deleteScratchDir" == "yes" ]]; then
-		sinfo -o " %n %t"   | tail -n +2 | sed 's/^ //g' | cut -d ' ' -f 1  \
-			| grep -v "dummy"  | grep -v " down"  \
-			| xargs -P 10 -I {}  ssh -tt ubuntu@{} " sudo rm -rf ${databaseDir} "
+		sinfo -o " %n %t"   | tail -n +2 | sed 's/^ //g' | grep -v " down" \
+			| grep -v " drain" | grep -v "dummy" \
+			| cut -d ' ' -f 1 | xargs -P 10 -I {}  ssh -tt ubuntu@{} " sudo rm -rf ${databaseDir} "
 	fi
 done
