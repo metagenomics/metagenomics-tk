@@ -78,6 +78,10 @@ jobs:
     needs: [codePolicy]
     steps:
       - uses: actions/checkout@v2
+      - name: Set Secrets
+        run: |
+          make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Test Full Pipeline ONT Run
         run: |
           VERSION=$(sort VERSIONS.txt | tail -n 1)
