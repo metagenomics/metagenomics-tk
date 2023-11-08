@@ -56,7 +56,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y locales \
   && DEBIAN_FRONTEND=noninteractive dpkg-reconfigure locales && git clone  --depth 1 --branch  ${GAPSEQ_VERSION} https://github.com/jotech/gapseq \
   && wget http://github.com/bbuchfink/diamond/releases/download/${DIAMOND_VERSION}/diamond-linux64.tar.gz  \
   && tar xzf diamond-linux64.tar.gz && rm diamond-linux64.tar.gz \
-  && pip install smetana==${SMETANA_VERSION} carveme==${CARVEME_VERSION} memote==${MEMOTE_VERSION}
-
+  && pip install smetana==${SMETANA_VERSION} carveme==${CARVEME_VERSION} cobra==0.27 depinfo==1.7.0 memote==${MEMOTE_VERSION}
 
 ENV PATH="${PATH}:/:/gapseq"
