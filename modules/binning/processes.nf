@@ -91,7 +91,6 @@ process pCovermContigsCoverage {
 }
 
 
-
 process pCovermGenomeCoverage {
 
     label 'small'
