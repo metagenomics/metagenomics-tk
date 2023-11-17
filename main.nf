@@ -479,8 +479,15 @@ workflow _wProcessHybrid {
       //Run Binning:
       wHybridBinningList(wHybridAssemblyList.out.contigs, combinedReads)
 
+    //TODO: fastg/gfa output
     emit:
-      reads = combinedReads
+      notBinnedContigs = wHybridBinningList.out.notBinnedContigs 
+      bins = wHybridBinningList.out.bins 
+      binsStats = wHybridBinningList.out.binsStats
+      mapping = wHybridBinningList.out.mapping
+      unmappedReads = wHybridBinningList.out.unmappedReads
+      contigCoverage = wHybridBinningList.out.contigCoverage
+      combinedReads = combinedReads
       medianQuality = medianQuality
 }
 
@@ -510,33 +517,35 @@ workflow wFullPipeline {
 
     SAMPLE_IDX = 0
     NOT_BINNED_PATH_IDX = 1
-    ont.notBinnedContigs | mix(illumina.notBinnedContigs) 
+    ont.notBinnedContigs | mix(illumina.notBinnedContigs) | mix(hybrid.notBinnedContigs) 
        | map { notBinned -> [ notBinned[SAMPLE_IDX], notBinned[SAMPLE_IDX] + "_notBinned", notBinned[NOT_BINNED_PATH_IDX]]} \
        | set { notBinnedContigs }
 
-    ont.binsStats | mix(illumina.binsStats) 
+    ont.binsStats | mix(illumina.binsStats) | mix(hybrid.binsStats) 
 	| map{ bin -> [bin.SAMPLE, bin.BIN_ID, bin.PATH]} \
         | set { bins }
 
     illumina.fastg | set { fastg } 
 
     ont.gfa | set { gfa } 
+    
+    ont.mapping | mix(illumina.mapping) | mix(hybrid.mapping) | set { mapping } 
 
-    ont.mapping | mix(illumina.mapping) | set { mapping } 
-
+    //TODO: include hybrid?
     wFragmentRecruitmentList(illumina.unmappedReads, ont.unmappedReads, ont.medianQuality)
 
-    ont.unmappedReads | mix(illumina.unmappedReads) | set { unmappedReads } 
+    ont.unmappedReads | mix(illumina.unmappedReads) | mix(hybrid.unmappedReads) | set { unmappedReads } 
 
-    ont.contigCoverage | mix(illumina.contigCoverage) | set { contigCoverage } 
+    ont.contigCoverage | mix(illumina.contigCoverage) | mix(hybrid.contigCoverage) | set { contigCoverage } 
 
     wSaveSettingsList(inputSamples | map { it -> it.SAMPLE })
 
+    //TODO: include hybrid?
     MAX_KMER = 0
     wPlasmidsList(bins | mix(notBinnedContigs), fastg | mix(gfa | combine(Channel.value(MAX_KMER))) | join(mapping) \
 	,illumina.readsPairSingle, ont.reads, ont.medianQuality)
 
-    wMagAttributesList(ont.bins | mix(illumina.bins, wFragmentRecruitmentList.out.foundGenomesPerSample ))
+    wMagAttributesList(ont.bins | mix(illumina.bins | mix(hybrid.bins), wFragmentRecruitmentList.out.foundGenomesPerSample ))
 
     mapJoin(wMagAttributesList.out.checkm, binsStats | mix(wFragmentRecruitmentList.out.binsStats), "BIN_ID", "BIN_ID") \
 	| set { binsStats  }
