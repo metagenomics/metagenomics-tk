@@ -28,7 +28,9 @@ steps:
     porechop:
        additionalParams:
          porechop: ""
-         filtlong: " --min_length 1000 --keep_percent 90  "
+         filtlong: " --min_length 500 --keep_percent 90  "
+    bbduk:
+      additionalParams: " entropy=0.8 entropywindow=50 entropyk=5 " 
     nanoplot:
       additionalParams: ""
   assemblyHybrid:
@@ -66,36 +68,26 @@ steps:
         samtoolsView: "  -F 3584  "
     metabat:
       additionalParams: " --seed 234234  "
-#  binning:
-#    bwa2:
-#      additionalParams: 
-#        bwa2: "   "
-#        # samtools flags are used to filter resulting bam file
-#        samtoolsView: "  -F 3584  "
-#    contigsCoverage:
-#      additionalParams: ""
-#    genomeCoverage:
-#      additionalParams: ""
-#    metabat:
-#      additionalParams: " --seed 234234  "
-#  magAttributes:
-#    gtdb:
-#      buffer: 1000
-#      database:
-#        download:
-#          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_v2_data.tar.gz
-#          md5sum: c42a6517bc6c14f517fa2c77121ae465
-#      additionalParams: " --min_af 0.65 --scratch_dir . "
-#    checkm:
-#      database:
-#        download:
-#          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz"
-#          md5sum: 0963b301dfe9345ea4be1246e32f6728
-#      buffer: 200
-#      additionalParams:
-#        tree: " --reduced_tree "
-#        lineage_set: " " 
-#        qa: "  "
+    contigsCoverage:
+      additionalParams: ""
+  magAttributes:
+    gtdb:
+      buffer: 1000
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_v2_data.tar.gz
+          md5sum: c42a6517bc6c14f517fa2c77121ae465
+      additionalParams: " --min_af 0.65 --scratch_dir . "
+    checkm:
+      database:
+        download:
+          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz"
+          md5sum: 0963b301dfe9345ea4be1246e32f6728
+      buffer: 200
+      additionalParams:
+        tree: " --reduced_tree "
+        lineage_set: " " 
+        qa: "  "
 #  fragmentRecruitment:
 #    mashScreen:
 #      genomes: test_data/fragmentRecruitment/mags.tsv
