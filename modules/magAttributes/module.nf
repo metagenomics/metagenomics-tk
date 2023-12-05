@@ -46,9 +46,9 @@ process pCheckM {
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm")
 
-    containerOptions Utils.getDockerMount(params.steps?.magAttributes?.checkm?.database, params)
+    containerOptions Utils.getDockerMount(params.steps?.magAttributes?.checkm?.database, params) 
 
-    beforeScript "mkdir -p ${params.polished.databases}"
+    beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
     label 'highmemMedium'
 
@@ -86,7 +86,7 @@ process pGtdbtk {
 
     containerOptions Utils.getDockerMount(params?.steps?.magAttributes?.gtdb?.database, params)
 
-    beforeScript "mkdir -p ${params.polished.databases}"
+    beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
     input:
     tuple val(sample), val(ending), path(bins) 
