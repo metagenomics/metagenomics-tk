@@ -61,7 +61,7 @@ process pPLSDB {
 
     tag "$sample $binID"
 
-    beforeScript "mkdir -p ${params.polished.databases}"
+    beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
     publishDir params.output, mode: "${params.publishDirMode}", \
 	saveAs: { filename -> getOutput("${sample}", params.runid, "PLSDB", filename) }, \
