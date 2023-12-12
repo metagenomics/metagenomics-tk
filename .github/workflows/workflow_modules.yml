@@ -105,7 +105,7 @@ jobs:
           ./example_params/fullPipelineSRAQCONT.yml "${WORK_DIR}" ${PROFILE} || exit 1
 
   mag_attributes:
-    timeout-minutes: 800
+    timeout-minutes: 2500
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
