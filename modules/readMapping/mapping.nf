@@ -238,7 +238,7 @@ workflow _wCreateMatrix {
       abundanceMatrix
 }
 
-
+//TODO: include samplesHybrid here!
 workflow _wReadMappingBwa {
    take:
      samplesONT
@@ -303,6 +303,8 @@ workflow _wReadMappingBwa {
       | toList() | map { it -> [it]}) \
       | join(ontMedianQuality, by: SAMPLE_NAME_IDX) | set { covermMinimapInput }
 
+     covermBWAInput | view()
+     covermMinimapInput | view()
      ALIGNMENT_INDEX = 2
      pCovermGenomeCoverage(Channel.value(params.steps?.readMapping?.find{ it.key == "coverm" }?.value), \
 	Channel.value("AGGREGATED"), \
