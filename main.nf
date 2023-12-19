@@ -488,6 +488,10 @@ workflow _wProcessHybrid {
       unmappedReads = wHybridBinningList.out.unmappedReads
       contigCoverage = wHybridBinningList.out.contigCoverage
       combinedReads = combinedReads
+      readsPair = wShortReadQualityControlList.out.readsPair
+      readsSingle = wShortReadQualityControlList.out.readsSingle
+      readsPairSingle = qcReads
+      readsONT = ontQCReads
       medianQuality = medianQuality
 }
 
@@ -565,7 +569,7 @@ workflow wFullPipeline {
 	| map{ it -> [SAMPLE: it[SAMPLE_IDX], BIN_ID: it[BIN_ID_IDX], PROTEINS: it[PATH_IDX]] } | set { proteins}
 
     wAnalyseMetabolitesList(binsStats, mapJoin(wMagAttributesList.out.checkm, proteins, "BIN_ID", "BIN_ID"))
-
-    _wAggregate(ont.reads, ont.medianQuality, illumina.readsPair, illumina.readsSingle, binsStats, \
-	wMagAttributesList.out.gtdb,  wAnalyseMetabolitesList.out.models)
+    //TODO: include hybrid?
+    _wAggregate(ont.reads | mix(hybrid.readsONT), ont.medianQuality | mix(hybrid.medianQuality), illumina.readsPair | mix (hybrid.readsPair), \
+    illumina.readsSingle |  mix(hybrid.readsSingle), binsStats,	wMagAttributesList.out.gtdb,  wAnalyseMetabolitesList.out.models)
 }
