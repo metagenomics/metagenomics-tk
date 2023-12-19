@@ -211,7 +211,7 @@ workflow _wHybridBinning {
 	| combine(Channel.from("metabatHybrid")) | join(bins, by: SAMPLE_IDX) \
 	| set { metabatBinStatisticsInput }  
      metabatBinStatisticsInput | join(medianQuality, by: SAMPLE_IDX)| set {binStatsInput}
-     binStatsInput | view
+     
      pGetBinStatistics(Channel.value(getModulePath(params.modules.binningHybrid)), binStatsInput)
 
      // Add bin statistics 
