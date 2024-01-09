@@ -1,6 +1,6 @@
 output: "output"
 summary: false
-s3SignIn: true
+s3SignIn: false
 runid: 1
 logLevel: 1
 logDir: log
