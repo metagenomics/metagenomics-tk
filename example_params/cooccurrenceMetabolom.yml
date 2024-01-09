@@ -1,6 +1,6 @@
 tempdir: "/tmp"
 summary: false
-s3SignIn: true
+s3SignIn: false
 output: "output"
 runid: 1
 logLevel: 0
