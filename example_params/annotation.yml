@@ -1,7 +1,7 @@
 output: "output"
 summary: false
 runid: 1
-s3SignIn: true
+s3SignIn: false
 logDir: log
 tempdir: "tmp"
 scratch: "/vol/scratch"
