@@ -26,7 +26,7 @@
  * `skipVersionCheck`: The toolkit is regurarly tested against a set of Nextflow versions. Setting the `--skipVersionCheck` allows you to use the toolkit with Nextflow versions
    that were not tested.
 
- * `s3NoSignIn`: If your data is publicly accessible via S3, then you will have to set the `s3NoSignIn` parameter to `true`.
+ * `s3SignIn`: If your input data (not the databases) is not publicly accessible via S3, then you will have to set the `s3SignIn` parameter to `true`.
 
 ## S3 Configuration
 
@@ -56,7 +56,7 @@ nextflow secrets set S3_SECRET xxxxxxxxx
 ```
 
 `S3_ACCESS` corresponds to the aws S3 access key id and `S3_SECRET` is the aws S3 secret key.
-If your data is publicly available then you have to set `s3SignIn:` to `false` in your config file.
+If your input data (not the databases) is publicly available then you have to set `s3SignIn:` to `false` in your config file.
 Please note that for using databases you have to provide an additional aws credentials file (see database section). 
 
 ## Configuration of input parameters of the full pipeline mode
