@@ -21,6 +21,7 @@ steps:
         download:
           source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm2_v2.tar.gz"
           md5sum: a634cb3d31a1f56f2912b74005f25f09
+      additionalParams: "  "
     prokka:
       defaultKingdom: false
       additionalParams: " --mincontiglen 200 "
