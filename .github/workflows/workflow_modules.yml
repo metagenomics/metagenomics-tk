@@ -76,7 +76,9 @@ jobs:
           " --databases=/vol/scratch/databases/      " \
           ./example_params/fullPipelineONT.yml "${WORK_DIR}" \
           ${PROFILE} ${VERSION}  || exit 1
-
+      - name: Cleanup previous checkm results for correct aggregation run
+        run: |
+          rm -rf output
       - name: Test Full Pipeline ONT and Illumina Run
         run: |
           VERSION=$(sort -r VERSIONS.txt | tail -n 1)
