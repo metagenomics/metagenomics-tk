@@ -128,7 +128,7 @@ jobs:
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/checkm_data_2015_01_16.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/checkm_data_2015_01_16.tar.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/checkm/*"  \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
-                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/checkm \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/checkm \
                                MODULE_DB_TEST_YML=example_params/magAttributes.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.magAttributes.checkm.database=env(database),del(.steps.magAttributes.gtdb,.steps.magAttributes.checkm2,.steps.magAttributes.prokka)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/checkm_yaml_database_tests" \
@@ -142,7 +142,7 @@ jobs:
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/checkm2_v2.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/checkm2_v2.tar.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/checkm2/*"  \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
-                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/checkm2 \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/checkm2 \
                                MODULE_DB_TEST_YML=example_params/magAttributes.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.magAttributes.checkm2.database=env(database),del(.steps.magAttributes.gtdb,.steps.magAttributes.checkm,.steps.magAttributes.prokka)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/checkm2_yaml_database_tests" \
@@ -158,7 +158,7 @@ jobs:
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/gtdbtk_r214_data/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
-                               MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/gtdb \
+                               MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/gtdb \
                                MODULE_DB_TEST_YML=example_params/magAttributes.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.magAttributes.gtdb.database=env(database),del(.steps.magAttributes.checkm,.steps.magAttributes.checkm2,.steps.magAttributes.prokka)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/gtdb_yaml_database_tests"  \
@@ -278,7 +278,7 @@ jobs:
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/card_20221209/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
-                               MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/rgi \
+                               MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/rgi \
                                MODULE_DB_TEST_YML=example_params/annotation.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.annotation.rgi.database=env(database),del(.steps.annotation.mmseqs2,.steps.annotation.keggFromBlast)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/rgi_yaml_database_tests" \
@@ -294,7 +294,7 @@ jobs:
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-links-mirror-2021-01/*"  \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
-                               MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/kegg \
+                               MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/kegg \
                                MODULE_DB_TEST_YML=example_params/annotation.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.annotation.keggFromBlast.database=env(database),del(.steps.annotation.rgi)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/kegg_yaml_database_tests" \
@@ -317,7 +317,7 @@ jobs:
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
-                               MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/mmseqs2 \
+                               MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/mmseqs2 \
                                MODULE_DB_TEST_YML=example_params/annotation.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.annotation.mmseqs2.kegg.database=env(database),del(.steps.annotation.rgi,.steps.annotation.keggFromBlast)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" \
@@ -356,7 +356,7 @@ jobs:
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/plasmids_plsdb_20220929/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
-                               MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids \
+                               MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/plasmids \
                                MODULE_DB_TEST_YML=example_params/plasmid.yml MODULE_DB_TEST_YML_PATH="'.steps.plasmid.PLSDB.database=env(database),del(.steps.plasmid.Platon,.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.MobTyper)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/plasmid_yaml_database_tests" \
                                MODULE_DB_TEST_REMOVE_DB="yes"
@@ -368,7 +368,7 @@ jobs:
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/pfam-A_35.0.hmm.gz" MODULE_DB_TEST_S3PATH="s3://databases/pfam-A_35.0.hmm.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/pfam-A_35.0.hmm.gz" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
-                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.plasmid.ViralVerifyPlasmid.database=env(database),del(.steps.plasmid.Platon,.steps.plasmid.PlasClass,.steps.plasmid.MobTyper,.steps.plasmid.PLSDB)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" \
                                MODULE_DB_TEST_GENERATED_YML_DIR="plasmid_yaml_database_tests" \
@@ -382,7 +382,7 @@ jobs:
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/platon_20220929.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/platon_20220929.tar.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/platon_20220929.tar.gz" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
-                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.plasmid.Platon.database=env(database),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.MobTyper,.steps.plasmid.PLSDB)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="plasmid_yaml_database_tests" \
                                MODULE_DB_TEST_REMOVE_DB="yes"
@@ -395,7 +395,7 @@ jobs:
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/mob_20220929.gz" MODULE_DB_TEST_S3PATH="s3://databases/mob_20220929.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/mob_20220929.gz" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
-                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.plasmid.MobTyper.database=env(database),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.Platon,.steps.plasmid.PLSDB)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="plasmid_yaml_database_tests" \
                                MODULE_DB_TEST_REMOVE_DB="yes"

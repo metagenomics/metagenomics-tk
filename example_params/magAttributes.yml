@@ -22,6 +22,16 @@ steps:
           source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm2_v2.tar.gz"
           md5sum: a634cb3d31a1f56f2912b74005f25f09
       additionalParams: "  "
+    checkm:
+      database:
+        download:
+          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz"
+          md5sum: 0963b301dfe9345ea4be1246e32f6728
+      buffer: 200
+      additionalParams:
+        tree: " --reduced_tree "
+        lineage_set: " " 
+        qa: "  "
     prokka:
       defaultKingdom: false
       additionalParams: " --mincontiglen 200 "
