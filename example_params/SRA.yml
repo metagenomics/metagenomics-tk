@@ -8,8 +8,8 @@ publishDirMode: "symlink"
 input:
   SRA:
     pattern:
-      ont: ".+[^(_1|_2)].+$"
-      illumina: ".+(_1|_2).+$"
+      ont: ".+[^(_1|_2)].+fastq.gz$"
+      illumina: ".+(_1|_2).+fastq.gz$"
     S3:
       path: test_data/SRA/samples.tsv 
       bucket: "s3://meta_test" 

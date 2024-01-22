@@ -3,8 +3,8 @@ summary: false
 input:
   SRA:
     pattern:
-      ont: ".+[^(_1|_2)].+$"
-      illumina: ".+(_1|_2).+$"
+      ont: ".+[^(_1|_2)].+fastq.gz$"
+      illumina: ".+(_1|_2).+fastq.gz$"
     S3:
       path: test_data/fullPipeline/production.tsv
       bucket: "s3://ftp.era.ebi.ac.uk" 
