@@ -178,8 +178,7 @@ database:
 
 You can specify an S3 link and configure the S3 call via the `s5cmd.params parameter.
 The `s5cmd.params` parameter allows you to set any setting available of the [s5cmd](https://github.com/peak/s5cmd) commandline tool. 
-If you need credentials to access your databases, you can set them via the Nextflow secrets mechanism. The correct key name for 
-for the access and secret key can be found in the corresponding database section.
+If you need credentials to access your databases, you can set them via the Nextflow secrets mechanism. The correct key name for the access and secret key can be found in the corresponding database section.
 
 In the following example the compressed file will be downloaded and extracted.
 
