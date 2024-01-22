@@ -4,6 +4,8 @@ S5CMD_PARAMS=$3
 CPUS=$4
 POLISHED_DB=$5
 MD5SUM=$6
+S3_gtdb_ACCESS=$7
+S3_gtdb_SECRET=$8
 
 
 # Check developer documentation
@@ -12,6 +14,12 @@ if [ -z "${EXTRACTED_DB}" ]
 then
      DATABASE=${POLISHED_DB}gtdb
      LOCK_FILE=${DATABASE}/lock.txt
+
+     if [ ! -z "${S3_gtdb_ACCESS}" ]
+     then
+          export AWS_ACCESS_KEY_ID=${S3_gtdb_ACCESS}
+          export AWS_SECRET_ACCESS_KEY=${S3_gtdb_SECRET}
+     fi
 
      # Download gtdb if necessary
      mkdir -p ${DATABASE}

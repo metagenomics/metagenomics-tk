@@ -71,6 +71,8 @@ process pPLSDB {
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid.containsKey("PLSDB")
 
+    secret { "${S3_PLSDB_ACCESS}"!="" ? ["S3_PLSDB_ACCESS", "S3_PLSDB_SECRET"] : [] } 
+
     container "${params.mash_image}"
 
     input:
@@ -84,6 +86,9 @@ process pPLSDB {
 
     shell:
     output = getOutput("${sample}", params.runid, "PLSDB", "")
+    S5CMD_PARAMS=params.steps?.plasmid?.PLSDB?.database?.download?.s5cmd?.params ?: ""
+    S3_PLSDB_ACCESS=params?.steps?.plasmid?.PLSDB?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_PLSDB_ACCESS" : ""
+    S3_PLSDB_SECRET=params?.steps?.plasmid?.PLSDB?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_PLSDB_SECRET" : ""
     template("plsdb.sh")
 }
 
