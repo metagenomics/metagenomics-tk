@@ -9,16 +9,22 @@ then
   LOCK_FILE=${DATABASE}/checksum.txt
   DOWNLOAD_LINK=!{params?.steps?.plasmid?.PLSDB?.database?.download?.source}
   MD5SUM=!{params?.steps?.plasmid?.PLSDB?.database?.download?.md5sum}
-  S5CMD_PARAMS="!{params.steps?.plasmid?.PLSDB?.database?.download?.s5cmd?.params}"
+
+  # Check if access and secret keys are necessary for s5cmd
+  if [ ! -z "!{S3_PLSDB_ACCESS}" ]
+  then
+    export AWS_ACCESS_KEY_ID=!{S3_PLSDB_ACCESS}
+    export AWS_SECRET_ACCESS_KEY=!{S3_PLSDB_SECRET}
+  fi
 
   # Download plsdb database if necessary
   mkdir -p ${DATABASE}
   flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
 	--link=$DOWNLOAD_LINK \
 	--httpsCommand="wget -qO- $DOWNLOAD_LINK | tar xjv " \
-	--s3FileCommand="s5cmd ${S5CMD_PARAMS} cat --concurrency !{task.cpus} ${DOWNLOAD_LINK} |  tar xjv " \
-	--s3DirectoryCommand="s5cmd ${S5CMD_PARAMS} cp --concurrency !{task.cpus} ${DOWNLOAD_LINK} . " \
-	--s5cmdAdditionalParams="${S5CMD_PARAMS}" \
+	--s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} ${DOWNLOAD_LINK} |  tar xjv " \
+	--s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} ${DOWNLOAD_LINK} . " \
+	--s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
 	--localCommand="tar xjvf ${DOWNLOAD_LINK} " \
 	--expectedMD5SUM=${MD5SUM}
 

@@ -1,5 +1,6 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: false
 input:
   paired:
     path: "test_data/fullPipeline/reads_split.tsv"

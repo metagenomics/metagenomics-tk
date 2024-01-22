@@ -4,7 +4,7 @@ mkdir output
 ls -1 !{bins} | xargs -I {} readlink -f {} > bin.path
 paste -d$'\t' bin.path <(for p in $(cat bin.path); do basename $p; done) > input.tsv
 
-gtdb_download.sh "!{EXTRACTED_DB}" "!{DOWNLOAD_LINK}" "!{S5CMD_PARAMS}" "!{task.cpus}" "!{params.polished.databases}" "!{MD5SUM}"
+gtdb_download.sh "!{EXTRACTED_DB}" "!{DOWNLOAD_LINK}" "!{S5CMD_PARAMS}" "!{task.cpus}" "!{params.polished.databases}" "!{MD5SUM}" "!{S3_gtdb_ACCESS}" "!{S3_gtdb_SECRET}" || exit 1
 GTDB=$(cat gtdbPath.txt)
 
 export GTDBTK_DATA_PATH=${GTDB}
