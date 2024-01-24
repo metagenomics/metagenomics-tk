@@ -1,5 +1,6 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: false
 output: "output"
 logDir: log
 runid: 1

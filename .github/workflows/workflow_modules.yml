@@ -24,6 +24,10 @@ jobs:
     needs: [codePolicy]
     steps:
       - uses: actions/checkout@v2
+      - name: Set Secrets
+        run: |
+          make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Test if SRA S3 Entrypoint works 
         run: |
           NCBI_API_KEY=${{ secrets.NCBI_API_KEY }}  bash ./scripts/test_SRA.sh " -c  test_data/assets/aws.config " "" "${WORK_DIR}" ${PROFILE} || exit 1
@@ -74,6 +78,10 @@ jobs:
     needs: [codePolicy]
     steps:
       - uses: actions/checkout@v2
+      - name: Set Secrets
+        run: |
+          make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Test Full Pipeline ONT Run
         run: |
           VERSION=$(sort VERSIONS.txt | tail -n 1)
@@ -121,6 +129,16 @@ jobs:
           bash ./scripts/test_magAttributes.sh \
           " --databases=/vol/scratch/databases/    " \
           example_params/magAttributes_fraction/magAttributes.yml "${WORK_DIR}" ${PROFILE} || exit 1
+      - name: Set Secrets
+        run: |
+          make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_checkm_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_checkm_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_gtdb_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_gtdb_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+
+
       - name: Test Checkm runs against different database parameters
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/checkm/" \
@@ -129,7 +147,7 @@ jobs:
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/checkm_data_2015_01_16.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/checkm_data_2015_01_16.tar.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/checkm/*"  \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
-                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/checkm \
+                               MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/checkm \
                                MODULE_DB_TEST_YML=example_params/magAttributes.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.magAttributes.checkm.database=env(database),del(.steps.magAttributes.gtdb,.steps.magAttributes.prokka)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/checkm_yaml_database_tests" \
@@ -143,7 +161,6 @@ jobs:
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/gtdbtk_r214_data.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/gtdbtk_r214_data.tar.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/gtdbtk_r214_data/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
-                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/gtdb \
                                MODULE_DB_TEST_YML=example_params/magAttributes.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.magAttributes.gtdb.database=env(database),del(.steps.magAttributes.checkm,.steps.magAttributes.prokka)'" \
@@ -243,10 +260,15 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
+      - name: Set Secrets
+        run: |
+          make set_secrets SECRET_NAME=S3_kegg_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_kegg_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Test Annotation
         run: |
           bash ./scripts/test_annotation.sh \
-            "     --steps.annotation.mmseqs.kegg.database.extractedDBPath=/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB --steps.annotation.keggFromBlast.database.extractedDBPath=/vol/spool/toolkit/kegg_2021-01/ --databases=/vol/scratch/databases/ " "" \
+            "     --steps.annotation.mmseqs.kegg.database.extractedDBPath=/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB \
+             --steps.annotation.keggFromBlast.database.extractedDBPath=/vol/spool/toolkit/kegg_2021-01/ --databases=/vol/scratch/databases/ " "" \
             "${WORK_DIR}" ${PROFILE}  || exit 1
 
   annotation_database_tests_part_1:
@@ -255,6 +277,15 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
+      - name: Set Secrets
+        run: |
+          make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_rgi_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_rgi_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_kegg_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_kegg_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+
       - name: Test rgi against different database configurations
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/card_20221209/card.json" \
@@ -263,7 +294,6 @@ jobs:
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/card_20221209.tar.bz2" MODULE_DB_TEST_S3PATH="s3://databases/card_20221209.tar.bz2" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/card_20221209/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
-                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/rgi \
                                MODULE_DB_TEST_YML=example_params/annotation.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.annotation.rgi.database=env(database),del(.steps.annotation.mmseqs2,.steps.annotation.keggFromBlast)'" \
@@ -279,7 +309,6 @@ jobs:
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases_internal/kegg-links-mirror-2021-01.tar.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-links-mirror-2021-01/*"  \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
-                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/kegg \
                                MODULE_DB_TEST_YML=example_params/annotation.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.annotation.keggFromBlast.database=env(database),del(.steps.annotation.rgi)'" \
@@ -294,6 +323,12 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
+      - name: Set Secrets
+        run: |
+          make set_secrets SECRET_NAME=S3_kegg_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_kegg_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Test mmseqs2 against different database configurations
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB" \
@@ -302,7 +337,6 @@ jobs:
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs.tar.zst" MODULE_DB_TEST_S3PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
-                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/mmseqs2 \
                                MODULE_DB_TEST_YML=example_params/annotation.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.annotation.mmseqs2.kegg.database=env(database),del(.steps.annotation.rgi,.steps.annotation.keggFromBlast)'" \
@@ -329,6 +363,16 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v2
+      - name: Set Secrets
+        run: |
+          make set_secrets SECRET_NAME=S3_PLSDB_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_PLSDB_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_ViralVerifyPlasmid_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_ViralVerifyPlasmid_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_Platon_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_Platon_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_MobTyper_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_MobTyper_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Plasmid Test
         run: |
           bash ./scripts/test_plasmids.sh " --databases=/vol/scratch/databases/     " "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
@@ -341,7 +385,6 @@ jobs:
                                MODULE_DB_TEST_S3PATH="s3://databases/plasmids_plsdb_20220929.tar.bz2" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/plasmids_plsdb_20220929/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
-                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids \
                                MODULE_DB_TEST_YML=example_params/plasmid.yml MODULE_DB_TEST_YML_PATH="'.steps.plasmid.PLSDB.database=env(database),del(.steps.plasmid.Platon,.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.MobTyper)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/plasmid_yaml_database_tests" \
@@ -354,7 +397,7 @@ jobs:
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/pfam-A_35.0.hmm.gz" MODULE_DB_TEST_S3PATH="s3://databases/pfam-A_35.0.hmm.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/pfam-A_35.*.hmm" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
-                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
+                               MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.plasmid.ViralVerifyPlasmid.database=env(database),del(.steps.plasmid.Platon,.steps.plasmid.PlasClass,.steps.plasmid.MobTyper,.steps.plasmid.PLSDB)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" \
                                MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/plasmid_yaml_database_tests" \
@@ -368,7 +411,7 @@ jobs:
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/platon_20220929.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/platon_20220929.tar.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/platon/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
-                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
+                               MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.plasmid.Platon.database=env(database),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.MobTyper,.steps.plasmid.PLSDB)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/plasmid_yaml_database_tests" \
                                MODULE_DB_TEST_REMOVE_DB="yes"
@@ -381,7 +424,7 @@ jobs:
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/mob_20220929.gz" MODULE_DB_TEST_S3PATH="s3://databases/mob_20220929.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/mob_20220929/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
-                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
+                               MODULE_DB_TEST_GENERATED_YML=/vol/spool/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.plasmid.MobTyper.database=env(database),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.Platon,.steps.plasmid.PLSDB)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/plasmid_yaml_database_tests" \
                                MODULE_DB_TEST_REMOVE_DB="yes"

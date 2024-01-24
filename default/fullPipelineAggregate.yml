@@ -1,5 +1,6 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: true
 output: "output"
 input: "fullPipelineOutput"
 logDir: log
