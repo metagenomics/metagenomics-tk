@@ -17,6 +17,7 @@ env:
   WORK_DIR: "/vol/spool/${{ github.head_ref }}"
   PROFILE: "slurm"
   PR_NUMBER: ${{ github.event.number }}
+  EMGB_KEGG_DB: "/vol/spool/emgb/annotatedgenes2json_db_nr-2023-04-29_kegg-mirror-2022-12" 
 jobs:
   full_pipeline:
     timeout-minutes: 2500
@@ -49,7 +50,8 @@ jobs:
       - name: Test EMGB import tools
         run: |
           ./bin/emgb.sh --output=output/test1 --runid=1 --binsdir=$(find output/test1/ -name "metabat") \
-                        --workdir="${WORK_DIR}_wFullPipeline" --blastdb=bacmet20_predicted --name=test1
+                        --db=${EMGB_KEGG_DB} \
+                        --workdir="${WORK_DIR}_wFullPipeline" --name=test1
 
       - name: Test Full Pipeline run that ends with magAttributes
         run: |
