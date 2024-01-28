@@ -31,6 +31,10 @@ class Utils {
       }
   }
 
+  static String getCreateDatabaseDirCommand(db){
+    return "if [ ! -z " + db + " ]; then mkdir " + db + " -p; fi"
+  }
+
 
   static String getModulePath(module){
     return module.name + '/' + module.version.major + "." +
