@@ -186,6 +186,14 @@ steps:
 #          download:
 #            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_experimental.tar.zst
 #            md5sum: 57a6d328486f0acd63f7e984f739e8fe
+      ncbi_nr:
+        params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+        database:
+          download:
+            source: s3://databases/nr_2023-04-29_mmseqs_taxonomy/*
+            md5sum: 79b9fb6b3dada41e602d70e12e7351c2
+            s5cmd:
+              params: '--retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
       bacmet20_predicted:
         params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
         database:
