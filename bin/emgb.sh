@@ -1,6 +1,7 @@
 #!/bin/bash
+set -e
 
-VERSION=0.3.0
+VERSION=0.3.1
 
 while [ $# -gt 0 ]; do
 	  case "$1" in
@@ -54,7 +55,7 @@ function getGenes {
 		echo $cmd
 	fi
 
-	docker run -i $DBMOUNT -v $(pwd):$(pwd) -v $WORK_DIR:$WORK_DIR -v ${OUTPUT_PATH}:${OUTPUT_PATH} quay.io/emgb/annotatedgenes2json:2.3.0 $cmd
+	docker run -i $DBMOUNT -v $(pwd):$(pwd) -v $WORK_DIR:$WORK_DIR -v ${OUTPUT_PATH}:${OUTPUT_PATH} quay.io/emgb/annotatedgenes2json:2.3.1 $cmd
 }
 
 
