@@ -115,7 +115,7 @@ We offer a script `bin/emgb.sh` that allows you to export a metagenomics toolkit
 Example Call:
 
 ```
-bash emgb.sh --output=output/test1 --runid=1 --binsdir=output/test1/1/binning/0.5.0/metabat --blastdb=bacmet20_predicted --name=test1
+bash emgb.sh --output=output/test1 --runid=1 --binsdir=output/test1/1/binning/0.5.0/metabat --db=${EMGB_KEGG_DB} --workdir="${WORK_DIR}" --name=test1
 ```
 
 You can get a help page for the necessary arguments by running `emgb.sh --help`.
