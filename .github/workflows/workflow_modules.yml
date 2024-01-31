@@ -434,7 +434,6 @@ jobs:
   settings:
     timeout-minutes: 2500
     runs-on: [ self-hosted, slurm]
-    needs: [codePolicy]
     steps:
       - uses: actions/checkout@v2
       - name: Test whether settings in easy mode can be updated
@@ -442,7 +441,7 @@ jobs:
           VERSION=$(sort VERSIONS.txt | tail -n 1)
           OUTPUT=outputEasy
           bash ./scripts/test_settings.sh \
-          " --preset --scratch /vol/scratch --input test_data/fullPipeline/reads_split.tsv highmemLarge=28,2000 --databases=/vol/scratch/databases/ --output=${OUTPUT} " \
+          " --preset --scratch /vol/scratch --input.paired.path test_data/fullPipeline/reads_split.tsv --highmemLarge=28,2000 --s3SignIn false  --databases=/vol/scratch/databases/ --output=${OUTPUT} " \
           "" "${WORK_DIR}" ${PROFILE} ${VERSION} || exit 1
           bash ./scripts/check_parameter.sh ${OUTPUT} || exit 1
       - name: Test whether settings in default mode can be updated
@@ -450,7 +449,7 @@ jobs:
           VERSION=$(sort VERSIONS.txt | tail -n 1)
           OUTPUT=outputDefault
           bash ./scripts/test_settings.sh \
-          " --scratch /vol/scratch --input test_data/fullPipeline/reads_split.tsv  --resources.highmemLarge.memory=2000  --databases=/vol/scratch/databases/ --output=${OUTPUT} " \
+          "  --scratch /vol/scratch  --resources.highmemLarge.memory=2000 --s3SignIn false  --databases=/vol/scratch/databases/ --output=${OUTPUT}  " \
           "" "${WORK_DIR}" ${PROFILE} ${VERSION} || exit 1
           bash ./scripts/check_parameter.sh ${OUTPUT} || exit 1
 
@@ -458,6 +457,7 @@ jobs:
 
   codePolicy:
     runs-on: [ self-hosted, slurm]
+    needs: [settings]
     steps:
       - uses: actions/checkout@v2
       - name: Checks if every process defines a publishDirMode
