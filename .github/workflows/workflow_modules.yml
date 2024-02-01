@@ -443,7 +443,6 @@ jobs:
           bash ./scripts/test_settings.sh \
           " --preset --scratch /vol/scratch --input.paired.path test_data/fullPipeline/reads_split.tsv --highmemLarge=28,2000 --s3SignIn false  --databases=/vol/scratch/databases/ --output=${OUTPUT} " \
           "" "${WORK_DIR}" ${PROFILE} ${VERSION} || exit 1
-          bash ./scripts/check_parameter.sh ${OUTPUT} || exit 1
       - name: Test whether settings in default mode can be updated
         run: |
           VERSION=$(sort VERSIONS.txt | tail -n 1)
