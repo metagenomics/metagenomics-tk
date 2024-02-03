@@ -29,6 +29,15 @@ ifndef PARAMS_FILE
 	override PARAMS_FILE = ${CURRENT_DIR}/example_params/fullPipeline.yml
 endif
 
+ifdef PRESET
+	override PARAMS_FILE=""
+endif
+
+ifneq (${PARAMS_FILE}, "")
+	override PARAMS_COMMAND =  -params-file ${PARAMS_FILE}
+endif
+
+
 ifndef BRANCH
 	override BRANCH = "dev"
 endif
@@ -126,7 +135,7 @@ set_secrets: nextflow ## Set secrets for sensitive data access
 	NXF_HOME=$$PWD/.nextflow ./nextflow secrets set ${SECRET_NAME} ${SECRET_VALUE}
 
 run_small_full_test: nextflow ## Prepares input files like downloading bins and reads and executes Nextflow. The default configuration it runs the full pipeline locally.
-	NXF_HOME=$$PWD/.nextflow ./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR} -profile ${PROFILE} -resume -entry ${ENTRY} -params-file ${PARAMS_FILE} --logDir ${LOG_DIR} ; exit $$?
+	NXF_HOME=$$PWD/.nextflow ./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR} -profile ${PROFILE} -resume -entry ${ENTRY} ${PARAMS_COMMAND} --logDir ${LOG_DIR} ; exit $$?
 
 
 help: ## Lists available Makefile commands
