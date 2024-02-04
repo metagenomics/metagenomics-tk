@@ -545,7 +545,6 @@ workflow _wMashScreen {
 	&& params?.steps.fragmentRecruitment.containsKey("mashScreen") \
 	&& params?.steps.fragmentRecruitment.mashScreen.containsKey("genomes")){
 
-
        BUFFER = 500
        // Some tools can not handle gzipped files. Unzip genomes before fragment recruitment
        Channel.fromPath(params?.steps.fragmentRecruitment?.mashScreen?.genomes) | splitCsv(sep: '\t', header: true) \

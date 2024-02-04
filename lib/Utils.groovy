@@ -23,16 +23,16 @@ class Utils {
               }
               volumeMountStr += " --volume " + params.polished.databases + ":" + params.polished.databases ;
 
-              if(config.download.containsKey("s5cmd") && config.download.s5cmd.containsKey("keyfile")){
-                  volumeMountStr += " --volume " + config.download.s5cmd.keyfile + ":/.aws/credentials" + " --volume " + config.download.s5cmd.keyfile + ":/root/.aws/credentials"
-              }
-
               return volumeMountStr;
           }
 
       } else {
           return "";
       }
+  }
+
+  static String getCreateDatabaseDirCommand(db){
+    return "if [ ! -z " + db + " ]; then mkdir " + db + " -p; fi"
   }
 
 

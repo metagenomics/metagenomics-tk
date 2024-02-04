@@ -61,7 +61,7 @@ process pPLSDB {
 
     tag "$sample $binID"
 
-    beforeScript "mkdir -p ${params.polished.databases}"
+    beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
     publishDir params.output, mode: "${params.publishDirMode}", \
 	saveAs: { filename -> getOutput("${sample}", params.runid, "PLSDB", filename) }, \
@@ -70,6 +70,8 @@ process pPLSDB {
     containerOptions Utils.getDockerMount(params.steps?.plasmid?.PLSDB?.database, params)
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid.containsKey("PLSDB")
+
+    secret { "${S3_PLSDB_ACCESS}"!="" ? ["S3_PLSDB_ACCESS", "S3_PLSDB_SECRET"] : [] } 
 
     container "${params.mash_image}"
 
@@ -84,6 +86,9 @@ process pPLSDB {
 
     shell:
     output = getOutput("${sample}", params.runid, "PLSDB", "")
+    S5CMD_PARAMS=params.steps?.plasmid?.PLSDB?.database?.download?.s5cmd?.params ?: ""
+    S3_PLSDB_ACCESS=params?.steps?.plasmid?.PLSDB?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_PLSDB_ACCESS" : ""
+    S3_PLSDB_SECRET=params?.steps?.plasmid?.PLSDB?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_PLSDB_SECRET" : ""
     template("plsdb.sh")
 }
 

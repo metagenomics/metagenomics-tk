@@ -440,6 +440,13 @@ workflow _wConfigurePipeline {
 }
 
 
+workflow wSaveSettings {
+  inputSamples = wInputFile()
+  wSaveSettingsList(inputSamples | map { it -> it.SAMPLE })
+}
+
+
+
 def flattenBins(binning){
   def chunkList = [];
   def SAMPLE_IDX = 0;
@@ -506,7 +513,7 @@ workflow _wProcessOnt {
 * Left and right read could be https, s3 links or file path. 
 */
 workflow wFullPipeline {
-   
+
     _wConfigurePipeline()
 
     inputSamples = wInputFile()

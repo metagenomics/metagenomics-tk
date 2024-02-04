@@ -7,13 +7,21 @@ if [ -z "!{EXTRACTED_DB}" ]
 then
    DATABASE=!{params.databases}/mob_typer
    LOCK_FILE=${DATABASE}/checksum.txt
+
+   # Check if access and secret keys are necessary for s5cmd
+   if [ ! -z "!{S3_MobTyper_ACCESS}" ]
+   then
+        export AWS_ACCESS_KEY_ID=!{S3_MobTyper_ACCESS}
+        export AWS_SECRET_ACCESS_KEY=!{S3_MobTyper_SECRET}
+   fi
+
    # Download plsdb database if necessary
    mkdir -p ${DATABASE}
    flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
     --link=!{DOWNLOAD_LINK} \
     --httpsCommand=" wget -qO- !{DOWNLOAD_LINK} | tar --strip-components=1  -xvz " \
     --s3FileCommand=" s5cmd !{S5CMD_PARAMS} cat !{DOWNLOAD_LINK} | tar --strip-components=1 -xvz " \
-    --s3DirectoryCommand=" s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} mob_suite.tar.gz && tar --strip-components=1 -xvz mob_suite.tar.gz && rm mob_suite.tar.gz " \
+    --s3DirectoryCommand=" s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} . " \
     --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
     --localCommand="tar --strip-components=1  -xzvf !{DOWNLOAD_LINK} " \
     --expectedMD5SUM=!{MD5SUM}

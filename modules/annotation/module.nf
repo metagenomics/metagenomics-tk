@@ -64,6 +64,8 @@ process pMMseqs2 {
 
       label 'highmemLarge'
 
+      secret { "${S3_DB_ACCESS}"!="" ? ["S3_${dbType}_ACCESS", "S3_${dbType}_SECRET"] : [] } 
+
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2/${dbType}", filename) }, \
          pattern: "{**.blast.tsv}"
 
@@ -80,6 +82,8 @@ process pMMseqs2 {
 
    shell:
    output = getOutput("${sample}", params.runid, "mmseqs2/${dbType}", "")
+   S3_DB_ACCESS=params.steps?.annotation?.mmseqs2?."${dbType}"?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_${dbType}_ACCESS" : ""
+   S3_DB_SECRET=params.steps?.annotation?.mmseqs2?."${dbType}"?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_${dbType}_SECRET" : ""
    '''
    mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part
@@ -89,6 +93,13 @@ process pMMseqs2 {
          DATABASE=!{params.polished.databases}mmseqs2 
          mkdir -p ${DATABASE}/!{dbType}
          LOCK_FILE=${DATABASE}/!{dbType}/lock.txt
+
+	 # Check if access and secret keys are necessary for s5cmd
+         if [ ! -z "!{S3_DB_ACCESS}" ]
+         then
+            export AWS_ACCESS_KEY_ID=!{S3_DB_ACCESS}
+            export AWS_SECRET_ACCESS_KEY=!{S3_DB_SECRET}
+         fi
          
          # Create and try to lock the given “LOCK_FILE”. If the file is locked no other process will download the same database simultaneously
          # and wait until the database is downloaded.  Depending on your database path (starts with s3:// | https:// | /../../.. ) 
@@ -96,11 +107,11 @@ process pMMseqs2 {
          # If a database is present at the given path, checksums are compared, if they are identical the download will be omitted.  
          flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE}/!{dbType} \
             --link=!{DOWNLOAD_LINK} \
-            --httpsCommand="wget -O mmseqs.!{dbType}.tar.zst !{DOWNLOAD_LINK}  && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
-            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
-            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
+            --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -d -c | tar -xv " \
+            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -d -c | tar -xv " \
+            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
 	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
-            --localCommand="zstd -T!{task.cpus} -d !{DOWNLOAD_LINK} -o mmseqs.!{dbType}.tar && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
+            --localCommand="zstd -T!{task.cpus} -c -d !{DOWNLOAD_LINK} | tar -xv " \
             --expectedMD5SUM=!{MD5SUM}
           
           # Path of the newly downloaded database. A mmseqs2 database consists out of multiple files,
@@ -147,8 +158,6 @@ process pMMseqs2 {
     '''
 }
 
-MAX_SENSITIVITY = 6
-
 /**
 *
 * The MMseqs2 module taxonomy calls an internal module lca that implements an lowest common ancestor assignment for sequences by querying them against a seqTaxDB.
@@ -172,6 +181,8 @@ process pMMseqs2_taxonomy {
 
       label 'highmemLarge'
 
+      secret { "${S3_TAX_DB_ACCESS}"!="" ? ["S3_TAX_${dbType}_ACCESS", "S3_TAX_${dbType}_SECRET"] : [] } 
+
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", filename) }, \
          pattern: "{*.out,*.html,*.tsv}"
  
@@ -183,7 +194,7 @@ process pMMseqs2_taxonomy {
 
    input:
       val(binType)
-      tuple val(sample), file(fasta), val(dbType), val(parameters), val(ramMode), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
+      tuple val(sample), file(fasta), val(dbType), val(parameters), val(ramMode), val(initialMaxSensitivity), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
       tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.taxonomy.tsv"), optional:true, emit: taxonomy
@@ -197,7 +208,10 @@ process pMMseqs2_taxonomy {
    output = getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", "")
    // The maximum possible sensitivity is reduced each time the process is retried.
    // The reason for this behaviour is a bug that occurs at higher sensitivity levels.
-   sensitivity = MAX_SENSITIVITY - task.attempt + 1
+   S3_TAX_DB_ACCESS=params.steps?.annotation?.mmseqs2_taxonomy?."${dbType}"?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_TAX_${dbType}_ACCESS" : ""
+   S3_TAX_DB_SECRET=params.steps?.annotation?.mmseqs2_taxonomy?."${dbType}"?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_TAX_${dbType}_SECRET" : ""
+   sensitivityRaw = initialMaxSensitivity - task.attempt + 1
+   sensitivity = sensitivityRaw < 1 ? 1 : sensitivityRaw
    '''
    mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part
@@ -208,17 +222,24 @@ process pMMseqs2_taxonomy {
             mkdir -p ${DATABASE}/!{dbType}
             LOCK_FILE=${DATABASE}/!{dbType}/lock.txt
 
+	    # Check if access and secret keys are necessary for s5cmd
+            if [ ! -z "!{S3_TAX_DB_ACCESS}" ]
+            then
+               export AWS_ACCESS_KEY_ID=!{S3_TAX_DB_ACCESS}
+               export AWS_SECRET_ACCESS_KEY=!{S3_TAX_DB_SECRET}
+            fi
+
             # Create and try to lock the given “LOCK_FILE”. If the file is locked no other process will download the same database simultaneously
             # and wait until the database is downloaded.  Depending on your database path (starts with s3:// | https:// | /../../.. )
             # one of the flock input commands is executed to download and decompress the database.
             # If a database is present at the given path, checksums are compared, if they are identical the download will be omitted.
             flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE}/!{dbType} \
                --link=!{DOWNLOAD_LINK} \
-               --httpsCommand="wget -O mmseqs.!{dbType}.tar.zst !{DOWNLOAD_LINK}  && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
-               --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus}  !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
-               --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} mmseqs.!{dbType}.tar.zst && zstd --rm -T!{task.cpus} -d mmseqs.!{dbType}.tar.zst && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
+               --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -c -d | tar -xv " \
+               --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -c -d | tar -xv " \
+               --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
    	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
-               --localCommand="zstd -T!{task.cpus} -d !{DOWNLOAD_LINK} -o mmseqs.!{dbType}.tar && tar -xvf mmseqs.!{dbType}.tar && rm mmseqs.!{dbType}.tar" \
+               --localCommand="zstd -T!{task.cpus} -c -d !{DOWNLOAD_LINK} | tar -xv " \
                --expectedMD5SUM=!{MD5SUM}
 
              # Path of the newly downloaded database. A mmseqs2 database consists out of multiple files,
@@ -242,7 +263,7 @@ process pMMseqs2_taxonomy {
         mmseqs touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
     fi
     # Define taxonomies
-    mmseqs taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database tmp !{parameters}  --start-sens 3 --sens-steps 1 -s !{sensitivity} --threads !{task.cpus}
+    mmseqs taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database tmp !{parameters}  --start-sens 1 --sens-steps 1 -s !{sensitivity} --threads !{task.cpus}
     # mmseqs2 searches produce output databases. These have to be converted to more useful formats.
     mmseqs createtsv queryDB !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.taxonomy.tsv --threads !{task.cpus}
     mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.krakenStyleTaxonomy.out
@@ -252,18 +273,20 @@ process pMMseqs2_taxonomy {
 
 process pResistanceGeneIdentifier {
    
-      container "${params.rgi_image}"
+   container "${params.rgi_image}"
       
-      containerOptions Utils.getDockerMount(params?.steps?.annotation?.rgi?.database, params)
+   containerOptions Utils.getDockerMount(params?.steps?.annotation?.rgi?.database, params)
  
-      tag "Sample: $sample, BinID: $binID"
+   tag "Sample: $sample, BinID: $binID"
 
-      label 'small'
+   label 'small'
 
-      publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "rgi", filename) }, \
+   publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "rgi", filename) }, \
          pattern: "{**.rgi.tsv,**.png,**.eps,**.csv}"
 
-      when params.steps.containsKey("annotation") && params?.steps.annotation.containsKey("rgi")
+   when params.steps.containsKey("annotation") && params?.steps.annotation.containsKey("rgi")
+
+   secret { "${S3_rgi_ACCESS}"!="" ? ["S3_rgi_ACCESS", "S3_rgi_SECRET"] : [] } 
 
    input:
       tuple val(sample), val(binID), file(fasta)
@@ -282,6 +305,8 @@ process pResistanceGeneIdentifier {
    DOWNLOAD_LINK=params.steps?.annotation?.rgi?.database?.download?.source ?: ""
    MD5SUM=params?.steps?.annotation?.rgi?.database?.download?.md5sum ?: ""
    S5CMD_PARAMS=params.steps?.annotation?.rgi?.database?.download?.s5cmd?.params ?: ""
+   S3_rgi_ACCESS=params.steps?.annotation?.rgi?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_rgi_ACCESS" : ""
+   S3_rgi_SECRET=params.steps?.annotation?.rgi?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_rgi_SECRET" : ""
    '''
    mkdir -p !{params.polished.databases}
    ADDITIONAL_RGI_PARAMS="!{params.steps?.annotation?.rgi?.additionalParams}"
@@ -293,15 +318,22 @@ process pResistanceGeneIdentifier {
         DATABASE=!{params.polished.databases}/rgi
         LOCK_FILE=${DATABASE}/lock.txt
 
+	# Check if access and secret keys are necessary for s5cmd
+        if [ ! -z "!{S3_rgi_ACCESS}" ]
+        then
+          export AWS_ACCESS_KEY_ID=!{S3_rgi_ACCESS}
+          export AWS_SECRET_ACCESS_KEY=!{S3_rgi_SECRET}
+        fi
+
         # Download CARD database
         mkdir -p ${DATABASE}
         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
          --link=!{DOWNLOAD_LINK} \
-         --httpsCommand="wget -O data !{DOWNLOAD_LINK} && tar -xvf data && rm data" \
+         --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | tar -xvj " \
          --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus}  !{DOWNLOAD_LINK} . " \
-         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} data && tar -xvf data  && rm data" \
+         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | tar -xvj " \
 	 --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
-         --localCommand="tar -xvf !{DOWNLOAD_LINK}" \
+         --localCommand="tar -xvjf !{DOWNLOAD_LINK}" \
          --expectedMD5SUM=!{MD5SUM}
 
          CARD_JSON="$(readlink -f ${DATABASE}/out/card.json)"
@@ -398,6 +430,8 @@ process pHmmSearch {
 
       label 'highmemMedium'
 
+      secret { "${S3_gtdb_ACCESS}"!="" ? ["S3_gtdb_ACCESS", "S3_gtdb_SECRET"] : [] } 
+
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "hmmSearch", filename) }
 
       when params.steps.containsKey("binning") && params?.steps.binning.containsKey("magscot")
@@ -420,10 +454,12 @@ process pHmmSearch {
    DOWNLOAD_LINK=params.steps?.binning?.magscot?.hmmSearch?.database?.download?.source ?: ""
    MD5SUM=params?.steps?.binning?.magscot?.hmmSearch?.database?.download?.md5sum ?: ""
    S5CMD_PARAMS=params.steps?.binning?.magscot?.hmmSearch?.database?.download?.s5cmd?.params ?: ""
+   S3_gtdb_ACCESS=params.steps?.binning?.magscot?.hmmSearch?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_gtdb_ACCESS" : ""
+   S3_gtdb_SECRET=params.steps?.binning?.magscot?.hmmSearch?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_gtdb_SECRET" : ""
    '''
    ADDITIONAL_HMMSEARCH_PARAMS="!{params.steps?.binning?.magscot?.hmmSearch?.additionalParams}"
 
-   gtdb_download.sh "!{EXTRACTED_DB}" "!{DOWNLOAD_LINK}" "!{S5CMD_PARAMS}" "!{task.cpus}" "!{params.polished.databases}" "!{MD5SUM}"
+   gtdb_download.sh "!{EXTRACTED_DB}" "!{DOWNLOAD_LINK}" "!{S5CMD_PARAMS}" "!{task.cpus}" "!{params.polished.databases}" "!{MD5SUM}" "!{S3_gtdb_ACCESS}" "!{S3_gtdb_SECRET}" || exit 1 
 
    GTDB=$(cat gtdbPath.txt)
 
@@ -468,6 +504,8 @@ process pKEGGFromBlast {
 
       when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("keggFromBlast")
 
+   secret { "${S3_KEGG_ACCESS}"!="" ? ["S3_kegg_ACCESS", "S3_kegg_SECRET"] : [] } 
+
    input:
       tuple val(sample), val(binType), file(blast_result)
 
@@ -482,6 +520,8 @@ process pKEGGFromBlast {
       MD5SUM=params?.steps?.annotation?.keggFromBlast?.database?.download?.md5sum ?: ""
       S5CMD_PARAMS=params.steps?.annotation?.keggFromBlast?.database?.download?.s5cmd?.params ?: ""
       EXTRACTED_DB=params.steps?.annotation?.keggFromBlast?.database?.extractedDBPath ?: ""
+      S3_KEGG_ACCESS=params.steps?.annotation?.keggFromBlast?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_kegg_ACCESS" : ""
+      S3_KEGG_SECRET=params.steps?.annotation?.keggFromBlast?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_kegg_SECRET" : ""
       '''
       mkdir -p !{params.polished.databases}
       # Check developer documentation
@@ -491,13 +531,20 @@ process pKEGGFromBlast {
         DATABASE=!{params.polished.databases}/kegg
         LOCK_FILE=${DATABASE}/lock.txt
 
+	# Check if access and secret keys are necessary for s5cmd
+        if [ ! -z "!{S3_KEGG_ACCESS}" ]
+        then
+          export AWS_ACCESS_KEY_ID=!{S3_KEGG_ACCESS}
+          export AWS_SECRET_ACCESS_KEY=!{S3_KEGG_SECRET}
+        fi
+
         # Download CARD database
         mkdir -p ${DATABASE}
         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
          --link=!{DOWNLOAD_LINK} \
-         --httpsCommand="wget -O kegg.tar.gz !{DOWNLOAD_LINK} && tar -xzvf kegg.tar.gz && rm kegg.tar.gz " \
+         --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | tar -xz " \
          --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
-         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp !{DOWNLOAD_LINK} kegg.tar.gz && tar -xzvf kegg.tar.gz && rm kegg.tar.gz " \
+         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat !{DOWNLOAD_LINK} | tar -xz " \
 	 --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
          --localCommand="tar -xzvf !{DOWNLOAD_LINK} " \
          --expectedMD5SUM=!{MD5SUM}
@@ -719,6 +766,7 @@ workflow _wAnnotation {
       selectedTaxDBs = params?.steps?.annotation?.mmseqs2_taxonomy.findAll({  it.key != "runOnMAGs"  }).collect({
             [it.key, it.value?.params ?: "", \
              it.value?.ramMode ? "true" : "false", \
+             it.value?.initialMaxSensitivity ?: "", \
              it.value?.database?.extractedDBPath ?: "", \
              it.value.database?.download?.source ?: "", \
              it.value.database?.download?.md5sum ?: "", \

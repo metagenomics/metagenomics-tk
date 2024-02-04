@@ -1,5 +1,6 @@
 tempdir: "tmp"
 summary: true
+s3SignIn: false
 output: "output"
 runid: 1
 logLevel: 1
@@ -9,18 +10,13 @@ publishDirMode: "symlink"
 steps:
   magAttributes:
     input: "test_data/magAttributes/input.tsv"
-    gtdb:
-      buffer: 1000
-      database:
-        download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
-          md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
-      additionalParams: " --min_af 0.65 --scratch_dir . "
     checkm:
       database:
         download:
-          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz"
+          source: "s3://databases/checkm_data_2015_01_16.tar.gz"
           md5sum: 0963b301dfe9345ea4be1246e32f6728
+          s5cmd: 
+            params: " --retry-count 30 --no-verify-ssl  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "
       buffer: 200
       additionalParams:
         tree: " --reduced_tree "

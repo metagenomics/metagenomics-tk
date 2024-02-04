@@ -1,10 +1,11 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: true
 input:
   SRA:
     pattern:
-      ont: ".+[^(_1|_2)].+$"
-      illumina: ".+(_1|_2).+$"
+      ont: ".+[^(_1|_2)].+fastq.gz$"
+      illumina: ".+(_1|_2).+fastq.gz$"
     S3:
       path: test_data/fullPipeline/production.tsv
       bucket: "s3://ftp.era.ebi.ac.uk" 
@@ -85,7 +86,9 @@ steps:
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
     contigsCoverage:
-      additionalParams: ""
+      additionalParams: " --min-covered-fraction 0 "
+    genomeCoverage:
+      additionalParams: " --min-covered-fraction 0 "
     metabat:
       additionalParams: " --seed 234234  "
   magAttributes:
@@ -143,7 +146,6 @@ steps:
             source: s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst
             md5sum: 0d20db97b3e7ee6571ca1fd5ad3a87f1
             s5cmd:
-              keyfile: /vol/spool/keyfile
               params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
       vfdb:
         params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
@@ -177,6 +179,7 @@ steps:
         params: ' --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies  --max-seqs 300 --max-accept 50 --cov-mode 0 -e 0.001 --e-profile 0.01 '
         # Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params
         ramMode: false
+        initialMaxSensitivity: 6
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz

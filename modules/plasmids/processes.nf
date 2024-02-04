@@ -28,7 +28,9 @@ process pViralVerifyPlasmid {
 
     container "${params.viralVerify_image}"
 
-    beforeScript "mkdir -p ${params.polished.databases}"
+    beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
+
+    secret { "${S3_ViralVerifyPlasmid_ACCESS}"!="" ? ["S3_ViralVerifyPlasmid_ACCESS", "S3_ViralVerifyPlasmid_SECRET"] : [] } 
 
     input:
     tuple val(sample), val(binID), path(plasmids)
@@ -45,6 +47,8 @@ process pViralVerifyPlasmid {
     S5CMD_PARAMS=params.steps?.plasmid?.ViralVerifyPlasmid?.database?.download?.s5cmd?.params ?: ""
     output = getOutput("${sample}", params.runid, "ViralVerifyPlasmid", "")
     ADDITIONAL_PARAMS=params.steps?.plasmid?.ViralVerifyPlasmid?.additionalParams ?: ""
+    S3_ViralVerifyPlasmid_ACCESS=params?.steps?.plasmid?.ViralVerifyPlasmid?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_ViralVerifyPlasmid_ACCESS" : ""
+    S3_ViralVerifyPlasmid_SECRET=params?.steps?.plasmid?.ViralVerifyPlasmid?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_ViralVerifyPlasmid_SECRET" : ""
     '''
     FILTER_STRING="!{params.steps?.plasmid?.ViralVerifyPlasmid?.filterString}"
 
@@ -56,12 +60,19 @@ process pViralVerifyPlasmid {
          DATABASE=!{params.polished.databases}/pfam
          LOCK_FILE=${DATABASE}/lock.txt
 
+	 # Check if access and secret keys are necessary for s5cmd
+         if [ ! -z "!{S3_ViralVerifyPlasmid_ACCESS}" ]
+         then
+             export AWS_ACCESS_KEY_ID=!{S3_ViralVerifyPlasmid_ACCESS}
+             export AWS_SECRET_ACCESS_KEY=!{S3_ViralVerifyPlasmid_SECRET}
+         fi
+
          mkdir -p ${DATABASE}
          flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
             --link=!{DOWNLOAD_LINK} \
-            --httpsCommand="wget -O - !{DOWNLOAD_LINK} | pigz -fdc > pfam.hmm " \
-            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat !{DOWNLOAD_LINK} | pigz -fdc > pfam.hmm  " \
-            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} pfam.hmm.gz && pigz -fdc pfam.hmm.gz > pfam.hmm && rm pfam.hmm.gz " \
+            --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | pigz -fdc > pfam.hmm " \
+            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | pigz -fdc > pfam.hmm  " \
+            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . && mv * pfam.hmm " \
             --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
             --localCommand="gunzip -c !{DOWNLOAD_LINK} > ./pfam.hmm " \
             --expectedMD5SUM=!{MD5SUM}
@@ -105,9 +116,11 @@ process pMobTyper {
 
     container "${params.mobSuite_image}"
 
-    beforeScript "mkdir -p ${params.polished.databases}"
+    beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
     containerOptions Utils.getDockerMount(params.steps?.plasmid?.MobTyper?.database, params)
+
+    secret { "${S3_MobTyper_ACCESS}"!="" ? ["S3_MobTyper_ACCESS", "S3_MobTyper_SECRET"] : [] } 
 
     input:
     tuple val(sample), val(binID), path(plasmids), val(start), val(stop)
@@ -126,6 +139,8 @@ process pMobTyper {
     ADDITIONAL_PARAMS=params.steps?.plasmid?.MobTyper?.additionalParams ?: ""
     MIN_LENGTH=params.steps?.plasmid?.MobTyper?.minLength ?: ""
     output = getOutput("${sample}", params.runid, "MobTyper", "")
+    S3_MobTyper_ACCESS=params.steps?.plasmid?.MobTyper?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_MobTyper_ACCESS" : ""
+    S3_MobTyper_SECRET=params.steps?.plasmid?.MobTyper?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_MobTyper_SECRET" : ""
     template("mobtyper.sh")
 }
 
@@ -174,7 +189,9 @@ process pPlaton {
 
     container "${params.platon_image}"
 
-    beforeScript "mkdir -p ${params.polished.databases}"
+    beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
+
+    secret { "${S3_Platon_ACCESS}"!="" ? ["S3_Platon_ACCESS", "S3_Platon_SECRET"] : [] } 
 
     input:
     tuple val(sample), val(binID), path(assembly)
@@ -191,6 +208,8 @@ process pPlaton {
     DOWNLOAD_LINK=params?.steps?.plasmid?.Platon?.database?.download?.source ?: ""
     MD5SUM=params?.steps?.plasmid?.Platon?.database?.download?.md5sum ?: ""
     S5CMD_PARAMS=params.steps?.plasmid?.Platon?.database?.download?.s5cmd?.params ?: ""
+    S3_Platon_ACCESS=params.steps?.plasmid?.Platon?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_Platon_ACCESS" : ""
+    S3_Platon_SECRET=params.steps?.plasmid?.Platon?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_Platon_SECRET" : ""
     '''
     # --meta is not supported by Platon
     sed -i "458 i       '-p', 'meta', " /usr/local/lib/python3.9/site-packages/platon/functions.py
@@ -202,13 +221,20 @@ process pPlaton {
       DATABASE=!{params.polished.databases}/platon
       LOCK_FILE=${DATABASE}/checksum.txt
 
+      # Check if access and secret keys are necessary for s5cmd
+      if [ ! -z "!{S3_Platon_ACCESS}" ]
+      then
+          export AWS_ACCESS_KEY_ID=!{S3_Platon_ACCESS}
+          export AWS_SECRET_ACCESS_KEY=!{S3_Platon_SECRET}
+      fi
+
       # Download plsdb database if necessary
       mkdir -p ${DATABASE}
       flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
 	--link=!{DOWNLOAD_LINK} \
 	--httpsCommand="wget -qO- !{DOWNLOAD_LINK} | tar -xvz " \
 	--s3FileCommand="s5cmd !{S5CMD_PARAMS} cat !{DOWNLOAD_LINK} | tar -xvz  " \
-	--s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} platon.tar.gz && tar -xzvf platon.tar.gz && rm platon.tar.gz " \
+	--s3DirectoryCommand="mkdir db && cd db && s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
 	--s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
 	--localCommand="tar xzvf !{DOWNLOAD_LINK} " \
 	--expectedMD5SUM=!{MD5SUM}

@@ -28,6 +28,20 @@ Checkm and GTDB need their databases as input. See [database section](../pipelin
 The GTDB and Checkm compressed databases must be tar.gz files. If you provide the extracted version of GTDB using the `extractedDBPath` parameter,
 please specify the path to the `releasesXXX` directory (e.g. "/vol/spool/gtdb/release202").
 
+If you need credentials to access your files via S3 then please use the following command:
+
+For GTDB:
+```
+nextflow secrets set S3_gtdb_ACCESS XXXXXXX
+nextflow secrets set S3_gtdb_SECRET XXXXXXX
+```
+
+For Checkm:
+```
+nextflow secrets set S3_checkm_ACCESS XXXXXXX
+nextflow secrets set S3_checkm_SECRET XXXXXXX
+```
+
 ## Output
 
 ### GTDBTk
