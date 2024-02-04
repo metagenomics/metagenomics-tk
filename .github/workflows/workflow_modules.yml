@@ -128,6 +128,8 @@ jobs:
           make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
           make set_secrets SECRET_NAME=S3_checkm_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
           make set_secrets SECRET_NAME=S3_checkm_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_checkm2_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_checkm2_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
           make set_secrets SECRET_NAME=S3_gtdb_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
           make set_secrets SECRET_NAME=S3_gtdb_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Test MAG Attributes
