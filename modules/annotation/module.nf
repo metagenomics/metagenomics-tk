@@ -24,7 +24,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 * See “/lib/Utils.groovy” for more information.
 **/
 def constructParametersObject(String tool){ 
-  return params?.steps?.annotation?."$tool".findAll({ it.key != "runOnMAGs" }).collect{ Utils.getDockerMount(it.value?.database, params, 'true')}.join(" ")
+  return params?.steps?.annotation?."$tool".findAll({ it.key != "runOnMAGs" && it.key != "chunkSize" }).collect{ Utils.getDockerMount(it.value?.database, params, 'true')}.join(" ")
 }
 
 
