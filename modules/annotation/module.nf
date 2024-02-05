@@ -125,7 +125,7 @@ process pMMseqs2 {
           # If an extracted database is present use that path. 
           MMSEQS2_DATABASE_DIR="!{EXTRACTED_DB}"
    fi
-    MMSEQS_HEADER="query,target,pident,alnlen,mismatch,gapopen,qstart,qend,tstart,tend,evalue,bits,qlen,tlen,qcov,tcov,theader"
+    MMSEQS_HEADER="query,target,pident,alnlen,mismatch,gapopen,qstart,qend,tstart,tend,evalue,bits,qlen,tlen,qcov,tcov"
     OUTPUT_TMP_TSV="!{sample}_!{binType}.!{start}.!{stop}.!{dbType}.blast.tmp.tsv"
     OUTPUT_TSV="!{sample}_!{binType}.!{start}.!{stop}.!{dbType}.blast.tsv"
 
