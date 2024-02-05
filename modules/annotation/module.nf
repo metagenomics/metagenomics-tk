@@ -78,7 +78,7 @@ process pMMseqs2 {
 
    output:
       tuple val("${dbType}"), val("${sample}"), val("${binType}"), val("${start}"), val("${stop}"), \
-	path("${sample}_${binType}.${dbType}.${start}.${stop}.blast.tsv"), optional:true, emit: blast
+	path("${sample}_${binType}.${start}.${stop}.${dbType}.blast.tsv"), optional:true, emit: blast
       tuple val("${sample}_${binType}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -126,8 +126,8 @@ process pMMseqs2 {
           MMSEQS2_DATABASE_DIR="!{EXTRACTED_DB}"
    fi
     MMSEQS_HEADER="query,target,pident,alnlen,mismatch,gapopen,qstart,qend,tstart,tend,evalue,bits,qlen,tlen,qcov,tcov,theader"
-    OUTPUT_TMP_TSV="!{sample}_!{binType}.!{dbType}.!{start}.!{stop}.blast.tmp.tsv"
-    OUTPUT_TSV="!{sample}_!{binType}.!{dbType}.!{start}.!{stop}.blast.tsv"
+    OUTPUT_TMP_TSV="!{sample}_!{binType}.!{start}.!{stop}.!{dbType}.blast.tmp.tsv"
+    OUTPUT_TSV="!{sample}_!{binType}.!{start}.!{stop}.!{dbType}.blast.tsv"
 
     # According to the MMSeqs docs the --split-memory-limit parameter defines the RAM usage for *about* 80 percent of the total RAM consumption.
     # We set the ram limit parameter to 75 percent of the total available RAM to make sure to not run into out of memory errors.
