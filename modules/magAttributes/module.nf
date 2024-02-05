@@ -81,6 +81,8 @@ process pCheckM2 {
 
     tag "Sample: $sample"
 
+    secret { "${S3_checkm2_ACCESS}"!="" ? ["S3_checkm2_ACCESS", "S3_checkm2_SECRET"] : [] } 
+
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "checkm2", filename) }, \
       pattern: "{**.tsv}"
 
