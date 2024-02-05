@@ -235,6 +235,7 @@ steps:
       defaultKingdom: false
       additionalParams: " --mincontiglen 500 "
     mmseqs2:
+      chunkSize: 7000
       kegg:
         params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
         database:

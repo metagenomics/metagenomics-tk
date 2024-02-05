@@ -43,6 +43,7 @@ steps:
             md5sum: d7e627221a1d4584d1c1795cda774cdb
         additionalParams: ""
       mmseqs2_taxonomy:
+        chunkSize: 7000
         runOnMAGs: false
         gtdb:
           params: ' --orf-filter-s 1 -e 1e-15'

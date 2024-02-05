@@ -170,6 +170,7 @@ steps:
       defaultKingdom: false
       additionalParams: " --mincontiglen 200 "
     mmseqs2:
+      chunkSize: 7000
       kegg:
         params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
         database:
