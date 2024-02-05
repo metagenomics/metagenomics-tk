@@ -10,6 +10,12 @@ then
   DATABASE=!{params.polished.databases}/checkm2
   LOCK_FILE=${DATABASE}/lock.txt
 
+  if [ ! -z "!{S3_checkm2_ACCESS}" ]
+  then
+    export AWS_ACCESS_KEY_ID=!{S3_checkm2_ACCESS}
+    export AWS_SECRET_ACCESS_KEY=!{S3_checkm2_SECRET}
+  fi
+
   # Download checkm database if necessary
   mkdir -p ${DATABASE}
   flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
