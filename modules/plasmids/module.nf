@@ -138,31 +138,6 @@ process pCount {
     '''
 }
 
-/*
-* This method takes number of entries in a input file (e.g. fata entries in multi fasta file),
-* the maximum number of allowed entries per chunk and the actual input (e.g. file).
-* It creates a list of indices of chunks of the input file based on the input parameters.
-*/
-def splitFilesIndex(seqCount, chunkSize, sample){
-  int chunk=seqCount.intdiv(chunkSize)
-  if(seqCount.mod(chunkSize) != 0){
-      chunk = chunk + 1
-  }
-  def chunks = []
-  for(def n : 1..chunk){
-      int start = (n-1) * chunkSize + 1
-     
-      int end = n * chunkSize
-    
-      if(end > seqCount){
-          end=seqCount
-      }
-      chunks.add(sample + [start, end])
-  }
-
-  return chunks
-}
-
 
 /*
 * 
@@ -180,7 +155,7 @@ workflow _wSplit {
     COUNT_IDX=3
     CHUNK_SIZE_IDX=4
     input | pCount | combine(chunkSize) | flatMap { sample -> \
-	splitFilesIndex(Integer.parseInt(sample[COUNT_IDX]), sample[CHUNK_SIZE_IDX], [sample[SAMPLE_IDX], sample[BIN_ID_IDX], sample[FILE_IDX]]) } \
+	Utils.splitFilesIndex(Integer.parseInt(sample[COUNT_IDX]), sample[CHUNK_SIZE_IDX], [sample[SAMPLE_IDX], sample[BIN_ID_IDX], sample[FILE_IDX]]) } \
 	| set { chunks }
   emit:
     chunks

@@ -4,6 +4,7 @@ include { pDumpLogs } from '../utils/processes'
 
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.stream.Collectors
 
 mode = 'mode_not_set'
 
@@ -62,7 +63,7 @@ process pMMseqs2 {
  
       tag "Sample: $sample, Database: $dbType"
 
-      label 'highmemLarge'
+      label 'large'
 
       secret { "${S3_DB_ACCESS}"!="" ? ["S3_${dbType}_ACCESS", "S3_${dbType}_SECRET"] : [] } 
 
@@ -73,10 +74,11 @@ process pMMseqs2 {
 
    input:
       val(binType)
-      tuple val(sample), file(fasta), file(contig2GeneMapping), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
-   
+      tuple val(sample), file(fasta), file(contig2GeneMapping), val(start), val(stop), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
+
    output:
-      tuple val("${dbType}"), val("${sample}"), val("${binType}"), path("${sample}_${binType}.${dbType}.blast.tsv"), optional:true, emit: blast
+      tuple val("${dbType}"), val("${sample}"), val("${binType}"), val("${start}"), val("${stop}"), \
+	path("${sample}_${binType}.${dbType}.${start}.${stop}.blast.tsv"), optional:true, emit: blast
       tuple val("${sample}_${binType}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -123,17 +125,21 @@ process pMMseqs2 {
           # If an extracted database is present use that path. 
           MMSEQS2_DATABASE_DIR="!{EXTRACTED_DB}"
    fi
-    MMSEQS_HEADER="query,target,pident,alnlen,mismatch,gapopen,qstart,qend,tstart,tend,evalue,bits,qlen,tlen,qcov,tcov"
-    OUTPUT_TMP_TSV="!{sample}_!{binType}.!{dbType}.blast.tmp.tsv"
-    OUTPUT_TSV="!{sample}_!{binType}.!{dbType}.blast.tsv"
+    MMSEQS_HEADER="query,target,pident,alnlen,mismatch,gapopen,qstart,qend,tstart,tend,evalue,bits,qlen,tlen,qcov,tcov,theader"
+    OUTPUT_TMP_TSV="!{sample}_!{binType}.!{dbType}.!{start}.!{stop}.blast.tmp.tsv"
+    OUTPUT_TSV="!{sample}_!{binType}.!{dbType}.!{start}.!{stop}.blast.tsv"
 
     # According to the MMSeqs docs the --split-memory-limit parameter defines the RAM usage for *about* 80 percent of the total RAM consumption.
     # We set the ram limit parameter to 75 percent of the total available RAM to make sure to not run into out of memory errors.
     RAM_LIMIT="$(awk -v RATIO=75 -v RAM=$(echo !{task.memory} | cut -f 1 -d ' ') 'BEGIN { print int(RAM / 100 * RATIO) }')G"
 
     mkdir tmp
+
+    # Create new input file
+    cat !{fasta} | seqkit range -r !{start}:!{stop} > input.fa
+
     # Only mmseqs2 databases can be used for every kind of search. Inputs have to be converted first.
-    mmseqs createdb !{fasta} queryDB
+    mmseqs createdb input.fa queryDB
     # Load all indices into memory to increase searching speed
     mmseqs touchdb --threads !{task.cpus} queryDB
     mmseqs touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
@@ -507,10 +513,10 @@ process pKEGGFromBlast {
    secret { "${S3_KEGG_ACCESS}"!="" ? ["S3_kegg_ACCESS", "S3_kegg_SECRET"] : [] } 
 
    input:
-      tuple val(sample), val(binType), file(blast_result)
+      tuple val(sample), val(binType), val(start), val(stop), file(blast_result)
 
    output:
-      tuple val("${sample}"), path("${sample}_${binType}_keggPaths.tsv"), emit: kegg_paths
+      tuple val("${sample}"), path("${sample}_${binType}_${start}_${stop}_keggPaths.tsv"), emit: kegg_paths
       tuple val("${sample}_${binType}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -553,7 +559,7 @@ process pKEGGFromBlast {
       else
          KEGG_DB="!{EXTRACTED_DB}"
       fi
-      blast2kegg.py !{blast_result} ${KEGG_DB} !{sample}_!{binType}_keggPaths.tsv
+      blast2kegg.py !{blast_result} ${KEGG_DB} !{sample}_!{binType}_!{start}_!{stop}_keggPaths.tsv
       '''
 }
 
@@ -729,6 +735,54 @@ workflow wAnnotateList {
 }
 
 
+process pCount {
+
+    label 'tiny'
+
+    tag "Sample: $sample, BinID: $binID"
+
+    container "${params.ubuntu_image}"
+
+    input:
+    tuple val(sample), val(binID), path(fasta), path(metadata)
+
+    output:
+    tuple val("${sample}"), val("${binID}"), path(fasta), path(metadata), env(COUNT) 
+
+    shell:
+    '''
+    COUNT=$(seqkit stats -T <(cat !{fasta}) | cut -d$'\t' -f 4 | tail -n 1)
+    '''
+}
+
+
+/*
+* 
+* This method splits the input file in chunks.
+*
+*/
+workflow _wSplit {
+  take:
+    input
+    chunkSize
+  main:
+    SAMPLE_IDX = 0
+    FILE_IDX = 1
+    FILE_2_IDX = 2
+    FILE_3_IDX = 3
+    COUNT_IDX=4
+    CHUNK_SIZE_IDX=5
+    ID_PLACEHOLDER = ""
+
+    input | map { dataset -> [dataset[SAMPLE_IDX].toString(), ID_PLACEHOLDER, dataset[FILE_IDX], dataset[FILE_2_IDX]] } \
+	| pCount | combine(chunkSize) | flatMap { sample -> \
+   	Utils.splitFilesIndex(Integer.parseInt(sample[COUNT_IDX]), sample[CHUNK_SIZE_IDX], [sample[SAMPLE_IDX], sample[FILE_2_IDX], sample[FILE_3_IDX]]) } \
+	| set { chunks }   	
+
+  emit:
+    chunks
+}
+
 /**
 *
 * The main annotation workflow. 
@@ -755,7 +809,7 @@ workflow _wAnnotation {
       pProkka(prodigalMode, _wCreateProkkaInput.out.prokkaInput | combine(contigCoverage, by: SAMPLE_IDX))
       
       // Collect all databases
-      selectedDBs = params?.steps?.annotation?.mmseqs2.findAll().collect({ 
+      selectedDBs = params?.steps?.annotation?.mmseqs2.findAll({ it.key != "chunkSize" }).collect({
             [it.key, it.value?.params ?: "", \
 	         it.value?.database?.extractedDBPath ?: "", \
              it.value.database?.download?.source ?: "", \
@@ -772,7 +826,6 @@ workflow _wAnnotation {
              it.value.database?.download?.md5sum ?: "", \
              it.value.database?.download?.s5cmd?.params ?: "" ]
       })
-
       PATH_IDX=2
 
       // The following groupTuple operators need a counter for the expected number of bins or fasta files of a sample.
@@ -785,9 +838,12 @@ workflow _wAnnotation {
       // Run all amino acid outputs against all databases
       // Collect by sample name to bundle searches and avoid calls with small input files
       pProkka.out.faa | map { [it[SAMPLE_IDX], it[PATH_IDX]] } | combine(fastaCounter, by:SAMPLE_IDX) \
-	| map { sample, path, size -> tuple( groupKey(sample, size), path ) }  | groupTuple() | set { groupedProkkaFaa }
+	| map { sample, path, size -> tuple( groupKey(sample, size), path ) } | groupTuple() | set { groupedProkkaFaa }
 
-      groupedProkkaFaa | combine(contig2GeneMapping, by: SAMPLE_IDX) | combine(Channel.from(selectedDBs)) | set { combinedMMseqs }
+      // Split fasta files and run blast on each part in parallel
+      _wSplit(groupedProkkaFaa | combine(contig2GeneMapping, by: SAMPLE_IDX), \
+	Channel.from(params.steps?.annotation?.mmseqs2?.chunkSize)) \
+           | combine(Channel.from(selectedDBs)) | set { combinedMMseqs }
 
       pMMseqs2(sourceChannel, combinedMMseqs)
       combinedMMseqsTax = groupedProkkaFaa | combine(Channel.from(selectedTaxDBs))
