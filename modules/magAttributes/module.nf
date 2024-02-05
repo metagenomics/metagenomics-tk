@@ -106,8 +106,8 @@ process pCheckM2 {
     DOWNLOAD_LINK=params?.steps?.magAttributes?.checkm2?.database?.download?.source ?: ""
     MD5SUM=params.steps?.magAttributes?.checkm2?.database?.download?.md5sum ?: ""
     EXTRACTED_DB=params.steps?.magAttributes?.checkm2?.database?.extractedDBPath ?: ""
-    S3_checkm2_ACCESS=params?.steps?.magAttributes?.checkm2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm_ACCESS" : ""
-    S3_checkm2_SECRET=params?.steps?.magAttributes?.checkm2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm_SECRET" : ""
+    S3_checkm2_ACCESS=params?.steps?.magAttributes?.checkm2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm2_ACCESS" : ""
+    S3_checkm2_SECRET=params?.steps?.magAttributes?.checkm2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm2_SECRET" : ""
     template 'checkm2.sh'
 }
 
