@@ -14,7 +14,7 @@ gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus} \
 # reformat gtdbtk output files
 touch output/gtdbtk.bac120.summary.tsv
 touch output/gtdbtk.ar53.summary.tsv
-FILE_ID=$(mktemp -u XXXXXXXXXX)
+FILE_ID=!{chunkId}
 FILE_BAC=chunk_${FILE_ID}_!{sample}_gtdbtk.bac120.summary.tsv
 FILE_ARC=chunk_${FILE_ID}_!{sample}_gtdbtk.ar53.summary.tsv
 FILE_COMB=chunk_${FILE_ID}_!{sample}_gtdbtk_combined.tsv

@@ -55,7 +55,7 @@ process pCheckM {
     label 'highmemMedium'
 
     input:
-    tuple val(sample), val(ending), path(bins) 
+    tuple val(sample), val(ending), path(bins), val(chunkId)
 
     output:
     tuple path("${sample}_checkm_*.tsv", type: "file"), val("${sample}"), emit: checkm
@@ -94,7 +94,7 @@ process pGtdbtk {
     beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
     input:
-    tuple val(sample), val(ending), path(bins) 
+    tuple val(sample), val(ending), path(bins), val(chunkId)
 
     output:
     tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
@@ -225,18 +225,19 @@ workflow wMagAttributesList {
 *
 * Method takes a list of the form [SAMPLE, [BIN1 path, BIN2 path]] as input
 * and produces a flattend list which is grouped by dataset and sample.
-* The output has the form [SAMPLE, file ending (e.g. .fa), [BIN 1 path, BIN 2 path]]
+* The output has the form [SAMPLE, file ending (e.g. .fa), [BIN 1 path, BIN 2 path], chunk index]
 *
 */
 def groupBins(binning, buffer){
   def chunkList = [];
   def SAMPLE_IDX = 0;
   def BIN_PATHS_IDX = 1;
-  binning[BIN_PATHS_IDX].collate(buffer).each {  
-       it.groupBy{ 
+  binning[BIN_PATHS_IDX].collate(buffer).eachWithIndex {  
+       it, indexSample -> it.groupBy{ 
             bin -> file(bin).name.substring(file(bin).name.lastIndexOf(".")) 
-       }.each {
-            ending, group -> chunkList.add([binning[SAMPLE_IDX],  ending, group]);
+       }.eachWithIndex {
+            ending, group, indexFileEnding -> \
+	chunkList.add([binning[SAMPLE_IDX], ending, group, indexSample.toString() + indexFileEnding.toString()]);
        }
   }
   return chunkList;
