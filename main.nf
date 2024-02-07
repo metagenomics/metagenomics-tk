@@ -328,6 +328,18 @@ workflow wAggregatePipeline {
      | map { sra, bins -> bins} \
      | set { checkm }
 
+    // get Checkm2 results
+    Pattern checkm2Pattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_checkm2_.*.tsv$')
+     selectedSRAMagAttributes | filter({ sra, path -> checkm2Pattern.matcher(path.toString()).matches()}) \
+     | splitCsv(header: true, sep: '\t') \
+     | map { sra, bins -> bins} \
+     | set { checkm2 }
+
+    // We allow only to execute checkm or checkm2 but not both
+    checkm \
+       | mix(checkm2) \
+       | set {checkm}
+
     // get gtdbtk summary files
     Pattern gtdbPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_combined.tsv$' )
     selectedSRAMagAttributes | filter({ sra, path -> gtdbPattern.matcher(path.toString()).matches()}) \

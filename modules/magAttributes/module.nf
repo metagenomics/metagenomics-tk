@@ -46,7 +46,8 @@ process pCheckM {
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }, \
       pattern: "{**.tsv}"
 
-    when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm")
+    when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm") \
+	&& !params.steps.magAttributes.containsKey("checkm2")
 
     containerOptions Utils.getDockerMount(params.steps?.magAttributes?.checkm?.database, params) 
 
@@ -73,6 +74,44 @@ process pCheckM {
     template 'checkm.sh'
 }
 
+
+process pCheckM2 {
+
+    container "${params.checkm2_image}"
+
+    tag "Sample: $sample"
+
+    secret { "${S3_checkm2_ACCESS}"!="" ? ["S3_checkm2_ACCESS", "S3_checkm2_SECRET"] : [] } 
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "checkm2", filename) }, \
+      pattern: "{**.tsv}"
+
+    when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm2")
+
+    containerOptions Utils.getDockerMount(params.steps?.magAttributes?.checkm2?.database, params)
+
+    beforeScript "mkdir -p ${params.polished.databases}"
+
+    label 'medium'
+
+    input:
+    tuple val(sample), val(ending), path(bins) 
+
+    output:
+    tuple path("${sample}_checkm2_*.tsv", type: "file"), val("${sample}"), emit: checkm
+    tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+
+    shell:
+    output = getOutput("${sample}", params.runid, "checkm2", "")
+    S5CMD_PARAMS=params?.steps?.magAttributes?.checkm2?.database?.download?.s5cmd?.params ?: "" 
+    DOWNLOAD_LINK=params?.steps?.magAttributes?.checkm2?.database?.download?.source ?: ""
+    MD5SUM=params.steps?.magAttributes?.checkm2?.database?.download?.md5sum ?: ""
+    EXTRACTED_DB=params.steps?.magAttributes?.checkm2?.database?.extractedDBPath ?: ""
+    S3_checkm2_ACCESS=params?.steps?.magAttributes?.checkm2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm2_ACCESS" : ""
+    S3_checkm2_SECRET=params?.steps?.magAttributes?.checkm2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm2_SECRET" : ""
+    template 'checkm2.sh'
+}
 
 process pGtdbtk {
 
@@ -249,6 +288,7 @@ workflow _wMagAttributes {
    main:
      GTDB_DEFAULT_BUFFER = 500
      CHECKM_DEFAULT_BUFFER = 30
+     CHECKM2_DEFAULT_BUFFER = 20000
      BIN_FILES_INPUT_IDX = 1
 
      DATASET_IDX = 0
@@ -261,18 +301,22 @@ workflow _wMagAttributes {
      // get file ending of bin files (.fa, .fasta, ...) and group by file ending and dataset
      bins | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.checkm?.buffer ?: CHECKM_DEFAULT_BUFFER)}) \
        | pCheckM | set {checkm}
+     bins | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.checkm2?.buffer ?: CHECKM2_DEFAULT_BUFFER)}) \
+       | pCheckM2 | set { checkm2 }
      bins | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.gtdb?.buffer ?: GTDB_DEFAULT_BUFFER )}) \
        | pGtdbtk | set {gtdb}
 
-     // Prepare checkm output file
-     checkm.checkm | groupTuple(by: DATASET_OUTPUT_IDX, remainder: true) | map { it -> it[BIN_FILES_OUTPUT_GROUP_IDX] }  | flatten | map { bin -> file(bin) } \
+     checkm2.checkm | mix(checkm.checkm) | set {checkmSelected}
+
+     // Prepare checkm2 output file
+     checkmSelected | groupTuple(by: DATASET_OUTPUT_IDX, remainder: true) | map { it -> it[BIN_FILES_OUTPUT_GROUP_IDX] }  | flatten | map { bin -> file(bin) } \
        | collectFile(keepHeader: true, newLine: false ){ item -> [ "bin_attributes.tsv", item.text ] } \
        | splitCsv(sep: '\t', header: true) \
-       | set{ checkm_list } 
+       | set{ checkmSelectedList } 
 
      if(params.summary){
-       // collect checkm files for checkm results across multiple datasets
-       checkm.checkm \
+       // collect checkm files for checkm2 results across multiple datasets
+       checkmSelected \
           | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
          [ "checkm.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
        }
@@ -290,6 +334,6 @@ workflow _wMagAttributes {
      pGtdbtk.out.logs | mix(pCheckM.out.logs) | pDumpLogs 
 
    emit:
-     checkm = checkm_list
+     checkm = checkmSelectedList
      gtdb = gtdb.combined
 }

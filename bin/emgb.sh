@@ -79,7 +79,7 @@ function getContigs {
 
 
 function getBins {
-	checkm=$(find $OUTPUT_PATH/$RUN_ID/magAttributes/*/checkm/ -name "*_checkm_*.tsv" -exec readlink -f {} \; | sed 's/^/ -checkm-tsv /g')
+	checkm=$(find $OUTPUT_PATH/$RUN_ID/magAttributes/*/checkm*/ -name "*_checkm*_*.tsv" -exec readlink -f {} \; | sed 's/^/ -checkm-tsv /g')
 	gtdbtk=$(find $OUTPUT_PATH/$RUN_ID/magAttributes/*/gtdb/ -name "*.summary.tsv" -exec readlink -f {} \; | sed 's/^/ -gtdbtk-tsvs /g')
 	bins=$(find $BINS_DIR -name "*_bin.*.fa" -exec readlink -f {} \; | tail -n 1 | rev | cut -f 1 -d '/' | rev | cut -d '.' -f 1 | sed 's/^/  -bin-id-prefix /g')
 	json=" -json-gz $(pwd)/${NAME}.bins.json.gz "
