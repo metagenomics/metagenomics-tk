@@ -840,9 +840,11 @@ workflow _wAnnotation {
       pProkka.out.faa | map { [it[SAMPLE_IDX], it[PATH_IDX]] } | combine(fastaCounter, by:SAMPLE_IDX) \
 	| map { sample, path, size -> tuple( groupKey(sample, size), path ) } | groupTuple() | set { groupedProkkaFaa }
 
+      MMSEQS2_CHUNK_SIZE_DEFAULT=7000
+
       // Split fasta files and run blast on each part in parallel
       _wSplit(groupedProkkaFaa | combine(contig2GeneMapping, by: SAMPLE_IDX), \
-	Channel.from(params.steps?.annotation?.mmseqs2?.chunkSize)) \
+	Channel.from(params.steps?.annotation?.mmseqs2?.chunkSize?:MMSEQS2_CHUNK_SIZE_DEFAULT)) \
            | combine(Channel.from(selectedDBs)) | set { combinedMMseqs }
 
       pMMseqs2(sourceChannel, combinedMMseqs)
