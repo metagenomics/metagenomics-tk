@@ -55,10 +55,10 @@ process pCheckM {
     label 'highmemMedium'
 
     input:
-    tuple val(sample), val(ending), path(bins), val(chunkId)
+    tuple val(sample), val(ending), path(bins), val(chunkId), val(numberOfChunks)
 
     output:
-    tuple path("${sample}_checkm_*.tsv", type: "file"), val("${sample}"), emit: checkm
+    tuple path("${sample}_checkm_*.tsv", type: "file"), val("${sample}"), val("${numberOfChunks}"), emit: checkm
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -94,14 +94,14 @@ process pGtdbtk {
     beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
     input:
-    tuple val(sample), val(ending), path(bins), val(chunkId)
+    tuple val(sample), val(ending), path(bins), val(chunkId), val(numberOfChunks)
 
     output:
     tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
     tuple path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), val("${sample}"), optional: true, emit: archea
     tuple path("chunk_*_${sample}_gtdbtk_unclassified.tsv"), val("${sample}"), optional: true, emit: unclassified
     tuple path("*.tree"), val("${sample}"), optional: true, emit: tree
-    tuple path("chunk_*_${sample}_gtdbtk_combined.tsv"), val("${sample}"), optional: true, emit: combined
+    tuple path("chunk_*_${sample}_gtdbtk_combined.tsv"), val("${sample}"), val("${numberOfChunks}"), optional: true, emit: combined
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -225,7 +225,7 @@ workflow wMagAttributesList {
 *
 * Method takes a list of the form [SAMPLE, [BIN1 path, BIN2 path]] as input
 * and produces a flattend list which is grouped by dataset and sample.
-* The output has the form [SAMPLE, file ending (e.g. .fa), [BIN 1 path, BIN 2 path], chunk index]
+* The output has the form [SAMPLE, file ending (e.g. .fa), [BIN 1 path, BIN 2 path], chunk index, nmber of chunks]
 *
 */
 def groupBins(binning, buffer){
@@ -240,7 +240,7 @@ def groupBins(binning, buffer){
 	chunkList.add([binning[SAMPLE_IDX], ending, group, indexSample.toString() + indexFileEnding.toString()]);
        }
   }
-  return chunkList;
+  return chunkList.collect( it -> it.plus(chunkList.size()) );
 }
 
 
@@ -255,9 +255,7 @@ workflow _wMagAttributes {
      DATASET_IDX = 0
      FILE_ENDING_IDX = 1
      BIN_FILES_IDX = 2
-     BIN_FILES_OUTPUT_GROUP_IDX = 0
      BIN_FILES_OUTPUT_IDX = 0
-     DATASET_OUTPUT_IDX = 1
 
      // get file ending of bin files (.fa, .fasta, ...) and group by file ending and dataset
      bins | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.checkm?.buffer ?: CHECKM_DEFAULT_BUFFER)}) \
@@ -266,10 +264,11 @@ workflow _wMagAttributes {
        | pGtdbtk | set {gtdb}
 
      // Prepare checkm output file
-     checkm.checkm | groupTuple(by: DATASET_OUTPUT_IDX, remainder: true) | map { it -> it[BIN_FILES_OUTPUT_GROUP_IDX] }  | flatten | map { bin -> file(bin) } \
-       | collectFile(keepHeader: true, newLine: false ){ item -> [ "bin_attributes.tsv", item.text ] } \
-       | splitCsv(sep: '\t', header: true) \
-       | set{ checkm_list } 
+     checkm.checkm |  splitCsv(sep: '\t', header: true) | map { checkmDict, sample, numberOfChunks ->  tuple( groupKey(sample, numberOfChunks.toInteger()), checkmDict )} \
+	| groupTuple(remainder: true) | map { sample, checkmDict -> checkmDict} | set { checkmList }
+
+     gtdb.combined | splitCsv(sep: '\t', header: true) | map { gtdbDict, sample, numberOfChunks ->  tuple( groupKey(sample, numberOfChunks.toInteger()), gtdbDict )} \
+	| groupTuple(remainder: true) | map { sample, gtdbDict -> gtdbDict} | set { gtdbCombinedList }
 
      if(params.summary){
        // collect checkm files for checkm results across multiple datasets
@@ -291,6 +290,6 @@ workflow _wMagAttributes {
      pGtdbtk.out.logs | mix(pCheckM.out.logs) | pDumpLogs 
 
    emit:
-     checkm = checkm_list
-     gtdb = gtdb.combined
+     checkm = checkmList
+     gtdb = gtdbCombinedList
 }
