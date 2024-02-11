@@ -56,10 +56,10 @@ process pCheckM {
     label 'highmemMedium'
 
     input:
-    tuple val(sample), val(ending), path(bins), val(chunkId), val(numberOfChunks)
+    tuple val(sample), val(ending), path(bins), val(chunkId)
 
     output:
-    tuple path("${sample}_checkm_*.tsv", type: "file"), val("${sample}"), val("${numberOfChunks}"), emit: checkm
+    tuple path("${sample}_checkm_*.tsv", type: "file"), val("${sample}"), emit: checkm
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -95,10 +95,10 @@ process pCheckM2 {
     label 'medium'
 
     input:
-    tuple val(sample), val(ending), path(bins), val(chunkId), val(numberOfChunks)
+    tuple val(sample), val(ending), path(bins), val(chunkId)
 
     output:
-    tuple path("${sample}_checkm2_*.tsv", type: "file"), val("${sample}"), val("${numberOfChunks}"), emit: checkm
+    tuple path("${sample}_checkm2_*.tsv", type: "file"), val("${sample}"), emit: checkm
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -119,6 +119,8 @@ process pGtdbtk {
 
     label 'highmemMedium'
 
+    scratch false
+
     tag "Sample: $sample"
 
     secret { "${S3_gtdb_ACCESS}"!="" ? ["S3_gtdb_ACCESS", "S3_gtdb_SECRET"] : [] } 
@@ -133,14 +135,14 @@ process pGtdbtk {
     beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
     input:
-    tuple val(sample), val(ending), path(bins), val(chunkId), val(numberOfChunks)
+    tuple val(sample), val(ending), path(bins), val(chunkId)
 
     output:
     tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
     tuple path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), val("${sample}"), optional: true, emit: archea
     tuple path("chunk_*_${sample}_gtdbtk_unclassified.tsv"), val("${sample}"), optional: true, emit: unclassified
     tuple path("*.tree"), val("${sample}"), optional: true, emit: tree
-    tuple path("chunk_*_${sample}_gtdbtk_combined.tsv"), val("${sample}"), val("${numberOfChunks}"), optional: true, emit: combined
+    tuple path("chunk_*_${sample}_gtdbtk_combined.tsv"), val("${sample}"), optional: true, emit: combined
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -264,7 +266,7 @@ workflow wMagAttributesList {
 *
 * Method takes a list of the form [SAMPLE, [BIN1 path, BIN2 path]] as input
 * and produces a flattend list which is grouped by dataset and sample.
-* The output has the form [SAMPLE, file ending (e.g. .fa), [BIN 1 path, BIN 2 path], chunk index, nmber of chunks]
+* The output has the form [SAMPLE, file ending (e.g. .fa), [BIN 1 path, BIN 2 path], chunk id]
 *
 */
 def groupBins(binning, buffer){
@@ -279,7 +281,7 @@ def groupBins(binning, buffer){
 	chunkList.add([binning[SAMPLE_IDX], ending, group, indexSample.toString() + indexFileEnding.toString()]);
        }
   }
-  return chunkList.collect( it -> it.plus(chunkList.size()) );
+  return chunkList;
 }
 
 
@@ -308,11 +310,14 @@ workflow _wMagAttributes {
      checkm2.checkm | mix(checkm.checkm) | set {checkmSelected}
 
      // Prepare checkm output file
-     checkmSelected | splitCsv(sep: '\t', header: true) | map { checkmDict, sample, numberOfChunks ->  tuple( groupKey(sample, numberOfChunks.toInteger()), checkmDict )} \
-	| groupTuple(remainder: true) | map { sample, checkmDict -> checkmDict} | set { checkmList }
+     checkmSelected | splitCsv(sep: '\t', header: true) \
+	| map { checkmDict, sample -> checkmDict } \
+	| set { checkmList }
 
-     gtdb.combined | splitCsv(sep: '\t', header: true) | map { gtdbDict, sample, numberOfChunks ->  tuple( groupKey(sample, numberOfChunks.toInteger()), gtdbDict )} \
-	| groupTuple(remainder: true) | map { sample, gtdbDict -> gtdbDict} | set { gtdbCombinedList }
+     // Prepare gtdb output file
+     gtdb.combined | splitCsv(sep: '\t', header: true) \
+	| map { gtdb, sample -> gtdb } \
+	| set { gtdbCombinedList }
 
      if(params.summary){
        // collect checkm files for checkm2 results across multiple datasets

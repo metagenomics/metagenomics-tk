@@ -558,16 +558,16 @@ workflow wFullPipeline {
 	 |  set { binsStats  }
      
     wAnnotatePlasmidList(Channel.value("plasmid"), Channel.value("meta"), \
-    wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage, wPlasmidsList.out.newPlasmids | map { [it[SAMPLE_IDX], 1] })
+    wPlasmidsList.out.newPlasmids, Channel.empty(), wPlasmidsList.out.newPlasmidsCoverage, wPlasmidsList.out.newPlasmids | map { [it[SAMPLE_IDX], 1] })
 
     ont.bins | mix(illumina.bins) | map { sample, bins -> [sample, bins.size()] } | set { binsCounter }
-    wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, contigCoverage, binsCounter)
+    wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), bins, wMagAttributesList.out.gtdb, contigCoverage, binsCounter)
 
     wFragmentRecruitmentList.out.foundGenomesPerSample | map { sample, genomes -> [sample, genomes.size()] } | set { recruitedGenomesCounter }
     wAnnotateRecruitedGenomesList(Channel.value("binned"), Channel.value("single"), wFragmentRecruitmentList.out.foundGenomesSeperated, \
     wMagAttributesList.out.gtdb, wFragmentRecruitmentList.out.contigCoverage, recruitedGenomesCounter)
 
-    wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs, null, \
+    wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs, Channel.empty(), \
     contigCoverage, notBinnedContigs | map { it -> [it[SAMPLE_IDX], 1] })
 
     BIN_ID_IDX = 1
