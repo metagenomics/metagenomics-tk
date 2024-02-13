@@ -119,8 +119,6 @@ process pGtdbtk {
 
     label 'highmemMedium'
 
-    scratch false
-
     tag "Sample: $sample"
 
     secret { "${S3_gtdb_ACCESS}"!="" ? ["S3_gtdb_ACCESS", "S3_gtdb_SECRET"] : [] } 
