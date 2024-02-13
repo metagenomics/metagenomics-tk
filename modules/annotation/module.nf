@@ -695,7 +695,7 @@ workflow wAnnotateFile {
       input |  map { sample, bin, path -> [sample, bin] } |  groupTuple(by: DATASET_IDX) \
 	|  map { sample, bins -> [sample, bins.size()] } | set { fastaCounter }
 
-      _wAnnotation(Channel.value("out"), Channel.value("param"), input, null, coverage, fastaCounter)
+      _wAnnotation(Channel.value("out"), Channel.value("param"), input, Channel.empty(), coverage, fastaCounter)
    emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }
