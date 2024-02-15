@@ -343,7 +343,8 @@ workflow wAggregatePipeline {
     // get gtdbtk summary files
     Pattern gtdbPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_combined.tsv$' )
     selectedSRAMagAttributes | filter({ sra, path -> gtdbPattern.matcher(path.toString()).matches()}) \
-     | map { sraID, bins -> [bins, sraID] } \
+     | map { sraID, bins -> bins } \
+     | splitCsv(sep: '\t', header: true) \
      | set { gtdb }
 
     // Get genome scale metabolic model files
