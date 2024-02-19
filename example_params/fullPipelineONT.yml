@@ -149,7 +149,7 @@ steps:
       defaultKingdom: false
       additionalParams: " --mincontiglen 200 "
     mmseqs2:
-      chunkSize: 7000
+      chunkSize: 20000
 #      vfdb:
 #        params: ' -s 2 --exact-kmer-matching 1 '
 #        database:
