@@ -171,12 +171,12 @@ steps:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
             md5sum: 55902401a765fc460c09994d839d9b64
-      ncbi_nr:
+      uniref90:
         params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2023-04-29_mmseqs_taxonomy.tar.zst
-            md5sum: 79b9fb6b3dada41e602d70e12e7351c2
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90_20231108_mmseqs.tar.zst
+            md5sum: 313f2c031361091af2d5f3c6f6f46013
     mmseqs2_taxonomy:
       # Run taxonomy classification on MAGs and unbinable contigs or just the later
       runOnMAGs: true
