@@ -93,11 +93,11 @@ process pMegahit {
 
     cpus { getNextHigherResource([-9, 137, 247], task.exitStatus, "cpus", task.attempt, \
 	"${memory}", params.steps.assembly.megahit, \
-	params.resources.highmemXLarge, "${sample}") }
+	params.resources.highmemLarge, "${sample}") }
 
     memory { getNextHigherResource([-9, 137, 247], task.exitStatus, "memory", task.attempt, \
 	"${memory}", params.steps.assembly.megahit, \
-	params.resources.highmemXLarge, "${sample}") + ' GB' }
+	params.resources.highmemLarge, "${sample}") + ' GB' }
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "megahit", filename) }
 
