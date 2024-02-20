@@ -93,11 +93,11 @@ process pMegahit {
 
     cpus { getNextHigherResource([-9, 137, 247], task.exitStatus, "cpus", task.attempt, \
 	"${memory}", params.steps.assembly.megahit, \
-	params.resources.highmemXLarge, "${sample}") }
+	params.resources.highmemLarge, "${sample}") }
 
     memory { getNextHigherResource([-9, 137, 247], task.exitStatus, "memory", task.attempt, \
 	"${memory}", params.steps.assembly.megahit, \
-	params.resources.highmemXLarge, "${sample}") + ' GB' }
+	params.resources.highmemLarge, "${sample}") + ' GB' }
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "megahit", filename) }
 
@@ -279,6 +279,8 @@ def getResources(predictedMemory, assembler, defaults, sample, attempt){
      // get memory values as list
      def memorySet = memoryLabelMap.keySet().sort()
 
+
+
      switch(assembler.resources.RAM.mode){
        case 'PREDICT':
      	  def predictedMemoryCeil = (int)Math.ceil(Float.parseFloat(predictedMemory))
@@ -317,13 +319,16 @@ def getResources(predictedMemory, assembler, defaults, sample, attempt){
        	  }
           break;
        case 'DEFAULT':
+
           // If the memory value is not predicted do the following
           def defaultCpus = defaults.cpus
+
           def defaultMemory = defaults.memory
 
      	  def defaultMemoryIndex = memorySet.findIndexOf({ it == defaultMemory })
 
  	  def nextHigherMemoryIndex = defaultMemoryIndex + attempt - 1 
+
 
      	  if(nextHigherMemoryIndex >= memorySet.size()){
              // In case it is already the highest possible memory setting
