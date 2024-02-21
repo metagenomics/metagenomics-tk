@@ -50,7 +50,7 @@ else
 	MMSEQS_VERSION="mmseqs_sse2"
 fi
 
-MMSEQS_HEADER="query,target,pident,alnlen,mismatch,gapopen,qstart,qend,tstart,tend,evalue,bits,qlen,tlen,qcov,tcov"
+MMSEQS_HEADER="query,target,pident,alnlen,mismatch,gapopen,qstart,qend,tstart,tend,evalue,bits,qlen,tlen,qcov,tcov!{ADDITIONAL_COLUMNS}"
 OUTPUT_TMP_TSV="!{sample}_!{binType}.!{start}.!{stop}.!{dbType}.blast.tmp.tsv"
 OUTPUT_TSV="!{sample}_!{binType}.!{start}.!{stop}.!{dbType}.blast.tsv"
 

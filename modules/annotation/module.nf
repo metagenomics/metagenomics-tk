@@ -74,7 +74,7 @@ process pMMseqs2 {
 
    input:
       val(binType)
-      tuple val(sample), file(fasta), file(contig2GeneMapping), val(start), val(stop), val(dbType), val(parameters), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
+      tuple val(sample), file(fasta), file(contig2GeneMapping), val(start), val(stop), val(dbType), val(parameters), val(columns), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
 
    output:
       tuple val("${dbType}"), val("${sample}"), val("${binType}"), val("${start}"), val("${stop}"), \
@@ -86,6 +86,7 @@ process pMMseqs2 {
    output = getOutput("${sample}", params.runid, "mmseqs2/${dbType}", "")
    S3_DB_ACCESS=params.steps?.annotation?.mmseqs2?."${dbType}"?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_${dbType}_ACCESS" : ""
    S3_DB_SECRET=params.steps?.annotation?.mmseqs2?."${dbType}"?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_${dbType}_SECRET" : ""
+   ADDITIONAL_COLUMNS = "${columns}".trim() == "" ? "" : ",${columns}"
    template("mmseqs2.sh")
 }
 
@@ -735,7 +736,8 @@ workflow _wAnnotation {
       
       // Collect all databases
       selectedDBs = params?.steps?.annotation?.mmseqs2.findAll({ it.key != "chunkSize" }).collect({
-            [it.key, it.value?.params ?: "", \
+            [it.key, it.value?.additionalParams?.search ?: "", \
+		it.value?.additionalParams?.additionalColumns ?: "", \
 	         it.value?.database?.extractedDBPath ?: "", \
              it.value.database?.download?.source ?: "", \
              it.value.database?.download?.md5sum ?: "", \
