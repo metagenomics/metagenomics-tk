@@ -126,9 +126,8 @@ class Utils {
       if(end > seqCount){
           end=seqCount
       }
-      chunks.add(sample + [start, end])
+      chunks.add(sample + [start, end, chunk])
     }
-
     return chunks
   }
 

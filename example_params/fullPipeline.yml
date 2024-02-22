@@ -172,7 +172,9 @@ steps:
     mmseqs2:
       chunkSize: 20000
       kegg:
-        params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+        additionalParams:
+          search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+          additionalColumns: ""
         database:
           extractedDBPath: '/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB'
 
@@ -189,7 +191,11 @@ steps:
 #            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_experimental.tar.zst
 #            md5sum: 57a6d328486f0acd63f7e984f739e8fe
       uniref90:
-        params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+        additionalParams:
+          search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+          additionalColumns: ""
+
+
         database:
           download:
             source: s3://databases/uniref90_20231108_mmseqs/*
@@ -198,7 +204,9 @@ steps:
               params: '--retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
 
       bacmet20_predicted:
-        params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+        additionalParams:
+          search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+          additionalColumns: ""
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
