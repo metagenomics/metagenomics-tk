@@ -206,7 +206,7 @@ process pMMseqs2_taxonomy {
         $MMSEQS_VERSION touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
     fi
     # Define taxonomies
-    $MMSEQS_VERSION taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database tmp !{parameters}  --start-sens 1 --sens-steps 1 -s !{sensitivity} --threads !{task.cpus}
+    $MMSEQS_VERSION taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database tmp !{parameters} -s !{sensitivity} --threads !{task.cpus}
     # mmseqs2 searches produce output databases. These have to be converted to more useful formats.
     $MMSEQS_VERSION createtsv queryDB !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.taxonomy.tsv --threads !{task.cpus}
     $MMSEQS_VERSION taxonomyreport ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.krakenStyleTaxonomy.out
