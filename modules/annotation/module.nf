@@ -181,22 +181,36 @@ process pMMseqs2_taxonomy {
              MMSEQS2_DATABASE_DIR="!{EXTRACTED_DB}"
       fi
 
+
+    # Check which mmseqs version is the right one
+    MMSEQS_VERSION=""
+    if grep -q "avx2" /proc/cpuinfo; then
+	echo "AVX2 supported, using mmseqs_avx2"
+	MMSEQS_VERSION="mmseqs_avx2"
+    elif grep -q "sse4_1" /proc/cpuinfo; then
+	echo "SSE4.1 supported, using mmseqs_sse41"
+	MMSEQS_VERSION="mmseqs_sse41"
+    else
+	echo "Using mmseqs_sse2"
+	MMSEQS_VERSION="mmseqs_sse2"
+    fi
+
     mkdir tmp
     # Only mmseqs2 databases can be used for every kind of search. Inputs have to be converted first.
-    mmseqs createdb !{fasta} queryDB
+    $MMSEQS_VERSION createdb !{fasta} queryDB
     # If the ramMode is set to true, the whole database will be loaded into the RAM. Do not forget to set the MMseqs2 parameter accordingly, --db-load-mode 3.
     if !{ramMode}
     then
         # Load all indices into memory to increase searching speed
-        mmseqs touchdb --threads !{task.cpus} queryDB
-        mmseqs touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
+        $MMSEQS_VERSION touchdb --threads !{task.cpus} queryDB
+        $MMSEQS_VERSION touchdb --threads !{task.cpus} ${MMSEQS2_DATABASE_DIR}
     fi
     # Define taxonomies
-    mmseqs taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database tmp !{parameters}  --start-sens 1 --sens-steps 1 -s !{sensitivity} --threads !{task.cpus}
+    $MMSEQS_VERSION taxonomy queryDB ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database tmp !{parameters}  --start-sens 1 --sens-steps 1 -s !{sensitivity} --threads !{task.cpus}
     # mmseqs2 searches produce output databases. These have to be converted to more useful formats.
-    mmseqs createtsv queryDB !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.taxonomy.tsv --threads !{task.cpus}
-    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.krakenStyleTaxonomy.out
-    mmseqs taxonomyreport ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.krona.html --report-mode 1
+    $MMSEQS_VERSION createtsv queryDB !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.taxonomy.tsv --threads !{task.cpus}
+    $MMSEQS_VERSION taxonomyreport ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.krakenStyleTaxonomy.out
+    $MMSEQS_VERSION taxonomyreport ${MMSEQS2_DATABASE_DIR} !{sample}_!{binType}.!{dbType}.taxresults.database !{sample}_!{binType}.!{dbType}.krona.html --report-mode 1
    '''
 }
 
