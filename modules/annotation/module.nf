@@ -695,7 +695,7 @@ process pCount {
 
 process pCollectFile {
 
-    label 'tiny'
+    label 'small'
 
     tag "Sample: $sample, Database: $dbType"
 
