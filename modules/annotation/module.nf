@@ -450,10 +450,10 @@ process pKEGGFromBlast {
    secret { "${S3_KEGG_ACCESS}"!="" ? ["S3_kegg_ACCESS", "S3_kegg_SECRET"] : [] } 
 
    input:
-      tuple val(sample), val(binType), file(blast_result)
+      tuple val(sample), val(binType), file(blastResult)
 
    output:
-      tuple val("${sample}"), path("${sample}_${binType}_keggPaths.tsv"), emit: kegg_paths
+      tuple val("${sample}"), path("*.keggPaths.tsv"), emit: keggPaths
       tuple val("${sample}_${binType}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -496,7 +496,7 @@ process pKEGGFromBlast {
       else
          KEGG_DB="!{EXTRACTED_DB}"
       fi
-      blast2kegg.py !{blast_result} ${KEGG_DB} !{sample}_!{binType}_keggPaths.tsv
+      blast2kegg.py !{blastResult} ${KEGG_DB} !{blastResult.baseName}.keggPaths.tsv
       '''
 }
 
@@ -708,7 +708,7 @@ process pCollectFile {
     tuple val(dbType), val(sample), val(type), path(blastOutputs)
 
     output:
-    tuple val("${sample}"), val("${type}"), val("${dbType}"), path("*.blast.tsv")
+    tuple val("${sample}"), val("${type}"), val("${dbType}"), path("*.blast.tsv", arity: "1..*")
 
     shell:
     '''
@@ -835,7 +835,7 @@ workflow _wAnnotation {
 	dataset[FIRST_ELEM_IDX][FIRST_ELEM_TYPE_IDX], dataset.stream().map{ elem -> elem[ELEM_PATH_IDX] }.collect()] } \
 	| pCollectFile \
 	| filter({ sample, type, dbType, blastFiles -> dbType == "kegg" }) \
-	| map({ sample, type, dbType, blastFiles ->  [ sample, type, blastFiles ] }) \
+	| flatMap({ sample, type, dbType, blastFiles -> blastFiles.stream().map({ fi -> [sample, type, fi] }).collect() }) \
         | pKEGGFromBlast
 
       combinedMMseqsTax = groupedProkkaFaa | combine(Channel.from(selectedTaxDBs))
@@ -850,7 +850,7 @@ workflow _wAnnotation {
 	| mix(pResistanceGeneIdentifier.out.logs) \
 	| mix(pKEGGFromBlast.out.logs) | pDumpLogs
    emit:
-      keggAnnotation = pKEGGFromBlast.out.kegg_paths
+      keggAnnotation = pKEGGFromBlast.out.keggPaths
       mmseqs2_kronaHtml = pMMseqs2_taxonomy.out.kronaHtml
       mmseqs2_krakenTaxonomy = pMMseqs2_taxonomy.out.krakenStyleTaxonomy
       mmseqs2_taxonomy = pMMseqs2_taxonomy.out.taxonomy
