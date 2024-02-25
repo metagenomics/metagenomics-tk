@@ -14,11 +14,15 @@ gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus} \
 # reformat gtdbtk output files
 touch output/gtdbtk.bac120.summary.tsv
 touch output/gtdbtk.ar53.summary.tsv
-FILE_ID=$(mktemp -u XXXXXXXXXX)
+FILE_ID=!{chunkId}
 FILE_BAC=chunk_${FILE_ID}_!{sample}_gtdbtk.bac120.summary.tsv
+FILE_BAC_TMP=chunk_${FILE_ID}_!{sample}_gtdbtk.bac120.summary.tmp.tsv
 FILE_ARC=chunk_${FILE_ID}_!{sample}_gtdbtk.ar53.summary.tsv
+FILE_ARC_TMP=chunk_${FILE_ID}_!{sample}_gtdbtk.ar53.summary.tmp.tsv
+FILE_COMB_TMP=chunk_${FILE_ID}_!{sample}_gtdbtk_combined.tmp.tsv
 FILE_COMB=chunk_${FILE_ID}_!{sample}_gtdbtk_combined.tsv
 FILE_UNCLASSIFIED=chunk_${FILE_ID}_!{sample}_gtdbtk_unclassified.tsv
+FILE_UNCLASSIFIED_TMP=chunk_${FILE_ID}_!{sample}_gtdbtk_unclassified.tmp.tsv
 
 # Filter out unclassified
 head -n 1 output/gtdbtk.bac120.summary.tsv > output/unclassified.tsv
@@ -31,19 +35,35 @@ grep -v "$(printf '\t')Unclassified$(printf '\t')" output/gtdbtk.bac120.summary.
 
 grep -v "$(printf '\t')Unclassified Archaea$(printf '\t')" output/gtdbtk.ar53.summary.tsv > output/classifiedArchaea.tsv || true
 
-sed "s/^/SAMPLE\t/g" <(head -n 1 output/unclassified.tsv) > ${FILE_UNCLASSIFIED}
-sed "s/^/!{sample}\t/g"  <(tail -n +2 output/unclassified.tsv) >> ${FILE_UNCLASSIFIED}
+sed "s/^/SAMPLE\t/g" <(head -n 1 output/unclassified.tsv) > ${FILE_UNCLASSIFIED_TMP}
+sed "s/^/!{sample}\t/g"  <(tail -n +2 output/unclassified.tsv) >> ${FILE_UNCLASSIFIED_TMP}
 
-sed "s/^/SAMPLE\t/g" <(head -n 1 output/classifiedBacteria.tsv) > $FILE_BAC
-sed "s/^/!{sample}\t/g"  <(tail -n +2 output/classifiedBacteria.tsv) >> $FILE_BAC
+sed "s/^/SAMPLE\t/g" <(head -n 1 output/classifiedBacteria.tsv) > $FILE_BAC_TMP
+sed "s/^/!{sample}\t/g"  <(tail -n +2 output/classifiedBacteria.tsv) >> $FILE_BAC_TMP
 
-sed "s/^/SAMPLE\t/g" <(head -n 1 output/classifiedArchaea.tsv) > $FILE_ARC
-sed "s/^/!{sample}\t/g" <(tail -n +2 output/classifiedArchaea.tsv) >> $FILE_ARC
+sed "s/^/SAMPLE\t/g" <(head -n 1 output/classifiedArchaea.tsv) > $FILE_ARC_TMP
+sed "s/^/!{sample}\t/g" <(tail -n +2 output/classifiedArchaea.tsv) >> $FILE_ARC_TMP
 
 GTDB_SUMMARY_TMP=gtdbtk_tmp.tsv
-cat <(head -n 1 ${FILE_BAC}) <(head -n 1 ${FILE_ARC}) | sort | uniq | sed 's/^/DOMAIN\t/g' > $GTDB_SUMMARY_TMP
-cat <(tail -n +2  ${FILE_ARC} | sed 's/^/ARCHAEA\t/g') <(tail -n +2  ${FILE_BAC} | sed 's/^/BACTERIA\t/g')  >> $GTDB_SUMMARY_TMP
-paste -d$'\t' <(cut -f 3 $GTDB_SUMMARY_TMP | sed '1,1s/user_genome/BIN_ID/') $GTDB_SUMMARY_TMP > $FILE_COMB
+cat <(head -n 1 ${FILE_BAC_TMP}) <(head -n 1 ${FILE_ARC_TMP}) | sort | uniq | sed 's/^/DOMAIN\t/g' > $GTDB_SUMMARY_TMP
+cat <(tail -n +2  ${FILE_ARC_TMP} | sed 's/^/ARCHAEA\t/g') <(tail -n +2  ${FILE_BAC_TMP} | sed 's/^/BACTERIA\t/g')  >> $GTDB_SUMMARY_TMP
+paste -d$'\t' <(cut -f 3 $GTDB_SUMMARY_TMP | sed '1,1s/user_genome/BIN_ID/') $GTDB_SUMMARY_TMP > $FILE_COMB_TMP
+
+if [[ $(wc -l <${FILE_COMB_TMP}) -ge 2 ]]; then
+	        mv ${FILE_COMB_TMP} ${FILE_COMB}
+fi
+
+if [[ $(wc -l <${FILE_BAC_TMP}) -ge 2 ]]; then
+	        mv ${FILE_BAC_TMP} ${FILE_BAC}
+fi
+
+if [[ $(wc -l <${FILE_ARC_TMP}) -ge 2 ]]; then
+	        mv ${FILE_ARC_TMP} ${FILE_ARC}
+fi
+
+if [[ $(wc -l <${FILE_UNCLASSIFIED_TMP}) -ge 2 ]]; then
+	        mv ${FILE_UNCLASSIFIED_TMP} ${FILE_UNCLASSIFIED}
+fi
 
 # Copy trees to output
 for tree in $(ls -1 output/classify/*.tree); do 

@@ -251,13 +251,16 @@ workflow wCooccurrenceList {
     gtdb
     models
   main:
-     gtdb | collectFile(keepHeader: true) { file, dataset -> ["gtdb", file.text]}\
-       | set {gtdbConcatenated}
-
     MODEL_NAME_IDX = 0
     MODEL_PATH_IDX = 1
+
+    gtdb | map { bin -> bin.BIN_ID + "\t" + bin.DOMAIN + "\t" + bin.SAMPLE + "\t" + bin.user_genome + "\t" + bin.classification } \
+     | collectFile(seed: "BIN_ID\tDOMAIN\tSAMPLE\tuser_genome\tclassification", newLine: true) \
+     | set {gtdbConcatenated}
+
     models | map { model -> [fixModelID(model[MODEL_NAME_IDX]), model[MODEL_PATH_IDX]]} | set { fixedModel }
     _wCooccurrence(abundanceMatrix, gtdbConcatenated, fixedModel)
+
 }
 
 

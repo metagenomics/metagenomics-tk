@@ -56,7 +56,7 @@ process pCheckM {
     label 'highmemMedium'
 
     input:
-    tuple val(sample), val(ending), path(bins) 
+    tuple val(sample), val(ending), path(bins), val(chunkId)
 
     output:
     tuple path("${sample}_checkm_*.tsv", type: "file"), val("${sample}"), emit: checkm
@@ -95,7 +95,7 @@ process pCheckM2 {
     label 'medium'
 
     input:
-    tuple val(sample), val(ending), path(bins) 
+    tuple val(sample), val(ending), path(bins), val(chunkId)
 
     output:
     tuple path("${sample}_checkm2_*.tsv", type: "file"), val("${sample}"), emit: checkm
@@ -133,7 +133,7 @@ process pGtdbtk {
     beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
     input:
-    tuple val(sample), val(ending), path(bins) 
+    tuple val(sample), val(ending), path(bins), val(chunkId)
 
     output:
     tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
@@ -264,18 +264,19 @@ workflow wMagAttributesList {
 *
 * Method takes a list of the form [SAMPLE, [BIN1 path, BIN2 path]] as input
 * and produces a flattend list which is grouped by dataset and sample.
-* The output has the form [SAMPLE, file ending (e.g. .fa), [BIN 1 path, BIN 2 path]]
+* The output has the form [SAMPLE, file ending (e.g. .fa), [BIN 1 path, BIN 2 path], chunk id]
 *
 */
 def groupBins(binning, buffer){
   def chunkList = [];
   def SAMPLE_IDX = 0;
   def BIN_PATHS_IDX = 1;
-  binning[BIN_PATHS_IDX].collate(buffer).each {  
-       it.groupBy{ 
+  binning[BIN_PATHS_IDX].collate(buffer).eachWithIndex {  
+       it, indexSample -> it.groupBy{ 
             bin -> file(bin).name.substring(file(bin).name.lastIndexOf(".")) 
-       }.each {
-            ending, group -> chunkList.add([binning[SAMPLE_IDX],  ending, group]);
+       }.eachWithIndex {
+            ending, group, indexFileEnding -> \
+	chunkList.add([binning[SAMPLE_IDX], ending, group, indexSample.toString() + indexFileEnding.toString()]);
        }
   }
   return chunkList;
@@ -294,9 +295,7 @@ workflow _wMagAttributes {
      DATASET_IDX = 0
      FILE_ENDING_IDX = 1
      BIN_FILES_IDX = 2
-     BIN_FILES_OUTPUT_GROUP_IDX = 0
      BIN_FILES_OUTPUT_IDX = 0
-     DATASET_OUTPUT_IDX = 1
 
      // get file ending of bin files (.fa, .fasta, ...) and group by file ending and dataset
      bins | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.checkm?.buffer ?: CHECKM_DEFAULT_BUFFER)}) \
@@ -308,11 +307,15 @@ workflow _wMagAttributes {
 
      checkm2.checkm | mix(checkm.checkm) | set {checkmSelected}
 
-     // Prepare checkm2 output file
-     checkmSelected | groupTuple(by: DATASET_OUTPUT_IDX, remainder: true) | map { it -> it[BIN_FILES_OUTPUT_GROUP_IDX] }  | flatten | map { bin -> file(bin) } \
-       | collectFile(keepHeader: true, newLine: false ){ item -> [ "bin_attributes.tsv", item.text ] } \
-       | splitCsv(sep: '\t', header: true) \
-       | set{ checkmSelectedList } 
+     // Prepare checkm output file
+     checkmSelected | splitCsv(sep: '\t', header: true) \
+	| map { checkmDict, sample -> checkmDict } \
+	| set { checkmList }
+
+     // Prepare gtdb output file
+     gtdb.combined | splitCsv(sep: '\t', header: true) \
+	| map { gtdb, sample -> gtdb } \
+	| set { gtdbCombinedList }
 
      if(params.summary){
        // collect checkm files for checkm2 results across multiple datasets
@@ -331,9 +334,9 @@ workflow _wMagAttributes {
        }
      }
 
-     pGtdbtk.out.logs | mix(pCheckM.out.logs) | pDumpLogs 
+     pGtdbtk.out.logs | mix(pCheckM.out.logs) | mix(pCheckM2.out.logs) | pDumpLogs 
 
    emit:
-     checkm = checkmSelectedList
-     gtdb = gtdb.combined
+     checkm = checkmList
+     gtdb = gtdbCombinedList
 }
