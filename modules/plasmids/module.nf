@@ -156,7 +156,7 @@ workflow _wSplit {
     CHUNK_SIZE_IDX=4
     input | pCount | combine(chunkSize) | flatMap { sample -> \
 	Utils.splitFilesIndex(Integer.parseInt(sample[COUNT_IDX]), sample[CHUNK_SIZE_IDX], [sample[SAMPLE_IDX], sample[BIN_ID_IDX], sample[FILE_IDX]]) } \
-	| map({ sample, start, end, chunkSize -> [sample, start, end] }) | set { chunks }
+	| map({ sample, binID, binFile, start, end, chunkSize -> [sample, binID, binFile, start, end] }) | set { chunks }
   emit:
     chunks
 }
