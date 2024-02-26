@@ -534,26 +534,20 @@ workflow _wCreateProkkaInput {
         DATASET_IDX = 0
         BIN_ID_IDX = 1
         PATH_IDX = 2
-        if(gtdb){
-            //get GTDB domains from the tsv file with Taxonomy for all bins:
-            GTDB_FILE_IDX = 0
-            DOMAIN_IDX = 0
-            gtdb | filter(it -> file(it[GTDB_FILE_IDX]).text?.trim()) \
-             | splitCsv(sep: '\t', header: true) \
-             | map { it ->  def command = it[GTDB_FILE_IDX].classification.split(';')[DOMAIN_IDX].minus('d__'); [it[GTDB_FILE_IDX].SAMPLE, it[GTDB_FILE_IDX].BIN_ID, command] } \
+
+        //get GTDB domains from the tsv file with Taxonomy for all bins:
+        DOMAIN_IDX = 0
+        gtdb | map { it ->  def command = it.classification.split(';')[DOMAIN_IDX].minus('d__'); [it.SAMPLE, it.BIN_ID, command] } \
              | set { gtdbDomain }
-            //set domain for each bin
-            DOMAIN_PROKKA_INPUT_IDX = 3
-            fasta   |  map {it -> [it[DATASET_IDX], it[BIN_ID_IDX], file(it[PATH_IDX]) ]} \
-             | join(gtdbDomain, by:[DATASET_IDX, BIN_ID_IDX], remainder: true) \
-             | filter({ it -> it[PATH_IDX]!=null }) \
-	     | map { it -> [ it[DATASET_IDX], it[BIN_ID_IDX], it[PATH_IDX], it[DOMAIN_PROKKA_INPUT_IDX]?:params?.steps?.annotation?.prokka?.defaultKingdom ] } \
-             | set { prokkaInput }
-        } else {
-            //if no gtdb annotation available, default to the defaultKingdom in params
-            fasta | map { it -> [it[DATASET_IDX], it[BIN_ID_IDX], it[PATH_IDX], params?.steps?.annotation?.prokka?.defaultKingdom]} | set { prokkaInput }
-        }
-        
+
+        //set domain for each bin
+        DOMAIN_PROKKA_INPUT_IDX = 3
+        fasta | map {it -> [it[DATASET_IDX], it[BIN_ID_IDX], file(it[PATH_IDX]) ]} \
+           | join(gtdbDomain, by:[DATASET_IDX, BIN_ID_IDX], remainder: true) \
+           | filter({ it -> it[PATH_IDX]!=null }) \
+	   | map { it -> [ it[DATASET_IDX], it[BIN_ID_IDX], it[PATH_IDX], it[DOMAIN_PROKKA_INPUT_IDX]?:params?.steps?.annotation?.prokka?.defaultKingdom ] } \
+           | set { prokkaInput }
+
     emit:
         prokkaInput
 }
@@ -644,7 +638,7 @@ workflow wAnnotateFile {
       input |  map { sample, bin, path -> [sample, bin] } |  groupTuple(by: DATASET_IDX) \
 	|  map { sample, bins -> [sample, bins.size()] } | set { fastaCounter }
 
-      _wAnnotation(Channel.value("out"), Channel.value("param"), input, null, coverage, fastaCounter)
+      _wAnnotation(Channel.value("out"), Channel.value("param"), input, Channel.empty(), coverage, fastaCounter)
    emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }

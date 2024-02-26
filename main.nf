@@ -5,7 +5,7 @@ include { wSaveSettingsList } from './modules/config/module'
 include { pPublish as pPublishIllumina; pPublish as pPublishOnt; } from './modules/utils/processes'
 include { wShortReadQualityControlFile; wShortReadQualityControlList} from './modules/qualityControl/shortReadQC'
 include { wOntQualityControlFile; wOntQualityControlList} from './modules/qualityControl/ontQC'
-include { wShortReadAssemblyFile; wShortReadAssemblyList } from './modules/assembly/shortReadAssembler'
+include { wShortReadAssemblyFile; wShortReadAssemblyList; wTestMemSelection } from './modules/assembly/shortReadAssembler'
 include { wOntAssemblyFile; wOntAssemblyList } from './modules/assembly/ontAssembler'
 include { wShortReadBinningList } from './modules/binning/shortReadBinning'
 include { wLongReadBinningList } from './modules/binning/ontBinning'
@@ -328,10 +328,23 @@ workflow wAggregatePipeline {
      | map { sra, bins -> bins} \
      | set { checkm }
 
+    // get Checkm2 results
+    Pattern checkm2Pattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_checkm2_.*.tsv$')
+     selectedSRAMagAttributes | filter({ sra, path -> checkm2Pattern.matcher(path.toString()).matches()}) \
+     | splitCsv(header: true, sep: '\t') \
+     | map { sra, bins -> bins} \
+     | set { checkm2 }
+
+    // We allow only to execute checkm or checkm2 but not both
+    checkm \
+       | mix(checkm2) \
+       | set {checkm}
+
     // get gtdbtk summary files
     Pattern gtdbPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_combined.tsv$' )
     selectedSRAMagAttributes | filter({ sra, path -> gtdbPattern.matcher(path.toString()).matches()}) \
-     | map { sraID, bins -> [bins, sraID] } \
+     | map { sraID, bins -> bins } \
+     | splitCsv(sep: '\t', header: true) \
      | set { gtdb }
 
     // Get genome scale metabolic model files
@@ -428,6 +441,13 @@ workflow _wConfigurePipeline {
 }
 
 
+workflow wSaveSettings {
+  inputSamples = wInputFile()
+  wSaveSettingsList(inputSamples | map { it -> it.SAMPLE })
+}
+
+
+
 def flattenBins(binning){
   def chunkList = [];
   def SAMPLE_IDX = 0;
@@ -494,7 +514,7 @@ workflow _wProcessOnt {
 * Left and right read could be https, s3 links or file path. 
 */
 workflow wFullPipeline {
-   
+
     _wConfigurePipeline()
 
     inputSamples = wInputFile()
@@ -539,16 +559,16 @@ workflow wFullPipeline {
 	 |  set { binsStats  }
      
     wAnnotatePlasmidList(Channel.value("plasmid"), Channel.value("meta"), \
-    wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage, wPlasmidsList.out.newPlasmids | map { [it[SAMPLE_IDX], 1] })
+    wPlasmidsList.out.newPlasmids, Channel.empty(), wPlasmidsList.out.newPlasmidsCoverage, wPlasmidsList.out.newPlasmids | map { [it[SAMPLE_IDX], 1] })
 
     ont.bins | mix(illumina.bins) | map { sample, bins -> [sample, bins.size()] } | set { binsCounter }
-    wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, contigCoverage, binsCounter)
+    wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), bins, wMagAttributesList.out.gtdb, contigCoverage, binsCounter)
 
     wFragmentRecruitmentList.out.foundGenomesPerSample | map { sample, genomes -> [sample, genomes.size()] } | set { recruitedGenomesCounter }
     wAnnotateRecruitedGenomesList(Channel.value("binned"), Channel.value("single"), wFragmentRecruitmentList.out.foundGenomesSeperated, \
     wMagAttributesList.out.gtdb, wFragmentRecruitmentList.out.contigCoverage, recruitedGenomesCounter)
 
-    wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs, null, \
+    wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs, Channel.empty(), \
     contigCoverage, notBinnedContigs | map { it -> [it[SAMPLE_IDX], 1] })
 
     BIN_ID_IDX = 1

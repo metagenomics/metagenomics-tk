@@ -1,7 +1,7 @@
 
 # Prepare checkm patch, output directory and output file name
 mkdir out
-FILE_ID=$(mktemp XXXXXXXX)
+FILE_ID=!{chunkId}
 FILE=!{sample}_checkm_${FILE_ID}.tsv
 
 # Check developer documentation
