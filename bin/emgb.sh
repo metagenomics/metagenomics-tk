@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-VERSION=0.3.1
+VERSION=0.4.0
 
 while [ $# -gt 0 ]; do
 	  case "$1" in
@@ -18,6 +18,8 @@ while [ $# -gt 0 ]; do
 	    --workdir=*) WORK_DIR="${1#*=}"
 	    ;;
             --type=*) TYPE="${1#*=}"
+	    ;;
+	    --blastdb=*) BLAST_DB="${1#*=}"
 	    ;;
 	    --version) VERSION_CHECK=1
 	    ;;
@@ -38,7 +40,7 @@ done
 
 
 function getGenes {
-	nr=$(find $OUTPUT_PATH/$RUN_ID/annotation/ -name "*.ncbi_nr.blast.tsv" -exec readlink -f {} \;  | sed 's/^/ -nr-blast-tab /g')
+	nr=$(find $OUTPUT_PATH/$RUN_ID/annotation/ -name "*.${BLAST_DB}.blast.tsv" -exec readlink -f {} \;  | sed 's/^/ -nr-blast-tab /g')
 	tax=$(find $OUTPUT_PATH/$RUN_ID/annotation/ -name "*.taxonomy.tsv" -exec readlink -f {} \; | sed 's/^/ -mmseqs-lineage /g')
 	ffn=$(find $OUTPUT_PATH/$RUN_ID/annotation -name "*.ffn.gz" -exec readlink -f {} \; | sed 's/^/ -ffn /g')
 	gff=$(find $OUTPUT_PATH/$RUN_ID/annotation -name "*.gff.gz" -exec readlink -f {} \; | sed 's/^/ -gff /g')
@@ -103,6 +105,9 @@ help()
 	echo "              -- (e.g. X in the following example path fullPipelineOutput/SAMPLE/X/binning/)                       "
 	echo "  --binsdir   -- directory of bins. If bin refinement was executed then the bin refinement output should be used."
 	echo "              -- (e.g. --binsdir=fullPipelineOutput/DRR066656/1/binning/0.4.0/metabat)"
+	echo "  --blastdb   -- Blast output that should be exported to emgb"
+	echo "              -- (e.g. the folder name of BLAST_DB: output/test1/1/annotation/0.3.0/mmseqs2/BLAST_DB)"
+	echo "              -- (Examples: bacmet20_predicted, ncbi_nr)"
 	echo "  --db        -- emgb specific kegg database"
 	echo "  --name      -- sample name, e.g. the SAMPLE in the paths above"
 	echo "  --type      -- if other then Illumina: ONT/Hybrid"
