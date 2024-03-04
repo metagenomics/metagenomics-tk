@@ -1,5 +1,5 @@
 mkdir -p !{params.polished.databases}
-# if no local database is referenced, start download part
+# if no local database is referenced, start the download part
 if [ -z "!{EXTRACTED_DB}" ] 
 then
 # polished params end with a / so no additional one is needed at the end
@@ -17,7 +17,7 @@ then
     # Create and try to lock the given “LOCK_FILE”. If the file is locked no other process will download the same database simultaneously
     # and wait until the database is downloaded.  Depending on your database path (starts with s3:// | https:// | /../../.. ) 
     # one of the flock input commands is executed to download and decompress the database.
-    # If a database is present at the given path, checksums are compared, if they are identical the download will be omitted.  
+    # If a database is present at the given path, checksums are compared. If they are identical, the download will be omitted.  
     flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE}/!{dbType} \
             --link=!{DOWNLOAD_LINK} \
             --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -d -c | tar -xv " \
@@ -27,10 +27,10 @@ then
             --localCommand="zstd -T!{task.cpus} -c -d !{DOWNLOAD_LINK} | tar -xv " \
             --expectedMD5SUM=!{MD5SUM}
           
-    # Path of the newly downloaded database. A mmseqs2 database consists out of multiple files,
+    # Path of the newly downloaded database. A mmseqs2 database consists of multiple files,
     # the unique lookup file is searched to determine the basename of each database.
     FILEPATH=$(find ${DATABASE}/!{dbType} -name *.lookup -type f)
-    # remove extension to get the files basename.
+    # remove the extension to get the files basename.
     MMSEQS2_DATABASE_DIR=${FILEPATH%.*}
 else
     # If an extracted database is present use that path. 
