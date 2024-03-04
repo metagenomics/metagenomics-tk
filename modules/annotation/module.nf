@@ -665,6 +665,12 @@ workflow wAnnotateList {
       proteins = _wAnnotation.out.prokka_faa
 }
 
+/**
+*
+* The pCount process is designed to count the number of sequences in a given FASTA file.
+* It uses the seqkit tool to calculate the sequence statistics of a FASTA file, specifically extracting the sequence count.
+*
+**/
 
 process pCount {
 
@@ -686,7 +692,12 @@ process pCount {
     '''
 }
 
-
+/**
+*
+* The pCollectFile process is designed to collect and concatenate BLAST output files.
+* It uses the csvtk tool to concatenate all the .tsv files and then splits them based on the BIN_ID.
+*
+**/
 process pCollectFile {
 
     label 'small'
@@ -820,7 +831,7 @@ workflow _wAnnotation {
       FIRST_ELEM_TYPE_IDX = 2
 
       ELEM_PATH_IDX = 3
-      // Collect chunks an publish as one file
+      // Collect chunks and publish as one file
       pMMseqs2.out.blast \
 	| map { db, sample, type, start, stop, chunks, out -> [db + "_-_" + sample + "_-_" + type, db, sample, type, start, stop, chunks, out] } \
         | map { key, db, sample, type, start, stop, chunks, out -> tuple(groupKey(key, chunks.toInteger()), [db, sample, type, out]) } \
