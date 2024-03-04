@@ -54,6 +54,7 @@ jobs:
       - name: Test EMGB import tools
         run: |
           ./bin/emgb.sh --output=output/test1 --runid=1 --binsdir=$(find output/test1/ -name "metabat") \
+                        --blastdb=uniref90 \
                         --db=${EMGB_KEGG_DB} \
                         --workdir="${WORK_DIR}_wFullPipeline" --name=test1
 

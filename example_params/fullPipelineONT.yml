@@ -149,6 +149,7 @@ steps:
       defaultKingdom: false
       additionalParams: " --mincontiglen 200 "
     mmseqs2:
+      chunkSize: 20000
 #      vfdb:
 #        params: ' -s 2 --exact-kmer-matching 1 '
 #        database:
@@ -162,7 +163,9 @@ steps:
 #            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_experimental.tar.zst
 #            md5sum: 57a6d328486f0acd63f7e984f739e8fe
       bacmet20_predicted:
-        params: ' -s 2 --exact-kmer-matching 1 '
+        additionalParams:
+          search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+          additionalColumns: ""
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
