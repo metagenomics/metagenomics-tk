@@ -831,14 +831,18 @@ workflow _wAnnotation {
       FIRST_ELEM_TYPE_IDX = 2
 
       ELEM_PATH_IDX = 3
-      // Collect chunks and publish as one file
+      
       pMMseqs2.out.blast \
+          // An artificial group key is created which consists of the db, sample name and the type of the data (e.g. binned)
 	| map { db, sample, type, start, stop, chunks, out -> [db + "_-_" + sample + "_-_" + type, db, sample, type, start, stop, chunks, out] } \
         | map { key, db, sample, type, start, stop, chunks, out -> tuple(groupKey(key, chunks.toInteger()), [db, sample, type, out]) } \
+          // Based on the artificial group key and the expected number of chunks, the groupTuple operator is executed
 	| groupTuple() \
+          // All values of each entry are then reordered and prepared for the pCollectFile process input
         | map { key, dataset -> [dataset[FIRST_ELEM_IDX][FIRST_ELEM_DB_IDX], dataset[FIRST_ELEM_IDX][FIRST_ELEM_SAMPLE_IDX], \
 	dataset[FIRST_ELEM_IDX][FIRST_ELEM_TYPE_IDX], dataset.stream().map{ elem -> elem[ELEM_PATH_IDX] }.collect()] } \
 	| pCollectFile \
+	  // The kegg database result is selected and reordered for the pKEGGFromBlast process input
 	| filter({ sample, type, dbType, blastFiles -> dbType == "kegg" }) \
 	| flatMap({ sample, type, dbType, blastFiles -> blastFiles.stream().map({ fi -> [sample, type, fi] }).collect() }) \
         | pKEGGFromBlast

@@ -108,7 +108,7 @@ class Utils {
   }
 
   /*
-  * This method takes number of entries in a input file (e.g. fata entries in multi fasta file),
+  * This method takes the number of entries of an input file (e.g. fasta entries in multi-fasta file),
   * the maximum number of allowed entries per chunk and the actual input (e.g. file).
   * It creates a list of indices of chunks of the input file based on the input parameters.
   */
