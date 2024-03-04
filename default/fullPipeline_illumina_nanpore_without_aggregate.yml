@@ -248,19 +248,20 @@ steps:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20220929.gz
           md5sum: 21fcaf9c3754a985d1d6875939d71e28
   metabolomics:
-     beforeProcessScript: ""
      filter:
        minCompleteness: 50
        maxContamination: 5
-     gapseq:
-       additionalParams: ""
+     carveme:
+       additionalParams: " --solver scip "
      smetana:
+       beforeProcessScript: ""
        global: false
        detailed: false
        additionalParams:
          detailed: ""
          global: ""
      memote:
+       beforeProcessScript: ""
        additionalParams:
          run: ""
          report: ""

@@ -13,21 +13,22 @@ logLevel: 1
 scratch: "/vol/scratch"
 steps:
   metabolomics:
-     beforeProcessScript: /vol/spool/dockerPull.sh
      input:
        bins: "test_data/metabolomics/input.tsv" 
      filter:
        minCompleteness: 49
        maxContamination: 5
      carveme:
-       additionalParams: ""
+       additionalParams: " --solver scip "
      smetana:
+       beforeProcessScript: /vol/spool/dockerPull.sh
        global: true
        detailed: true
        additionalParams:
          detailed: ""
          global: ""
      memote:
+       beforeProcessScript: /vol/spool/dockerPull.sh
        additionalParams:
          run: ""
          report: ""

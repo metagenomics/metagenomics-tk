@@ -217,19 +217,20 @@ steps:
       database:
         extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 
   metabolomics:
-     beforeProcessScript: /vol/spool/dockerPull.sh
      filter:
        minCompleteness: 49
        maxContamination: 5
      carveme:
-       additionalParams: ""
+       additionalParams: " --solver scip "
      smetana:
+       beforeProcessScript: /vol/spool/dockerPull.sh
        global: false
        detailed: false
        additionalParams:
          detailed: ""
          global: ""
      memote:
+       beforeProcessScript: /vol/spool/dockerPull.sh
        additionalParams:
          run: ""
          report: ""

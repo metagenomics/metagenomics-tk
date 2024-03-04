@@ -33,7 +33,7 @@ In the following example your the image name is metabolomics:0.1.0:
 
 * `--gapseq_image=metabolomics:0.1.0` (Optional)
 * `--smetana_image=metabolomics:0.1.0` (Required)
-* `--carveme_image=metabolomics:0.1.0` (Required)
+* `--carveme_image=metabolomics:0.1.0` (Optional. Carveme is not able to detect the solver automatically. Please specify `--solver` in the configuration file if you want to use the scip solver.)
 * `--memote_image=metabolomics:0.1.0` (Optional. Memote is not able to detect the solver automatically. Please specify `--solver` in the configuration file if you are not using the glpk solver.)
 
 For gapseq and memote we are using a publicly available docker image that uses the freely available glkp solver which means that you don't have to provide this parameter.

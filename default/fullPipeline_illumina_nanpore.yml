@@ -289,19 +289,20 @@ steps:
           source: s3://databases_internal/kegg-links-mirror-2021-01.tar.gz
           md5sum: 69538151ecf4128f4cb1e0ac21ff55b3
   metabolomics:
-     beforeProcessScript: ""
      filter:
        minCompleteness: 50
        maxContamination: 5
-     gapseq:
-       additionalParams: ""
+     carveme:
+       additionalParams: " --solver scip "
      smetana:
+       beforeProcessScript: ""
        global: false
        detailed: false
        additionalParams:
          detailed: ""
          global: ""
      memote:
+       beforeProcessScript: ""
        additionalParams:
          run: ""
          report: ""

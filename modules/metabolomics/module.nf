@@ -17,8 +17,8 @@ process pGapSeq {
 
     tag "Sample: $sample, Bin: $id"
 
-    beforeScript params?.steps.containsKey("metabolomics") \
-	? Utils.getBeforeScript(params?.steps?.metabolomics?.beforeProcessScript.trim(), params.gapseq_image) \
+    beforeScript params?.steps.containsKey("metabolomics")  && params?.steps?.metabolomics?.gapseq?.containsKey("beforeProcessScript") \
+	? Utils.getBeforeScript(params?.steps?.metabolomics?.gapseq?.beforeProcessScript.trim(), params.gapseq_image) \
 	: ""
 
     when params.steps.containsKey("metabolomics") \
@@ -60,8 +60,8 @@ process pMemote {
 
     container "${params.memote_image}"
 
-    beforeScript params?.steps.containsKey("metabolomics") \
-	? Utils.getBeforeScript(params?.steps?.metabolomics?.beforeProcessScript.trim(), params.memote_image) \
+    beforeScript params?.steps.containsKey("metabolomics") && params?.steps?.metabolomics?.memote?.containsKey("beforeProcessScript") \
+	? Utils.getBeforeScript(params?.steps?.metabolomics?.memote?.beforeProcessScript.trim(), params.memote_image) \
 	: ""
 
     when params.steps.containsKey("metabolomics") && params.steps.metabolomics.containsKey("memote")
@@ -92,8 +92,8 @@ process pSmetanaDetailed {
 
     container "${params.smetana_image}"
 
-    beforeScript params?.steps.containsKey("metabolomics") \
-	? Utils.getBeforeScript(params?.steps?.metabolomics?.beforeProcessScript.trim(), params.smetana_image) \
+    beforeScript params?.steps.containsKey("metabolomics") && params?.steps?.metabolomics?.smetana?.containsKey("beforeProcessScript")  \
+	? Utils.getBeforeScript(params?.steps?.metabolomics?.smetana?.beforeProcessScript.trim(), params.smetana_image) \
 	: ""
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid , "smetana/detailed/", filename) }, \
@@ -121,8 +121,8 @@ process pSmetanaGlobal {
 
     tag "Sample: $sample"
 
-    beforeScript params?.steps.containsKey("metabolomics") \
-	? Utils.getBeforeScript(params?.steps?.metabolomics?.beforeProcessScript.trim(), params.smetana_image) \
+    beforeScript params?.steps.containsKey("metabolomics") && params?.steps?.metabolomics?.smetana?.containsKey("beforeProcessScript") \
+	? Utils.getBeforeScript(params?.steps?.metabolomics?.smetana?.beforeProcessScript.trim(), params.smetana_image) \
 	: ""
 
     container "${params.smetana_image}"
