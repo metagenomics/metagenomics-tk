@@ -141,6 +141,7 @@ process pGtdbtk {
     tuple path("chunk_*_${sample}_gtdbtk_unclassified.tsv"), val("${sample}"), optional: true, emit: unclassified
     tuple path("*.tree"), val("${sample}"), optional: true, emit: tree
     tuple path("chunk_*_${sample}_gtdbtk_combined.tsv"), val("${sample}"), optional: true, emit: combined
+    tuple path("chunk_*_${sample}_missing_bins.tsv"), val("${sample}"), optional: true, emit: missing
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -257,6 +258,7 @@ workflow wMagAttributesList {
    emit:
      checkm = _wMagAttributes.out.checkm
      gtdb = _wMagAttributes.out.gtdb
+     gtdbMissing = _wMagAttributes.out.gtdbMissing
 }
 
 
@@ -317,6 +319,11 @@ workflow _wMagAttributes {
 	| map { gtdb, sample -> gtdb } \
 	| set { gtdbCombinedList }
 
+     // Prepare missing gtdb output file
+     gtdb.missing | splitCsv(sep: '\t', header: true) \
+	| map { gtdb, sample -> gtdb } \
+	| set { gtdbMissingList }
+
      if(params.summary){
        // collect checkm files for checkm2 results across multiple datasets
        checkmSelected \
@@ -339,4 +346,5 @@ workflow _wMagAttributes {
    emit:
      checkm = checkmList
      gtdb = gtdbCombinedList
+     gtdbMissing = gtdbMissingList
 }

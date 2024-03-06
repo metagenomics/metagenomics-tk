@@ -6,6 +6,12 @@ jobs:
     runs-on: [self-hosted, prodTest]
     steps:
       - uses: actions/checkout@v2
+      - name: Set Secrets
+        run: |
+          make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_kegg_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_kegg_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: "Run full pipeline mode with all samples"
         run: |
           bash ./scripts/test_fullPipeline.sh \

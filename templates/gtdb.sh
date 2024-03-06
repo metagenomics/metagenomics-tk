@@ -1,6 +1,7 @@
 
 # create input, output files and run default gtdbtk command
 mkdir output
+ls -1 !{bins} > binNames.tsv
 ls -1 !{bins} | xargs -I {} readlink -f {} > bin.path
 paste -d$'\t' bin.path <(for p in $(cat bin.path); do basename $p; done) > input.tsv
 
@@ -23,6 +24,9 @@ FILE_COMB_TMP=chunk_${FILE_ID}_!{sample}_gtdbtk_combined.tmp.tsv
 FILE_COMB=chunk_${FILE_ID}_!{sample}_gtdbtk_combined.tsv
 FILE_UNCLASSIFIED=chunk_${FILE_ID}_!{sample}_gtdbtk_unclassified.tsv
 FILE_UNCLASSIFIED_TMP=chunk_${FILE_ID}_!{sample}_gtdbtk_unclassified.tmp.tsv
+MISSING_OUTPUT=chunk_${FILE_ID}_!{sample}_missing_bins.tsv
+MISSING_OUTPUT_TMP=chunk_${FILE_ID}_!{sample}_missing_bins.tmp.tsv
+
 
 # Filter out unclassified
 head -n 1 output/gtdbtk.bac120.summary.tsv > output/unclassified.tsv
@@ -70,3 +74,11 @@ for tree in $(ls -1 output/classify/*.tree); do
 	NEW_TREE_NAME=$(basename $(echo ${tree} | sed "s/classify.tree/classify_${FILE_ID}.tree/g"));
         mv ${tree} ${NEW_TREE_NAME}
 done
+
+echo -e "SAMPLE\tBIN_ID" > ${MISSING_OUTPUT_TMP}
+cat binNames.tsv <(cut -f 1 ${FILE_COMB} | tail -n +2) \
+	| sort | uniq -c | tr -s ' ' | grep " 1 "  | cut -f 3 -d ' ' | sed "s/^/!{sample}\t/g"  >> ${MISSING_OUTPUT_TMP}
+
+if [[ $(wc -l <${MISSING_OUTPUT_TMP}) -ge 2 ]]; then
+	        mv  ${MISSING_OUTPUT_TMP} ${MISSING_OUTPUT}
+fi
