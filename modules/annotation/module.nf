@@ -530,6 +530,7 @@ workflow _wCreateProkkaInput {
     take:
         fasta
         gtdb
+        gtdbMissing
     main:
         DATASET_IDX = 0
         BIN_ID_IDX = 1
@@ -543,7 +544,7 @@ workflow _wCreateProkkaInput {
         //set domain for each bin
         DOMAIN_PROKKA_INPUT_IDX = 3
         fasta | map {it -> [it[DATASET_IDX], it[BIN_ID_IDX], file(it[PATH_IDX]) ]} \
-           | join(gtdbDomain, by:[DATASET_IDX, BIN_ID_IDX], remainder: true) \
+           | join(gtdbDomain | mix(gtdbMissing | map { bin -> [bin.SAMPLE, bin.BIN_ID] }), by:[DATASET_IDX, BIN_ID_IDX], remainder: true) \
            | filter({ it -> it[PATH_IDX]!=null }) \
 	   | map { it -> [ it[DATASET_IDX], it[BIN_ID_IDX], it[PATH_IDX], it[DOMAIN_PROKKA_INPUT_IDX]?:params?.steps?.annotation?.prokka?.defaultKingdom ] } \
            | set { prokkaInput }
@@ -638,7 +639,7 @@ workflow wAnnotateFile {
       input |  map { sample, bin, path -> [sample, bin] } |  groupTuple(by: DATASET_IDX) \
 	|  map { sample, bins -> [sample, bins.size()] } | set { fastaCounter }
 
-      _wAnnotation(Channel.value("out"), Channel.value("param"), input, Channel.empty(), coverage, fastaCounter)
+      _wAnnotation(Channel.value("out"), Channel.value("param"), input, Channel.empty(), Channel.empty(), coverage, fastaCounter)
    emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
 }
@@ -654,12 +655,13 @@ workflow wAnnotateList {
       prodigalMode
       fasta
       gtdb
+      gtdbMissing
       contigCoverage
       fastaCounter
    main:
       annotationTmpDir = params.tempdir + "/annotation"
       file(annotationTmpDir).mkdirs()
-      _wAnnotation(sourceChannel, prodigalMode, fasta, gtdb, contigCoverage, fastaCounter)
+      _wAnnotation(sourceChannel, prodigalMode, fasta, gtdb, gtdbMissing, contigCoverage, fastaCounter)
     emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
       proteins = _wAnnotation.out.prokka_faa
@@ -773,13 +775,14 @@ workflow _wAnnotation {
       prodigalMode
       fasta
       gtdb
+      gtdbMissing
       contigCoverage
       fastaCounter
    main:
       SAMPLE_IDX=0
 
       // Format input for prokka and run prokka:
-      _wCreateProkkaInput(fasta, gtdb)
+      _wCreateProkkaInput(fasta, gtdb, gtdbMissing)
 
       pProkka(prodigalMode, _wCreateProkkaInput.out.prokkaInput | combine(contigCoverage, by: SAMPLE_IDX))
       
