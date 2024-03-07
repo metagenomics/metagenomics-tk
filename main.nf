@@ -15,6 +15,7 @@ include { wAnalyseMetabolitesList; wAnalyseMetabolitesFile } from './modules/met
 include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/mapping.nf'
 include { wFragmentRecruitmentFile; wFragmentRecruitmentList;} from './modules/fragmentRecruitment/module'
 include { wAnnotateFile; wAnnotateList as wAnnotateBinsList; \
+          _wCreateProkkaInput; _wCreateProkkaGtdbInput;  \
 	  wAnnotateList as wAnnotateUnbinnedList; \
 	  wAnnotateList as wAnnotatePlasmidList; \
 	  wAnnotateList as wAnnotateRecruitedGenomesList; } from './modules/annotation/module'
@@ -559,17 +560,18 @@ workflow wFullPipeline {
 	 |  set { binsStats  }
      
     wAnnotatePlasmidList(Channel.value("plasmid"), Channel.value("meta"), \
-    wPlasmidsList.out.newPlasmids, Channel.empty(), Channel.empty(), wPlasmidsList.out.newPlasmidsCoverage, wPlasmidsList.out.newPlasmids | map { [it[SAMPLE_IDX], 1] })
+    wPlasmidsList.out.newPlasmids | _wCreateProkkaInput, wPlasmidsList.out.newPlasmidsCoverage, wPlasmidsList.out.newPlasmids | map { [it[SAMPLE_IDX], 1] })
 
     ont.bins | mix(illumina.bins) | map { sample, bins -> [sample, bins.size()] } | set { binsCounter }
 
-    wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), bins, wMagAttributesList.out.gtdb, wMagAttributesList.out.gtdbMissing, contigCoverage, binsCounter)
+    _wCreateProkkaGtdbInput(bins, wMagAttributesList.out.gtdb, wMagAttributesList.out.gtdbMissing)
+    wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), _wCreateProkkaGtdbInput.out.prokkaInput, contigCoverage, binsCounter)
 
     wFragmentRecruitmentList.out.foundGenomesPerSample | map { sample, genomes -> [sample, genomes.size()] } | set { recruitedGenomesCounter }
-    wAnnotateRecruitedGenomesList(Channel.value("binned"), Channel.value("single"), wFragmentRecruitmentList.out.foundGenomesSeperated, \
-    wMagAttributesList.out.gtdb, wMagAttributesList.out.gtdbMissing, wFragmentRecruitmentList.out.contigCoverage, recruitedGenomesCounter)
+    wAnnotateRecruitedGenomesList(Channel.value("binned"), Channel.value("single"), wFragmentRecruitmentList.out.foundGenomesSeperated | _wCreateProkkaInput, \
+    wFragmentRecruitmentList.out.contigCoverage, recruitedGenomesCounter)
 
-    wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs, Channel.empty(), Channel.empty(), \
+    wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs | _wCreateProkkaInput, \
     contigCoverage, notBinnedContigs | map { it -> [it[SAMPLE_IDX], 1] })
 
     BIN_ID_IDX = 1
