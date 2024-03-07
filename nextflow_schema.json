@@ -363,7 +363,7 @@
                "hidden": true,
                "default": false
             },
-            "steps.annotation.mmseqs2_taxonomy.database.extractedDBPath":{
+            "steps.annotation.mmseqs2_taxonomy.gtdb.database.extractedDBPath":{
                "type":"string",
                "description":"db path for mmseqs2_taxonomy vs gtdb.",
                "displayName":"db path for mmseqs2_taxonomy vs gtdb.",
