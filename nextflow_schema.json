@@ -356,7 +356,7 @@
                "hidden": true,
                "default":  " --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies --max-seqs 300 --max-accept 50 --cov-mode 0 -e 0.001 --e-profile 0.01 "
             },
-            "steps.annotation.mmseqs2_taxonomy.ramMode":{
+            "steps.annotation.mmseqs2_taxonomy.gtdb.ramMode":{
                "type":"boolean",
                "description":"Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params",
                "displayName": "Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params",

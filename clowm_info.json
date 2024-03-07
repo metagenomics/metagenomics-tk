@@ -25,7 +25,7 @@
         "steps.annotation.mmseqs2.bacmet20_experimental.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e1333e1db731bb364dd64ab7802fb/latest",
         "steps.annotation.mmseqs2.bacmet20_predicted.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e133555f777cdadf86884c254803e/latest",
         "steps.annotation.mmseqs2.uniref90.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e135f88c27b45bec49809b7dedb64/latest",
-        "steps.annotation.mmseqs2_taxonomy.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e12f912707a5da24bbb160115096b/latest",
+        "steps.annotation.mmseqs2_taxonomy.gtdb.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e12f912707a5da24bbb160115096b/latest",
         "steps.annotation.rgi.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e133f18777c579b8b791a57f7a315/latest",
         "steps.annotation.keggFromMMseqs2.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e13dda76a71439be3bb7f8cee0259/latest",
         "steps.plasmid.ViralVerifyPlasmid.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e13d5f0ea76a49b4ba36cdf9d04cd/latest",
