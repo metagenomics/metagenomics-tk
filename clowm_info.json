@@ -19,7 +19,7 @@
     "exampleParameters": {
         "input.paired.path": "https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/test_data/fullPipeline/reads_split.tsv",
         "steps.magAttributes.gtdb.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e12ef116275458ea149715133b0ec/latest",
-        "steps.magAttributes.checkm.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e13275e1e74ac860f071623cf8711/latest",
+        "steps.magAttributes.checkm.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e191c493176c3b3b4514a28b6d331/latest",
         "steps.annotation.mmseqs2.kegg.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e13fe10b67a65abed521d2815c3d5/latest",
         "steps.annotation.mmseqs2.vfdb.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e1341b7b971b0abbd24b55ea015bf/latest",
         "steps.annotation.mmseqs2.bacmet20_experimental.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e1333e1db731bb364dd64ab7802fb/latest",
