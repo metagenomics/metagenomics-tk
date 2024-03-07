@@ -1,0 +1,567 @@
+{
+   "$schema":"http://json-schema.org/draft-07/schema",
+   "$id":"https://raw.githubusercontent.com/pbelmann/metagenomics-tk/master/nextflow_schema.json",
+   "title":"Metagenomics Toolkit",
+   "description":"This pipeline uses Nextflow to process metagenomic data.",
+   "type":"object",
+   "definitions":{
+      "general_parameters":{
+         "title":"General parameters",
+         "type":"object",
+         "description":"",
+         "default":"",
+         "fa_icon": "fas fa-gear",
+         "properties":{
+            "input.paired.path": {
+               "type": "string",
+               "description": "File with paths to paired read files",
+               "format": "file-path",
+               "fa_icon": "fas fa-file"
+             },
+            "output":{
+               "type":"string",
+               "description":"Directory for output",
+               "format": "directory-path",
+               "fa_icon": "fas fa-folder"
+            },
+            "runid":{
+               "type":"integer",
+               "description":"An ID for this workflow run",
+               "default": 1,
+               "minimum": 1,
+               "fa_icon": "fas fa-fingerprint"
+            },
+            "logLevel":{
+               "type":"integer",
+               "description":"logLevel",
+               "hidden":true,
+               "default": 1,
+               "minimum": 0,
+               "maximum": 1
+            },
+            "summary":{
+               "type":"boolean",
+               "description":"Summary",
+               "hidden":true,
+               "default": false
+            },
+            "logDir":{
+               "type":"string",
+               "default":"log",
+               "hidden": true,
+               "description":"Directory for log files"
+            },
+            "tempdir":{
+               "type":"string",
+               "description":"Directory for temporary files",
+               "hidden": true,
+               "default":"/tmp"
+            },
+            "publishDirMode":{
+               "type":"string",
+               "description":"Store results as symlink (to work folder) or copy (in output folder)",
+               "default":"copy",
+               "enum":[
+                  "symlink",
+                  "copy"
+               ],
+               "hidden": true
+            },
+            "scratch":{
+               "type":"string",
+               "description":"Local directory on cluster workers for computation (scratch dir)",
+               "default":"/vol/scratch",
+               "hidden": true
+            }
+         },
+        "required": ["input.paired.path", "output", "tempdir", "runid", "summary"]
+      },
+      "quality_control":{
+         "title":"Quality control",
+         "type":"object",
+         "description":"",
+         "default":"",
+         "fa_icon": "fas fa-terminal",
+         "properties":{
+            "steps.qc.fastp.additionalParams":{
+               "type":"string",
+               "description":"Command line parameters for fastp.",
+               "displayName": "fastp additional parameters",
+               "default":"--detect_adapter_for_pe -q 20 --cut_front --trim_front1 3 --cut_tail --trim_tail1 3 --cut_mean_quality 10 --length_required 50"
+            },
+            "steps.qc.fastp.timeLimit":{
+               "type":"string",
+               "description":"Time limit for fastp.",
+               "displayName": "fastp timelimit",
+               "default":"AUTO",
+               "hidden": true
+            },
+            "steps.qc.nonpareil.additionalParams":{
+               "type":"string",
+               "description":"Command line parameters for Nonpareil.",
+               "displayName": "nonpareil additional parameters",
+               "default":" -v 10 -r 1234 "
+            },
+            "steps.qc.kmc.additionalParams.count":{
+               "type":"string",
+               "description":"Command line parameters for KMC count.",
+               "displayName": "KMC count additional parameters",
+               "help_text": "Computes k-mer distribution based on k-mer length 13 and 21\n-sm - use strict memory mode (memory limit from -m<n> switch will not be exceeded)\n-cs<value> - maximal value of a counter",
+               "default": " -sm -cs10000 "
+            },
+            "steps.qc.kmc.additionalParams.histo":{
+               "type":"string",
+               "description":"Command line parameters for KMC histogram.",
+               "displayName": "KMC histogram additional parameters",
+               "default": " -cx50000 "
+            }
+         }
+      },
+      "assembly_binning":{
+         "title":"Assembly and Binning",
+         "type":"object",
+         "description":"",
+         "default":"",
+         "fa_icon": "fas fa-terminal",
+         "properties":{
+            "steps.assembly.megahit.additionalParams":{
+               "type":"string",
+               "description":"Command line parameters for megahit.",
+               "displayName": "megahit additional parameters",
+               "help_text": "--mem-flag 0 to use minimum memory, --mem-flag 1 (default) moderate memory and --mem-flag 2 all memory \nmeta-sensitive: '--min-count 1 --k-list 21,29,39,49,...,129,141' \n meta-large:  '--k-min  27  --k-max 127 --k-step 10' (large & complex metagenomes, like soil)",
+               "default":"  --min-contig-len 1000 --presets meta-sensitive "
+            },
+            "steps.assembly.megahit.fastg":{
+               "type":"boolean",
+               "description":"Fastg output",
+               "displayName": "fastg output",
+               "default": true,
+               "hidden": true
+            },
+            "steps.assembly.megahit.resources.RAM.mode":{
+               "type":"string",
+               "description":"Flag to predict resources",
+               "displayName": "predict resource",
+               "enum": [
+                  "DEFAULT",
+                  "PREDICT"
+              ],
+               "default":"DEFAULT",
+               "hidden": true
+            },
+            "steps.assembly.megahit.resources.RAM.predictMinLabel":{
+               "type":"string",
+               "description":"Default label for resource allocation",
+               "displayName": "resource label",
+               "default":"highmemLarge",
+               "hidden": true
+            },
+            "steps.binning.bwa2.additionalParams.bwa2":{
+               "type":"string",
+               "description":"Command line parameters for BWA2.",
+               "displayName": "BWA2 additional parameters",
+               "default":"  "
+            },
+            "steps.binning.bwa2.additionalParams.samtoolsView":{
+               "type":"string",
+               "description":"Command line parameters for samtools view.",
+               "displayName": "samtoolw view additional parameters",
+               "default":" -F 3584 "
+            },
+            "steps.binning.contigsCoverage.additionalParams":{
+               "type":"string",
+               "description":"Command line parameters for contigs coverage.",
+               "displayName": "contigs coverage additional parameters",
+               "default":" --min-covered-fraction 0 "
+            },
+            "steps.binning.genomeCoverage.additionalParams":{
+               "type":"string",
+               "description":"Command line parameters for genome coverage.",
+               "displayName": "genome coverage additional parameters",
+               "default":" --min-covered-fraction 0 "
+            },
+            "steps.binning.metabat.additionalParams":{
+               "type":"string",
+               "description":"Command line parameters for metabat.",
+               "displayName": "metabat additional parameters",
+               "help_text": "Set --seed positive numbers to reproduce the result exactly. Otherwise, random seed will be set each time.",
+               "default":"  --seed 234234 "
+            }
+         }
+      },
+      "mag_annotation":{
+         "title":"MAG Attributes and Annotation",
+         "type":"object",
+         "description":"",
+         "default":"",
+         "fa_icon": "fas fa-terminal",
+         "properties":{
+            "steps.magAttributes.gtdb.buffer":{
+               "type":"integer",
+               "description":"GTDB buffer",
+               "displayName": "GTDB buffer",
+               "default": 1000,
+               "hidden": true
+            },
+            "steps.magAttributes.gtdb.database.extractedDBPath":{
+               "type":"string",
+               "description":"GTDB database path",
+               "displayName": "gtdb-database",
+               "hidden": true
+            },
+            "steps.magAttributes.gtdb.additionalParams":{
+               "type":"string",
+               "description":"Command line parameters for GTDB",
+               "displayName": "GTDB additional parameters",
+               "default": " --min_af 0.65 --scratch_dir . ",
+               "hidden": false
+            },
+            "steps.magAttributes.checkm.database.extractedDBPath":{
+               "type":"string",
+               "description":"checkm database path",
+               "displayName": "check-database",
+               "hidden": true
+            },
+            "steps.magAttributes.checkm.buffer":{
+               "type":"integer",
+               "description":"checkm buffer",
+               "displayName": "checkm buffer",
+               "default": 200,
+               "hidden": true
+            },
+            "steps.magAttributes.checkm.additionalParams.tree":{
+               "type":"string",
+               "description":"checkm tree parameter",
+               "displayName": "checkm tree parameter",
+               "default": " --reduced_tree ",
+               "hidden": true
+            },
+            "steps.magAttributes.checkm.additionalParams.lineage_set":{
+               "type":"string",
+               "description":"checkm lineage_set parameter",
+               "displayName": "checkm lineage_set parameter",
+               "default": " ",
+               "hidden": true
+            },
+            "steps.magAttributes.checkm.additionalParams.qa":{
+               "type":"string",
+               "description":"checkm qa parameter",
+               "displayName": "checkm qa parameter",
+               "default": " ",
+               "hidden": true
+            },
+            "steps.annotation.prokka.defaultKingdom":{
+               "type":"boolean",
+               "description":"prokka default Kingdom",
+               "displayName": "prokka default Kingdom",
+               "hidden": true,
+               "default": false
+            },
+            "steps.annotation.prokka.additionalParams":{
+               "type":"string",
+               "description":"Command line parameters for prokka.",
+               "displayName":"prokka additional Parameters",
+               "hidden": true,
+               "default": " --mincontiglen 500 "
+            },
+            "steps.annotation.mmseqs2.kegg.params":{
+               "type":"string",
+               "description":"Command line parameters for mmseqs2 vs kegg.",
+               "displayName":"mmseqs2 vs kegg parameters",
+               "hidden": true,
+               "default": " --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 "
+            },
+            "steps.annotation.mmseqs2.kegg.database.extractedDBPath":{
+               "type":"string",
+               "description":"kegg mmseqs database path.",
+               "displayName":"kegg mmseqs database path.",
+               "hidden": true
+            },
+            "steps.annotation.mmseqs2.vfdb.params":{
+               "type":"string",
+               "description":"Command line parameters for mmseqs2 vs vfdb.",
+               "displayName":"mmseqs2 vs vfdb parameters",
+               "hidden": true,
+               "default": " --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 "
+            },
+            "steps.annotation.mmseqs2.vfdb.database.extractedDBPath":{
+               "type":"string",
+               "description":"vfdb mmseqs database path.",
+               "displayName":"vfdb mmseqs database path.",
+               "hidden": true
+            },
+            "steps.annotation.mmseqs2.bacmet20_experimental.params":{
+               "type":"string",
+               "description":"Command line parameters for mmseqs2 vs bacmet20_experimental.",
+               "displayName":"mmseqs2 vs bacmet20_experimental parameters",
+               "hidden": true,
+               "default": " --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 "
+            },
+            "steps.annotation.mmseqs2.bacmet20_experimental.database.extractedDBPath":{
+               "type":"string",
+               "description":"bacmet20_experimental mmseqs database path.",
+               "displayName":"bacmet20_experimental mmseqs database path.",
+               "hidden": true
+            },
+            "steps.annotation.mmseqs2.bacmet20_predicted.params":{
+               "type":"string",
+               "description":"Command line parameters for mmseqs2 vs bacmet20_predicted.",
+               "displayName":"mmseqs2 vs bacmet20_predicted parameters",
+               "hidden": true,
+               "default": " --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 "
+            },
+            "steps.annotation.mmseqs2.bacmet20_predicted.database.extractedDBPath":{
+               "type":"string",
+               "description":"bacmet20_predicted mmseqs database path.",
+               "displayName":"bacmet20_predicted mmseqs database path.",
+               "hidden": true
+            },
+            "steps.annotation.mmseqs2.uniref90.params":{
+               "type":"string",
+               "description":"Command line parameters for mmseqs2 vs uniref90.",
+               "displayName":"mmseqs2 vs uniref90 parameters",
+               "hidden": true,
+               "default": " --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 "
+            },
+            "steps.annotation.mmseqs2.uniref90.database.extractedDBPath":{
+               "type":"string",
+               "description":"uniref90 mmseqs database path.",
+               "displayName":"uniref90 mmseqs database path.",
+               "hidden": true
+            },
+            "steps.annotation.rgi.additionalParams":{
+               "type":"string",
+               "description":"Command line parameters for rgi.",
+               "displayName":"rgi parameters",
+               "hidden": true,
+               "default":  " --include_loose --include_nudge "
+            },
+            "steps.annotation.rgi.database.extractedDBPath":{
+               "type":"string",
+               "description":"rgi database path.",
+               "displayName":"rgi database path.",
+               "hidden": true
+            },
+            "steps.annotation.mmseqs2_taxonomy.runOnMAGs":{
+               "type":"boolean",
+               "description":"Run taxonomy classification on MAGs and unbinable contigs or just the later",
+               "displayName": "Run taxonomy classification on MAGs and unbinable contigs or just the later",
+               "hidden": true,
+               "default": true
+            },
+            "steps.annotation.mmseqs2_taxonomy.gtdb.params":{
+               "type":"string",
+               "description":"Command line parameters for mmseqs2_taxonomy vs gtdb.",
+               "displayName":" mmseqs2_taxonomy vs gtdb parameters",
+               "hidden": true,
+               "default":  " --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies --max-seqs 300 --max-accept 50 --cov-mode 0 -e 0.001 --e-profile 0.01 "
+            },
+            "steps.annotation.mmseqs2_taxonomy.ramMode":{
+               "type":"boolean",
+               "description":"Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params",
+               "displayName": "Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params",
+               "hidden": true,
+               "default": false
+            },
+            "steps.annotation.mmseqs2_taxonomy.database.extractedDBPath":{
+               "type":"string",
+               "description":"db path for mmseqs2_taxonomy vs gtdb.",
+               "displayName":"db path for mmseqs2_taxonomy vs gtdb.",
+               "hidden": true
+            },  
+            "steps.annotation.keggFromMMseqs2.database.extractedDBPath":{
+               "type":"string",
+               "description":"db path for kegg from mmseqs2.",
+               "displayName":"db path for kegg from mmseqs2.",
+               "hidden": true
+            }
+         }
+      },
+      "plasmid":{
+         "title":"Plasmid module",
+         "type":"object",
+         "description":"",
+         "default":"",
+         "fa_icon": "fas fa-terminal",
+         "properties":{
+            "steps.plasmid.SCAPP.additionalParams.bwa2":{
+               "type":"string",
+               "description":"Command line parameters for SCAPP bwa2.",
+               "displayName": "SCAPP bwa2 additional parameters",
+               "hidden": true,
+               "default":" "
+            },
+            "steps.plasmid.SCAPP.additionalParams.SCAPP":{
+               "type":"string",
+               "description":"Command line parameters for SCAPP.",
+               "displayName": "SCAPP additional parameters",
+               "hidden": true,
+               "default":" "
+            },
+            "steps.plasmid.SCAPP.additionalParams.coverm":{
+               "type":"string",
+               "description":"Command line parameters for SCAPP coverm.",
+               "displayName": "SCAPP coverm additional parameters",
+               "hidden": true,
+               "default":" --min-covered-fraction 0 "
+            },
+            "steps.plasmid.SCAPP.additionalParams.minimap":{
+               "type":"string",
+               "description":"Command line parameters for SCAPP minimap.",
+               "displayName": "SCAPP minimap additional parameters",
+               "hidden": true,
+               "default":" "
+            },
+            "steps.plasmid.SCAPP.additionalParams.samtoolsViewBwa2":{
+               "type":"string",
+               "description":"Command line parameters for SCAPP samtoolsViewBwa2.",
+               "displayName": "SCAPP samtoolsViewBwa2 additional parameters",
+               "hidden": true,
+               "default":" -F 3584 " 
+            },
+            "steps.plasmid.SCAPP.additionalParams.samtoolsViewMinimap":{
+               "type":"string",
+               "description":"Command line parameters for SCAPP samtoolsViewMinimap.",
+               "displayName": "SCAPP samtoolsViewMinimap additional parameters",
+               "hidden": true,
+               "default":" " 
+            },
+            "steps.plasmid.ViralVerifyPlasmid.filter":{
+               "type":"boolean",
+               "description":"ViralVerifyPlasmid filter",
+               "displayName": "ViralVerifyPlasmid.filter",
+               "hidden": true,
+               "default": true
+            },
+            "steps.plasmid.ViralVerifyPlasmid.filterString":{
+               "type":"string",
+               "description":"ViralVerifyPlasmid filterString",
+               "displayName": "ViralVerifyPlasmid filterString",
+               "hidden": true,
+               "default":"Uncertain - plasmid or chromosomal|Plasmid"
+            },
+            "steps.plasmid.ViralVerifyPlasmid.database.extractedDBPath":{
+               "type":"string",
+               "description":"db path for ViralVerifyPlasmid (pfam).",
+               "displayName":"db path for ViralVerifyPlasmid (pfam).",
+               "hidden": true
+            },
+            "steps.plasmid.ViralVerifyPlasmid.additionalParams":{
+               "type":"string",
+               "description":"ViralVerifyPlasmid additional parameters",
+               "displayName": "ViralVerifyPlasmid additional parameters",
+               "hidden": true,
+               "default":" --thr 7 "
+            },
+            "steps.plasmid.PlasClass.filter":{
+               "type":"boolean",
+               "description":"PlasClass filter",
+               "displayName": "PlasClass filter",
+               "hidden": true,
+               "default": true
+            },
+            "steps.plasmid.PlasClass.additionalParams":{
+               "type":"string",
+               "description":"PlasClass additional parameters",
+               "displayName": "PlasClass additional parameters",
+               "hidden": true,
+               "default":"   "
+            },  
+            "steps.plasmid.PlasClass.threshold":{
+               "type":"number",
+               "description":"PlasClass threshold",
+               "displayName": "PlasClass threshold",
+               "hidden": true,
+               "default":0.9
+            },
+            "steps.plasmid.Filter.method":{
+               "type":"string",
+               "description":"Filter method",
+               "displayName": "Filter method",
+               "hidden": true,
+               "default":"OR"
+            },  
+            "steps.plasmid.Filter.minLength":{
+               "type":"integer",
+               "description":"Filter minimum length",
+               "displayName": "Filter minimum length",
+               "hidden": true,
+               "default":1000
+            },
+            "steps.plasmid.PLSDB.sharedKmerThreshold":{
+               "type":"integer",
+               "description":"PLSDB shared Kmer Threshold",
+               "displayName":"PLSDB shared Kmer Threshold",
+               "hidden": true,
+               "default":0
+            },
+            "steps.plasmid.PLSDB.database.extractedDBPath":{
+               "type":"string",
+               "description":"db path for PLSDB.",
+               "displayName":"db path for PLSDB.",
+               "hidden": true
+            },
+            "steps.plasmid.PLSDB.additionalParams.mashSketch":{
+               "type":"string",
+               "description":"PLSDB mashSketch additional parameters",
+               "displayName": "PLSDB mashSketch additional parameters",
+               "hidden": true,
+               "help_text": "-s: Sketch size \n-k: k-mer size \n-S: Seed to provide to the hash function.",
+               "default":" -S 42 -k 21 -s 1000 "
+            },  
+            "steps.plasmid.PLSDB.additionalParams.mashDist":{
+               "type":"string",
+               "description":"PLSDB mashDist additional parameters",
+               "displayName": "PLSDB mashDist additional parameters",
+               "hidden": true,
+               "help_text": "-d: Maximum distance to report \n-v: Maximum p-value to report",
+               "default":" -v 0.1 -d 0.1 "
+            },
+            "steps.plasmid.MobTyper.filter":{
+               "type":"boolean",
+               "description":"MobTyper filter",
+               "displayName": "MobTyper filter",
+               "hidden": true,
+               "default": true
+            },
+            "steps.plasmid.MobTyper.minLength":{
+               "type":"integer",
+               "description":"MobTyper minimum length",
+               "displayName": "MobTyper minimum length",
+               "hidden": true,
+               "default":1000
+            },
+            "steps.plasmid.MobTyper.additionalParams":{
+               "type":"string",
+               "description":"MobTyper additional parameters",
+               "displayName": "MobTyper additional parameters",
+               "hidden": true,
+               "default":" --min_length 1000  "
+            },
+            "steps.plasmid.MobTyper.database.extractedDBPath":{
+               "type":"string",
+               "description":"db path for MobTyper.",
+               "displayName":"db path for MobTyper.",
+               "hidden": true
+            }           
+         }
+      }
+   },
+   "allOf":[
+      {
+         "$ref":"#/definitions/general_parameters"
+      },
+      {
+         "$ref":"#/definitions/quality_control"
+      },
+      {
+         "$ref":"#/definitions/assembly_binning"
+      },
+      {
+         "$ref":"#/definitions/mag_annotation"
+      },
+      {
+         "$ref":"#/definitions/plasmid"
+      }
+   ]
+}
