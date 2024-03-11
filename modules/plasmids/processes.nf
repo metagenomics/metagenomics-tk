@@ -89,6 +89,9 @@ process pViralVerifyPlasmid {
     TMP_OUTPUT="!{binID}_viralverifyplasmid_tmp.tsv"
     FINAL_OUTPUT="!{binID}_viralverifyplasmid.tsv"
 
+    # In case that no sequences could be found then at least an empty header file should be created
+    echo -e "CONTIG\tSAMPLE\tBIN_ID" > ${FINAL_OUTPUT} 
+
     if [ -n "$(find . -name '*.csv')" ]; then
       # Filter viral verify output by user provided strings 
       # and add Sample and BinID
@@ -123,13 +126,13 @@ process pMobTyper {
     secret { "${S3_MobTyper_ACCESS}"!="" ? ["S3_MobTyper_ACCESS", "S3_MobTyper_SECRET"] : [] } 
 
     input:
-    tuple val(sample), val(binID), path(plasmids), val(start), val(stop)
+    tuple val(sample), val(binID), path(plasmids), val(start), val(stop), val(chunkSize)
 
     output:
     tuple val("${binID}_chunk_${start}_${stop}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
       file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
     tuple val("${sample}"), val("${binID}"), val("MobTyper"), \
-	path("${binID}_chunk_${start}_${stop}_mobtyper.tsv"), emit: plasmidsStats, optional: true
+	path("${binID}_chunk_${start}_${stop}_mobtyper.tsv"), val("${chunkSize}"), emit: plasmidsStats, optional: true
 
     shell:
     EXTRACTED_DB=params.steps?.plasmid?.MobTyper?.database?.extractedDBPath ?: ""
@@ -159,13 +162,13 @@ process pPlasClass {
     container "${params.PlasClass_image}"
 
     input:
-    tuple val(sample), val(binID), path(assembly), val(start), val(stop)
+    tuple val(sample), val(binID), path(assembly), val(start), val(stop), val(chunkSize)
 
     output:
     tuple val("${binID}_chunk_${start}_${stop}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
       file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
     tuple val("${sample}"), val("${binID}"), val("PlasClass"), \
-	path("${binID}_chunk_${start}_${stop}_plasClass.tsv"), emit: probabilities, optional: true
+	path("${binID}_chunk_${start}_${stop}_plasClass.tsv"), val("${chunkSize}"), emit: probabilities, optional: true
 
     shell:
     output = getOutput("${sample}", params.runid, "PlasClass", "")
@@ -244,15 +247,20 @@ process pPlaton {
       PLATON_DB=!{EXTRACTED_DB}
     fi
 
+    FINAL_OUTPUT=!{binID}_platon.tsv
+
     pigz -p !{task.cpus} -fdc !{assembly} > assembly.fasta
 
     # In some cases prodigal fails because of a too short query sequence. In such cases the process should end with exit code 0.
     trap 'if [ "$?" == 1 ] && ( grep -q "ORFs failed" assembly.log || grep -q "ORFs=0$" assembly.log || grep -q "Error detecting input file format. First line seems to be blank." assembly.log ); then echo "Protein Prediction Failed"; exit 0; fi' EXIT
     platon assembly.fasta !{ADDITIONAL_PARAMS} --db ${PLATON_DB} --mode sensitivity -t !{task.cpus}
 
+    # In case that no sequences could be found then at least an empty header file should be created
+    echo -e "SAMPLE\tBIN_ID\tCONTIG" > ${FINAL_OUTPUT} 
+
     if [ -n "$(find . -name '*.tsv')" ]; then
       # Add Sample and BinId
-      sed -e '1 s/^/SAMPLE\tBIN_ID\t/g' -e "1 s/\tID\t/\tCONTIG\t/"  -e "2,$ s/^/!{sample}\t!{binID}\t/g" *.tsv > !{binID}_platon.tsv
+      sed -e '1 s/^/SAMPLE\tBIN_ID\t/g' -e "1 s/\tID\t/\tCONTIG\t/"  -e "2,$ s/^/!{sample}\t!{binID}\t/g" *.tsv > ${FINAL_OUTPUT}
     fi
     '''
 }
@@ -290,13 +298,22 @@ process pFilter {
        mkdir header
        mkdir tmp
        mkdir missing
-       for file in !{contigHeaderFiles}; do 
-         TMP_FILE=tmp/${file}
-         FINAL_FILE=header/${file}
-         MISSING_FILE=missing/${file}
+       mkdir input
+
+       for file in !{contigHeaderFiles}; do
+	  if [ $(wc -l < ${file}) -gt 1 ]; then
+            mv ${file} input/${file}
+          fi
+       done
+
+       for file in $(ls -1 input/*); do 
+         BASENAME=$(basename ${file})
+         TMP_FILE=tmp/${BASENAME}
+         FINAL_FILE=header/${BASENAME}
+         MISSING_FILE=missing/${BASENAME}
          METHOD="$(echo ${file} | rev | cut -d '_' -f 1 | rev | cut -d '.' -f 1)"
          csvtk cut -f CONTIG --tabs ${file} | sed -e "2,$ s/$/\tTRUE/g"  -e "1 s/$/\t${METHOD}/g" > ${TMP_FILE}
-    	 csvtk cut -f CONTIG --tabs ${file} | tail -n +2 >> filtered_header.tsv
+	 csvtk cut -f CONTIG --tabs ${file} | tail -n +2 >> filtered_header.tsv
          if [ $(wc -l < ${TMP_FILE}) -gt 1 ]; then
                 mv ${TMP_FILE} ${FINAL_FILE}
          else

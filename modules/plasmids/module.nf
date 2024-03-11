@@ -156,7 +156,7 @@ workflow _wSplit {
     CHUNK_SIZE_IDX=4
     input | pCount | combine(chunkSize) | flatMap { sample -> \
 	Utils.splitFilesIndex(Integer.parseInt(sample[COUNT_IDX]), sample[CHUNK_SIZE_IDX], [sample[SAMPLE_IDX], sample[BIN_ID_IDX], sample[FILE_IDX]]) } \
-	| map({ sample, binID, binFile, start, end, chunkSize -> [sample, binID, binFile, start, end] }) | set { chunks }
+	| map({ sample, binID, binFile, start, end, chunkSize -> [sample, binID, binFile, start, end, chunkSize] }) | set { chunks }
   emit:
     chunks
 }
@@ -166,7 +166,8 @@ def getSampleToolKey(sample){
   SAMPLE_IDX = 0
   BIN_ID_IDX = 1
   FILE_IDX = 2
-  return ["${sample[SAMPLE_IDX]}_ttt_${sample[BIN_ID_IDX]}_ttt_${sample[FILE_IDX]}.tsv", sample[SAMPLE_IDX], sample[BIN_ID_IDX], sample[FILE_IDX]]
+  CHUNK_IDX = 3
+  return ["${sample[SAMPLE_IDX]}_ttt_${sample[BIN_ID_IDX]}_ttt_${sample[FILE_IDX]}.tsv", sample[SAMPLE_IDX], sample[BIN_ID_IDX], sample[FILE_IDX], sample[CHUNK_IDX]]
 }
 
 
@@ -197,12 +198,38 @@ workflow _wRunPlasClass {
    main:
       // Split input files in chunks
       _wSplit(samplesContigs, Channel.from(params.modules.plasmids.process.pPlasClass.defaults.inputSize)) | pPlasClass
-
       _wCollectChunks(pPlasClass.out.probabilities)
 
     emit:
       probabilities = _wCollectChunks.out.plasmidsStats
       logs = pPlasClass.out.logs
+}
+
+
+/**
+*
+* The pCollectFile process is designed to collect and concatenate plasmid output files.
+* It uses the csvtk tool to concatenate all the .tsv files.
+*
+**/
+process pCollectFile {
+
+    label 'small'
+
+    tag "Sample: $sample, Bin: $bin, Tool: $tool"
+
+    container "${params.ubuntu_image}"
+
+    input:
+    tuple val(sample), val(bin), val(tool), path(toolOutputs)
+
+    output:
+    tuple val("${sample}"), val("${bin}"), val("${tool}"), path("*_toolOutputConcat_${tool}.tsv")
+
+    shell:
+    '''
+    csvtk -t -T concat !{toolOutputs} > !{sample}_!{bin}_toolOutputConcat_!{tool}.tsv
+    '''
 }
 
 /*
@@ -212,23 +239,16 @@ workflow _wCollectChunks {
   take:
     chunks
   main:
-    // Create per sample and bin id a composite key
-    UNIQUE_SAMPLE_KEY_IDX = 0
-    chunks | map { sample -> getSampleToolKey(sample) } \
-	| unique { sample -> sample[UNIQUE_SAMPLE_KEY_IDX] } | set { statsChunk }
-
-    // Collect all chunks of a specific sample and bin id
-    STATS_IDX = 3 
+    CHUNK_PATH_IDX=3
+    SAMPLE_IDX=0
+    BIN_IDX=1
+    TOOL_IDX=2
     chunks \
-	| collectFile(keepHeader: true){ sample -> \
-	[ getSampleToolKey(sample)[UNIQUE_SAMPLE_KEY_IDX], file(sample[STATS_IDX]).text] } \
-	| map { f -> [file(f).name, f] } | set { statsCombined}
-
-    // get initial ids such as sample and bin id and remove composite key
-    UNIQUE_CHUNK_IDX = 0
-    COMPOSED_INDEX_IDX = 0
-    statsChunk | join(statsCombined, by: UNIQUE_CHUNK_IDX) \
-	| map { sample -> sample.remove(COMPOSED_INDEX_IDX); sample } | set { statsFinal }
+        | map { sample, type, tool, path, chunks -> \
+	tuple(groupKey(sample + "_---_" + type + "_---_" + tool, chunks.toInteger()), [sample, type, tool, path]) } \
+        | groupTuple() \
+	| map { key, chunks -> [chunks[0][SAMPLE_IDX], chunks[0][BIN_IDX], chunks[0][TOOL_IDX], \
+	chunks.stream().map{ elem -> elem[CHUNK_PATH_IDX] }.collect()] } | pCollectFile | set {statsFinal}
   emit:
     plasmidsStats = statsFinal
 }
@@ -243,6 +263,8 @@ workflow _runNonPlasmidAssemblyAnalysis {
 
       // Check which tools the user has chosen for filtering contigs
       selectedFilterTools = params?.steps?.plasmid.findAll({ tool, options -> {  options instanceof Map && options?.filter } }).collect{it.key}
+      selectedFilterToolsLength = selectedFilterTools.size() 
+
       Channel.from(selectedFilterTools) | set { toolsChannel }
 
       // Collect output
@@ -262,7 +284,7 @@ workflow _runNonPlasmidAssemblyAnalysis {
       	plasmidsStats \
 	 | filter({result ->  result[TOOL_TYPE_IDX] in selectedFilterTools }) \
 	 | combine(samplesContigs, by: [SAMPLE_ID_IDX, BIN_ID_IDX]) \
-         | groupTuple(by: [SAMPLE_ID_IDX, BIN_ID_IDX]) \
+         | groupTuple(by: [SAMPLE_ID_IDX, BIN_ID_IDX], size: selectedFilterToolsLength) \
          | map { result -> [result[SAMPLE_ID_IDX], result[BIN_ID_IDX], selectedFilterTools.size(), result[FASTA_IDX][0], result[CONTIG_HEADER_IDX]] } \
          | pContigsPlasmidsFilter
 
@@ -320,8 +342,6 @@ workflow _runCircularAnalysis {
         params.steps?.plasmid?.SCAPP?.additionalParams?.samtoolsViewBwa2, \
 	false]), pSCAPP.out.plasmids | join(illuminaReads))
 
-
-
        pMinimap2(Channel.value(params.steps.containsKey("plasmid") && params?.steps?.plasmid.containsKey("SCAPP")), \
 	Channel.value([Utils.getModulePath(params.modules.plasmids), \
         "SCAPP/readMapping/minimap", params.steps?.plasmid?.SCAPP?.additionalParams?.minimap, \
@@ -338,6 +358,8 @@ workflow _runCircularAnalysis {
 
        // Check which tools the user has chosen for filtering contigs
        selectedFilterTools = params?.steps?.plasmid.findAll({ tool, options -> {  options instanceof Map && options?.filter } }).collect{it.key}
+       selectedFilterToolsLength = selectedFilterTools.size() 
+
        Channel.from(selectedFilterTools) | set { toolsChannel }
 
        // Collect output
@@ -357,7 +379,7 @@ workflow _runCircularAnalysis {
       	 plasmidsStats \
 	  | filter({result ->  result[TOOL_TYPE_IDX] in selectedFilterTools }) \
           | combine(newPlasmids, by: [SAMPLE_ID_IDX, BIN_ID_IDX] ) \
-          | groupTuple(by: [SAMPLE_ID_IDX, BIN_ID_IDX]) \
+          | groupTuple(by: [SAMPLE_ID_IDX, BIN_ID_IDX], size: selectedFilterToolsLength) \
           | map { result -> [result[SAMPLE_ID_IDX], result[BIN_ID_IDX], selectedFilterTools.size(), result[FASTA_IDX][0], result[CONTIG_HEADER_IDX]] } \
           | pCircularPlasmidsFilter
 
