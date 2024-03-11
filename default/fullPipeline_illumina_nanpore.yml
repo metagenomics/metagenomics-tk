@@ -217,7 +217,6 @@ steps:
         mashSketch: " -S 42 -k 21 -s 1000 "
         mashDist: " -v 0.1 -d 0.1 "
     MobTyper:
-      filter: true
       minLength: 1000
       additionalParams: " --min_length 1000  "
       database:
@@ -299,6 +298,8 @@ steps:
         download:
           source: s3://databases_internal/kegg-links-mirror-2021-01.tar.gz
           md5sum: 69538151ecf4128f4cb1e0ac21ff55b3
+          s5cmd:
+              params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
   metabolomics:
      filter:
        minCompleteness: 50

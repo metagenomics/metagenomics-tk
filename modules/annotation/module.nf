@@ -421,13 +421,13 @@ process pHmmSearch {
 
 /**
 *
-* pKEGGFromBlast is build to handle results in the outfmt 6 file standard.
+* pKEGGFromMMseqs2 is build to handle results in the outfmt 6 file standard.
 * These search results will be compared to kegg link-files to produce a file where all available kegg information
 * for these search results is collected in a centralized way/file.
 * You need to call (and fill out) the aws credential file with -c to use this module as kegg is commercial an the database has to be placed in your project s3!
 *
 **/
-process pKEGGFromBlast {
+process pKEGGFromMMseqs2 {
 
       tag "$sample"
 
@@ -441,11 +441,11 @@ process pKEGGFromBlast {
       // Another mount flag is used to get a key file (aws format) into the docker-container. 
       // This file is then used by s5cmd. 
 
-      containerOptions Utils.getDockerMount(params.steps?.annotation?.keggFromBlast?.database, params)
-      publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromBlast", filename) }, \
+      containerOptions Utils.getDockerMount(params.steps?.annotation?.keggFromMMseqs2?.database, params)
+      publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromMMseqs2", filename) }, \
          pattern: "{**.tsv}"
 
-      when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("keggFromBlast")
+      when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("keggFromMMseqs2")
 
    secret { "${S3_KEGG_ACCESS}"!="" ? ["S3_kegg_ACCESS", "S3_kegg_SECRET"] : [] } 
 
@@ -458,13 +458,13 @@ process pKEGGFromBlast {
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
    shell:
-      output = getOutput("${sample}", params.runid, "keggFromBlast", "")
-      DOWNLOAD_LINK=params.steps?.annotation?.keggFromBlast?.database?.download?.source ?: ""
-      MD5SUM=params?.steps?.annotation?.keggFromBlast?.database?.download?.md5sum ?: ""
-      S5CMD_PARAMS=params.steps?.annotation?.keggFromBlast?.database?.download?.s5cmd?.params ?: ""
-      EXTRACTED_DB=params.steps?.annotation?.keggFromBlast?.database?.extractedDBPath ?: ""
-      S3_KEGG_ACCESS=params.steps?.annotation?.keggFromBlast?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_kegg_ACCESS" : ""
-      S3_KEGG_SECRET=params.steps?.annotation?.keggFromBlast?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_kegg_SECRET" : ""
+      output = getOutput("${sample}", params.runid, "keggFromMMseqs2", "")
+      DOWNLOAD_LINK=params.steps?.annotation?.keggFromMMseqs2?.database?.download?.source ?: ""
+      MD5SUM=params?.steps?.annotation?.keggFromMMseqs2?.database?.download?.md5sum ?: ""
+      S5CMD_PARAMS=params.steps?.annotation?.keggFromMMseqs2?.database?.download?.s5cmd?.params ?: ""
+      EXTRACTED_DB=params.steps?.annotation?.keggFromMMseqs2?.database?.extractedDBPath ?: ""
+      S3_KEGG_ACCESS=params.steps?.annotation?.keggFromMMseqs2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_kegg_ACCESS" : ""
+      S3_KEGG_SECRET=params.steps?.annotation?.keggFromMMseqs2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_kegg_SECRET" : ""
       '''
       mkdir -p !{params.polished.databases}
       # Check developer documentation
@@ -481,7 +481,7 @@ process pKEGGFromBlast {
           export AWS_SECRET_ACCESS_KEY=!{S3_KEGG_SECRET}
         fi
 
-        # Download CARD database
+        # Download KEGG database
         mkdir -p ${DATABASE}
         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
          --link=!{DOWNLOAD_LINK} \
@@ -853,10 +853,10 @@ workflow _wAnnotation {
         | map { key, dataset -> [dataset[FIRST_ELEM_IDX][FIRST_ELEM_DB_IDX], dataset[FIRST_ELEM_IDX][FIRST_ELEM_SAMPLE_IDX], \
 	dataset[FIRST_ELEM_IDX][FIRST_ELEM_TYPE_IDX], dataset.stream().map{ elem -> elem[ELEM_PATH_IDX] }.collect()] } \
 	| pCollectFile \
-	  // The kegg database result is selected and reordered for the pKEGGFromBlast process input
+	  // The kegg database result is selected and reordered for the pKEGGFromMMseqs2 process input
 	| filter({ sample, type, dbType, blastFiles -> dbType == "kegg" }) \
 	| flatMap({ sample, type, dbType, blastFiles -> blastFiles.stream().map({ fi -> [sample, type, fi] }).collect() }) \
-        | pKEGGFromBlast
+        | pKEGGFromMMseqs2
 
       combinedMMseqsTax = groupedProkkaFaa | combine(Channel.from(selectedTaxDBs))
       pMMseqs2_taxonomy(sourceChannel, combinedMMseqsTax)
@@ -868,9 +868,9 @@ workflow _wAnnotation {
       pProkka.out.logs | mix(pMMseqs2.out.logs) \
         | mix(pMMseqs2_taxonomy.out.logs) \
 	| mix(pResistanceGeneIdentifier.out.logs) \
-	| mix(pKEGGFromBlast.out.logs) | pDumpLogs
+	| mix(pKEGGFromMMseqs2.out.logs) | pDumpLogs
    emit:
-      keggAnnotation = pKEGGFromBlast.out.keggPaths
+      keggAnnotation = pKEGGFromMMseqs2.out.keggPaths
       mmseqs2_kronaHtml = pMMseqs2_taxonomy.out.kronaHtml
       mmseqs2_krakenTaxonomy = pMMseqs2_taxonomy.out.krakenStyleTaxonomy
       mmseqs2_taxonomy = pMMseqs2_taxonomy.out.taxonomy
