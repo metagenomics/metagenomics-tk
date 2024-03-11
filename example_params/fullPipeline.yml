@@ -223,7 +223,7 @@ steps:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2023-04-29_mmseqs_taxonomy.tar.zst
             md5sum: 79b9fb6b3dada41e602d70e12e7351c2
-    keggFromBlast:
+    keggFromMMseqs2:
       database:
         extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 
   metabolomics:

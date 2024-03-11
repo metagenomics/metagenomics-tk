@@ -39,7 +39,7 @@ steps:
 #            download:
 #              source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_2022_07_29.tar.zst
 #              md5sum: 7e32aaed112d6e056fb8764b637bf49e
-      keggFromBlast:
+      keggFromMMseqs2:
          database:
            extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/"
       rgi: 
