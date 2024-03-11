@@ -28,7 +28,7 @@ process pViralVerifyPlasmid {
 
     container "${params.viralVerify_image}"
 
-    beforeScript "mkdir -p ${params.polished.databases}"
+    beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
     input:
     tuple val(sample), val(binID), path(plasmids)
@@ -105,7 +105,7 @@ process pMobTyper {
 
     container "${params.mobSuite_image}"
 
-    beforeScript "mkdir -p ${params.polished.databases}"
+    beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
     containerOptions Utils.getDockerMount(params.steps?.plasmid?.MobTyper?.database, params)
 
@@ -174,7 +174,7 @@ process pPlaton {
 
     container "${params.platon_image}"
 
-    beforeScript "mkdir -p ${params.polished.databases}"
+    beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
     input:
     tuple val(sample), val(binID), path(assembly)

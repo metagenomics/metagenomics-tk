@@ -8,7 +8,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 
 process pCarveMe {
 
-    label 'tiny'
+    label 'small'
 
     tag "Sample: $sample, Bin: $id"
 

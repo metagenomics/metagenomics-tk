@@ -78,7 +78,7 @@ def getNextHigherResource = { exitCodes, exitStatus, resourceType, attempt, memo
                          return currentResourceType;
                       } else {
                          // if the exit code is not known then the memory value should not be increased
-                         FLAVOR_INDEX_CONSTANT_TO_ADD = 0
+                         FLAVOR_INDEX_CONSTANT_TO_ADD = 1
                          def currentResource = getResources(memory, tool, defaults, sample, FLAVOR_INDEX_CONSTANT_TO_ADD);
                          def currentResourceType = currentResource[resourceType];
 
@@ -145,6 +145,30 @@ process pMetaspades {
     shell:
     outputFastg = params?.steps?.assembly?.metaspades?.fastg ? "TRUE" : "FALSE"
     template 'metaspades.sh'
+}
+
+
+/*
+*
+* This workflow is only meant for testing purposes.
+*
+*/
+workflow wTestMemSelection {
+  main:
+        exitCode = -9
+        attempt = 2
+        flavorRAMPredicted = "34"
+        resourcesFlavor =  params.resources.highmemXLarge
+        outCPUs = getNextHigherResource([-9, 137, 247], exitCode, "cpus", attempt, \
+        flavorRAMPredicted, params.steps.assembly.megahit, \
+        resourcesFlavor, "SAMPLE")
+
+        outRAM = getNextHigherResource([-9, 137, 247], exitCode, "memory", attempt, \
+        flavorRAMPredicted, params.steps.assembly.megahit, \
+        resourcesFlavor, "SAMPLE")
+
+        println("CPUs: " + outCPUs)
+        println("RAM: " + outRAM)
 }
 
 
@@ -264,7 +288,7 @@ def getResources(predictedMemory, assembler, defaults, sample, attempt){
      	  def sortedUpdatedMemorySet = updatedMemorySet.sort()
      	  def predictedMemoryIndex = sortedUpdatedMemorySet.findIndexOf({ it == predictedMemoryCeil })
           
-     	  def nextHigherMemoryIndex = predictedMemoryIndex + attempt + 1
+     	  def nextHigherMemoryIndex = predictedMemoryIndex + attempt
 
      	  if(nextHigherMemoryIndex  >= sortedUpdatedMemorySet.size()){
              // In case it is already the highest possible memory setting
@@ -299,13 +323,14 @@ def getResources(predictedMemory, assembler, defaults, sample, attempt){
 
      	  def defaultMemoryIndex = memorySet.findIndexOf({ it == defaultMemory })
 
- 	  def nextHigherMemoryIndex = defaultMemoryIndex + attempt
+ 	  def nextHigherMemoryIndex = defaultMemoryIndex + attempt - 1 
 
-     	  if(defaultMemoryIndex >= memorySet.size()){
+     	  if(nextHigherMemoryIndex >= memorySet.size()){
              // In case it is already the highest possible memory setting
              // then try the label with the highest memory
-             println("Warning: Predicted Memory " + predictedMemoryCeil \
-		+ " of the dataset " + sample + " is greater or equal to the flavour with the largest RAM specification.")
+             println("Warning: Highest possible memory setting " \
+		+ " of the dataset " + sample + " is already reached." \
+                + " Retry will be done using a flavor with the highest possible RAM configuration")
 
              def label = memoryLabelMap[memorySet[memorySet.size()-1]]
              def cpus =  labelMap[label]["cpus"]

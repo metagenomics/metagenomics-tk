@@ -1,4 +1,4 @@
-FROM python:3.7-bullseye
+FROM quay.io/metagenomics/toolkit-python:3.7-1
 
 ARG COSDIR=/opt/CPLEX
 
@@ -45,7 +45,7 @@ ENV CPX_PYVERSION ${CPX_PYVERSION}
 ENV GAPSEQ_VERSION v1.2
 ENV CARVEME_VERSION 1.5.1
 ENV SMETANA_VERSION 1.1.0
-ENV MEMOTE_VERSION 0.13.0
+ENV MEMOTE_VERSION 0.14.0
 ENV DIAMOND_VERSION v2.0.13
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y locales \
@@ -56,7 +56,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y locales \
   && DEBIAN_FRONTEND=noninteractive dpkg-reconfigure locales && git clone  --depth 1 --branch  ${GAPSEQ_VERSION} https://github.com/jotech/gapseq \
   && wget http://github.com/bbuchfink/diamond/releases/download/${DIAMOND_VERSION}/diamond-linux64.tar.gz  \
   && tar xzf diamond-linux64.tar.gz && rm diamond-linux64.tar.gz \
-  && pip install smetana==${SMETANA_VERSION} carveme==${CARVEME_VERSION} memote==${MEMOTE_VERSION}
-
+  && pip install smetana==${SMETANA_VERSION} carveme==${CARVEME_VERSION} cobra==0.27 depinfo==1.7.0 memote==${MEMOTE_VERSION}
 
 ENV PATH="${PATH}:/:/gapseq"
