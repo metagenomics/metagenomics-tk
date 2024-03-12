@@ -255,12 +255,12 @@ process pPlaton {
     trap 'if [ "$?" == 1 ] && ( grep -q "ORFs failed" assembly.log || grep -q "ORFs=0$" assembly.log || grep -q "Error detecting input file format. First line seems to be blank." assembly.log ); then echo "Protein Prediction Failed"; exit 0; fi' EXIT
     platon assembly.fasta !{ADDITIONAL_PARAMS} --db ${PLATON_DB} --mode sensitivity -t !{task.cpus}
 
-    # In case that no sequences could be found then at least an empty header file should be created
-    echo -e "SAMPLE\tBIN_ID\tCONTIG" > ${FINAL_OUTPUT} 
-
     if [ -n "$(find . -name '*.tsv')" ]; then
       # Add Sample and BinId
       sed -e '1 s/^/SAMPLE\tBIN_ID\t/g' -e "1 s/\tID\t/\tCONTIG\t/"  -e "2,$ s/^/!{sample}\t!{binID}\t/g" *.tsv > ${FINAL_OUTPUT}
+    else
+      # In case that no sequences could be found then at least an empty header file should be created
+      echo -e "SAMPLE\tBIN_ID\tCONTIG" > ${FINAL_OUTPUT} 
     fi
     '''
 }
