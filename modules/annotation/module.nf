@@ -283,7 +283,6 @@ process pResistanceGeneIdentifier {
    MD5SUM=params?.steps?.annotation?.rgi?.database?.download?.md5sum ?: ""
    S5CMD_PARAMS=params.steps?.annotation?.rgi?.database?.download?.s5cmd?.params ?: ""
    '''
-   mkdir -p !{params.polished.databases}
    ADDITIONAL_RGI_PARAMS="!{params.steps?.annotation?.rgi?.additionalParams}"
 
    # Check developer documentation
