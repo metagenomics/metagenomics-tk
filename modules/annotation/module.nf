@@ -142,7 +142,6 @@ process pMMseqs2_taxonomy {
    sensitivityRaw = initialMaxSensitivity - task.attempt + 1
    sensitivity = sensitivityRaw < 1 ? 1 : sensitivityRaw
    '''
-   mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part
       if [ -z "!{EXTRACTED_DB}" ]
       then
@@ -465,7 +464,6 @@ process pKEGGFromMMseqs2 {
       S3_KEGG_ACCESS=params.steps?.annotation?.keggFromMMseqs2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_kegg_ACCESS" : ""
       S3_KEGG_SECRET=params.steps?.annotation?.keggFromMMseqs2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_kegg_SECRET" : ""
       '''
-      mkdir -p !{params.polished.databases}
       # Check developer documentation
       KEGG_DB=""
       if [[ -z "!{EXTRACTED_DB}" ]] 

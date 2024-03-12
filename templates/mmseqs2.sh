@@ -1,4 +1,3 @@
-mkdir -p !{params.polished.databases}
 # if no local database is referenced, start the download part
 if [ -z "!{EXTRACTED_DB}" ] 
 then
