@@ -251,7 +251,6 @@ process pResistanceGeneIdentifier {
    S3_rgi_ACCESS=params.steps?.annotation?.rgi?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_rgi_ACCESS" : ""
    S3_rgi_SECRET=params.steps?.annotation?.rgi?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_rgi_SECRET" : ""
    '''
-   mkdir -p !{params.polished.databases}
    ADDITIONAL_RGI_PARAMS="!{params.steps?.annotation?.rgi?.additionalParams}"
 
    # Check developer documentation
