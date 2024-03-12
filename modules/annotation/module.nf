@@ -81,7 +81,6 @@ process pMMseqs2 {
    shell:
    output = getOutput("${sample}", params.runid, "mmseqs2/${dbType}", "")
    '''
-   mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part
    if [ -z "!{EXTRACTED_DB}" ] 
    then
@@ -199,7 +198,6 @@ process pMMseqs2_taxonomy {
    // The reason for this behaviour is a bug that occurs at higher sensitivity levels.
    sensitivity = MAX_SENSITIVITY - task.attempt + 1
    '''
-   mkdir -p !{params.polished.databases}
    # if no local database is referenced, start download part
       if [ -z "!{EXTRACTED_DB}" ]
       then
@@ -482,7 +480,6 @@ process pKEGGFromBlast {
       S5CMD_PARAMS=params.steps?.annotation?.keggFromBlast?.database?.download?.s5cmd?.params ?: ""
       EXTRACTED_DB=params.steps?.annotation?.keggFromBlast?.database?.extractedDBPath ?: ""
       '''
-      mkdir -p !{params.polished.databases}
       # Check developer documentation
       KEGG_DB=""
       if [[ -z "!{EXTRACTED_DB}" ]] 
