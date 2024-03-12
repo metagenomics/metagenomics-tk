@@ -136,7 +136,7 @@ process pMinimap2 {
 
     container "${params.samtools_image}"
 
-    label 'large'
+    label 'highmemLarge'
 
     tag "Sample: $sample"
 
@@ -178,7 +178,7 @@ process pBowtie2 {
 
     container "${params.bowtie_image}"
 
-    label 'large'
+    label 'highmemLarge'
 
     tag "Sample: $sample"
 
@@ -226,7 +226,7 @@ process pBwa {
 
     container "${params.samtools_bwa_image}"
 
-    label 'large'
+    label 'highmemLarge'
 
     cache 'deep'
 
@@ -272,7 +272,7 @@ process pBwa2 {
 
     container "${params.samtools_bwa2_image}"
 
-    label 'large'
+    label 'highmemLarge'
 
     cache 'deep'
 

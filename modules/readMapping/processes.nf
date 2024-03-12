@@ -13,7 +13,7 @@ process pMinimap2Index {
 
     container "${params.ubuntu_image}"
 
-    label 'large'
+    label 'highmemLarge'
 
     when:
     run
@@ -33,7 +33,7 @@ process pMinimap2Index {
 }
 
 process pMapMinimap2 {
-    label 'large'
+    label 'highmemLarge'
 
     container "${params.samtools_bwa_image}"
 

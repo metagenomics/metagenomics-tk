@@ -1,5 +1,6 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: true
 output: "output"
 logDir: log
 runid: 1
@@ -8,8 +9,8 @@ publishDirMode: "symlink"
 input:
   SRA:
     pattern:
-      ont: ".+[^(_1|_2)].+$"
-      illumina: ".+(_1|_2).+$"
+      ont: ".+[^(_1|_2)].+fastq.gz$"
+      illumina: ".+(_1|_2).+fastq.gz$"
     S3:
       path: test_data/SRA/samples.tsv 
       bucket: "s3://ftp.era.ebi.ac.uk" 
@@ -22,4 +23,3 @@ steps:
         s5cmdParams: " --retry-count 30 --no-verify-ssl --no-sign-request --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "
       additionalParams: " "
       timeLimit: "AUTO"
-

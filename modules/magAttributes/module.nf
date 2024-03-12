@@ -1,4 +1,4 @@
-nextflow.enable.dsl=2
+include { wSaveSettingsList } from '../config/module'
 
 include { pDumpLogs } from '../utils/processes'
 include { pProkka; _wCreateProkkaInput } from '../annotation/module'
@@ -41,19 +41,22 @@ process pCheckM {
 
     tag "Sample: $sample"
 
+    secret { "${S3_checkm_ACCESS}"!="" ? ["S3_checkm_ACCESS", "S3_checkm_SECRET"] : [] } 
+
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }, \
       pattern: "{**.tsv}"
 
-    when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm")
+    when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm") \
+	&& !params.steps.magAttributes.containsKey("checkm2")
 
-    containerOptions Utils.getDockerMount(params.steps?.magAttributes?.checkm?.database, params)
+    containerOptions Utils.getDockerMount(params.steps?.magAttributes?.checkm?.database, params) 
 
-    beforeScript "mkdir -p ${params.polished.databases}"
+    beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
-    label 'medium'
+    label 'highmemMedium'
 
     input:
-    tuple val(sample), val(ending), path(bins) 
+    tuple val(sample), val(ending), path(bins), val(chunkId)
 
     output:
     tuple path("${sample}_checkm_*.tsv", type: "file"), val("${sample}"), emit: checkm
@@ -66,18 +69,59 @@ process pCheckM {
     DOWNLOAD_LINK=params?.steps?.magAttributes?.checkm?.database?.download?.source ?: ""
     MD5SUM=params.steps?.magAttributes?.checkm?.database?.download?.md5sum ?: ""
     EXTRACTED_DB=params.steps?.magAttributes?.checkm?.database?.extractedDBPath ?: ""
+    S3_checkm_ACCESS=params?.steps?.magAttributes?.checkm?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm_ACCESS" : ""
+    S3_checkm_SECRET=params?.steps?.magAttributes?.checkm?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm_SECRET" : ""
     template 'checkm.sh'
-    
 }
 
+
+process pCheckM2 {
+
+    container "${params.checkm2_image}"
+
+    tag "Sample: $sample"
+
+    secret { "${S3_checkm2_ACCESS}"!="" ? ["S3_checkm2_ACCESS", "S3_checkm2_SECRET"] : [] } 
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "checkm2", filename) }, \
+      pattern: "{**.tsv}"
+
+    when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm2")
+
+    containerOptions Utils.getDockerMount(params.steps?.magAttributes?.checkm2?.database, params)
+
+    beforeScript "mkdir -p ${params.polished.databases}"
+
+    label 'medium'
+
+    input:
+    tuple val(sample), val(ending), path(bins), val(chunkId)
+
+    output:
+    tuple path("${sample}_checkm2_*.tsv", type: "file"), val("${sample}"), emit: checkm
+    tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+
+    shell:
+    output = getOutput("${sample}", params.runid, "checkm2", "")
+    S5CMD_PARAMS=params?.steps?.magAttributes?.checkm2?.database?.download?.s5cmd?.params ?: "" 
+    DOWNLOAD_LINK=params?.steps?.magAttributes?.checkm2?.database?.download?.source ?: ""
+    MD5SUM=params.steps?.magAttributes?.checkm2?.database?.download?.md5sum ?: ""
+    EXTRACTED_DB=params.steps?.magAttributes?.checkm2?.database?.extractedDBPath ?: ""
+    S3_checkm2_ACCESS=params?.steps?.magAttributes?.checkm2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm2_ACCESS" : ""
+    S3_checkm2_SECRET=params?.steps?.magAttributes?.checkm2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm2_SECRET" : ""
+    template 'checkm2.sh'
+}
 
 process pGtdbtk {
 
     container "${params.gtdbtk_image}"
 
-    label 'medium'
+    label 'highmemMedium'
 
     tag "Sample: $sample"
+
+    secret { "${S3_gtdb_ACCESS}"!="" ? ["S3_gtdb_ACCESS", "S3_gtdb_SECRET"] : [] } 
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }, \
       pattern: "{**.tsv,**.tree}"
@@ -86,10 +130,10 @@ process pGtdbtk {
 
     containerOptions Utils.getDockerMount(params?.steps?.magAttributes?.gtdb?.database, params)
 
-    beforeScript "mkdir -p ${params.polished.databases}"
+    beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
     input:
-    tuple val(sample), val(ending), path(bins) 
+    tuple val(sample), val(ending), path(bins), val(chunkId)
 
     output:
     tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
@@ -107,6 +151,8 @@ process pGtdbtk {
     MD5SUM=params.steps?.magAttributes?.gtdb?.database?.download?.md5sum ?: ""
     EXTRACTED_DB=params.steps?.magAttributes?.gtdb?.database?.extractedDBPath ?: ""
     GTDB_PARAMS=params.steps.magAttributes.gtdb.additionalParams ?: ""
+    S3_gtdb_ACCESS=params?.steps?.magAttributes?.gtdb?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_gtdb_ACCESS" : ""
+    S3_gtdb_SECRET=params?.steps?.magAttributes?.gtdb?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_gtdb_SECRET" : ""
     template 'gtdb.sh'
 }
 
@@ -131,6 +177,7 @@ workflow wCMSeqWorkflowFile {
       alignments
    main:
       wMagAttributesFile(genomes)
+
       
       //prepare alignment inputs for CMSeq:
       alignments | splitCsv(sep: '\t', header: true)  \
@@ -140,6 +187,9 @@ workflow wCMSeqWorkflowFile {
       genomes | splitCsv(sep: '\t', header: true) \
        | map { sample -> [sample.DATASET, file(sample.PATH).getName(), file(sample.PATH)] } \
        | set { genomesForProkka }
+
+      DATASET_IDX = 0 
+      wSaveSettingsList(samplesContigs | map { it -> it[DATASET_IDX] })
 
       _wCreateProkkaInput(genomesForProkka, wMagAttributesFile.out.gtdb)
 
@@ -174,7 +224,10 @@ workflow wMagAttributesFile {
      DATASET_IDX = 0
      mags | splitCsv(sep: '\t', header: true) \
        | map { sample -> [sample.DATASET, file(sample.PATH)] } \
-       | groupTuple(by: DATASET_IDX) | _wMagAttributes
+       | groupTuple(by: DATASET_IDX) | set { mags }
+  
+     _wMagAttributes(mags)
+     wSaveSettingsList(mags | map { it -> it[DATASET_IDX] })
    emit:
      checkm = _wMagAttributes.out.checkm
      gtdb = _wMagAttributes.out.gtdb
@@ -211,18 +264,19 @@ workflow wMagAttributesList {
 *
 * Method takes a list of the form [SAMPLE, [BIN1 path, BIN2 path]] as input
 * and produces a flattend list which is grouped by dataset and sample.
-* The output has the form [SAMPLE, file ending (e.g. .fa), [BIN 1 path, BIN 2 path]]
+* The output has the form [SAMPLE, file ending (e.g. .fa), [BIN 1 path, BIN 2 path], chunk id]
 *
 */
 def groupBins(binning, buffer){
   def chunkList = [];
   def SAMPLE_IDX = 0;
   def BIN_PATHS_IDX = 1;
-  binning[BIN_PATHS_IDX].collate(buffer).each {  
-       it.groupBy{ 
+  binning[BIN_PATHS_IDX].collate(buffer).eachWithIndex {  
+       it, indexSample -> it.groupBy{ 
             bin -> file(bin).name.substring(file(bin).name.lastIndexOf(".")) 
-       }.each {
-            ending, group -> chunkList.add([binning[SAMPLE_IDX],  ending, group]);
+       }.eachWithIndex {
+            ending, group, indexFileEnding -> \
+	chunkList.add([binning[SAMPLE_IDX], ending, group, indexSample.toString() + indexFileEnding.toString()]);
        }
   }
   return chunkList;
@@ -235,30 +289,37 @@ workflow _wMagAttributes {
    main:
      GTDB_DEFAULT_BUFFER = 500
      CHECKM_DEFAULT_BUFFER = 30
+     CHECKM2_DEFAULT_BUFFER = 20000
      BIN_FILES_INPUT_IDX = 1
 
      DATASET_IDX = 0
      FILE_ENDING_IDX = 1
      BIN_FILES_IDX = 2
-     BIN_FILES_OUTPUT_GROUP_IDX = 0
      BIN_FILES_OUTPUT_IDX = 0
-     DATASET_OUTPUT_IDX = 1
 
      // get file ending of bin files (.fa, .fasta, ...) and group by file ending and dataset
      bins | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.checkm?.buffer ?: CHECKM_DEFAULT_BUFFER)}) \
        | pCheckM | set {checkm}
+     bins | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.checkm2?.buffer ?: CHECKM2_DEFAULT_BUFFER)}) \
+       | pCheckM2 | set { checkm2 }
      bins | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.gtdb?.buffer ?: GTDB_DEFAULT_BUFFER )}) \
        | pGtdbtk | set {gtdb}
 
+     checkm2.checkm | mix(checkm.checkm) | set {checkmSelected}
+
      // Prepare checkm output file
-     checkm.checkm | groupTuple(by: DATASET_OUTPUT_IDX, remainder: true) | map { it -> it[BIN_FILES_OUTPUT_GROUP_IDX] }  | flatten | map { bin -> file(bin) } \
-       | collectFile(keepHeader: true, newLine: false ){ item -> [ "bin_attributes.tsv", item.text ] } \
-       | splitCsv(sep: '\t', header: true) \
-       | set{ checkm_list } 
+     checkmSelected | splitCsv(sep: '\t', header: true) \
+	| map { checkmDict, sample -> checkmDict } \
+	| set { checkmList }
+
+     // Prepare gtdb output file
+     gtdb.combined | splitCsv(sep: '\t', header: true) \
+	| map { gtdb, sample -> gtdb } \
+	| set { gtdbCombinedList }
 
      if(params.summary){
-       // collect checkm files for checkm results across multiple datasets
-       checkm.checkm \
+       // collect checkm files for checkm2 results across multiple datasets
+       checkmSelected \
           | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
          [ "checkm.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
        }
@@ -273,9 +334,9 @@ workflow _wMagAttributes {
        }
      }
 
-     pGtdbtk.out.logs | mix(pCheckM.out.logs) | pDumpLogs 
+     pGtdbtk.out.logs | mix(pCheckM.out.logs) | mix(pCheckM2.out.logs) | pDumpLogs 
 
    emit:
-     checkm = checkm_list
-     gtdb = gtdb.combined
+     checkm = checkmList
+     gtdb = gtdbCombinedList
 }

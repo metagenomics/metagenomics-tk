@@ -33,10 +33,11 @@ process pConfigUpload {
   configStr = yaml.dump(config)
   workflowVersion = manifest.version
   workflowName = manifest.name
+  timestamp = new java.util.Date().format('YYYYMMdd-HHmmss-SSS')
   '''
-  echo "!{configStr}" > params_!{parameterName}.yml
-  echo "version: !{workflowVersion}" >> manifest_!{parameterName}.yml
-  echo "name: !{workflowName}" >> manifest_!{parameterName}.yml
+  echo "!{configStr}" > params_!{timestamp}.yml
+  echo "version: !{workflowVersion}" >> manifest_!{timestamp}.yml
+  echo "name: !{workflowName}" >> manifest_!{timestamp}.yml
   '''
 }
 

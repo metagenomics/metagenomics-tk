@@ -1,5 +1,6 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: false
 output: "output"
 logDir: log
 runid: 1
@@ -20,12 +21,18 @@ steps:
             predictMinLabel: 'AUTO' 
 
 resources:
-  large:
+  highmemLarge:
     cpus: 28
     memory: 230
-  medium:
+  highmemMedium:
     cpus: 14
     memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
   small:
     cpus: 7
     memory: 14

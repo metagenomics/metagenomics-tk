@@ -1,5 +1,6 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: true
 input:
   paired:
     path: "test_data/fullPipeline/reads_split.tsv"
@@ -85,15 +86,22 @@ steps:
         mashSketch: " -S 42 -k 21 -s 1000 "
         mashDist: " -v 0.2 -d 0.2 "
 resources:
-  large:
+  highmemLarge:
     cpus: 28
     memory: 230
-  medium:
+  highmemMedium:
     cpus: 14
     memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
   small:
     cpus: 7
     memory: 14
   tiny:
     cpus: 1
     memory: 1
+

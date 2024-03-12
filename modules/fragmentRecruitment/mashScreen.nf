@@ -1,10 +1,9 @@
-nextflow.enable.dsl=2
+include { wSaveSettingsList } from '../config/module'
 
 include { pBowtie2; pMinimap2; pBwa; pBwa2; pGetBinStatistics; \
 	pCovermGenomeCoverage; pCovermContigsCoverage; } from  '../binning/processes'
 
-include { pMashSketchGenome; \
-	  pMashPaste as pMashPasteChunk; \
+include { pMashPaste as pMashPasteChunk; \
 	  pMashPaste as pMashPasteFinal; } from  '../dereplication/bottomUpClustering/processes'
 include { pDumpLogs } from '../utils/processes'
 
@@ -27,7 +26,7 @@ def getModulePath(module){
 
 process pMashScreen {
 
-    label 'medium'
+    label 'highmemMedium'
 
     tag "Sample: $sample"
 
@@ -136,6 +135,9 @@ workflow wMashScreenFile {
      	Channel.from(file(params.steps.fragmentRecruitment.mashScreen.samples.ont)) | splitCsv(sep: '\t', header: true) \
              | map { line -> [ line.SAMPLE, file(line.READS)]} | set { ontReads  }
      }
+ 
+     SAMPLE_IDX = 0
+     wSaveSettingsList(ontReads | mix(singleReads) | mix(pairedReads) | map { it -> it[SAMPLE_IDX] } | unique)
 
      _wMashScreen(pairedReads, singleReads, ontReads, Channel.empty())
 }
@@ -249,16 +251,16 @@ workflow _wRunMash {
    take:
      sampleReads
      singleReads
-     genomesMap
+     genomes
    main:
      BUFFER_SKETCH = 1000
      PATH_IDX = 0
 
-     pMashSketchGenome(params?.steps.containsKey("fragmentRecruitment") &&  params?.steps.fragmentRecruitment.containsKey("mashScreen"), \
-	Channel.value(params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.mashSketch), genomesMap)
+     pMashSketchGenomeGroup(params?.steps.containsKey("fragmentRecruitment") &&  params?.steps.fragmentRecruitment.containsKey("mashScreen"), \
+	Channel.value(params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.mashSketch), genomes | buffer(size: BUFFER_SKETCH, remainder: true))
 
      // Combine sketches
-     pMashSketchGenome.out.sketch  | toSortedList | flatten | buffer(size: BUFFER_SKETCH, remainder: true) | set { mashPasteInput }
+     pMashSketchGenomeGroup.out.sketches | flatten | toSortedList | flatten | buffer(size: BUFFER_SKETCH, remainder: true) | set { mashPasteInput }
 
      pMashPasteChunk(params?.steps.containsKey("fragmentRecruitment") &&  params?.steps.fragmentRecruitment.containsKey("mashScreen"), \
 	Channel.value([getModulePath(params.modules.fragmentRecruitment), "mash/paste"]),  mashPasteInput)
@@ -461,30 +463,69 @@ workflow _wGetStatistics {
      contigCoverage = pCovermContigsCoverage.out.coverage
 }
 
-process pUnzip {
+
+process pUnzipGroup {
 
   label 'tiny'
 
+  fair true
+
   container "${params.ubuntu_image}"
 
-  tag "Genome: ${x.baseName}"
+  when params?.steps.containsKey("fragmentRecruitment") && params.steps.fragmentRecruitment.containsKey("mashScreen")
+
+  time params?.steps.containsKey("fragmentRecruitment") \
+	&& params.steps.fragmentRecruitment.containsKey("mashScreen") \
+	? Utils.setTimeLimit(params.steps.fragmentRecruitment.mashScreen.unzip, params.modules.fragmentRecruitment.process.unzip.defaults, params.resources.tiny) : ""
 
   cache 'deep'
 
   input:
-  path x
+  path(x, stageAs: "input/*")
 
   output:
-  path("out/${x.baseName}${concatEnding}")
+  path("*", type: "file")
 
-  script:
-  ending = file(x).name.substring(file(x).name.lastIndexOf(".")) 
-  concatEnding =  ending == ".gz" ? "" : ending 
-  """
-  mkdir out
-  < $x zcat --force > out/${x.baseName}${concatEnding}
-  """
+  shell:
+  '''
+  for f in input/*; do  
+	cp $f . ; 
+	name=$(basename $f); 
+	if gzip -t $name; then 
+		gunzip  -d $name ;
+	fi 
+  done
+  '''
 }
+
+
+process pMashSketchGenomeGroup {
+
+    container "${params.mash_image}"
+
+    label 'tiny'
+
+    fair true
+
+    when:
+    run
+
+    input:
+    val(run)
+    val(mashSketchParams)
+    path(x)
+
+    output:
+    path("*.msh"), emit: sketches
+
+    shell:
+    '''
+    for f in * ; do  
+    	mash sketch !{mashSketchParams} $f -o $(basename $f).msh
+    done
+    '''
+}
+
 
 workflow _wMashScreen {
    take: 
@@ -503,8 +544,12 @@ workflow _wMashScreen {
      if(params?.steps.containsKey("fragmentRecruitment") \
 	&& params?.steps.fragmentRecruitment.containsKey("mashScreen") \
 	&& params?.steps.fragmentRecruitment.mashScreen.containsKey("genomes")){
+
+       BUFFER = 500
+       // Some tools can not handle gzipped files. Unzip genomes before fragment recruitment
        Channel.fromPath(params?.steps.fragmentRecruitment?.mashScreen?.genomes) | splitCsv(sep: '\t', header: true) \
-         | map { line -> file(line.PATH)} | pUnzip | set { genomes }
+         | map { line -> file(line.PATH)} | buffer( size: BUFFER, remainder: true ) | pUnzipGroup \
+	 |  flatten | set { genomes }
      }
 
      UNIQUE_IDX=0
@@ -515,7 +560,7 @@ workflow _wMashScreen {
      genomes | map { genome -> [file(genome).name, genome] } | set { genomesMap }
 
      // Run mash and return matched genomes per sample
-     _wRunMash(sampleReads | mix(ontReads), singleReads, genomesMap)
+     _wRunMash(sampleReads | mix(ontReads), singleReads, genomes)
 
      // Concatenate genomes per sample and map reads per sample against concatenated genomes via Bowtie 
      _wRunMapping(_wRunMash.out.mashScreenFilteredOutput, sampleReads, singleReads, ontReads, genomesMap)

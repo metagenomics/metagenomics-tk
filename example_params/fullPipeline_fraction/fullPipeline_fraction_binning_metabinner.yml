@@ -1,5 +1,6 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: true
 input:
   paired:
     path: "test_data/fullPipeline/reads_split.tsv"
@@ -39,20 +40,30 @@ steps:
       kmerSize: 4
   annotation:
     mmseqs2:
+      chunkSize: 7000
       kegg:
-        params: ' -s 2 --exact-kmer-matching 1 '
+        additionalParams:
+          search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+          additionalColumns: ""
         database:
           extractedDBPath: '/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB'
 resources:
-  large:
+  highmemLarge:
     cpus: 28
     memory: 230
-  medium:
+  highmemMedium:
     cpus: 14
     memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
   small:
     cpus: 7
     memory: 14
   tiny:
     cpus: 1
     memory: 1
+

@@ -1,5 +1,6 @@
 output: "output"
 summary: false
+s3SignIn: false
 runid: 1
 logLevel: 1
 logDir: log
@@ -24,12 +25,18 @@ steps:
     sans:
       additionalParams: " -k 15 -f strict -w 25  -t 400 " 
 resources:
-  large:
+  highmemLarge:
     cpus: 28
     memory: 230
-  medium:
+  highmemMedium:
     cpus: 14
     memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
   small:
     cpus: 7
     memory: 14

@@ -1,7 +1,7 @@
 
 # Prepare checkm patch, output directory and output file name
 mkdir out
-FILE_ID=$(mktemp XXXXXXXX)
+FILE_ID=!{chunkId}
 FILE=!{sample}_checkm_${FILE_ID}.tsv
 
 # Check developer documentation
@@ -12,12 +12,18 @@ then
 
   echo '{"dataRoot": "!{params.databases}/checkm/out", "remoteManifestURL": "https://data.ace.uq.edu.au/public/CheckM_databases/", "manifestType": "CheckM", "remoteManifestName": ".dmanifest", "localManifestName": ".dmanifest"}' > /tmp/DATA_CONFIG
 
+  if [ ! -z "!{S3_checkm_ACCESS}" ]
+  then
+    export AWS_ACCESS_KEY_ID=!{S3_checkm_ACCESS}
+    export AWS_SECRET_ACCESS_KEY=!{S3_checkm_SECRET}
+  fi
+
   # Download checkm database if necessary
   mkdir -p ${DATABASE}
   flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
     --link=!{DOWNLOAD_LINK} \
-    --httpsCommand="wget -O checkm.tar.gz !{DOWNLOAD_LINK} && tar -xzvf checkm.tar.gz && rm checkm.tar.gz" \
-    --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} checkm.tar.gz && tar -xzvf checkm.tar.gz && rm checkm.tar.gz" \
+    --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | tar -xzv " \
+    --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | tar -xzv " \
     --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
     --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
     --localCommand="tar -xzvf !{DOWNLOAD_LINK}" \

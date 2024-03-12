@@ -29,8 +29,25 @@ ifndef PARAMS_FILE
 	override PARAMS_FILE = ${CURRENT_DIR}/example_params/fullPipeline.yml
 endif
 
+ifdef PRESET
+	override PARAMS_FILE=""
+endif
+
+ifneq (${PARAMS_FILE}, "")
+	override PARAMS_COMMAND =  -params-file ${PARAMS_FILE}
+endif
+
+
 ifndef BRANCH
 	override BRANCH = "dev"
+endif
+
+ifndef SECRET_NAME
+	override SECRET_NAME = ""
+endif
+
+ifndef SECRET_VALUE
+	override SECRET_VALUE = ""
 endif
 
 ifndef VERSION
@@ -45,21 +62,21 @@ ifndef MODULE_DB_TEST_EXTRACTED
 	override MODULE_DB_TEST_S3PATH = "s3://databases/plsdb.zip"
 	override MODULE_DB_TEST_S3_DIRECTORY_PATH = "s3://databases/plsdb/"
 	override MODULE_DB_TEST_S5CMD_COMMAND = " --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "
-	override MODULE_DB_TEST_CREDENTIALS = /vol/spool/peter/meta-omics-toolkit/credentials
 	override MODULE_DB_TEST_GENERATED_YML = /vol/spool/peter/meta-omics-toolkit/generated_yamls/
 	override MODULE_DB_TEST_YML = example_params/plasmid.yml
 	override MODULE_DB_TEST_YML_PATH = ".steps.plasmid.PLSDB.database=env(database)"
 	override MODULE_DB_TEST_YML_SCRIPT = "./scripts/test_plasmids.sh" 
 	override MODULE_DB_TEST_GENERATED_YML_DIR = "plasmid_yaml_database_tests"
 	override MODULE_DB_TEST_SKIP_TESTS = ""
+	override MODULE_DB_TEST_REMOVE_DB = "no"
 endif
 
 runDatabaseTest: ## Run database tests
 	bash ./scripts/test_module_db.sh ${MODULE_DB_TEST_EXTRACTED} ${MODULE_DB_TEST_MD5SUM} \
 		${MODULE_DB_TEST_HTTPS} ${MODULE_DB_TEST_PATH} ${MODULE_DB_TEST_S3PATH} ${MODULE_DB_TEST_S3_DIRECTORY_PATH} \
-		${MODULE_DB_TEST_S5CMD_COMMAND} ${MODULE_DB_TEST_CREDENTIALS} ${MODULE_DB_TEST_GENERATED_YML} \
+		${MODULE_DB_TEST_S5CMD_COMMAND} ${MODULE_DB_TEST_GENERATED_YML} \
 		${MODULE_DB_TEST_YML} ${MODULE_DB_TEST_YML_PATH} ${MODULE_DB_TEST_YML_SCRIPT} ${MODULE_DB_TEST_GENERATED_YML_DIR} \
-		${MODULE_DB_TEST_SKIP_TESTS}
+		${MODULE_DB_TEST_SKIP_TESTS} ${MODULE_DB_TEST_REMOVE_DB}
 
 .PHONY: list clean test_clean run_small_full_test check changelog python_version_check checkPublisDirMode
 
@@ -114,8 +131,12 @@ dev_wiki: wiki_venv ## Start mkdocs developer session
 build_publish_docker:
 	bash ./scripts/buildPublishImage.sh ${COMMIT_START} ${COMMIT_END} ${DOCKER_REPOSITORY}
 	
+set_secrets: nextflow ## Set secrets for sensitive data access
+	NXF_HOME=$$PWD/.nextflow ./nextflow secrets set ${SECRET_NAME} ${SECRET_VALUE}
+
 run_small_full_test: nextflow ## Prepares input files like downloading bins and reads and executes Nextflow. The default configuration it runs the full pipeline locally.
-	NXF_HOME=$$PWD/.nextflow ./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR} -profile ${PROFILE} -resume -entry ${ENTRY} -params-file ${PARAMS_FILE} --logDir ${LOG_DIR} ; exit $$?
+	NXF_HOME=$$PWD/.nextflow ./nextflow run main.nf ${OPTIONS} -work-dir ${WORK_DIR} -profile ${PROFILE} -resume -entry ${ENTRY} ${PARAMS_COMMAND} --logDir ${LOG_DIR} ; exit $$?
+
 
 help: ## Lists available Makefile commands
 	@egrep '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-16s\033[0m %s\n", $$1, $$2}'

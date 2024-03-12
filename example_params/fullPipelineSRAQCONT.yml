@@ -1,5 +1,6 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: true
 output: "output"
 logDir: log
 runid: 1
@@ -9,8 +10,8 @@ input:
     pattern:
       # Bielefeld Mirror:
       #   patternONT: ".+[^(_1|_2)].+$"
-      ont: ".+(_1).+$"
-      illumina: ".+(_1|_2).+$"
+      ont: ".+(_1).+fastq.gz$"
+      illumina: ".+(_1|_2).+fastq.gz$"
     S3:
       path: test_data/SRA/ONTsamples.tsv
       bucket: "s3://meta_test" 
@@ -24,6 +25,4 @@ steps:
         filtlong: " --min_length 1000 --keep_percent 90 "
       download:
         s5cmdParams: " --retry-count 30 --no-verify-ssl --no-sign-request --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "
-
-
 

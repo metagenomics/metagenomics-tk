@@ -8,7 +8,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 
 process pCarveMe {
 
-    label 'tiny'
+    label 'small'
 
     tag "Sample: $sample, Bin: $id"
 
@@ -18,8 +18,8 @@ process pCarveMe {
 
     when params.steps.containsKey("metabolomics") && params.steps.metabolomics.containsKey("carveme")
 
-    beforeScript  params?.steps.containsKey("metabolomics") \
-	? Utils.getBeforeScript(params?.steps?.metabolomics?.beforeProcessScript.trim(), params.carveme_image) \
+    beforeScript  params?.steps.containsKey("metabolomics") && params?.steps?.metabolomics?.carveme?.containsKey("beforeProcessScript")  \
+	? Utils.getBeforeScript(params.steps.metabolomics.carveme.beforeProcessScript.trim(), params.carveme_image) \
 	: ""
   
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "carveme", filename) }, \

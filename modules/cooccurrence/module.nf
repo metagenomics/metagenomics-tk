@@ -1,5 +1,3 @@
-nextflow.enable.dsl=2
-
 include { pDumpLogs } from '../utils/processes'
 
 def getOutput(RUNID, TOOL, filename){
@@ -32,7 +30,7 @@ process pVerticalConcat {
 
 process pBuildCorrelationNetwork {
 
-    label 'large'
+    label 'highmemLarge'
 
     cache 'deep'
    
@@ -66,7 +64,7 @@ process pBuildCorrelationNetwork {
 MAX_SPIEC_EASI_RETRIES = 2
 process pBuildSpiecEasiNetwork {
 
-    label 'large'
+    label 'highmemLarge'
 
     cache 'deep'
 
@@ -75,7 +73,7 @@ process pBuildSpiecEasiNetwork {
     time params.steps.containsKey("cooccurrence") ? \
 	Utils.setTimeLimit(params.steps.cooccurrence.inference.additionalParams, \
 	params.modules.cooccurrence.process.pBuildSpiecEasiNetwork.defaults, \
-	params.resources.large) : ""
+	params.resources.highmemLarge) : ""
 
     maxRetries MAX_SPIEC_EASI_RETRIES
 
@@ -161,7 +159,7 @@ process pVerticalConcatFinal {
 MAX_SMETANA_RETRIES = 10
 process pSmetanaEdges {
 
-    label 'large'
+    label 'highmemLarge'
 
     cache 'deep'
 
@@ -212,6 +210,7 @@ workflow wCooccurrenceFile {
         | splitCsv(sep: '\t', header: true) \
         | map { bin -> [bin.BIN_ID, file(bin.PATH)] } | set {models}
     }
+
     _wCooccurrence(count, Channel.from(file(params.steps.cooccurrence.input.gtdb)), models)
 
 }
@@ -252,13 +251,16 @@ workflow wCooccurrenceList {
     gtdb
     models
   main:
-     gtdb | collectFile(keepHeader: true) { file, dataset -> ["gtdb", file.text]}\
-       | set {gtdbConcatenated}
-
     MODEL_NAME_IDX = 0
     MODEL_PATH_IDX = 1
+
+    gtdb | map { bin -> bin.BIN_ID + "\t" + bin.DOMAIN + "\t" + bin.SAMPLE + "\t" + bin.user_genome + "\t" + bin.classification } \
+     | collectFile(seed: "BIN_ID\tDOMAIN\tSAMPLE\tuser_genome\tclassification", newLine: true) \
+     | set {gtdbConcatenated}
+
     models | map { model -> [fixModelID(model[MODEL_NAME_IDX]), model[MODEL_PATH_IDX]]} | set { fixedModel }
     _wCooccurrence(abundanceMatrix, gtdbConcatenated, fixedModel)
+
 }
 
 

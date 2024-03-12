@@ -1,5 +1,6 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: true
 input:
   paired:
     path: "test_data/fullPipeline/reads_split.tsv"
@@ -25,7 +26,7 @@ steps:
       timeLimit: "AUTO"
       additionalParams: 
          count: " -sm -ci2 -cs10000  "
-         histo: " "
+         histo: " -cx50000 "
   assembly:
     megahit:
       additionalParams: " --min-contig-len 200 "
@@ -57,6 +58,19 @@ steps:
       additionalParams: ""
     metabat:
       additionalParams: " --seed 234234  "
+    metabinner:
+      minContigLength: 500
+      kmerSize: 4
+    magscot:
+      additionalParams: ""
+      prodigal:
+        additionalParams: " -p meta "
+      hmmSearch:
+        additionalParams: "--noali --notextw --cut_nc"
+        database:
+          download:
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
+            md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
   binningONT:
     minimap:
       additionalParams: 
@@ -75,19 +89,15 @@ steps:
       buffer: 1000
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_v2_data.tar.gz
-          md5sum: c42a6517bc6c14f517fa2c77121ae465
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
+          md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
       additionalParams: " --min_af 0.65 --scratch_dir . "
-    checkm:
+    checkm2:
       database:
         download:
-          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz"
-          md5sum: 0963b301dfe9345ea4be1246e32f6728
-      buffer: 200
-      additionalParams:
-        tree: " --reduced_tree "
-        lineage_set: " " 
-        qa: "  "
+          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm2_v2.tar.gz"
+          md5sum: a634cb3d31a1f56f2912b74005f25f09
+      additionalParams: "  "
   dereplication:
     bottomUpClustering:
       minimumCompleteness: 0
@@ -105,6 +115,8 @@ steps:
   fragmentRecruitment:
     mashScreen:
       genomes: test_data/fragmentRecruitment/mags.tsv
+      unzip:
+        timeLimit: "AUTO"
       additionalParams:
         mashSketch: " "
         mashScreen: " "
@@ -137,8 +149,11 @@ steps:
       defaultKingdom: false
       additionalParams: " --mincontiglen 200 "
     mmseqs2:
+      chunkSize: 20000
       kegg:
-        params: ' -s 2 --exact-kmer-matching 1 '
+        additionalParams:
+          search :  ' -s 2 --exact-kmer-matching 1 '
+          additionalColumns: ""
         database:
           extractedDBPath: '/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB'
 #      vfdb:
@@ -154,7 +169,9 @@ steps:
 #            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_experimental.tar.zst
 #            md5sum: 57a6d328486f0acd63f7e984f739e8fe
       bacmet20_predicted:
-        params: ' -s 2 --exact-kmer-matching 1 '
+        additionalParams:
+          search :  ' -s 2 --exact-kmer-matching 1 '
+          additionalColumns: ""
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
@@ -167,12 +184,22 @@ steps:
           md5sum: d7e627221a1d4584d1c1795cda774cdb
     mmseqs2_taxonomy:
       runOnMAGs: false
-      ncbi_nr:
-        params: '-s 1 --orf-filter-s 1 -e 1e-15'
+      gtdb:
+        params: ' --orf-filter-s 1 -e 1e-15'
+        ramMode: false
+        initialMaxSensitivity: 1
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
-            md5sum: 184bb8207ee1575cae7756137cde076b
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
+            md5sum: 3c8f12c5c2dc55841a14dd30a0a4c718
+      ncbi_nr:
+        params: ' --orf-filter-s 1 -e 1e-15'
+        ramMode: false
+        initialMaxSensitivity: 1
+        database:
+          download:
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2023-04-29_mmseqs_taxonomy.tar.zst
+            md5sum: 79b9fb6b3dada41e602d70e12e7351c2
     keggFromBlast:
       database:
         extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 
@@ -236,12 +263,18 @@ steps:
           mashSketch: " -S 42 -k 21 -s 1000 "
           mashDist: " -v 0.2 -d 0.2 "
 resources:
-  large:
+  highmemLarge:
     cpus: 28
     memory: 230
-  medium:
+  highmemMedium:
     cpus: 14
     memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
   small:
     cpus: 7
     memory: 14

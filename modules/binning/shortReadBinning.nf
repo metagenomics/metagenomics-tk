@@ -2,6 +2,7 @@ nextflow.enable.dsl=2
 
 include { pGetBinStatistics as pGetBinStatistics; \
 	pCovermContigsCoverage; pCovermGenomeCoverage; pBowtie2; pMetabat; pBwa; pBwa2 } from './processes'
+include { pProdigal; pHmmSearch } from '../annotation/module'
 
 include { pDumpLogs } from '../utils/processes'
 
@@ -46,7 +47,7 @@ process pMetabinner {
 
     tag "Sample: $sample"
 
-    label 'large'
+    label 'highmemLarge'
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metabinner", filename) }
 
@@ -73,7 +74,7 @@ process pMaxBin {
 
     container "${params.maxbin_image}"
 
-    label 'large'
+    label 'highmemLarge'
 
     tag "$sample"
 
@@ -90,10 +91,103 @@ process pMaxBin {
     '''
     NEW_TYPE="!{TYPE}_maxbin"
     mkdir !{TYPE}_!{sample}
-    run_MaxBin.pl -preserve_intermediate -contig !{contigs} -reads !{reads} -thread 28 -out !{TYPE}_!{sample}/out
+    run_MaxBin.pl -preserve_intermediate -contig !{contigs} -reads !{reads} -thread !{task.cpus} -out !{TYPE}_!{sample}/out
     '''
 }
 
+
+/**
+ * MAGScoT - Run MAGScoT binning refinement
+ * @param sample: Sample name
+ * @param contigMaps: Individual contig to bin files from binning algorithms
+ * @param allHits: GTDBtk single copy marker identification of all contigs
+ * @param contigs: Path to contigs
+ * @return: Files containing scores, bin-contig mappings, new bins, and not binned contigs
+ *
+ * This process runs the MAGScoT R script on the input contig maps
+ * to compare and refine the binning of multiple other binners.
+ * It outputs several files containing scores, bin-contig mappings, bins, and not binned contigs.
+ **/
+process pMAGScoT {
+
+    container "${params.magscot_image}"
+
+    tag "Sample: $sample"
+
+    label 'small'
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "magscot", filename) }
+
+    // Override default MAGScoT container entrypoint, so that the "RScript magscot" call that is normally run
+    // does not clash with the Nextflow process call "/bin/bash"
+    containerOptions '--entrypoint ""'
+
+    when params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")
+
+
+    input:
+    tuple val(sample), file(contigMaps), file(allHits), path(contigs)
+
+    output:
+    tuple val("${sample}"), file("${sample}_MagScoT.*"), optional: true, emit: scores
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
+    tuple val("${sample}"), file("${sample}_bin.*.fa"), optional: true, emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    shell:
+    '''
+    # Once in a blue moon Nextflow leaves the header in the file
+    # Failsafe to remove header from contigMaps file if it exists
+    sed -i '/^BIN_ID\tCONTIG\tBINNER$/d' !{contigMaps}
+    Rscript /opt/MAGScoT.R !{params.steps?.binning?.magscot?.additionalParams} -i !{contigMaps} --hmm !{allHits} -o !{sample}_MagScoT
+
+    # Create a new binning file according to the naming convention
+    echo "Converting MAGScoT binning according to the naming convention"
+    echo -e 'BIN_ID\tCONTIG\tBINNER' > !{sample}_bin_contig_mapping.tsv
+
+    # Use head to get the first line, awk to print the first field (the filename),
+    # and sed to remove everything up to and including the last dot (.) in the filename, leaving only the file extension.
+    # Export the variable to use it in the xargs commands subshell further down
+    export EXT=$(head -n 1 !{contigMaps} | awk '{print $1}' | sed 's/.*\\.//')
+
+    # Remove the header and pipe the remaining lines to xargs to run the script line by line
+    sed 1d !{sample}_MagScoT.refined.contig_to_bin.out | xargs -n 2 sh -c '
+        # Get the first column and separate the number, remove the leading zeros
+        binID=$(echo $0 | cut -d"_" -f4 | sed 's/^0*//')
+        CONTIG=$1
+        # Create a file with the contigs for each bin for reconstruction with seqkit
+        echo $CONTIG >> !{sample}_bin.$binID.lst
+        echo "!{sample}_bin.$binID.$EXT\t$CONTIG\tMAGScot" >> !{sample}_bin_contig_mapping.tsv
+    '
+    echo "Done converting"
+    # Reconstructing the bins from the converted MAGScoT output list
+    echo "Reconstructing bins"
+    for bin in !{sample}_bin.*.lst; do
+        seqkit grep -f $bin !{contigs} -o ${bin%.lst}.fa.tmp
+    done
+    echo "Done reconstructing bins"
+
+    # Rename the bins to the naming convention
+    for bin in $(find * -name "*bin*.fa.tmp"); do
+    	BIN_NAME="$(basename ${bin})"
+    	echo "Renaming bin: ${BIN_NAME}"
+
+    	# Get id of the bin (e.g get 2 of the bin SAMPLEID_bin.2.fa.tmp)
+    	ID=$(echo ${BIN_NAME} | rev | cut -d '.' -f 3 | rev)
+    	echo "Bin id: ${ID}"
+
+    	# Append bin id to every header
+    	seqkit replace  -p '(.*)' -r "\\${1} MAG=${ID}" $bin > ${BIN_NAME%.tmp}
+    	# Remove temporary file
+    	rm $bin
+    done
+
+    # Creating un-binned contigs file
+    seqkit grep -f <(cat !{sample}_bin.*.lst) -v !{contigs} -o !{sample}_notBinned.fa.tmp
+    seqkit replace -p '(.*)' -r "\\${1} MAG=NotBinned" !{sample}_notBinned.fa.tmp > !{sample}_notBinned.fa
+    '''
+}
 
 /*
 *
@@ -191,7 +285,6 @@ workflow _wBinning {
       params.steps.containsKey("fragmentRecruitment")]), \
       contigs | join(inputReads, by: SAMPLE_IDX))
 
-
      pBowtie2.out.mappedReads | mix(pBwa.out.mappedReads, pBwa2.out.mappedReads) | set { mappedReads }
      pBowtie2.out.unmappedReads | mix(pBwa.out.unmappedReads, pBwa2.out.unmappedReads) | set { unmappedReads }
 
@@ -212,7 +305,35 @@ workflow _wBinning {
       "metabat", params.steps?.binning?.metabat?.additionalParams]), \
       binningInput | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)))
 
+     // Re-evaluate binning with MAGScoT
+     // ORF detection with Prodigal for MAGScoT
+     CONTIG_MAPPING_IDX = 1
+
+    magscot_input = Channel.empty()
+    if (params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")) {
+     pProdigal(contigs)
+     pHmmSearch(pProdigal.out.prodigal_faa)
+     pMetabinner.out.binContigMapping | mix(pMetabat.out.binContigMapping) \
+     // Collect the joined items into a file, again, based on the same sample
+     | collectFile(keepHeader: false){ item -> ["${item[SAMPLE_IDX]}", item[CONTIG_MAPPING_IDX].text]} \
+     // Use the map function to restore the original tuple structure of [sample, file],
+     // as the collectFile function only returns the file
+     | map { f -> [file(f).name, f] } \
+     // Join the binContigMapping files with the hmmsearch allHits output and contigs
+     | join(pHmmSearch.out.allhits, by: SAMPLE_IDX) | join(contigs, by: SAMPLE_IDX) \
+     | set { magscot_input }
+    }
+    pMAGScoT(magscot_input)
+
+    // Only use MAGScoT bins if the user has selected the refinement step
+    if (params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")) {
+      pMAGScoT.out.bins | set { bins }
+      pMAGScoT.out.notBinned | set { notBinned }
+    } else {
      pMetabinner.out.bins | mix(pMetabat.out.bins) | set { bins }
+     pMetabinner.out.notBinned | mix(pMetabat.out.notBinned) | set { notBinned }
+    }
+
 
      emptyFile = file(params.tempdir + "/empty")
 
@@ -225,8 +346,6 @@ workflow _wBinning {
 	| map { sample -> sample.addAll(ALIGNMENT_INDEX, emptyFile); sample } | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)))
 
      pCovermGenomeCoverage.out.logs | pDumpLogs
- 
-     pMetabinner.out.notBinned | mix(pMetabat.out.notBinned) | set { notBinned }
 
      // Ensure that in case just one bin is produced that it still is a list
      bins | map({ it -> it[1] = aslist(it[1]); it  }) | set{ binsList }
@@ -242,9 +361,17 @@ workflow _wBinning {
      pMetabat.out.binContigMapping | join(mappedReads, by: SAMPLE_IDX) \
 	| combine(Channel.from("metabat")) | join(pMetabat.out.bins, by: SAMPLE_IDX) \
 	| set { metabatBinStatisticsInput }
+	pMAGScoT.out.binContigMapping | join(mappedReads, by: SAMPLE_IDX) \
+    | combine(Channel.from("magscot")) | join(pMAGScoT.out.bins, by: SAMPLE_IDX) \
+    | set { magscotBinStatisticsInput }
 
-     metabatBinStatisticsInput | mix(metabinnerBinStatisticsInput) \
-	| combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) | set {binStatsInput}
+     // Only use the MAGScoT bin statistics if the user has selected the refinement step
+     if (params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")) {
+        magscotBinStatisticsInput | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) | set {binStatsInput}
+     } else {
+        metabatBinStatisticsInput | mix(metabinnerBinStatisticsInput) \
+        | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) | set {binStatsInput}
+     }
 
      pGetBinStatistics(Channel.value(getModulePath(params.modules.binning)), binStatsInput)
 
@@ -252,6 +379,7 @@ workflow _wBinning {
      pGetBinStatistics.out.binsStats | map { it -> file(it[1]) } \
 	| splitCsv(sep: '\t', header: true) | set { binsStats }
      mapJoin(binsStats, binMap, "BIN_ID", "BIN_ID") | set {binMap}
+
    emit:
      binsStats = binMap
      bins = binsList

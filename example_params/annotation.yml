@@ -1,6 +1,7 @@
 output: "output"
 summary: false
 runid: 1
+s3SignIn: false
 logDir: log
 tempdir: "tmp"
 scratch: "/vol/scratch"
@@ -10,8 +11,11 @@ steps:
    annotation:
       input: "test_data/annotation/input_small.tsv"
       mmseqs2:
+        chunkSize: 20000
         kegg:
-          params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+          additionalParams:
+            search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+            additionalColumns: ""
           database:
             extractedDBPath: '/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB'
 #        bacmet20_experimental:
@@ -21,11 +25,14 @@ steps:
 #              source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_experimental.tar.zst
 #              md5sum: 57a6d328486f0acd63f7e984f739e8fe
         bacmet20_predicted:
-          params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
           database:
             download:
               source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
               md5sum: 55902401a765fc460c09994d839d9b64
+          additionalParams:
+            search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+            additionalColumns: ""
+
 #        vfdb:
 #          params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
 #          database:
@@ -41,17 +48,33 @@ steps:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
             md5sum: d7e627221a1d4584d1c1795cda774cdb
         additionalParams: ""
+      mmseqs2_taxonomy:
+        runOnMAGs: false
+        gtdb:
+          params: ' --orf-filter-s 1 -e 1e-15'
+          ramMode: false
+          initialMaxSensitivity: 1
+          database:
+            download:
+              source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
+              md5sum: 3c8f12c5c2dc55841a14dd30a0a4c718
       prokka:
         prodigalMode: "meta"
         defaultKingdom: false
         additionalParams: " --mincontiglen 200 "
 resources:
-  large:
+  highmemLarge:
     cpus: 28
     memory: 230
-  medium:
+  highmemMedium:
     cpus: 14
     memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
   small:
     cpus: 7
     memory: 14

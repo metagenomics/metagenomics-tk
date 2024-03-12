@@ -1,10 +1,11 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: true
 input:
   SRA:
     pattern:
-      ont: ".+[^(_1|_2)].+$"
-      illumina: ".+(_1|_2).+$"
+      ont: ".+[^(_1|_2)].+fastq.gz$"
+      illumina: ".+(_1|_2).+fastq.gz$"
     S3:
       path: test_data/fullPipeline/production.tsv
       bucket: "s3://ftp.era.ebi.ac.uk" 
@@ -37,7 +38,7 @@ steps:
         #  -sm - use strict memory mode (memory limit from -m<n> switch will not be exceeded)
         #  -cs<value> - maximal value of a counter
         count: " -sm -cs10000 "
-        histo: " "
+        histo: " -cx50000 "
 
   qcONT:
     porechop:
@@ -73,10 +74,11 @@ steps:
       additionalParams: " --min-covered-fraction 0 "
     genomeCoverage:
       additionalParams: " --min-covered-fraction 0 "
-
+    # Primary binning tool
     metabat:
       # Set --seed positive numbers to reproduce the result exactly. Otherwise, random seed will be set each time.
       additionalParams: " --seed 234234  "
+    # Secondary binning tool for use with MAGscot
   binningONT:
     minimap:
       additionalParams: 
@@ -84,7 +86,9 @@ steps:
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
     contigsCoverage:
-      additionalParams: ""
+      additionalParams: " --min-covered-fraction 0 "
+    genomeCoverage:
+      additionalParams: " --min-covered-fraction 0 "
     metabat:
       additionalParams: " --seed 234234  "
   magAttributes:
@@ -94,24 +98,20 @@ steps:
       buffer: 1000
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_v2_data.tar.gz
-          md5sum: c42a6517bc6c14f517fa2c77121ae465
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
+          md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
       additionalParams: " --min_af 0.65 --scratch_dir . "
-    # checkm lineage_wf
-    checkm:
+    checkm2:
       database:
         download:
-                # Use Version number in databse names
-          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz"
-          md5sum: 0963b301dfe9345ea4be1246e32f6728
-      buffer: 200
-      additionalParams:
-        tree: " --reduced_tree "
-        lineage_set: " " 
-        qa: "  "
+          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm2_v2.tar.gz"
+          md5sum: a634cb3d31a1f56f2912b74005f25f09
+      additionalParams: "  "
   fragmentRecruitment:
     mashScreen:
       genomes: test_data/fragmentRecruitment/mags.tsv
+      unzip:
+        timeLimit: "AUTO"
       additionalParams:
         mashSketch: " "
         mashScreen: " "
@@ -140,38 +140,60 @@ steps:
       additionalParams: " --mincontiglen 500 "
     mmseqs2:
       kegg:
-        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+        additionalParams:
+          search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          additionalColumns: ""
         database:
           download:
             source: s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst
             md5sum: 0d20db97b3e7ee6571ca1fd5ad3a87f1
             s5cmd:
-              keyfile: /vol/spool/keyfile
               params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
       vfdb:
-        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+        additionalParams:
+          search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          additionalColumns: ""
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_2022_07_29.tar.zst
             md5sum: 7e32aaed112d6e056fb8764b637bf49e
       bacmet20_experimental:
-        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+        additionalParams:
+          search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          additionalColumns: ""
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_experimental.tar.zst
             md5sum: 57a6d328486f0acd63f7e984f739e8fe
       bacmet20_predicted:
-        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+        additionalParams:
+          search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          additionalColumns: ""
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
             md5sum: 55902401a765fc460c09994d839d9b64
-      ncbi_nr:
-        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+      uniref90:
+        additionalParams:
+          search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          additionalColumns: ""
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2022-04-02_mmseqs_taxonomy.tar.zst
-            md5sum: 184bb8207ee1575cae7756137cde076b
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90_20231108_mmseqs.tar.zst
+            md5sum: 313f2c031361091af2d5f3c6f6f46013
+    mmseqs2_taxonomy:
+      # Run taxonomy classification on MAGs and unbinable contigs or just the later
+      runOnMAGs: true
+      gtdb:
+        # High sensitivity mode parameters only work for quality MAGs, for unbinable contigs use default parameters
+        params: ' --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies  --max-seqs 300 --max-accept 50 --cov-mode 0 -e 0.001 --e-profile 0.01 '
+        # Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params
+        ramMode: false
+        initialMaxSensitivity: 6
+        database:
+          download:
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
+            md5sum: 3c8f12c5c2dc55841a14dd30a0a4c718
     rgi:
       # --include_loose includes matches of more distant homologs of AMR genes which may also report spurious partial matches
       # --include_nudge Partial ORFs may do not pass curated bitscore cut-offs or novel samples may contain divergent alleles, so nudging 
@@ -186,34 +208,90 @@ steps:
         download:
           source: s3://databases_internal/kegg-links-mirror-2021-01.tar.gz
           md5sum: 69538151ecf4128f4cb1e0ac21ff55b3
-
+  plasmid:
+    SCAPP:
+      additionalParams:
+        bwa2: "  "
+        SCAPP: "  "
+        coverm: " --min-covered-fraction 0 "
+        minimap: " "
+        samtoolsViewBwa2: " -F 3584 " 
+        samtoolsViewMinimap: " " 
+    ViralVerifyPlasmid:
+      filter: true
+      # Select sequences that are labeled as uncertain or plasmid id ViralVerifies output
+      filterString: "Uncertain - plasmid or chromosomal|Plasmid"
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/pfam-A_35.0.hmm.gz
+          md5sum: c80b75bd48ec41760bbca19c70616e36
+      additionalParams: " --thr 7 "
+    PlasClass:
+      filter: true
+      # A cutoff of 0.9 for longer (> 2 kb) sequences should pretty much yield only plasmids.
+      threshold: 0.9
+      additionalParams: "   "
+    Filter:
+      method: "OR"
+      minLength: 1000 
+    PLSDB:
+      sharedKmerThreshold: 0
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20220929.tar.bz2
+          md5sum: 13c1078e6cd6a46e3f508c24ca07cc18
+      additionalParams:
+     # Parameters according to plsdb paper
+     # -s: Sketch size
+     # -k: k-mer size
+     # -S: Seed to provide to the hash function
+     # -d: Maximum distance to report
+     # -v: Maximum p-value to report
+        mashSketch: " -S 42 -k 21 -s 1000 "
+        mashDist: " -v 0.1 -d 0.1 "
+    MobTyper:
+      filter: true
+      minLength: 1000
+      additionalParams: " --min_length 1000  "
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20220929.gz
+          md5sum: 21fcaf9c3754a985d1d6875939d71e28
   metabolomics:
-     beforeProcessScript: ""
      filter:
        minCompleteness: 50
        maxContamination: 5
-     gapseq:
-       additionalParams: ""
+     carveme:
+       additionalParams: " --solver scip "
      smetana:
+       beforeProcessScript: ""
        global: false
        detailed: false
        additionalParams:
          detailed: ""
          global: ""
      memote:
+       beforeProcessScript: ""
        additionalParams:
          run: ""
          report: ""
 resources:
-  large:
+  highmemLarge:
     cpus: 28
     memory: 230
-  medium:
+  highmemMedium:
     cpus: 14
     memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
   small:
     cpus: 7
     memory: 14
   tiny:
     cpus: 1
-    memory: 2
+    memory: 1
+

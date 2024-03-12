@@ -1,5 +1,6 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: true
 output: "output"
 input: "fullPipelineOutput"
 logDir: log
@@ -9,7 +10,7 @@ scratch: "/vol/scratch"
 publishDirMode: "symlink"
 steps:
   dereplication:
-    pasolli:
+    bottomUpClustering:
       # stricter MIMAG medium quality
       minimumCompleteness: 50
       maximumContamination: 5
@@ -49,17 +50,23 @@ steps:
         metabolicEdgeBatches: 5
         metabolicEdgeReplicates: 10
         smetana: " --flavor bigg --molweight "
-
 resources:
-  large:
+  highmemLarge:
     cpus: 28
     memory: 230
-  medium:
+  highmemMedium:
     cpus: 14
     memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
   small:
     cpus: 7
     memory: 14
   tiny:
     cpus: 1
     memory: 1
+

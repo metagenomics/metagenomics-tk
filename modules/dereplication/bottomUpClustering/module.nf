@@ -17,7 +17,7 @@ process pMashDist {
 
     container "${params.mash_image}"
 
-    label 'large'
+    label 'highmemLarge'
 
     when params?.steps.containsKey("dereplication") &&  params?.steps.dereplication.containsKey("bottomUpClustering")
 
@@ -47,7 +47,7 @@ process pClusterDistances {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "bottomUpClustering/clusterMashDist", filename) }
 
-    label 'medium'
+    label 'highmemMedium'
 
     output:
     tuple file("distances.tsv"), file('out/clusters.tsv'), emit: clusters
@@ -71,7 +71,7 @@ process pSelectRepresentative {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "bottomUpClustering/selectedRepresentatives", filename) }
 
-    label 'medium'
+    label 'highmemMedium'
 
     output:
     path("intermediate_clusters.tsv"), emit: clusters

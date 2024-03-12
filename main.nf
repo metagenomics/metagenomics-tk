@@ -5,8 +5,12 @@ include { wSaveSettingsList } from './modules/config/module'
 include { pPublish as pPublishIllumina; pPublish as pPublishOnt; } from './modules/utils/processes'
 include { wShortReadQualityControlFile; wShortReadQualityControlList} from './modules/qualityControl/shortReadQC'
 include { wOntQualityControlFile; wOntQualityControlList} from './modules/qualityControl/ontQC'
+<<<<<<< HEAD
 include { wShortReadAssemblyFile; wShortReadAssemblyList } from './modules/assembly/shortReadAssembler'
 include { wHybridAssemblyList } from './modules/assembly/hybridAssembler'
+=======
+include { wShortReadAssemblyFile; wShortReadAssemblyList; wTestMemSelection } from './modules/assembly/shortReadAssembler'
+>>>>>>> origin/dev
 include { wOntAssemblyFile; wOntAssemblyList } from './modules/assembly/ontAssembler'
 include { wShortReadBinningList } from './modules/binning/shortReadBinning'
 include { wLongReadBinningList } from './modules/binning/ontBinning'
@@ -42,8 +46,6 @@ if(! params.skipVersionCheck){
 }
 
 
-
-
 def mapJoin(channel_a, channel_b, key_a, key_b){
     channel_a \
         | map{ it -> [it[key_a], it] } \
@@ -52,6 +54,7 @@ def mapJoin(channel_a, channel_b, key_a, key_b){
 }
 
 workflow wDereplication {
+   wSaveSettingsList(Channel.value("AGGREGATED"))
    wDereplicateFile(Channel.from(file(params?.steps?.dereplication?.bottomUpClustering?.input)))
 }
 
@@ -110,10 +113,6 @@ workflow wSRATable {
    pPublishOnt(params.logDir, ontFile)
 }
 
-workflow wDereplicationPath {
-   wDereplicatePath()
-}
-
 workflow wPlasmids {
    wPlasmidsPath()
 }
@@ -139,6 +138,7 @@ workflow wMetabolomics {
 }
 
 workflow wCooccurrence {
+   wSaveSettingsList(Channel.value("AGGREGATED"))
    wCooccurrenceFile()
 }
 
@@ -149,12 +149,15 @@ workflow wCooccurrence {
 */
 def collectModuleFiles(dir, sra, modules){
    def fileList = [];
-   def moduleList = []
+   def moduleList = [];
+   def moduleName = "";
+
    params.modules.eachWithIndex { v, k -> moduleList.add(v.getKey() + "/" + v.getValue().version.major + ".") }
 
    // iterate  over all specified modules
    for(module in modules){
      def moduleDir = file(dir + "/" + module.name + "/")
+     moduleName = module.name
      // Check if the module exists
      if(moduleDir.exists()){
        // collect all files
@@ -167,6 +170,7 @@ def collectModuleFiles(dir, sra, modules){
        }
      }
    }
+   
    return fileList;
 }
 
@@ -215,8 +219,28 @@ workflow _wAggregateONT {
 
 workflow _wAggregateIllumina { 
     take:
-      sraFiles
+      binningFiles
+      qcFiles
     main:
+      // Figure out if binrefinement via magscot was used.
+      // Example Binning related file of the binningFiles channel:
+      // [test2, /vol/spool/peter/meta-omics-toolkit/output/test2/1/binning/0.5.0/magscot]
+      FILE_PATH_IDX = 1
+      IS_MAGSCOT = "magscot"
+      IS_NOT_MAGSCOT = "no_magscot"
+      binningFiles | filter( path -> path[FILE_PATH_IDX].endsWith(IS_MAGSCOT)) | map { it -> IS_MAGSCOT } \
+	| unique | ifEmpty(IS_NOT_MAGSCOT) | set { isMagscot }
+
+      // If magscot was used then get all files that are placed in the magscot folder. If magscot was not used then get all binning related files
+      MAGSCOT_FLAG = 2
+      BINNING_FILE_PATH = 1
+      SAMPLE_IDX = 0
+      Pattern magscotPattern = Pattern.compile('.*/binning/' + params.modules.binning.version.major + '..*/magscot/.*$')
+      binningFiles | combine(isMagscot) \
+	| filter( binningFile -> binningFile[MAGSCOT_FLAG] == IS_MAGSCOT ? magscotPattern.matcher(binningFile[BINNING_FILE_PATH].toString()).matches() : true ) \
+        | map { binFile -> [binFile[SAMPLE_IDX], binFile[BINNING_FILE_PATH]] } \
+	| mix(qcFiles) | set { sraFiles }
+
       // get Illumina paired Fastq files
       Pattern illuminaPattern = Pattern.compile('.*/qc/' + params.modules.qc.version.major + '..*/.*/.*interleaved.qc.fq.gz$')
       sraFiles | filter({ sra, path -> illuminaPattern.matcher(path.toString()).matches()}) \
@@ -237,6 +261,7 @@ workflow _wAggregateIllumina {
       Pattern illuminaBinsStatsPattern = Pattern.compile('.*/binning/' + params.modules.binning.version.major + '..*/.*/.*_bins_stats.tsv$')
       sraFiles | filter({ sra, path -> illuminaBinsStatsPattern.matcher(path.toString()).matches()}) \
        | splitCsv(header: true, sep: '\t') | map { sra, bins -> bins } | set{illuminaBinStats}
+ 
     emit:
       illuminaSamples = illuminaSamples
       unpairedIlluminaSamples = unpairedIlluminaSamples
@@ -277,6 +302,9 @@ workflow wAggregatePipeline {
     def input = params.input
     def runID = params.runid
 
+    // Save config File
+    wSaveSettingsList(Channel.value("AGGREGATED"))
+
     // List all available SRAIDs
     Channel.from(file(input).list()) | filter({ path -> !(path ==~ /.*summary$/) && !(path ==~ /null$/) }) \
      | filter({ path -> !(path ==~ /.*AGGREGATED$/)}) \
@@ -287,7 +315,9 @@ workflow wAggregatePipeline {
 
     // List all files in sample directories
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.qc])} | set { qcFiles }
-    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binning]) } | mix(qcFiles) | _wAggregateIllumina 
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binning]) } | set { binningFiles } 
+
+    _wAggregateIllumina(binningFiles, qcFiles)
 
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binningONT])} | set { binningONTFiles }
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.qcONT])} | mix(binningONTFiles) | _wAggregateONT
@@ -304,10 +334,23 @@ workflow wAggregatePipeline {
      | map { sra, bins -> bins} \
      | set { checkm }
 
+    // get Checkm2 results
+    Pattern checkm2Pattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_checkm2_.*.tsv$')
+     selectedSRAMagAttributes | filter({ sra, path -> checkm2Pattern.matcher(path.toString()).matches()}) \
+     | splitCsv(header: true, sep: '\t') \
+     | map { sra, bins -> bins} \
+     | set { checkm2 }
+
+    // We allow only to execute checkm or checkm2 but not both
+    checkm \
+       | mix(checkm2) \
+       | set {checkm}
+
     // get gtdbtk summary files
     Pattern gtdbPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_combined.tsv$' )
     selectedSRAMagAttributes | filter({ sra, path -> gtdbPattern.matcher(path.toString()).matches()}) \
-     | map { sraID, bins -> [bins, sraID] } \
+     | map { sraID, bins -> bins } \
+     | splitCsv(sep: '\t', header: true) \
      | set { gtdb }
 
     // Get genome scale metabolic model files
@@ -351,6 +394,10 @@ workflow _wAggregate {
      representativeGenomesTempDir = params.tempdir + "/representativeGenomes"
      file(representativeGenomesTempDir).mkdirs()
 
+     if (params?.steps?.dereplication?.useOnlyBinRefinement) {
+        binsStats = binsStats.filter { it.PATH.toString().contains("magscot") || it.PATH.toString().contains("binningONT") }
+     }
+
      wDereplicateList(binsStats)
 
      REPRESENTATIVES_PATH_IDX = 0
@@ -391,12 +438,20 @@ workflow _wConfigurePipeline {
           def nonpareil = [ nonpareil: [additionalParams: " -v 10 -r 1234 "]]
           params.steps.qc.putAll(nonpareil) 
         }
+
 	if(!params.steps?.qc.containsKey("kmc")){
-          def kmc = [ kmc: [additionalParams: [ count: " -sm -cs10000 ", histo: " "]]]
+          def kmc = [ kmc: [additionalParams: [ count: " -sm -cs10000 ", histo: " -cx50000 "]]]
           params.steps.qc.putAll(kmc) 
         }
     }
 }
+
+
+workflow wSaveSettings {
+  inputSamples = wInputFile()
+  wSaveSettingsList(inputSamples | map { it -> it.SAMPLE })
+}
+
 
 
 def flattenBins(binning){
@@ -506,7 +561,7 @@ workflow _wProcessHybrid {
 * Left and right read could be https, s3 links or file path. 
 */
 workflow wFullPipeline {
-   
+
     _wConfigurePipeline()
 
     inputSamples = wInputFile()
@@ -551,17 +606,21 @@ workflow wFullPipeline {
 
     wMagAttributesList(ont.bins | mix(illumina.bins | mix(hybrid.bins), wFragmentRecruitmentList.out.foundGenomesPerSample ))
 
-    mapJoin(wMagAttributesList.out.checkm, binsStats | mix(wFragmentRecruitmentList.out.binsStats), "BIN_ID", "BIN_ID") \
-	| set { binsStats  }
+    mapJoin(wMagAttributesList.out.checkm, binsStats  | mix(wFragmentRecruitmentList.out.binsStats), "BIN_ID", "BIN_ID") \
+	 |  set { binsStats  }
+     
+    wAnnotatePlasmidList(Channel.value("plasmid"), Channel.value("meta"), \
+    wPlasmidsList.out.newPlasmids, Channel.empty(), wPlasmidsList.out.newPlasmidsCoverage, wPlasmidsList.out.newPlasmids | map { [it[SAMPLE_IDX], 1] })
 
-    wAnnotatePlasmidList(Channel.value("plasmid"), Channel.value("meta"), wPlasmidsList.out.newPlasmids, null, wPlasmidsList.out.newPlasmidsCoverage)
+    ont.bins | mix(illumina.bins) | map { sample, bins -> [sample, bins.size()] } | set { binsCounter }
+    wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), bins, wMagAttributesList.out.gtdb, contigCoverage, binsCounter)
 
-    wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), bins, wMagAttributesList.out.gtdb?:null, contigCoverage)
-
+    wFragmentRecruitmentList.out.foundGenomesPerSample | map { sample, genomes -> [sample, genomes.size()] } | set { recruitedGenomesCounter }
     wAnnotateRecruitedGenomesList(Channel.value("binned"), Channel.value("single"), wFragmentRecruitmentList.out.foundGenomesSeperated, \
-  	wMagAttributesList.out.gtdb, wFragmentRecruitmentList.out.contigCoverage)
+    wMagAttributesList.out.gtdb, wFragmentRecruitmentList.out.contigCoverage, recruitedGenomesCounter)
 
-    wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs, null, contigCoverage)
+    wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs, Channel.empty(), \
+    contigCoverage, notBinnedContigs | map { it -> [it[SAMPLE_IDX], 1] })
 
     BIN_ID_IDX = 1
     PATH_IDX = 2
