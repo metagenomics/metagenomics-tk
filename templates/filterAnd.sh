@@ -2,6 +2,7 @@
 mkdir header
 mkdir tmp
 mkdir missing
+mkdir input
 
 for file in !{contigHeaderFiles}; do
   if [ $(wc -l < ${file}) -gt 1 ]; then
