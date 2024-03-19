@@ -1,5 +1,8 @@
 name: "Run Tests against real samples"
 on: [workflow_dispatch]
+env:
+  EMGB_KEGG_DB: "/vol/spool/emgb/annotatedgenes2json_db_nr-2023-04-29_kegg-mirror-2022-12" 
+  WORK_DIR: "/vol/spool/work"
 jobs:
   run_full_pipeline:
     timeout-minutes: 14400
@@ -21,3 +24,9 @@ jobs:
            --steps.fragmentRecruitment.mashScreen.genomes=/vol/spool/toolkit/gtdb/paths.tsv " \
           ./default/fullPipeline_illumina_nanpore.yml "" slurm || exit 1
 
+      - name: Import in EMGB
+        run: |
+          ./bin/emgb.sh --output=output/ERR4229264 --runid=1 --binsdir=$(find output/ERR4229264/ -name "metabat") \
+                        --blastdb=uniref90 \
+                        --db=${EMGB_KEGG_DB} \
+                        --workdir="${WORK_DIR}" --name=ERR4229264
