@@ -13,8 +13,7 @@
         "steps.annotation.rgi.database.extractedDBPath",
         "steps.annotation.keggFromMMseqs2.database.extractedDBPath",
         "steps.plasmid.ViralVerifyPlasmid.database.extractedDBPath",
-        "steps.plasmid.PLSDB.database.extractedDBPath",
-        "steps.plasmid.MobTyper.database.extractedDBPath"
+        "steps.plasmid.PLSDB.database.extractedDBPath"
     ],
     "exampleParameters": {
         "input.paired.path": "https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/test_data/fullPipeline/reads_split.tsv",
@@ -29,7 +28,6 @@
         "steps.annotation.mmseqs2.kegg.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e13dda76a71439be3bb7f8cee0259/latest/kegg-mirror-2021-01_mmseqs/sequenceDB",
         "steps.annotation.rgi.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e133f18777c579b8b791a57f7a315/latest/card.json",
         "steps.plasmid.ViralVerifyPlasmid.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e13d5f0ea76a49b4ba36cdf9d04cd/latest/pfam-A_35.0.hmm",
-        "steps.plasmid.PLSDB.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e13460d257d9bab53d66d2f3031c9/latest",
-        "steps.plasmid.MobTyper.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e144ede4a76e2bac1a95a64c09368/latest/mob_29_09_2022"
-    }
+        "steps.plasmid.PLSDB.database.extractedDBPath": "/vol/data/databases/clowm/CLDB-018e13460d257d9bab53d66d2f3031c9/latest"
+        }
 }

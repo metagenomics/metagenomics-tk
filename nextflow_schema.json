@@ -516,33 +516,7 @@
                "hidden": true,
                "help_text": "-d: Maximum distance to report \n-v: Maximum p-value to report",
                "default":" -v 0.1 -d 0.1 "
-            },
-            "steps.plasmid.MobTyper.filter":{
-               "type":"boolean",
-               "description":"MobTyper filter",
-               "displayName": "MobTyper filter",
-               "hidden": true
-            },
-            "steps.plasmid.MobTyper.minLength":{
-               "type":"integer",
-               "description":"MobTyper minimum length",
-               "displayName": "MobTyper minimum length",
-               "hidden": true,
-               "default":1000
-            },
-            "steps.plasmid.MobTyper.additionalParams":{
-               "type":"string",
-               "description":"MobTyper additional parameters",
-               "displayName": "MobTyper additional parameters",
-               "hidden": true,
-               "default":" --min_length 1000  "
-            },
-            "steps.plasmid.MobTyper.database.extractedDBPath":{
-               "type":"string",
-               "description":"db path for MobTyper.",
-               "displayName":"db path for MobTyper.",
-               "hidden": true
-            }           
+            }     
          }
       }
    },
