@@ -160,10 +160,10 @@ steps:
      # Thats why it makes sense to set at leat a low min covered fraction parameter.
     coverm:
       additionalParams: " --min-covered-fraction 30 "
-    minimap2:
+    minimap:
       additionalParams:
-        minimap2_index: ""
-        minimap2: ""
+        minimap_index: ""
+        minimap: ""
   cooccurrence:
     inference:
       additionalParams:
