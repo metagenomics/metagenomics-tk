@@ -521,8 +521,7 @@
                "type":"boolean",
                "description":"MobTyper filter",
                "displayName": "MobTyper filter",
-               "hidden": true,
-               "default": true
+               "hidden": true
             },
             "steps.plasmid.MobTyper.minLength":{
                "type":"integer",
