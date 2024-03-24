@@ -5,12 +5,8 @@ include { wSaveSettingsList } from './modules/config/module'
 include { pPublish as pPublishIllumina; pPublish as pPublishOnt; } from './modules/utils/processes'
 include { wShortReadQualityControlFile; wShortReadQualityControlList} from './modules/qualityControl/shortReadQC'
 include { wOntQualityControlFile; wOntQualityControlList} from './modules/qualityControl/ontQC'
-<<<<<<< HEAD
-include { wShortReadAssemblyFile; wShortReadAssemblyList } from './modules/assembly/shortReadAssembler'
 include { wHybridAssemblyList } from './modules/assembly/hybridAssembler'
-=======
 include { wShortReadAssemblyFile; wShortReadAssemblyList; wTestMemSelection } from './modules/assembly/shortReadAssembler'
->>>>>>> origin/dev
 include { wOntAssemblyFile; wOntAssemblyList } from './modules/assembly/ontAssembler'
 include { wShortReadBinningList } from './modules/binning/shortReadBinning'
 include { wLongReadBinningList } from './modules/binning/ontBinning'
