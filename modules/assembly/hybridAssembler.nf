@@ -20,7 +20,7 @@ def timestamp = new java.util.Date().format( 'YYYYMMdd-HHmmss-SSS')
 */
 process pMetaflyeHybrid {
 
-    label 'large'
+    label 'highmemLarge'
 
     tag "Sample: $sample"
 
@@ -67,7 +67,7 @@ process pMetaflyeHybrid {
 
 process pMetaspadesHybrid {
 
-    label 'large'
+    label 'highmemLarge'
 
     tag "$sample"
 
