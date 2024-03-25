@@ -1,8 +1,9 @@
 name: "Run Tests against real samples"
 on: [workflow_dispatch]
 env:
-  EMGB_KEGG_DB: "/vol/spool/emgb/annotatedgenes2json_db_nr-2023-04-29_kegg-mirror-2022-12" 
+  EMGB_KEGG_DB: "/vol/spool/toolkit/emgb/annotatedgenes2json_db_kegg-mirror-2022-12" 
   WORK_DIR: "/vol/spool/work"
+  EMGB_DB_TITLES: "/vol/spool/toolkit/emgb/uniref90.titles.tsv.gz"
 jobs:
   run_full_pipeline:
     timeout-minutes: 14400
@@ -29,4 +30,5 @@ jobs:
           ./bin/emgb.sh --output=output/ERR4229264 --runid=1 --binsdir=$(find output/ERR4229264/ -name "metabat") \
                         --blastdb=uniref90 \
                         --db=${EMGB_KEGG_DB} \
+                        --titles=${EMGB_DB_TITLES} \
                         --workdir="${WORK_DIR}" --name=ERR4229264

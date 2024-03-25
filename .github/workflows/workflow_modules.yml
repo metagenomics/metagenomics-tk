@@ -17,7 +17,8 @@ env:
   WORK_DIR: "/vol/spool/${{ github.head_ref }}"
   PROFILE: "slurm"
   PR_NUMBER: ${{ github.event.number }}
-  EMGB_KEGG_DB: "/vol/spool/emgb/annotatedgenes2json_db_nr-2023-04-29_kegg-mirror-2022-12" 
+  EMGB_KEGG_DB: "/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2022-12" 
+  EMGB_DB_TITLES: "/vol/spool/emgb/uniref90.titles.tsv.gz"
 jobs:
   full_pipeline:
     timeout-minutes: 2500
@@ -55,6 +56,7 @@ jobs:
         run: |
           ./bin/emgb.sh --output=output/test1 --runid=1 --binsdir=$(find output/test1/ -name "metabat") \
                         --blastdb=uniref90 \
+                        --titles=${EMGB_DB_TITLES} \
                         --db=${EMGB_KEGG_DB} \
                         --workdir="${WORK_DIR}_wFullPipeline" --name=test1
 
