@@ -712,7 +712,7 @@ process pCount {
 **/
 process pCollectFile {
 
-    label 'small'
+    label 'highmemMedium'
 
     tag "Sample: $sample, Database: $dbType"
 

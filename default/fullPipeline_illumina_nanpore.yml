@@ -167,8 +167,8 @@ steps:
   cooccurrence:
     inference:
       additionalParams:
-        method: 'spiec-easi'
-        rscript: " --mincovthreshold 0.9 --maxzero 60"
+        method: 'correlation'
+        rscript: " --mincovthreshold 0.9 --maxzero 60 --minweight 0.4 "
         timeLimit: "AUTO"
     metabolicAnnotation:
       additionalParams:
