@@ -22,7 +22,9 @@ jobs:
           " -c /vol/spool/aws.config --databases=/vol/scratch/databases/  --logDir s3://toolkit-dev-benchmark \
            --steps.metabolomics.smetana.beforeProcessScript=/vol/spool/dockerPull.sh \
            --smetana_image=pbelmann/metabolomics:0.1.0 --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh \
-           --steps.fragmentRecruitment.mashScreen.genomes=/vol/spool/toolkit/gtdb/paths.tsv " \
+           --steps.fragmentRecruitment.mashScreen.genomes=/vol/spool/toolkit/gtdb/paths.tsv \
+           --steps.cooccurrence.inference.additionalParams.rscript=' --mincovthreshold 0.9 --maxzero 100 ' \
+           --steps.annotation.mmseqs2.kegg.database.extractedDBPath='/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB' " \
           ./default/fullPipeline_illumina_nanpore.yml "" slurm || exit 1
 
       - name: Import in EMGB
