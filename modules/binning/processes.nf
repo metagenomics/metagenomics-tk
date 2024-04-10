@@ -348,4 +348,28 @@ process pMetabat {
     template 'metabat.sh'
 }
 
+//combine ont and illumina reads into one file:
+process pSamtoolsMerge {
 
+    container "${params.samtools_image}"
+    
+    tag "$sample"
+
+    label 'small'
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
+
+    input:
+      val(run)
+      tuple val(module), val(outputToolDir)
+      tuple val(sample), path(ontBam, stageAs: 'ontMapping.bam'), path(illuminaBam, stageAs: 'illuminaMapping.bam')
+
+    output:
+      tuple val("${sample}"), file("${sample}_mapping.bam"), emit: combinedBAM
+      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    shell:
+    '''
+    samtools merge !{sample}_mapping.bam --threads !{task.cpus} !{ontBam} !{illuminaBam}
+    '''
+}

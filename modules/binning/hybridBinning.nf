@@ -2,7 +2,7 @@ nextflow.enable.dsl=2
 
 //TODO: remove unneeded imports
 include { pGetBinStatistics as pGetBinStatistics; \
-	pCovermContigsCoverage; pCovermGenomeCoverage; pMinimap2; pBwa2 } from './processes'
+	pCovermContigsCoverage; pCovermGenomeCoverage; pMinimap2; pBwa2; pSamtoolsMerge } from './processes'
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.binningHybrid.name + '/' +
@@ -81,28 +81,6 @@ def createMap(binning){
   return chunkList;
 }
 
-//combine ont and illumina reads into one file:
-process pSamtoolsMerge {
-
-    container "${params.samtools_image}"
-
-    label 'small'
-
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "samtoolsMerge", filename) }
-
-    input:
-      tuple val(sample), path(ontBam, stageAs: 'ontMapping.bam'), path(illuminaBam, stageAs: 'illuminaMapping.bam')
-
-    output:
-      tuple val("${sample}"), file("${sample}_mapping.bam"), emit: combinedBAM
-      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-
-    shell:
-    '''
-    samtools merge !{sample}_mapping.bam --threads !{task.cpus} !{ontBam} !{illuminaBam}
-    '''
-}
-
 process pMetabatHybrid {
 
     container "${params.metabat_image}"
@@ -153,6 +131,7 @@ workflow _wHybridBinning {
     PAIRED_END_IDX = 2
     UNPAIRED_END_IDX = 3
     ONT_MEDIAN_QUALITY_IDX = 4
+    DO_NOT_ESTIMATE_QUALITY = "-1"
     
     illuminaReads = combinedReads | map {it -> [it[SAMPLE_IDX], it[PAIRED_END_IDX], it[UNPAIRED_END_IDX]] }
     ontReads = combinedReads | map {it -> [it[SAMPLE_IDX], it[ONT_IDX]] }
@@ -182,7 +161,7 @@ workflow _wHybridBinning {
     unmappedReads = pMinimap2.out.unmappedReads | join(pBwa2.out.unmappedReads)
 
     //3) combine BAMs:
-    pSamtoolsMerge(mappedReads)
+    pSamtoolsMerge(Channel.value(true), Channel.value([Utils.getModulePath(params?.modules?.binningHybrid) ,"samtoolsMerge"]), mappedReads)
     combinedBAM = pSamtoolsMerge.out.combinedBAM
 
 
@@ -203,6 +182,7 @@ workflow _wHybridBinning {
  
     //5)Coverm
     covermMappingInput = mappedONTReads | join(mappedIlluminaReads) | join (medianQuality)
+    //TODO: medianQuality durch das hier ersetzen? :  combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY))
     pCovermContigsCoverage(Channel.value(params?.steps?.binningHybrid.find{ it.key == "contigsCoverage"}?.value), Channel.value([getModulePath(params.modules.binningHybrid), \
 	"contigCoverage", params?.steps?.binningHybrid?.contigsCoverage?.additionalParams]), combinedBAM | join (medianQuality))
     
