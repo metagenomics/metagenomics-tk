@@ -1,7 +1,7 @@
 include { wSaveSettingsList } from '../config/module'
 
 include { pDumpLogs } from '../utils/processes'
-include { pCovermContigsCoverage; pBowtie2; pMinimap2; pBwa; pBwa2} from '../binning/processes'
+include { pCovermContigsCoverage; pBowtie2; pMinimap2; pBwa; pBwa2; pSamtoolsMerge} from '../binning/processes'
 
 include { pPlaton as pPlatonCircular; \
           pPlaton as pPlatonLinear; \
@@ -320,18 +320,24 @@ workflow _runCircularAnalysis {
         params.steps?.plasmid?.SCAPP?.additionalParams?.samtoolsViewBwa2, \
 	false]), pSCAPP.out.plasmids | join(illuminaReads))
 
-
-
        pMinimap2(Channel.value(params.steps.containsKey("plasmid") && params?.steps?.plasmid.containsKey("SCAPP")), \
 	Channel.value([Utils.getModulePath(params.modules.plasmids), \
         "SCAPP/readMapping/minimap", params.steps?.plasmid?.SCAPP?.additionalParams?.minimap, \
         params.steps?.plasmid?.SCAPP?.additionalParams?.samtoolsViewMinimap, false]), \
        pSCAPP.out.plasmids | join(ontReads))
 
-       pBowtie2.out.mappedReads | mix(pBwa.out.mappedReads, pBwa2.out.mappedReads) \
-	| combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) \
-	| mix(pMinimap2.out.mappedReads | join(ontMedianQuality, by: SAMPLE_IDX)) \
-	| set { covermInput  }
+       //combine both BAMs when necessary (hybrid assembly):
+       pBowtie2.out.mappedReads | mix(pBwa.out.mappedReads, pBwa2.out.mappedReads) | set { mappedIlluminaReads }
+       pMinimap2.out.mappedReads | set { mappedONTReads } 
+       mappedReads = mappedONTReads | join(mappedIlluminaReads)
+       pSamtoolsMerge(Channel.value(true), Channel.value([Utils.getModulePath(params?.modules?.plasmids) ,"SCAPP/samtoolsMerge"]), mappedReads )
+       combinedBAM = pSamtoolsMerge.out.combinedBAM | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY))
+       
+       //concatenate combinedBAM with other mappings 
+       allMappings = combinedBAM.concat(mappedIlluminaReads | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY))) \
+                                .concat(mappedONTReads | join(ontMedianQuality, by: SAMPLE_IDX))
+       //get the first one - this will be either the combined one or the Illumina/ONT mapping
+       allMappings.collect().map(it -> [it[0], it[1], it[2]]) | set { covermInput }
 
        pCovermContigsCoverage(Channel.value(true), Channel.value([Utils.getModulePath(params?.modules?.plasmids) \
 	,"SCAPP/coverage", params?.steps?.plasmid?.SCAPP?.additionalParams?.coverm]), covermInput) 
