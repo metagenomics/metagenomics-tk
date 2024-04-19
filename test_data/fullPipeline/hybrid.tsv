@@ -1,0 +1,2 @@
+SAMPLE	ONT	READS1	READS2
+hybrid_test	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/hybrid_test_data/basecall_small.fastq.gz	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/hybrid_test_data/Illumina_R1.fastq.gz	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/hybrid_test_data/Illumina_R2.fastq.gz
