@@ -62,7 +62,7 @@ process pMMseqs2 {
  
       tag "Sample: $sample, Database: $dbType"
 
-      label 'highmemLarge'
+      label 'highmemXLarge'
 
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "mmseqs2/${dbType}", filename) }, \
          pattern: "{**.blast.tsv}"
