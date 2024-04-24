@@ -286,7 +286,7 @@ workflow _wBuildNetwork {
        STABILITY_IDX = 1 
        NLAMBDA_IDX = 2
        pBuildSpiecEasiNetwork(nlambda, abundance, gtdbConcatenated)
-       pBuildSpiecEasiNetwork.out.edges | max { it[STABILITY_IDX] } | set {bestEdges}
+       pBuildSpiecEasiNetwork.out.edges | max { it[STABILITY_IDX] } | filter(it -> it!=null) | set {bestEdges}
 
        bestEdges | collectFile(storeDir: params.output + "/" + getOutput(params.runid, \
 	 "network/spiec-easi/final", "")){ network -> ["nlambda_" + network[NLAMBDA_IDX] + "_" + file(network[NETWORK_IDX]).name, network[NETWORK_IDX].text]}
