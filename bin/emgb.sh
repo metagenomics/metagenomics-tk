@@ -19,8 +19,6 @@ while [ $# -gt 0 ]; do
 	    ;;
             --type=*) TYPE="${1#*=}"
 	    ;;
-            --titles=*) TITLES="${1#*=}"
-	    ;;
 	    --blastdb=*) BLAST_DB="${1#*=}"
 	    ;;
 	    --version) VERSION_CHECK=1
@@ -51,20 +49,15 @@ function getGenes {
 	db=$DB
 	json=" -json-gz $(pwd)/${NAME}.genes.json.gz "
 	name=" -dataset-name ${NAME} "
-	titles=""
-	if [ ! -z "$TITLES" ]
-	then
-                titles=" -title-tsv $TITLES "
-	fi
 
-	cmd="$nr $kegg $gff $faa $ffn $tax $bins $db $json $name $titles "
+	cmd="$nr $kegg $gff $faa $ffn $tax $bins $db $json $name"
 
 	if [ ! -z "$DEBUG_CHECK" ]
 	then
 		echo $cmd
 	fi
 
-	docker run -i $DBMOUNT -v $(pwd):$(pwd) -v $WORK_DIR:$WORK_DIR -v ${OUTPUT_PATH}:${OUTPUT_PATH} quay.io/emgb/annotatedgenes2json:2.5.0 $cmd
+	docker run -i $DBMOUNT -v $(pwd):$(pwd) -v $WORK_DIR:$WORK_DIR -v ${OUTPUT_PATH}:${OUTPUT_PATH} quay.io/emgb/annotatedgenes2json:2.3.1 $cmd
 }
 
 
@@ -100,7 +93,7 @@ function getBins {
 		echo $cmd
 	fi
 
-	docker run -i $DBMOUNT -v $(pwd):$(pwd) -v $WORK_DIR:$WORK_DIR -v ${OUTPUT_PATH}:${OUTPUT_PATH} quay.io/emgb/annotatedbins2json:2.2.2 $cmd
+	docker run -i $DBMOUNT -v $(pwd):$(pwd) -v $WORK_DIR:$WORK_DIR -v ${OUTPUT_PATH}:${OUTPUT_PATH} quay.io/emgb/annotatedbins2json:2.3.0 $cmd
 }
 
 
@@ -117,9 +110,6 @@ help()
 	echo "              -- (Examples: bacmet20_predicted, ncbi_nr)"
 	echo "  --db        -- emgb specific kegg database"
 	echo "  --name      -- sample name, e.g. the SAMPLE in the paths above"
-	echo "  --titles    -- Custom .tsv file mapping IDs to Subject Titles extracted from FASTA (optional)."
-	echo "              -- The following link explains how to create the corresponding tsv file."
-	echo "              -- https://gitlab.ub.uni-bielefeld.de/cmg/emgb/annotatedgenes2json#use-cases"
 	echo "  --type      -- if other then Illumina: ONT/Hybrid"
 	echo "  --workdir   -- absolute path to Nextflow work directory"
 	echo "  --help      -- help page"
