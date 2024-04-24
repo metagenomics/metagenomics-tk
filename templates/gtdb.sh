@@ -10,7 +10,7 @@ GTDB=$(cat gtdbPath.txt)
 
 export GTDBTK_DATA_PATH=${GTDB}
 gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus} \
-	--extension !{ending} !{GTDB_PARAMS}
+	--mash_db genomes.msh --extension !{ending} !{GTDB_PARAMS}
 
 # reformat gtdbtk output files
 touch output/gtdbtk.bac120.summary.tsv
@@ -70,13 +70,20 @@ if [[ $(wc -l <${FILE_UNCLASSIFIED_TMP}) -ge 2 ]]; then
 fi
 
 # Copy trees to output
-for tree in $(ls -1 output/classify/*.tree); do 
+for tree in $(find output/classify/ -name "*.tree"); do 
 	NEW_TREE_NAME=$(basename $(echo ${tree} | sed "s/classify.tree/classify_${FILE_ID}.tree/g"));
         mv ${tree} ${NEW_TREE_NAME}
 done
 
+FOUND_TMP=found.tsv
+if [[ -f "${FILE_COMB}" ]]; then
+	 cp "${FILE_COMB}"  ${FOUND_TMP}
+else
+	 touch ${FOUND_TMP}
+fi
+
 echo -e "SAMPLE\tBIN_ID" > ${MISSING_OUTPUT_TMP}
-cat binNames.tsv <(cut -f 1 ${FILE_COMB} | tail -n +2) \
+cat binNames.tsv <(cut -f 1 ${FOUND_TMP} | tail -n +2) \
 	| sort | uniq -c | tr -s ' ' | grep " 1 "  | cut -f 3 -d ' ' | sed "s/^/!{sample}\t/g"  >> ${MISSING_OUTPUT_TMP}
 
 if [[ $(wc -l <${MISSING_OUTPUT_TMP}) -ge 2 ]]; then
