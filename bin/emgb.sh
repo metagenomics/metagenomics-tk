@@ -109,7 +109,7 @@ function getBins {
 		echo $cmd
 	fi
 
-	docker run -i $DBMOUNT -v $(pwd):$(pwd) -v $WORK_DIR:$WORK_DIR -v ${OUTPUT_PATH}:${OUTPUT_PATH} quay.io/emgb/annotatedbins2json:2.3.0 $cmd
+	docker run -i $DBMOUNT -v $(pwd):$(pwd) -v $WORK_DIR:$WORK_DIR -v ${OUTPUT_PATH}:${OUTPUT_PATH} quay.io/emgb/annotatedbins2json:2.4.0 $cmd
 }
 
 
