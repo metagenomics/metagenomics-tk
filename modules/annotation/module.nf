@@ -163,7 +163,7 @@ process pMMseqs2_taxonomy {
             # If a database is present at the given path, checksums are compared, if they are identical the download will be omitted.
             flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE}/!{dbType} \
                --link=!{DOWNLOAD_LINK} \
-               --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -c -d | tar -xv " \
+               --httpsCommand="wgetStatic --no-check-certificate -qO- !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -c -d | tar -xv " \
                --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | zstd -T!{task.cpus} -c -d | tar -xv " \
                --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
    	    --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
@@ -270,7 +270,7 @@ process pResistanceGeneIdentifier {
         mkdir -p ${DATABASE}
         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
          --link=!{DOWNLOAD_LINK} \
-         --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | tar -xvj " \
+         --httpsCommand="wgetStatic --no-check-certificate -qO- !{DOWNLOAD_LINK} | tar -xvj " \
          --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus}  !{DOWNLOAD_LINK} . " \
          --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | tar -xvj " \
 	 --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
@@ -482,7 +482,7 @@ process pKEGGFromMMseqs2 {
         mkdir -p ${DATABASE}
         flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
          --link=!{DOWNLOAD_LINK} \
-         --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | tar -xz " \
+         --httpsCommand="wgetStatic --no-check-certificate -qO- !{DOWNLOAD_LINK} | tar -xz " \
          --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
          --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat !{DOWNLOAD_LINK} | tar -xz " \
 	 --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
