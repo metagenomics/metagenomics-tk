@@ -70,7 +70,7 @@ process pViralVerifyPlasmid {
          mkdir -p ${DATABASE}
          flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
             --link=!{DOWNLOAD_LINK} \
-            --httpsCommand="wget -qO- !{DOWNLOAD_LINK} | pigz -fdc > pfam.hmm " \
+            --httpsCommand="wgetStatic --no-check-certificate -qO- !{DOWNLOAD_LINK} | pigz -fdc > pfam.hmm " \
             --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | pigz -fdc > pfam.hmm  " \
             --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . && mv * pfam.hmm " \
             --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
@@ -235,7 +235,7 @@ process pPlaton {
       mkdir -p ${DATABASE}
       flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
 	--link=!{DOWNLOAD_LINK} \
-	--httpsCommand="wget -qO- !{DOWNLOAD_LINK} | tar -xvz " \
+	--httpsCommand="wgetStatic --no-check-certificate -qO- !{DOWNLOAD_LINK} | tar -xvz " \
 	--s3FileCommand="s5cmd !{S5CMD_PARAMS} cat !{DOWNLOAD_LINK} | tar -xvz  " \
 	--s3DirectoryCommand="mkdir db && cd db && s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
 	--s5cmdAdditionalParams="!{S5CMD_PARAMS}" \

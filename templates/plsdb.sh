@@ -21,7 +21,7 @@ then
   mkdir -p ${DATABASE}
   flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
 	--link=$DOWNLOAD_LINK \
-	--httpsCommand="wget -qO- $DOWNLOAD_LINK | tar xjv " \
+	--httpsCommand="wgetStatic --no-check-certificate -qO- $DOWNLOAD_LINK | tar xjv " \
 	--s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} ${DOWNLOAD_LINK} |  tar xjv " \
 	--s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} ${DOWNLOAD_LINK} . " \
 	--s5cmdAdditionalParams="!{S5CMD_PARAMS}" \

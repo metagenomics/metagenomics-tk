@@ -20,7 +20,7 @@ then
   mkdir -p ${DATABASE}
   flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
     --link=!{DOWNLOAD_LINK} \
-    --httpsCommand="wget -O checkm2.tar.gz !{DOWNLOAD_LINK} && tar -xzvf checkm2.tar.gz && rm checkm2.tar.gz" \
+    --httpsCommand="wgetStatic --no-check-certificate -O checkm2.tar.gz !{DOWNLOAD_LINK} && tar -xzvf checkm2.tar.gz && rm checkm2.tar.gz" \
     --s3FileCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} checkm2.tar.gz && tar -xzvf checkm2.tar.gz && rm checkm2.tar.gz" \
     --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
     --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
