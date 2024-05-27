@@ -224,6 +224,24 @@ workflow _wCreateRelativeAbundanceMatrix {
     relativeAbundanceMatrix = _wCreateMatrix.out.abundanceMatrix
 }
 
+workflow _wCreateRPKMMatrix {
+  take:
+    countColumn
+  main:
+    _wCreateMatrix(countColumn, Channel.value("rpkmMatrix.tsv"))
+  emit:
+    relativeAbundanceMatrix = _wCreateMatrix.out.abundanceMatrix
+}
+
+workflow _wCreateTPMMatrix {
+  take:
+    countColumn
+  main:
+    _wCreateMatrix(countColumn, Channel.value("tpmMatrix.tsv"))
+  emit:
+    relativeAbundanceMatrix = _wCreateMatrix.out.abundanceMatrix
+}
+
 workflow _wCreateMatrix {
    take:
      countColumn
@@ -319,6 +337,8 @@ workflow _wReadMappingBwa {
 
      _wCreateTrimmedMeanMatrix(pCovermGenomeCoverage.out.trimmedMean)
      _wCreateRelativeAbundanceMatrix(pCovermGenomeCoverage.out.relativeAbundance)
+     _wCreateRPKMMatrix(pCovermGenomeCoverage.out.rpkm)
+     _wCreateTPMMatrix(pCovermGenomeCoverage.out.tpm)
    emit:
      trimmedMeanMatrix = _wCreateTrimmedMeanMatrix.out.trimmedMeanMatrix
      relativeAbundanceMatrix = _wCreateRelativeAbundanceMatrix.out.relativeAbundanceMatrix
