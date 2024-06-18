@@ -119,6 +119,43 @@ jobs:
           bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config     "  \
           ./example_params/fullPipelineSRAQCONT.yml "${WORK_DIR}" ${PROFILE} || exit 1
 
+  qc:
+    timeout-minutes: 2500
+    needs: [codePolicy]
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - name: QC Filter DB Test
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/human_filter.db.20231218v2" \
+                               MODULE_DB_TEST_MD5SUM="cc92c0f926656565b1156d66a0db5a3c" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/human_filter.db.20231218v2.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/human_filter.db.20231218v2.gz" MODULE_DB_TEST_S3PATH="s3://databases/human_filter.db.20231218v2.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/human_filter.db.2023*.gz" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/qc MODULE_DB_TEST_YML=example_params/qc.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.qc.filterHuman.database=env(database)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_qc.sh" \
+                               MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/qc_yaml_database_tests" \
+                               MODULE_DB_TEST_REMOVE_DB="yes"
+  qcONT:
+    timeout-minutes: 2500
+    needs: [codePolicy]
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - name: QC ONT Filter DB Test
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/human_filter.db.20231218v2" \
+                               MODULE_DB_TEST_MD5SUM="cc92c0f926656565b1156d66a0db5a3c" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/human_filter.db.20231218v2.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/human_filter.db.20231218v2.gz" MODULE_DB_TEST_S3PATH="s3://databases/human_filter.db.20231218v2.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/human_filter.db.2023*.gz" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/qc MODULE_DB_TEST_YML=example_params/qcONT.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.qcONT.filterHumanONT.database=env(database)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_qc.sh" \
+                               MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/qc_yaml_database_tests" \
+                               MODULE_DB_TEST_REMOVE_DB="yes"
+
+
+
   mag_attributes:
     timeout-minutes: 2500
     needs: [codePolicy]

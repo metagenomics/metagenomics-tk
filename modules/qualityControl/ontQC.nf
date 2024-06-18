@@ -87,6 +87,45 @@ process pPorechopDownload {
 }
 
 
+/*
+*
+* This process removes sequences that originate from human DNA.
+*
+*/
+process pFilterHumanONT {
+
+    label 'medium'
+
+    tag "Sample: $sample"
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "filterHumanONT", filename) }
+
+    when params.steps.containsKey("qc") && params?.steps?.qc.containsKey("filterHumanONT")
+
+    container "${params.scrubber_image}"
+
+    input:
+    tuple val(sample), path(longReads)
+
+    output:
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
+    tuple val("${sample}"), path("*_filtered.fq.gz"), emit: filteredSeqs
+    tuple val("${sample}"), path("*_summary_before.tsv"), emit: summaryBefore
+    tuple val("${sample}"), path("*_summary_after.tsv"), emit: summaryAfter
+    tuple val("${sample}"), path("*_removed.fq.gz"), optional: true, emit: removed
+
+    shell:
+    EXTRACTED_DB=params.steps?.qc?.filterHumanONT?.database?.extractedDBPath ?: ""
+    DOWNLOAD_LINK=params.steps?.qc?.filterHumanONT?.database?.download?.source ?: ""
+    MD5SUM=params?.steps?.qc?.filterHumanONT?.database?.download?.md5sum ?: ""
+    S5CMD_PARAMS=params.steps?.qc?.filterHumanONT?.database?.download?.s5cmd?.params ?: ""
+    output = getOutput("${sample}", params.runid, "filterHumanONT", "")
+    ADDITIONAL_PARAMS=params.steps?.qc?.filterHumanONT?.additionalParams ?: ""
+    S3_filter_ACCESS=params?.steps?.qc?.filterHumanONT?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_filter_ACCESS" : ""
+    S3_filter_SECRET=params?.steps?.qc?.filterHumanONT?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_filter_SECRET" : ""
+    template 'filterHumanONT.sh'
+}
+
 
 process pNanoPlot {
 
@@ -136,7 +175,15 @@ workflow _wONTFastq {
              samples.download | pPorechopDownload
 
              pPorechop.out.reads | mix(pPorechopDownload.out.reads)  | set { reads }
-             reads | pNanoPlot
+
+             filteredSeqs = Channel.empty()
+             if(params.steps.containsKey("qcONT") && params.steps.qc.containsKey("filterHumanONT")){
+             	reads | pFilterHumanONT | set{ filteredSeqs }
+	     } else {
+                reads | set { filteredSeqs }
+             }
+
+             filteredSeqs | pNanoPlot
       emit:
         reads = reads
         medianQuality = pNanoPlot.out.medianQuality

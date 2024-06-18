@@ -13,6 +13,12 @@ steps:
     fastp:
        # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
        additionalParams: "  "
+    filterHuman:
+      additionalParams: "  "
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/human_filter.db.20231218v2.gz
+          md5sum: cc92c0f926656565b1156d66a0db5a3c
 resources:
   highmemLarge:
     cpus: 28
