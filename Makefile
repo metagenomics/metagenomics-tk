@@ -37,7 +37,6 @@ ifneq (${PARAMS_FILE}, "")
 	override PARAMS_COMMAND =  -params-file ${PARAMS_FILE}
 endif
 
-
 ifndef BRANCH
 	override BRANCH = "dev"
 endif
@@ -87,18 +86,19 @@ clean : ## Removes all files that are produced during runs are not necessary
 	- rm trace.txt*
 	- rm dag.dot*
 
-changelog: ## Creates a new CHANGELOG.md file
+changelog: ## Creates a new CHANGELOG
 	LATEST="$$(git describe --tags $$(git rev-list --tags --max-count=1))"; \
-	docker run -v "$${PWD}":/workdir quay.io/git-chglog/git-chglog:latest "$${LATEST}"
+	docker run -v "$${PWD}":/workdir quay.io/git-chglog/git-chglog:latest "$${LATEST}" 
+
+changelogTag: ## Creates a new CHANGELOG by specifying a tag with the environment variable TAG.
+	docker run -v "$${PWD}":/workdir quay.io/git-chglog/git-chglog:latest "${TAG}"
 
 nextflow: ## Downloads Nextflow binary
 	wget -qO- https://github.com/nextflow-io/nextflow/releases/download/v${VERSION}/nextflow-${VERSION}-all > nextflow
 	chmod a+x nextflow
 
-
 check: ## Checks if processes did fail and the current nextflow run returns exit code 1. (Useful in a github actions context)
 	bash ./scripts/check_log.sh $$(ls -1 ${LOG_DIR}/trace.* | tail -n 1 ) || (echo "$?"; exit 1)
-
 
 checkPublisDirMode: ## Check if publishDirMode is set in process
 	! (grep -r publishIR modules/ | grep -v "//" | grep -v params.publishDirMode) || echo "publishDirMode must always be set in process publishDir method"

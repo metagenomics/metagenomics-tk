@@ -26,7 +26,8 @@ A new release should be made the following way:
 
 3. Run `git fetch` on the master branch to get the latest tag.
 
-4. Run `make changelog` and paste the output on the Github release section.
+4. Run `make changelog` and paste the output on the Github release section. In case you want to specify a specific tag you can also run `TAG=YOUR_TAG  make changelog`,
+where `YOUR_TAG` is the tag you want to compare to (e.g. 0.4.0).
 
 ```YAML
 ---8<--- "../.chglog/config.yml"
