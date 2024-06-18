@@ -100,7 +100,7 @@ process pFilterHumanONT {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "filterHumanONT", filename) }
 
-    when params.steps.containsKey("qc") && params?.steps?.qc.containsKey("filterHumanONT")
+    when params.steps.containsKey("qcONT") && params?.steps?.qc.containsKey("filterHumanONT")
 
     container "${params.scrubber_image}"
 
@@ -115,14 +115,14 @@ process pFilterHumanONT {
     tuple val("${sample}"), path("*_removed.fq.gz"), optional: true, emit: removed
 
     shell:
-    EXTRACTED_DB=params.steps?.qc?.filterHumanONT?.database?.extractedDBPath ?: ""
-    DOWNLOAD_LINK=params.steps?.qc?.filterHumanONT?.database?.download?.source ?: ""
-    MD5SUM=params?.steps?.qc?.filterHumanONT?.database?.download?.md5sum ?: ""
-    S5CMD_PARAMS=params.steps?.qc?.filterHumanONT?.database?.download?.s5cmd?.params ?: ""
+    EXTRACTED_DB=params.steps?.qcONT?.filterHumanONT?.database?.extractedDBPath ?: ""
+    DOWNLOAD_LINK=params.steps?.qcONT?.filterHumanONT?.database?.download?.source ?: ""
+    MD5SUM=params?.steps?.qcONT?.filterHumanONT?.database?.download?.md5sum ?: ""
+    S5CMD_PARAMS=params.steps?.qcONT?.filterHumanONT?.database?.download?.s5cmd?.params ?: ""
     output = getOutput("${sample}", params.runid, "filterHumanONT", "")
-    ADDITIONAL_PARAMS=params.steps?.qc?.filterHumanONT?.additionalParams ?: ""
-    S3_filter_ACCESS=params?.steps?.qc?.filterHumanONT?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_filter_ACCESS" : ""
-    S3_filter_SECRET=params?.steps?.qc?.filterHumanONT?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_filter_SECRET" : ""
+    ADDITIONAL_PARAMS=params.steps?.qcONT?.filterHumanONT?.additionalParams ?: ""
+    S3_filter_ACCESS=params?.steps?.qcONT?.filterHumanONT?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_filter_ACCESS" : ""
+    S3_filter_SECRET=params?.steps?.qcONT?.filterHumanONT?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_filter_SECRET" : ""
     template 'filterHumanONT.sh'
 }
 
@@ -177,7 +177,7 @@ workflow _wONTFastq {
              pPorechop.out.reads | mix(pPorechopDownload.out.reads)  | set { reads }
 
              filteredSeqs = Channel.empty()
-             if(params.steps.containsKey("qcONT") && params.steps.qc.containsKey("filterHumanONT")){
+             if(params.steps.containsKey("qcONT") && params.steps.qcONT.containsKey("filterHumanONT")){
              	reads | pFilterHumanONT | set{ filteredSeqs }
 	     } else {
                 reads | set { filteredSeqs }
