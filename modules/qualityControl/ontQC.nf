@@ -178,7 +178,8 @@ workflow _wONTFastq {
 
              filteredSeqs = Channel.empty()
              if(params.steps.containsKey("qcONT") && params.steps.qcONT.containsKey("filterHumanONT")){
-             	reads | pFilterHumanONT | set{ filteredSeqs }
+             	reads | pFilterHumanONT
+                pFilterHumanONT.out.filteredSeqs | set{ filteredSeqs }
 	     } else {
                 reads | set { filteredSeqs }
              }
