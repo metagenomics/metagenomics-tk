@@ -222,8 +222,6 @@ workflow wOntQualityControlList {
  * 
  */
 workflow wOntQualityControlFile {
-     take:
-       readsTable
      main:
         Channel.from(file(params.steps.qcONT.input)) 
             | splitCsv(sep: '\t', header: true) \
