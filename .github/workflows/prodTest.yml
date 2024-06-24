@@ -9,7 +9,7 @@ jobs:
     timeout-minutes: 14400
     runs-on: [self-hosted, prodTest]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set Secrets
         run: |
           make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
