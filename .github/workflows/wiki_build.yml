@@ -9,7 +9,7 @@ jobs:
   build_job:
     runs-on: [self-hosted, html]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: "Publish wiki"
         run: |
            make publish_wiki_html BRANCH=${{ github.base_ref }}

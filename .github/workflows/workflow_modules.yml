@@ -25,7 +25,7 @@ jobs:
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set Secrets
         run: |
           make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
@@ -82,7 +82,7 @@ jobs:
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set Secrets
         run: |
           make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
@@ -124,7 +124,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set Secrets
         run: |
           make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
@@ -195,7 +195,7 @@ jobs:
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test Dereplication
         run: |
           bash ./scripts/test_dereplication.sh "    " "" "${WORK_DIR}" ${PROFILE} || exit 1
@@ -210,7 +210,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test Read Mapping
         run: |
           bash ./scripts/test_readMapping.sh "    " "" "${WORK_DIR}" ${PROFILE}  || exit 1
@@ -220,7 +220,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test Megahit Assembly
         run: |
           bash ./scripts/test_assembly.sh "    " "" "${WORK_DIR}" ${PROFILE}  || exit 1
@@ -238,7 +238,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test cooccurrence graph building
         run: |
           bash ./scripts/test_cooccurrence.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
@@ -251,7 +251,7 @@ jobs:
     timeout-minutes: 800
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test if cplex docker container can be build
         run: |
           cp /vol/spool/cos_installer-test.bin cplex/docker/ \
@@ -267,7 +267,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test Fragment Recruitment via Mash Screen with BWA
         run: |
           bash ./scripts/test_fragmentRecruitment.sh "     " "example_params/fragmentRecruitmentMashScreen.yml" "${WORK_DIR}" ${PROFILE}  || exit 1
@@ -282,7 +282,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set Secrets
         run: |
           make set_secrets SECRET_NAME=S3_kegg_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
@@ -299,7 +299,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set Secrets
         run: |
           make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
@@ -347,7 +347,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set Secrets
         run: |
           make set_secrets SECRET_NAME=S3_kegg_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
@@ -376,7 +376,7 @@ jobs:
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Metabolomics
         run: |
           bash ./scripts/test_metabolomics.sh "   -c  test_data/assets/aws.config     \
@@ -389,7 +389,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set Secrets
         run: |
           make set_secrets SECRET_NAME=S3_PLSDB_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
@@ -461,7 +461,7 @@ jobs:
     timeout-minutes: 2500
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test whether settings in easy mode can be updated
         run: |
           VERSION=$(sort VERSIONS.txt | tail -n 1)
@@ -485,7 +485,7 @@ jobs:
     runs-on: [ self-hosted, slurm]
     needs: [settings]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Checks if every process defines a publishDirMode
         run: |
           make checkPublisDirMode || exit 1 
