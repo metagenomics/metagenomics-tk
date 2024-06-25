@@ -146,7 +146,7 @@ jobs:
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/qcONT MODULE_DB_TEST_YML=example_params/qcONT.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.qcONT.filterHumanONT.database=env(database)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_qcONT.sh" \
-                               MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/qc_yaml_database_tests" \
+                               MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/qcONT_yaml_database_tests" \
                                MODULE_DB_TEST_REMOVE_DB="yes"
 
 

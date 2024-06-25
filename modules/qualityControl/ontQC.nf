@@ -100,7 +100,7 @@ process pFilterHumanONT {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "filterHumanONT", filename) }
 
-    when params.steps.containsKey("qcONT") && params?.steps?.qc.containsKey("filterHumanONT")
+    when params.steps.containsKey("qcONT") && params?.steps?.qcONT.containsKey("filterHumanONT")
 
     container "${params.scrubber_image}"
 
