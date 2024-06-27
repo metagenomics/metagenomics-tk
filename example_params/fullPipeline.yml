@@ -68,7 +68,8 @@ steps:
         mashSketch: " "
         mashScreen: " "
         bwa2: " "
-        coverm: "  --min-covered-fraction 5  "
+        coverm: "  --min-covered-fraction 5   "
+        covermONT: "  --min-covered-fraction 5   "
         minimap: "  "
         samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
@@ -98,8 +99,8 @@ steps:
       additionalParams:
         bwa2_index: ""
         bwa2_mem: ""
-    coverm:
-      additionalParams: " --min-covered-fraction 0 "
+    coverm: " --min-covered-fraction 0 "
+    covermONT: " --min-covered-fraction 0 "
   cooccurrence:
     inference:
       additionalParams: 
@@ -118,6 +119,7 @@ steps:
         SCAPP: "  "
         bwa2: "  "
         coverm: "  "
+        covermONT: "  "
         minimap: " "
         samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 

@@ -28,8 +28,8 @@ steps:
       additionalParams:
         bwa2_index: ""
         bwa2_mem: ""
-    coverm:
-        additionalParams: " --min-covered-fraction 0 "
+    coverm: " --min-covered-fraction 0 "
+    covermONT: " --min-covered-fraction 0 "
     minimap:
       additionalParams:
         minimap_index: ""

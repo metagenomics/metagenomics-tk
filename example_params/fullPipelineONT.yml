@@ -64,7 +64,8 @@ steps:
         bowtie: " "
         samtoolsViewBowtie: " -F 3584 " 
         samtoolsViewMinimap: " " 
-        coverm: "  --min-covered-fraction 5  "
+        coverm: " --min-covered-fraction 5 "
+        covermONT: " --min-covered-fraction 5  "
         minimap: " "
       mashDistCutoff: 0.95
       coveredBasesCutoff: 0.2
@@ -88,8 +89,8 @@ steps:
         pyani: " -m ANIb "
         representativeAniCutoff: 0.95
   readMapping:
-    coverm:
-      additionalParams: " --min-covered-fraction 0 "
+    coverm: " --min-covered-fraction 0 "
+    covermONT: " --min-covered-fraction 0 "
     minimap:
       additionalParams:
         minimap_index: ""
@@ -102,6 +103,7 @@ steps:
         samtoolsViewBowtie: " -F 3584 " 
         samtoolsViewMinimap: " " 
         coverm: "  "
+        covermONT: "  "
         minimap: "  "
     ViralVerifyPlasmid:
       filter: true
