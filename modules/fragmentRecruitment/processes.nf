@@ -48,3 +48,17 @@ process pCovermCount {
 
     # Run other metrics like RPKM, TPM, ...
     coverm genome  -t !{task.cpus} -b !{mapping} \
+         !{params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.coverm} !{percentIdentity} \
+	--genome-fasta-list list.txt --methods mean trimmed_mean variance length count reads_per_base rpkm tpm \
+	| sed -e '1 s/^.*$/SAMPLE\tGENOME\tMEAN\tTRIMMED_MEAN\tVARIANCE\tLENGTH\tREAD_COUNT\tREADS_PER_BASE\tRPKM\tTPM/' \
+	| sed -e "2,$ s/^/!{sample}\t/g" > $OUT/metrics.tsv || true
+
+    coveredBasesCutoff=!{params.steps?.fragmentRecruitment?.mashScreen?.coveredBasesCutoff}
+    FOUND_GENOMES=foundGenomes.tsv
+    for b in $(awk -v coveredBases=${coveredBasesCutoff} '(NR>1){if ($5 > coveredBases) print $2}' $OUT/coveredBases.tsv); do 
+        file=$(grep -P "\t$b$" mapping.tsv | cut -f 1);
+	echo $(basename $file)  >> ${FOUND_GENOMES} 
+    done
+    '''
+
+}
