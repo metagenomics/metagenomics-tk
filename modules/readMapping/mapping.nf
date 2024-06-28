@@ -354,7 +354,7 @@ workflow _wReadMappingBwa {
 	| mix(pCovermGenomeCoverageONT.out.rpkm) | set {rpkm}
 
      pCovermGenomeCoverage.out.tpm \
-	| pCovermGenomeCoverageONT.out.tpm | set {tpm}
+	| mix(pCovermGenomeCoverageONT.out.tpm) | set {tpm}
 
      _wCreateTrimmedMeanMatrix(trimmedMean)
      _wCreateRelativeAbundanceMatrix(relativeAbundance)
