@@ -7,7 +7,7 @@ include { pMinimap2Index as pMinimap2IndexLong; \
 include { pDumpLogs } from '../utils/processes'
 
 include { pCovermGenomeCoverage as pCovermGenomeCoverage; \
-          pCovermGenomeCoverage as pCovermGenomeCoverageONT; 
+          pCovermGenomeCoverage as pCovermGenomeCoverageONT; \
         } from '../binning/processes'
 
 def getModulePath(module){
@@ -345,16 +345,16 @@ workflow _wReadMappingBwa {
 	| mix(pCovermGenomeCoverage.out.logs, pCovermGenomeCoverageONT.out.logs) | pDumpLogs
 
      pCovermGenomeCoverage.out.trimmedMean \
-	| mix(pCovermGenomeCoverage.out.trimmedMean) | set {trimmedMean}
+	| mix(pCovermGenomeCoverageONT.out.trimmedMean) | set {trimmedMean}
 
      pCovermGenomeCoverage.out.relativeAbundance \
 	| mix(pCovermGenomeCoverageONT.out.relativeAbundance) | set {relativeAbundance}
 
      pCovermGenomeCoverage.out.rpkm \
-	| mix(pCovermGenomeCoverage.out.rpkm) | set {rpkm}
+	| mix(pCovermGenomeCoverageONT.out.rpkm) | set {rpkm}
 
      pCovermGenomeCoverage.out.tpm \
-	| pCovermGenomeCoverage.out.tpm | set {tpm}
+	| pCovermGenomeCoverageONT.out.tpm | set {tpm}
 
      _wCreateTrimmedMeanMatrix(trimmedMean)
      _wCreateRelativeAbundanceMatrix(relativeAbundance)
