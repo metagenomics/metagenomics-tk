@@ -7,6 +7,7 @@ process pCovermCount {
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
 
     input:
+      val(covermParams)
       tuple val(sample), file(mapping), file(listOfRepresentatives), val(medianQuality)
 
     output:
@@ -29,7 +30,7 @@ process pCovermCount {
     paste -d '\t' list.txt  <(cat list.txt  | rev | cut -d '/' -f 1  | cut -d '.' -f 2- | rev) > mapping.tsv
     
     # Get covered bases
-    coverm genome -t !{task.cpus} -b !{mapping} \
+    coverm genome -t !{task.cpus} !{covermParams} -b !{mapping} \
          !{params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.coverm}  !{percentIdentity}  \
         --genome-fasta-list list.txt --methods covered_bases --output-file covTmpContent.tsv \
 
@@ -47,8 +48,8 @@ process pCovermCount {
                 && paste -d$'\t' covLengthTmpContent.tsv covLengthTmp.tsv > $OUT/coveredBases.tsv || true
 
     # Run other metrics like RPKM, TPM, ...
-    coverm genome  -t !{task.cpus} -b !{mapping} \
-         !{params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.coverm} !{percentIdentity} \
+    coverm genome  -t !{task.cpus}  -b !{mapping} \
+         !{covermParams} !{percentIdentity} \
 	--genome-fasta-list list.txt --methods mean trimmed_mean variance length count reads_per_base rpkm tpm \
 	| sed -e '1 s/^.*$/SAMPLE\tGENOME\tMEAN\tTRIMMED_MEAN\tVARIANCE\tLENGTH\tREAD_COUNT\tREADS_PER_BASE\tRPKM\tTPM/' \
 	| sed -e "2,$ s/^/!{sample}\t/g" > $OUT/metrics.tsv || true

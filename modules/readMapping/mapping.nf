@@ -331,13 +331,13 @@ workflow _wReadMappingBwa {
      pCovermGenomeCoverage(Channel.value(params.steps?.readMapping?.find{ it.key == "coverm" }?.value), \
 	Channel.value("AGGREGATED"), \
 	Channel.value([getModulePath(params.modules.readMapping), \
-	"genomeCoverage", params.steps?.readMapping?.coverm?.additionalParams]), \
+	"genomeCoverage", params.steps?.readMapping?.coverm]), \
 	covermBWAInput)
 
      pCovermGenomeCoverageONT(Channel.value(params.steps?.readMapping?.find{ it.key == "covermONT" }?.value), \
 	Channel.value("AGGREGATED"), \
 	Channel.value([getModulePath(params.modules.readMapping), \
-	"genomeCoverage", params.steps?.readMapping?.coverm?.additionalParams]), \
+	"genomeCoverage", params.steps?.readMapping?.covermONT]), \
 	covermMinimapInput)
 
      pMapBwa2.out.logs | mix(pMapBwa.out.logs) \
