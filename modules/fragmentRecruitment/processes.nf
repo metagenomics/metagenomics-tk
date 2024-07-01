@@ -1,3 +1,11 @@
+def getOutput(SAMPLE, RUNID, TOOL, filename){
+    return SAMPLE + '/' + RUNID + '/' + params.modules.fragmentRecruitment.name + '/' + 
+         params.modules.fragmentRecruitment.version.major + "." +
+         params.modules.fragmentRecruitment.version.minor + "." +
+         params.modules.fragmentRecruitment.version.patch +
+         '/' + TOOL + '/' + filename
+}
+
 process pCovermCount {
 
     label 'small'
@@ -6,8 +14,12 @@ process pCovermCount {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
 
+    when:
+    run
+
     input:
       val(covermParams)
+      val(run)
       tuple val(sample), file(mapping), file(listOfRepresentatives), val(medianQuality)
 
     output:
@@ -31,7 +43,7 @@ process pCovermCount {
     
     # Get covered bases
     coverm genome -t !{task.cpus} !{covermParams} -b !{mapping} \
-         !{params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.coverm}  !{percentIdentity}  \
+        !{percentIdentity}  \
         --genome-fasta-list list.txt --methods covered_bases --output-file covTmpContent.tsv \
 
     # Get length
