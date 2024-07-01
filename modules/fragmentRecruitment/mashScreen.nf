@@ -329,7 +329,7 @@ workflow _wGetStatistics {
 	| join(ontMedianQuality, by: SAMPLE_IDX) \
         | set { covermMinimapReadsInput }
 
-     pCovermCount(Channel.value(params?.steps?.fragmentRecruitment.find{ it.key == "coverm"}?.value) | view, \
+     pCovermCount(Channel.value(params?.steps?.fragmentRecruitment.find{ it.key == "coverm"}?.value), \
 	params?.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.coverm != null, covermBowtieReadsInput)
 
      pCovermCountONT(Channel.value(params?.steps?.fragmentRecruitment.find{ it.key == "covermONT"}?.value), \
