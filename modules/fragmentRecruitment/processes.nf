@@ -14,12 +14,8 @@ process pCovermCount {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
 
-    when:
-    run
-
     input:
       val(covermParams)
-      val(run)
       tuple val(sample), file(mapping), file(listOfRepresentatives), val(medianQuality)
 
     output:
