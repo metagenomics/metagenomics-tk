@@ -330,10 +330,10 @@ workflow _wGetStatistics {
         | set { covermMinimapReadsInput }
 
      pCovermCount(Channel.value(params?.steps?.fragmentRecruitment.find{ it.key == "coverm"}?.value), \
-	params?.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.coverm != null, covermBowtieReadsInput)
+	covermBowtieReadsInput)
 
      pCovermCountONT(Channel.value(params?.steps?.fragmentRecruitment.find{ it.key == "covermONT"}?.value), \
-	params?.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.covermONT != null, covermMinimapReadsInput)
+	covermMinimapReadsInput)
 
      pCovermCount.out.foundGenomes | mix(pCovermCountONT.out.foundGenomes) | set { foundGenomes } 
 
