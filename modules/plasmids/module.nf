@@ -1,7 +1,9 @@
 include { wSaveSettingsList } from '../config/module'
 
 include { pDumpLogs } from '../utils/processes'
-include { pCovermContigsCoverage; pBowtie2; pMinimap2; pBwa; pBwa2} from '../binning/processes'
+include { pCovermContigsCoverage as pCovermContigsCoverage; 
+          pCovermContigsCoverage as pCovermContigsCoverageONT;
+	  pBowtie2; pMinimap2; pBwa; pBwa2} from '../binning/processes'
 
 include { pPlaton as pPlatonCircular; \
           pPlaton as pPlatonLinear; \
@@ -349,12 +351,18 @@ workflow _runCircularAnalysis {
        pSCAPP.out.plasmids | join(ontReads))
 
        pBowtie2.out.mappedReads | mix(pBwa.out.mappedReads, pBwa2.out.mappedReads) \
-	| combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) \
-	| mix(pMinimap2.out.mappedReads | join(ontMedianQuality, by: SAMPLE_IDX)) \
-	| set { covermInput  }
+	| combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) | set { covermInput }
+
+       pMinimap2.out.mappedReads | join(ontMedianQuality, by: SAMPLE_IDX) \
+	| set { covermInputONT }
 
        pCovermContigsCoverage(Channel.value(true), Channel.value([Utils.getModulePath(params?.modules?.plasmids) \
 	,"SCAPP/coverage", params?.steps?.plasmid?.SCAPP?.additionalParams?.coverm]), covermInput) 
+
+       pCovermContigsCoverageONT(Channel.value(true), Channel.value([Utils.getModulePath(params?.modules?.plasmids) \
+	,"SCAPP/coverage", params?.steps?.plasmid?.SCAPP?.additionalParams?.covermONT]), covermInputONT) 
+
+       pCovermContigsCoverage.out.coverage | mix(pCovermContigsCoverageONT.out.coverage) | set { coverage }
 
        // Check which tools the user has chosen for filtering contigs
        selectedFilterTools = params?.steps?.plasmid.findAll({ tool, options -> {  options instanceof Map && options?.filter } }).collect{it.key}
@@ -394,7 +402,7 @@ workflow _runCircularAnalysis {
 
     emit:
       plasmids = filteredPlasmids
-      coverage = pCovermContigsCoverage.out.coverage
+      coverage = coverage
 }
 
 

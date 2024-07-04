@@ -6,7 +6,9 @@ include { pMinimap2Index as pMinimap2IndexLong; \
 
 include { pDumpLogs } from '../utils/processes'
 
-include { pCovermGenomeCoverage; } from '../binning/processes'
+include { pCovermGenomeCoverage as pCovermGenomeCoverage; \
+          pCovermGenomeCoverage as pCovermGenomeCoverageONT; \
+        } from '../binning/processes'
 
 def getModulePath(module){
     return module.name + '/' + module.version.major + "." +
@@ -329,16 +331,35 @@ workflow _wReadMappingBwa {
      pCovermGenomeCoverage(Channel.value(params.steps?.readMapping?.find{ it.key == "coverm" }?.value), \
 	Channel.value("AGGREGATED"), \
 	Channel.value([getModulePath(params.modules.readMapping), \
-	"genomeCoverage", params.steps?.readMapping?.coverm?.additionalParams]), \
-	covermBWAInput | mix(covermMinimapInput))
+	"genomeCoverage", params.steps?.readMapping?.coverm]), \
+	covermBWAInput)
+
+     pCovermGenomeCoverageONT(Channel.value(params.steps?.readMapping?.find{ it.key == "covermONT" }?.value), \
+	Channel.value("AGGREGATED"), \
+	Channel.value([getModulePath(params.modules.readMapping), \
+	"genomeCoverage", params.steps?.readMapping?.covermONT]), \
+	covermMinimapInput)
 
      pMapBwa2.out.logs | mix(pMapBwa.out.logs) \
-	| mix(pMapMinimap2Long.out.logs) | mix(pCovermGenomeCoverage.out.logs) | pDumpLogs
+	| mix(pMapMinimap2Long.out.logs) \
+	| mix(pCovermGenomeCoverage.out.logs, pCovermGenomeCoverageONT.out.logs) | pDumpLogs
 
-     _wCreateTrimmedMeanMatrix(pCovermGenomeCoverage.out.trimmedMean)
-     _wCreateRelativeAbundanceMatrix(pCovermGenomeCoverage.out.relativeAbundance)
-     _wCreateRPKMMatrix(pCovermGenomeCoverage.out.rpkm)
-     _wCreateTPMMatrix(pCovermGenomeCoverage.out.tpm)
+     pCovermGenomeCoverage.out.trimmedMean \
+	| mix(pCovermGenomeCoverageONT.out.trimmedMean) | set {trimmedMean}
+
+     pCovermGenomeCoverage.out.relativeAbundance \
+	| mix(pCovermGenomeCoverageONT.out.relativeAbundance) | set {relativeAbundance}
+
+     pCovermGenomeCoverage.out.rpkm \
+	| mix(pCovermGenomeCoverageONT.out.rpkm) | set {rpkm}
+
+     pCovermGenomeCoverage.out.tpm \
+	| mix(pCovermGenomeCoverageONT.out.tpm) | set {tpm}
+
+     _wCreateTrimmedMeanMatrix(trimmedMean)
+     _wCreateRelativeAbundanceMatrix(relativeAbundance)
+     _wCreateRPKMMatrix(rpkm)
+     _wCreateTPMMatrix(tpm)
    emit:
      trimmedMeanMatrix = _wCreateTrimmedMeanMatrix.out.trimmedMeanMatrix
      relativeAbundanceMatrix = _wCreateRelativeAbundanceMatrix.out.relativeAbundanceMatrix

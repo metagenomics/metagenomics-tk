@@ -86,9 +86,9 @@ steps:
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
     contigsCoverage:
-      additionalParams: " --min-covered-fraction 0 --min-read-percent-identity 100 --min-read-aligned-percent 100 "
+      additionalParams: " --min-covered-fraction 0  --min-read-aligned-percent 100 "
     genomeCoverage:
-      additionalParams: " --min-covered-fraction 0 --min-read-percent-identity 100 --min-read-aligned-percent 100 "
+      additionalParams: " --min-covered-fraction 0  --min-read-aligned-percent 100 "
     metabat:
       additionalParams: " --seed 234234  "
   magAttributes:
@@ -118,7 +118,8 @@ steps:
         bwa2: "  "
         # We demand that matches should be at least 70 percent to restrict the
         # search space. We further restrict all found matches in 'coveredBasesCutoff' parameter.
-        coverm: " --min-covered-fraction 70  --min-read-percent-identity 95 --min-read-aligned-percent 95 "
+        coverm: " --min-covered-fraction 70 --min-read-percent-identity 95 --min-read-aligned-percent 95 "
+        covermONT: " --min-covered-fraction 70 --min-read-aligned-percent 95 "
         minimap: "   "
         samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
@@ -158,8 +159,8 @@ steps:
      # One table is based on relative abundance and the second one on the trimmed mean.
      # Just using relative abundance makes it difficult to tell if a genome is part of a dataset.
      # Thats why it makes sense to set at leat a low min covered fraction parameter.
-    coverm:
-      additionalParams: " --min-covered-fraction 80  --min-read-percent-identity 95 --min-read-aligned-percent 95 "
+    coverm: " --min-covered-fraction 80  --min-read-percent-identity 95 --min-read-aligned-percent 95 "
+    covermONT: " --min-covered-fraction 80  --min-read-aligned-percent 95 "
     minimap:
       additionalParams:
         minimap_index: ""
@@ -181,6 +182,7 @@ steps:
         bwa2: "  "
         SCAPP: "  "
         coverm: " --min-covered-fraction 0 --min-read-percent-identity 100 --min-read-aligned-percent 100 "
+        covermONT: " --min-covered-fraction 0 --min-read-aligned-percent 100 "
         minimap: " "
         samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 

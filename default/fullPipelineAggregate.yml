@@ -33,8 +33,8 @@ steps:
      # One table is based on relative abundance and the second one on the trimmed mean.
      # Just using relative abundance makes it difficult to tell if a genome is part of a dataset.
      # Thats why it makes sense to set at leat a low min covered fraction parameter.
-    coverm:
-      additionalParams: " --min-covered-fraction 80  --min-read-percent-identity 95 --min-read-aligned-percent 95 "
+    coverm: " --min-covered-fraction 80  --min-read-percent-identity 95 --min-read-aligned-percent 95 "
+    covermONT: " --min-covered-fraction 80  --min-read-aligned-percent 95 "
     minimap:
       additionalParams:
         minimap_index: ""

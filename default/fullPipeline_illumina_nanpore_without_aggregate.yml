@@ -119,6 +119,7 @@ steps:
         # We demand that matches should be at least 70 percent to restrict the
         # search space. We further restrict all found matches in 'coveredBasesCutoff' parameter.
         coverm: " --min-covered-fraction 70 --min-read-percent-identity 95 --min-read-aligned-percent 95  "
+        covermONT: " --min-covered-fraction 70 --min-read-aligned-percent 95 "
         minimap: "   "
         samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
@@ -216,6 +217,7 @@ steps:
         bwa2: "  "
         SCAPP: "  "
         coverm: " --min-covered-fraction 0 --min-read-percent-identity 100 --min-read-aligned-percent 100 "
+        covermONT: " --min-covered-fraction 0 --min-read-aligned-percent 100 "
         minimap: " "
         samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 

@@ -22,6 +22,7 @@ steps:
         bwa2: " "
         minimap: " "
         coverm: "  --min-covered-fraction 0  "
+        covermONT: "  --min-covered-fraction 0 "
         samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
       mashDistCutoff: 0.70

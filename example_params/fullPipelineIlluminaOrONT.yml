@@ -124,6 +124,7 @@ steps:
         samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
         coverm: "  --min-covered-fraction 0 "
+        covermONT: "  --min-covered-fraction 0 "
         minimap: "  "
       mashDistCutoff: 0.05
       coveredBasesCutoff: 0.01
@@ -137,8 +138,8 @@ steps:
       additionalParams:
         bwa2_index: ""
         bwa2_mem: ""
-    coverm:
-      additionalParams: " --min-covered-fraction 0 "
+    coverm: " --min-covered-fraction 0 "
+    covermONT: " --min-covered-fraction 0 "
     minimap:
       additionalParams:
         minimap_index: ""
@@ -207,7 +208,7 @@ steps:
     inference:
       additionalParams: 
         method: 'correlation'
-        rscript: " --mincovthreshold 0.1 --maxzero 80 --minweight 0.4 "
+        rscript: " --mincovthreshold 0.1 --maxzero 110 --minweight 0.4 "
         timeLimit: "AUTO"
     metabolicAnnotation:
       additionalParams:
