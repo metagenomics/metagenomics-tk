@@ -25,7 +25,7 @@ jobs:
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set Secrets
         run: |
           make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
@@ -82,7 +82,7 @@ jobs:
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set Secrets
         run: |
           make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
@@ -119,12 +119,44 @@ jobs:
           bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config     "  \
           ./example_params/fullPipelineSRAQCONT.yml "${WORK_DIR}" ${PROFILE} || exit 1
 
+  qc:
+    timeout-minutes: 2500
+    needs: [codePolicy]
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - name: QC Filter DB Test
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/human_filter.db.20231218v2" \
+                               MODULE_DB_TEST_MD5SUM="cc92c0f926656565b1156d66a0db5a3c" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/human_filter.db.20231218v2.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/human_filter.db.20231218v2.gz" MODULE_DB_TEST_S3PATH="s3://databases/human_filter.db.20231218v2.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/human_filter.db.20231218v2" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/qc MODULE_DB_TEST_YML=example_params/qc.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.qc.filterHuman.database=env(database)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_qc.sh" \
+                               MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/qc_yaml_database_tests" \
+                               MODULE_DB_TEST_REMOVE_DB="yes"
+      - name: QC ONT Filter DB Test
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/human_filter.db.20231218v2" \
+                               MODULE_DB_TEST_MD5SUM="cc92c0f926656565b1156d66a0db5a3c" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/human_filter.db.20231218v2.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/human_filter.db.20231218v2.gz" MODULE_DB_TEST_S3PATH="s3://databases/human_filter.db.20231218v2.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/human_filter.db.20231218v2" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/qcONT MODULE_DB_TEST_YML=example_params/qcONT.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.qcONT.filterHumanONT.database=env(database)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_qcONT.sh" \
+                               MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/qcONT_yaml_database_tests" \
+                               MODULE_DB_TEST_REMOVE_DB="yes"
+
+
+
   mag_attributes:
     timeout-minutes: 2500
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set Secrets
         run: |
           make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
@@ -195,7 +227,7 @@ jobs:
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test Dereplication
         run: |
           bash ./scripts/test_dereplication.sh "    " "" "${WORK_DIR}" ${PROFILE} || exit 1
@@ -210,7 +242,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test Read Mapping
         run: |
           bash ./scripts/test_readMapping.sh "    " "" "${WORK_DIR}" ${PROFILE}  || exit 1
@@ -220,7 +252,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test Megahit Assembly
         run: |
           bash ./scripts/test_assembly.sh "    " "" "${WORK_DIR}" ${PROFILE}  || exit 1
@@ -238,7 +270,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test cooccurrence graph building
         run: |
           bash ./scripts/test_cooccurrence.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
@@ -251,7 +283,7 @@ jobs:
     timeout-minutes: 800
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test if cplex docker container can be build
         run: |
           cp /vol/spool/cos_installer-test.bin cplex/docker/ \
@@ -267,7 +299,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test Fragment Recruitment via Mash Screen with BWA
         run: |
           bash ./scripts/test_fragmentRecruitment.sh "     " "example_params/fragmentRecruitmentMashScreen.yml" "${WORK_DIR}" ${PROFILE}  || exit 1
@@ -282,7 +314,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set Secrets
         run: |
           make set_secrets SECRET_NAME=S3_kegg_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
@@ -299,7 +331,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set Secrets
         run: |
           make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
@@ -347,7 +379,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set Secrets
         run: |
           make set_secrets SECRET_NAME=S3_kegg_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
@@ -376,7 +408,7 @@ jobs:
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Metabolomics
         run: |
           bash ./scripts/test_metabolomics.sh "   -c  test_data/assets/aws.config     \
@@ -389,7 +421,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set Secrets
         run: |
           make set_secrets SECRET_NAME=S3_PLSDB_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
@@ -461,7 +493,7 @@ jobs:
     timeout-minutes: 2500
     runs-on: [ self-hosted, slurm]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Test whether settings in easy mode can be updated
         run: |
           VERSION=$(sort VERSIONS.txt | tail -n 1)
@@ -485,7 +517,7 @@ jobs:
     runs-on: [ self-hosted, slurm]
     needs: [settings]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Checks if every process defines a publishDirMode
         run: |
           make checkPublisDirMode || exit 1 
