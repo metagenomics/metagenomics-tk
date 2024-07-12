@@ -32,7 +32,8 @@ else
   export CHECKM2DB=$(find !{EXTRACTED_DB} -name "*.dmnd")
 fi
 
-checkm2 predict !{params.steps.magAttributes.checkm2.additionalParams} --threads !{task.cpus} --input !{bins} -o out
+mkdir tmp
+checkm2 predict !{params.steps.magAttributes.checkm2.additionalParams} --tmpdir tmp --threads !{task.cpus} --input !{bins} -o out
 mv out/quality_report.tsv ${OUTPUT}
 
 # Prepare output
