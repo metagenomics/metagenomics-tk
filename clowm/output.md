@@ -1,29 +1,29 @@
 # Metagenomics-Toolkit: Output
 
 ## Quality Control
-The output is a gzipped fastq file (`SAMPLE_interleaved.qc.fq.gz`) containing trimmed and quality filtered reads.
+The output is a gzipped fastq file (`SAMPLE_interleaved.qc.fq.gz`) containing trimmed and quality-filtered reads.
 
 ## Assembly
 The output contains the following files:
 
-* A gzipped fasta file containing contigs.
-* A file containing the assembly graph in fastg format.
+* A gzipped FASTA file containing contigs.
+* A file containing the assembly graph in FASTG format.
 * A file containing assembly statistics.
 
 ## Binning
-The output contains
+The output contains:
 
-* the binning results in the metabat folder.
+* the binning results in the MetaBAT folder.
 * the coverage of each contig and MAG.
-* the read mapping to each contig and MAG and the corresponding mapping statistics.
+* the read mapping to each contig and MAG, and the corresponding mapping statistics.
 
 ## Mag Attributes
 
-### Checkm
-The Checkm output adds a `BIN_ID` and `SAMPLE` column to the corresponding checkm output file.
+### CheckM
+The CheckM output adds a `BIN_ID` and `SAMPLE` column to the corresponding CheckM output file.
 
-### GTDBTk
-All GTDB tsv files include the GTDB specific columns in addition to a `SAMPLE` column (`*_SAMPLE_gtdbtk.bac120.summary.tsv`,
+### GTDB-Tk
+All GTDB .tsv files include the GTDB specific columns in addition to a `SAMPLE` column (`*_SAMPLE_gtdbtk.bac120.summary.tsv`,
 `*_SAMPLE_gtdbtk.ar122.summary.tsv`). In addition, this module produces a file `*_SAMPLE_gtdbtk_combined.tsv` that combines
 both files and adds a `BIN_ID` column. A reference tree file (`*.tree`) in Newick format containing query genomes placed with pplacer is also produced.
 
@@ -53,21 +53,22 @@ The `*rgi.tsv` files contain the found CARD genes.
 ## Plasmids
 
 ### SCAPP
-SCAPP detects plasmid sequences out of the samples assembly graph. It reports sequences as gzipped fasta files
+SCAPP detects plasmid sequences out of the samples assembly graph. It reports sequences as gzipped FASTA files
 (`*_plasmids.fasta.gz`). A basic statistic (`*_plasmids_stats.tsv`) per plasmid and a summary statistic
-(`*_plasmids_summary_stats.tsv`) over all plasmids is also generated. Coverm coverage metrics are generated for all
+(`*_plasmids_summary_stats.tsv`) over all plasmids is also generated. CoverM coverage metrics are generated for all
 plasmids. Gene coverage values are generated as part of the annotation module output.
 
 ### PlasClass
-PlasClass is able to identify plasmids by using a statistical model that was build using kmer frequencies.
+PlasClass can identify plasmids by using a statistical model that was build using kmer frequencies.
 It reports gzipped fata files and their probabilities (`*_plasclass.tsv`).
 
-### ViralVerifyPlasmid
-ViralVerfiy is applying a Naive Bayes classifier (`*_viralverifyplasmid.tsv`).
+### ViralVerify Plasmid
+ViralVerify is applying a Naive Bayes classifier (`*_viralverifyplasmid.tsv`).
 
 ### PLSDB
-PLSDB includes a curated set of plasmid sequences that were extracted from databases like refseq. The metadata of
-found sequences are reported in *.tsv and the metadata of the filtered sequences in `*_kmerThreshold_X.tsv`.
+PLSDB includes a curated set of plasmid sequences that were extracted from databases like refseq. Metadata of
+the found sequences is reported in `*.tsv` and the metadata of the filtered sequences in `*_kmerThreshold_X.tsv`.
 
 ### Filtered
-All Contigs that were identified as plasmids by all tools that were activated as a filter (e.g. `--steps.plasmid.PlasClass.filter`). If `AND` is specified, only contigs reported as plasmid by all tools will be returned, otherwise all contigs reported as plasmid by at least one tool will be returned. Which tools detected a plasmid on which contig is saved in a file named `*_detection_tools.tsv`.
+All contigs that were identified as plasmids by all tools that were activated as a filter (e.g. `--steps.plasmid.PlasClass.filter`). 
+If `AND` is specified, only contigs reported as plasmid by all tools will be returned, otherwise all contigs reported as plasmid by at least one tool will be returned. Which tools detected a plasmid on which contig is saved in a file named `*_detection_tools.tsv`.
