@@ -70,4 +70,4 @@ PLSDB includes a curated set of plasmid sequences that were extracted from datab
 found sequences are reported in *.tsv and the metadata of the filtered sequences in `*_kmerThreshold_X.tsv`.
 
 ### Filtered
-All Contigs that were identified as plasmids by all tools that were activated as a filter (`--steps.plasmid.PlasClass.filter`). If `--steps.plasmid.Filter.method` (excluding assembled plasmids by e.g. SCAPP). Which tools detected a plasmid on which contig is saved in a file named `*_detection_tools.tsv`.
+All Contigs that were identified as plasmids by all tools that were activated as a filter (e.g. `--steps.plasmid.PlasClass.filter`). If `AND` is specified, only contigs reported as plasmid by all tools will be returned, otherwise all contigs reported as plasmid by at least one tool will be returned. Which tools detected a plasmid on which contig is saved in a file named `*_detection_tools.tsv`.

@@ -25,7 +25,7 @@ Currently the following modules and tools are enabled for execution in CloWM:
 | 4 | Read Mapping | BWA2 |
 | 6 | Binning | MetaBAT2, MAGScoT |
 | 9 | Plasmids Assembly /Examination |  Platon, ViralVerify, PlasClass, PLSDB, SCAPP |
-|  8 | Phylogeny/Taxonomy and Annotation | GTDB-tk, CheckM, Prokka, RGI, MMseqs, MMSeqs taxonomy |
+| 8 | Phylogeny/Taxonomy and Annotation | GTDB-tk, CheckM, Prokka, RGI, MMseqs, MMSeqs taxonomy |
 
 ### Plasmids 
 
@@ -40,8 +40,6 @@ Only the detected plasmids will be used for downstream analysis.
 ## Databases
 
 The following databases are used:
-
-For the annotation of metagenome assembled genomes (MAGs), plasmid identification and other MAG the meta-omics-toolkit uses the following databases and tools:
   - GTDB (Genome Taxonomy Database)
   - VFDB (Virulence Factors Database)
   - KEGG (Kyoto Encyclopedia of Genes and Genomes)
