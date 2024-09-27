@@ -156,7 +156,7 @@
       "type": "object",
       "description": "",
       "default": "",
-      "fa_icon": "fab fa-layer-group",
+      "fa_icon": "fas fa-layer-group",
       "properties": {
         "steps.binning.bwa2.additionalParams.bwa2": {
           "type": "string",
