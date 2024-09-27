@@ -42,6 +42,7 @@
         "summary": {
           "type": "boolean",
           "description": "Summary",
+          "default": false,
           "hidden": true
         },
         "logDir": {
@@ -254,6 +255,7 @@
         },
         "steps.annotation.prokka.defaultKingdom": {
           "type": "boolean",
+          "default": false,
           "description": "prokka default Kingdom",
           "displayName": "prokka default Kingdom",
           "hidden": true
@@ -359,6 +361,7 @@
         },
         "steps.annotation.mmseqs2_taxonomy.gtdb.ramMode": {
           "type": "boolean",
+          "default": false,
           "description": "Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params",
           "displayName": "Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params",
           "hidden": true
