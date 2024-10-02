@@ -142,7 +142,7 @@ steps:
     mmseqs2:
       kegg:
         additionalParams:
-          search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 2 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
           additionalColumns: ""
         database:
           download:
@@ -152,7 +152,7 @@ steps:
               params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
       vfdb:
         additionalParams:
-          search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 2 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
           additionalColumns: ""
         database:
           download:
@@ -160,7 +160,7 @@ steps:
             md5sum: 7e32aaed112d6e056fb8764b637bf49e
       bacmet20_experimental:
         additionalParams:
-          search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 2 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
           additionalColumns: ""
         database:
           download:
@@ -168,7 +168,7 @@ steps:
             md5sum: 57a6d328486f0acd63f7e984f739e8fe
       bacmet20_predicted:
         additionalParams:
-          search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 2 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
           additionalColumns: ""
         database:
           download:
@@ -176,7 +176,7 @@ steps:
             md5sum: 55902401a765fc460c09994d839d9b64
       uniref90:
         additionalParams:
-          search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 2 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
           additionalColumns: ""
         database:
           download:
@@ -187,7 +187,7 @@ steps:
       runOnMAGs: true
       gtdb:
         # High sensitivity mode parameters only work for quality MAGs, for unbinable contigs use default parameters
-        params: ' --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies  --max-seqs 300 --max-accept 50 --cov-mode 0 -e 0.001 --e-profile 0.01 '
+        params: ' --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies  --max-seqs 300 --max-accept 50 --cov-mode 2 -e 0.001 --e-profile 0.01 '
         # Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params
         ramMode: false
         initialMaxSensitivity: 6
