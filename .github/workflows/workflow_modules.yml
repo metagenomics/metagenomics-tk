@@ -30,12 +30,6 @@ jobs:
         run: |
           make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
           make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
-      - name: Test if SRA S3 Entrypoint works 
-        run: |
-          NCBI_API_KEY=${{ secrets.NCBI_API_KEY }}  bash ./scripts/test_SRA.sh " -c  test_data/assets/aws.config " "" "${WORK_DIR}" ${PROFILE} || exit 1
-      - name: Test if just the input SRA datasets are reported 
-        run: |
-          bash ./scripts/test_SRA_large.sh "${WORK_DIR}" ${PROFILE} || exit 1
       - name: Test if SRA S3 Input module works 
         run: |
           bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config    " \
@@ -149,6 +143,23 @@ jobs:
                                MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/qcONT_yaml_database_tests" \
                                MODULE_DB_TEST_REMOVE_DB="yes"
 
+
+  external_SRA:
+    timeout-minutes: 800
+    runs-on: [ self-hosted, slurm]
+    needs: [codePolicy]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set Secrets
+        run: |
+          make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+      - name: Test if SRA S3 Entrypoint works 
+        run: |
+          NCBI_API_KEY=${{ secrets.NCBI_API_KEY }}  bash ./scripts/test_SRA.sh " -c  test_data/assets/aws.config " "" "${WORK_DIR}" ${PROFILE} || exit 1
+      - name: Test if just the input SRA datasets are reported 
+        run: |
+          bash ./scripts/test_SRA_large.sh "${WORK_DIR}" ${PROFILE} || exit 1
 
 
   mag_attributes:
@@ -373,7 +384,6 @@ jobs:
                                MODULE_DB_TEST_SKIP_TESTS="https" \
                                MODULE_DB_TEST_REMOVE_DB="yes"
 
-
   annotation_database_tests_part_2:
     timeout-minutes: 2200
     needs: [codePolicy]
@@ -400,7 +410,37 @@ jobs:
                                MODULE_DB_TEST_YML_PATH="'.steps.annotation.mmseqs2.kegg.database=env(database),del(.steps.annotation.rgi,.steps.annotation.keggFromMMseqs2)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" \
                                MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/mmseqs2_yaml_database_tests" \
-                               MODULE_DB_TEST_SKIP_TESTS="https" \
+                               MODULE_DB_TEST_SKIP_TESTS="s3File,s3Directory,https" \
+                               MODULE_DB_TEST_REMOVE_DB="yes"
+
+
+  external_S3_annotation_database:
+    timeout-minutes: 2200
+    needs: [codePolicy]
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set Secrets
+        run: |
+          make set_secrets SECRET_NAME=S3_kegg_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_kegg_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+      - name: Test mmseqs2 against different database configurations
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB" \
+                               MODULE_DB_TEST_MD5SUM="0d20db97b3e7ee6571ca1fd5ad3a87f1" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs.tar.zst" MODULE_DB_TEST_S3PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs/*" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
+                               MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/mmseqs2 \
+                               MODULE_DB_TEST_YML=example_params/annotation.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.annotation.mmseqs2.kegg.database=env(database),del(.steps.annotation.rgi,.steps.annotation.keggFromMMseqs2)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" \
+                               MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/mmseqs2_yaml_database_tests" \
+                               MODULE_DB_TEST_SKIP_TESTS="extracted,https,compressed" \
                                MODULE_DB_TEST_REMOVE_DB="yes"
 
   metabolomics:
