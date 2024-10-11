@@ -61,6 +61,8 @@ process pGetMetadata {
     tag "Accession: $sraid"
 
     maxForks 3
+
+    maxErrors 5
     
     when:
     params?.input.containsKey("SRA")
@@ -90,6 +92,8 @@ process pGetSRAIDs {
     time '10m'
 
     maxForks 4
+
+    maxErrors 5
 
     tag "Accession: $sraid"
     
