@@ -230,7 +230,9 @@ jobs:
                                MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/gtdb \
                                MODULE_DB_TEST_YML=example_params/magAttributes.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.magAttributes.gtdb.database=env(database),del(.steps.magAttributes.checkm,.steps.magAttributes.checkm2,.steps.magAttributes.prokka)'" \
-                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/gtdb_yaml_database_tests"  \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" \
+                               MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/gtdb_yaml_database_tests"  \
+                               MODULE_DB_TEST_SKIP_TESTS="s3File,s3Directory,https" \
                                MODULE_DB_TEST_REMOVE_DB="yes"
 
   dereplication:
@@ -442,6 +444,39 @@ jobs:
                                MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/mmseqs2_yaml_database_tests" \
                                MODULE_DB_TEST_SKIP_TESTS="extracted,https,compressed" \
                                MODULE_DB_TEST_REMOVE_DB="yes"
+
+
+  external_gtdb_S3_mag_attributes:
+    timeout-minutes: 2500
+    needs: [codePolicy]
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set Secrets
+        run: |
+          make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_gtdb_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_gtdb_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+
+      - name: Test GTDB runs against different database parameters
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/gtdbtk_r214_data/release214" \
+                               MODULE_DB_TEST_MD5SUM="390e16b3f7b0c4463eb7a3b2149261d9" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/gtdbtk_r214_data.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/gtdbtk_r214_data.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/gtdbtk_r214_data/*" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
+                               MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/gtdb \
+                               MODULE_DB_TEST_YML=example_params/magAttributes.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.magAttributes.gtdb.database=env(database),del(.steps.magAttributes.checkm,.steps.magAttributes.checkm2,.steps.magAttributes.prokka)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" \
+                               MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/gtdb_yaml_database_tests"  \
+                               MODULE_DB_TEST_SKIP_TESTS="extracted,https,compressed" \
+                               MODULE_DB_TEST_REMOVE_DB="yes"
+
+
 
   metabolomics:
     timeout-minutes: 700
