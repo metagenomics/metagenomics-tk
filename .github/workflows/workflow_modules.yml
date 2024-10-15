@@ -1,13 +1,7 @@
 
 name: Test Pull Requests
 
-on:
-  pull_request:
-    branches: [ dev ]
-    paths-ignore:
-       - 'docker/**/VERSION'
-
-  workflow_dispatch:
+on: [workflow_dispatch]
 
 concurrency: 
   group: ${{ github.head_ref }}
@@ -236,6 +230,15 @@ jobs:
           bash ./scripts/test_dereplication.sh "     " example_params/dereplication_fraction/dereplication.yml \
                                                  "${WORK_DIR}" ${PROFILE}  || exit 1
 
+  quickstart:
+    timeout-minutes: 800
+    runs-on: [ self-hosted, slurm]
+    needs: [codePolicy]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test Dereplication
+        run: |
+          bash ./scripts/test_quickstart.sh || exit 1
 
   readmapping:
     timeout-minutes: 800

@@ -1,12 +1,8 @@
 name: Close artifacts of closed Pull Requests
 
 # only trigger on pull request closed events
-on:
-  pull_request:
-    types: [ closed ]
-    branches: [ dev ]
-    paths-ignore: 
-       - 'docker/**/VERSION'
+#
+on: [workflow_dispatch]
 
 env:
   WORK_DIR: "/vol/spool"
