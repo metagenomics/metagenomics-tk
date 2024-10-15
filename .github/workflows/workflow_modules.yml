@@ -1,10 +1,10 @@
 name: Test Pull Requests
 on: [workflow_dispatch]
 concurrency: 
-  group: ${{ github.head_ref }}
+  group: ${{ github.ref_name }}
   cancel-in-progress: true
 env:
-  WORK_DIR: "/vol/spool/${{ github.head_ref }}"
+  WORK_DIR: "/vol/spool/${{ github.ref_name }}"
   PROFILE: "slurm"
   PR_NUMBER: ${{ github.event.number }}
   EMGB_KEGG_DB: "/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2022-12" 
@@ -285,7 +285,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Test cooccurrence graph building
         run: |
-          bash ./scripts/test_cooccurrence.sh "" "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+          bash ./scripts/test_cooccurrence.sh "" "" "${WORK_DIR}/${{ github.ref_name }}" ${PROFILE}  || exit 1
       - name: Test cooccurrence graph building with edge analysis
         run: |
           bash ./scripts/test_cooccurrence.sh " --smetana_image=pbelmann/metabolomics:0.1.0 --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh " \
@@ -508,7 +508,7 @@ jobs:
           make set_secrets SECRET_NAME=S3_MobTyper_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Plasmid Test
         run: |
-          bash ./scripts/test_plasmids.sh " --databases=/vol/scratch/databases/     " "" "${WORK_DIR}/${{ github.head_ref }}" ${PROFILE}  || exit 1
+          bash ./scripts/test_plasmids.sh " --databases=/vol/scratch/databases/     " "" "${WORK_DIR}/${{ github.ref_name }}" ${PROFILE}  || exit 1
       - name: Plasmids Database Test
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/plasmids_plsdb_20220929" \
