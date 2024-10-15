@@ -1,12 +1,6 @@
 name: Build and push Docker images
 
-on:
-  push:
-    branches:
-      - master
-      - dev
-    paths:
-      - 'docker/**/VERSION'
+on: [workflow_dispatch]
 jobs:
   push:
     runs-on: [ self-hosted, dockerPush ]
