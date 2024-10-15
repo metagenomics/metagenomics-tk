@@ -110,22 +110,16 @@ wiki_venv: python_version_check ## Install virtual environment for wiki
 	python3 -m venv wiki_venv
 	. wiki_venv/bin/activate && pip install -r wiki_scripts/requirements.txt
 
-wiki_build.html: wiki_venv ## Build wiki html
+wiki_publish: wiki_venv ## Publish the local wiki to ghpages
 	( \
 		. wiki_venv/bin/activate; \
-		cd wiki_scripts; \
-		mkdocs build; \
-		htmlark site/print_page/index.html -o ../wiki_build.html \
+                ./wiki_venv/bin/mike deploy --config-file wiki_scripts/mkdocs.yml --push --update-aliases ${TOOLKIT_TAG} latest; \
 	)
-
-publish_wiki_html: wiki_build.html ## Publish wiki html
-	mc cp wiki_build.html dereplication/meta-omics-toolkit/${BRANCH}.html
 	
 dev_wiki: wiki_venv ## Start mkdocs developer session
 	( \
 		. wiki_venv/bin/activate; \
-		cd wiki_scripts; \
-		mkdocs serve; \
+		mkdocs serve --config-file wiki_scripts/mkdocs.yml; \
 	)
 
 build_publish_docker:

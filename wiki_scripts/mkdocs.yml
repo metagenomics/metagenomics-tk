@@ -1,39 +1,63 @@
 use_directory_urls: true
-site_name: Meta-Omics-Toolkit
+site_name: Metagenomics-Toolkit
 docs_dir: ../docs
 
 markdown_extensions:
+  - toc:
+      permalink: "&para;"
+  - admonition
   - pymdownx.inlinehilite
   - pymdownx.superfences:
-        custom_fences:
-           - name: mermaid
-             class: mermaid
-             format: !!python/name:mermaid2.fence_mermaid
+    #        custom_fences:
+          #           - name: mermaid
+          #             class: mermaid
+          #             format: !!python/name:mermaid2.fence_mermaid
   - pymdownx.tabbed:
       alternate_style: true 
   - pymdownx.snippets:
-       base_path: ../docs/
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+     # base_path: ..
 
 plugins:
   - search
-  - mermaid2
-  - print-site:
-        add_to_navigation: false
-        print_page_title: 'Meta-Omics-Toolkit'
-        enumerate_headings: true
-        add_table_of_contents: true
-        toc_title: "Table of Contents"
-    
-extra_javascript:
-   - https://unpkg.com/mermaid/dist/mermaid.min.js
 
 theme:
   name: material
-
+  custom_dir: overrides
+  features:
+        - navigation.tabs
+        - navigation.tabs.sticky
+        - content.code.copy
+  palette: 
+      - scheme: default
+        primary: blue grey
+        toggle:
+          icon: material/brightness-7 
+          name: Switch to dark mode
+      - scheme: slate
+        primary: blue grey
+        toggle:
+          icon: material/brightness-4
+          name: Switch to light mode
+extra:
+  version:
+    provider: mike
 nav:
-  - "Home": README.md
-  - "Global Pipeline Configuration Settings": pipeline_configuration.md
+  - "Introduction": README.md
+  - "Quickstart": quickstart.md 
+  - "Getting Started":
+    - "Concept": concept.md
+    - "Full Pipeline": full_pipeline.md
+    - "Per-Sample and Aggregation": per_sample_and_aggregation.md
+    - "EMGB": emgb.md
+  - "Configuration":
+    - "Global Pipeline Configuration": configuration.md
+    - "Pipeline Input Configuration": pipeline_input.md
+    - "Database Configuration": database.md
   - "Modules":
+    - modules/introduction.md
     - modules/qualityControl.md
     - modules/annotation.md
     - modules/assembly.md

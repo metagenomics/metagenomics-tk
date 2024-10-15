@@ -2,7 +2,12 @@
 
 The fragment recruitment module can be used to find genomes in a set of read datasets.
 
-**Note:** This module only supports illumina data. 
+In case the fragment recruitment module is part of the full pipeline pr per-sample pipeline configuration then
+reads that could not be mapped back to a contig are screened for a user provided list of MAGs.
+Detected genomes are included in all other parts of the remaining pipeline.
+Look out for their specific headers to differentiate results based on real assembled genomes and the reference genomes.
+
+**Note:** This module currently only supports illumina data. 
 
 ## Input
 
@@ -14,32 +19,45 @@ The fragment recruitment module can be used to find genomes in a set of read dat
 
 === "Configuration file for fragment recruitment via mash screen and BWA"
 
+    !!! warning "Warning"
+     
+        **The configuration file shown here is for demonstration and testing purposes only. 
+          Parameters that should be used in production can be viewed in the fragment recruitment section 
+          of one of the yaml files located in the `default` folder of the Toolkit's Github repository.**
+
     ```YAML
-    ---8<--- "../../example_params/fragmentRecruitmentMashScreen.yml"
+    ---8<--- "example_params/fragmentRecruitmentMashScreen.yml"
     ``` 
 
 === "Configuration file for fragment recruitment via mash screen and Bowtie"
 
+
+    !!! warning "Warning"
+     
+        **The configuration file shown here is for demonstration and testing purposes only. 
+          Parameters that should be used in production can be viewed in the fragment recruitment section 
+          of one of the yaml files located in the `default` folder of the Toolkit's Github repository.**
+
     ```YAML
-    ---8<--- "../../example_params/fragmentRecruitment_fraction/fragmentRecruitmentMashScreenBowtie.yml"
+    ---8<--- "example_params/fragmentRecruitment_fraction/fragmentRecruitmentMashScreenBowtie.yml"
     ``` 
 
 === "Input TSV file for genomes"
 
     ```TSV
-    ---8<--- "../../test_data/fragmentRecruitment/mags.tsv"
+    ---8<--- "test_data/fragmentRecruitment/mags.tsv"
     ```
 
 === "Input TSV file for paired end reads"
 
     ```TSV
-    ---8<--- "../../test_data/fragmentRecruitment/paired.tsv"
+    ---8<--- "test_data/fragmentRecruitment/paired.tsv"
     ```
 
 === "Input TSV file for single end reads"
 
     ```TSV
-    ---8<--- "../../test_data/fragmentRecruitment/single.tsv"
+    ---8<--- "test_data/fragmentRecruitment/single.tsv"
     ```
 
 **NOTE!** The file names of all provided genomes must be unique.

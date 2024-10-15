@@ -2,125 +2,43 @@
 
 ## Introduction
 
-The Metagenomics-Toolkit allows you to run either the full pipeline of assembly, binning and many other downstream analysis tasks or individual modules.
-The toolkit can be configured by providing the module configuration via a yml file and a flag for the corresponding module or full pipeline mode.  
-Options for global pipeline configuration can be viewed [here](pipeline_configuration.md).
+The Metagenomics-Toolkit or Toolkit for short is a scalable, data agnostic workflow that automates the analysis of short and long metagenomic reads obtained from Illumina or Oxford Nanopore Technology devices, respectively.
+The Toolkit offers not only standard features expected in a metagenome workflow, such as quality control, assembly, binning, and annotation, but also distinctive features,
+such as plasmid identification based on various tools, the recovery of unassembled microbial community members, and the discovery of microbial interdependencies through a combination of dereplication, cooccurrence, and genome-scale metabolic modeling.
+Furthermore, the Metagenomics-Toolkit includes a machine learning-optimized assembly step that tailors the peak RAM value requested by a metagenome assembler to match actual requirements, thereby minimizing the dependency on dedicated high-memory hardware.
 
-All tools follow the same error strategy. The execution of a tool is retried three times. If the run fails the fourth time, it will be ignored.
-If the execution is ignored, the toolkit will continue to run all tools that do not depend on the output of the failed tool run.
-Exceptions of this handling are specified in the corresponding module section.
+## Schematic Overview
 
-*Note!* Please do never place sensitive information in any of the yml configuration files since the configuration is part of the pipeline output.
+The Toolkit can be applied in two steps which can be either applied in one execution or in two executions consecutively. 
+In addition, each module c0an be executed separately. 
 
-## Run Full Pipeline
+### Per-Sample Pipeline Overview
 
-```BASH
-nextflow run main.nf -work-dir /shared/directory/test \
-	-profile PROFILE  -resume \
-	-entry wFullPipeline -params-file example_params/fullPipeline.yml
-```
+The per-sample part of the pipeline processes each dataset individually. This step includes quality control, assembly, binning and annotation of 
+each dataset individually. You can read more at the getting started page.
 
-where
- *  /shared/directory/test is a directory that is shared between multiple machines.
- * PROFILE can be either `standard` (local use) or `slurm` depending on which environment the pipeline should be executed.
+![per-sample-workflow](https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/clowm/IBG-5_Grafik-Veröffentlichung-A4_V09.jpg)
 
-### Input
+### Aggregation Pipeline Overview
 
-=== "Command"
+The aggregation part of the pipeline processes and combines the outputs of the "per-sample" part. MAGs of all input datasets are dereplicated and
+the abundances of the MAG representatives are estimated. The MAG representatives are then used for cooccurrence analyses.
 
-    ```BASH
-    -entry wFullPipeline -params-file example_params/fullPipeline.yml
-    ```
+![aggregation-workflow](https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/clowm/IBG-5_Grafik-Veroeffentlichung-A4_SecondP_V02.jpg)
 
-=== "Configuration File"
+## EMGB
 
-    ```YAML
-    ---8<--- "../example_params/fullPipeline.yml"
-    ```
+The Exploratory Metagenome Browser [(EMGB)](https://gitlab.ub.uni-bielefeld.de/cmg/emgb/emgb-server) is a web interface that has been developed for the visual exploration of metagenomic datasets. 
+The majority of the Toolkit output including detected MAGs, MAG taxonomy, genes, pathways can be viewed via the Exploratory Metagenome Browser.
+Large datasets containing millions of genes and their annotations are pre-processed and visualized, to be searched in real-time by the user. 
+The platform provides access to different aspects of one or more datasets via an interactive taxonomic tree, a contig viewer, dynamic KEGG metabolic maps and different statistics.
 
-=== "TSV Table"
+![EMGB](figures/emgb.png)
 
-    ```TSV
-    ---8<--- "../test_data/fullPipeline/reads_split.tsv"
-    ```
-  
-    Must include the columns `SAMPLE`, `READS1` and `READS2`. `SAMPLE` must contain unique dataset identifiers
-    without whitespaces or special characters. `READS1` and `READS2` are paired reads and can be HTTPS URLs, S3 links or files.
+## Further Reading
 
-=== "Additional S3 Configuration"
+* If you are interested in testing the basic workflow, we recommend that you read the [Quickstart](quickstart.md) page.
 
-    Nextflow usually stores downloaded files in the work directory. If enough scratch space is available on the worker nodes then this can be prevented by specifying
-    s3 links in the input tsv file and `download` parameter in the input yaml.
+* In case you want to run the workflow on a cluster then you can skip the Quickstart page and start directly with the [Getting Started](concept.md) section.
 
-    S3 TSV Links:
-    ```TSV
-    ---8<--- "../test_data/fullPipeline/reads_split_s3.tsv"
-    ```
-
-    Input YAML
-    ```YAML
-    ---8<--- "../example_params/fullPipelineQC.yml"
-    ```
-
-### Output (Overview)
-
-In addition to the pipeline module outputs defined in the module section (Dereplication, MagAttributes, etc), the following outputs are produced. 
-
- * quality control (fastq) 
-
- * assembly (contigs)
-
- * binning (genomes)
- 
- * read mapping (bam files)
-
-### Optional: Run per sample analysis and the aggregation of per sample seperately
-
-There are two ways to execute the toolkit. You can either run all steps in one execution or you run first the per sample analysis
-(e.g. assembly, binning, annotation, etc.) and afterwards you combine the results (e.g. dereplication, co-occurrence) in a second run.
-The second option allows you to process multiple samples via independent toolkit executions on different infrastructures and combine all
-results afterwards.
-
-You would first have to run the wFullPipeline mode without dereplication, read mapping and co-occurrence modules
-and afterwards run the the aggregation as described below:
-
-#### Input
-
-=== "Command"
-
-    ```BASH
-    -entry wAggregatePipeline -params-file example_params/fullPipelineAggregate.yml
-    ```
-
-=== "Configuration File"
-
-    ```YAML
-    ---8<--- "../example_params/fullPipelineAggregate.yml"
-    ```
-
-### Elastic Metagenomic Browser (EMGB)
-
-The output generated by the Metagenomics-Toolkit can be imported into (EMGB)[https://gitlab.ub.uni-bielefeld.de/cmg/emgb/emgb-server].
-EMGB allows you to easily explore your metagenomic samples in terms of MAGs, genes and their function.
-
-Your configuration must include at least the following analysis steps:
-* Assembly
-* Binning
-* Gene prediction and annotation with Prokka
-* Gene annotation with MMseqs
-* Gene taxonomy prediction with MMseqs
-
-We offer a script `bin/emgb.sh` that allows you to export a metagenomics toolkit output folder to emgb compatible json files.
-
-Example Call:
-
-```
-bash emgb.sh --output=output/test1 --runid=1 --binsdir=output/test1/1/binning/0.5.0/metabat --blastdb=bacmet20_predicted --name=test1
-```
-
-You can get a help page for the necessary arguments by running `emgb.sh --help`.
-
-### Caveats
-
-* The pipeline breaks if `--stageInMode` is specified with `copy`.
-
+* If you want to run a specific module, then you can start with the [modules section](modules/introduction.md). 
