@@ -11,20 +11,26 @@
 
 === "Configuration File"
 
+    !!! warning "Warning"
+     
+        **The configuration file shown here is for demonstration and testing purposes only. 
+          Parameters that should be used in production can be viewed in the magAttributes section 
+          of one of the yaml files located in the `default` folder of the Toolkit's Github repository.**
+
     ```YAML
-    ---8<--- "../example_params/magAttributes.yml"
+    ---8<--- "example_params/magAttributes.yml"
     ```
 
 === "MAGs TSV Table"
 
     ```TSV
-    ---8<--- "../test_data/magAttributes/input.tsv"
+    ---8<--- "test_data/magAttributes/input.tsv"
     ```
     Must include at least `DATASET` identifier and mag specific `PATH` and `BIN_ID` column.
 
 ## Databases
 
-Checkm and GTDB need their databases as input. See [database section](../pipeline_configuration.md#database-input-configuration) for possibly download strategies.
+Checkm and GTDB need their databases as input. See [database section](../database.md/#database-input-configuration) for possibly download strategies.
 The GTDB and Checkm compressed databases must be tar.gz files. If you provide the extracted version of GTDB using the `extractedDBPath` parameter,
 please specify the path to the `releasesXXX` directory (e.g. "/vol/spool/gtdb/release202").
 

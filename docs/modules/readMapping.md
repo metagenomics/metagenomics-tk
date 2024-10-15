@@ -12,20 +12,26 @@
 
 === "Configuration File"
 
+    !!! warning "Warning"
+     
+        **The configuration file shown here is for demonstration and testing purposes only. 
+          Parameters that should be used in production can be viewed in the read mapping section 
+          of one of the yaml files located in the `default` folder of the Toolkit's Github repository.**
+
     ```YAML
-    ---8<--- "../example_params/readMapping.yml"
+    ---8<--- "example_params/readMapping.yml"
     ```
 
 === "MAGs TSV Table"
 
     ```TSV
-    ---8<--- "../test_data/readMapping/mags.tsv"
+    ---8<--- "test_data/readMapping/mags.tsv"
     ```
 
 === "Samples TSV Table"
 
     ```TSV
-    ---8<--- "../test_data/readMapping/samples.tsv"
+    ---8<--- "test_data/readMapping/samples.tsv"
     ```
 
 ## Output
