@@ -20,15 +20,25 @@ Scope can for example represent a module, a configuration or a specific document
 
 A new release should be made the following way: 
 
-1. Update pipeline version in the nextflow manifest `nextflow.config`.
+1. Checkout the dev branch.
 
-2. Create a release on Github.
+2. Update pipeline version in the nextflow manifest `nextflow.config`.
 
-3. Run `git fetch` on the master branch to get the latest tag.
+3. Push the changes to the dev branch.
 
-4. Run `make changelog` and paste the output on the Github release section.
+4. Checkout the master branch.
 
-5. Once the Github release is created, publish the wiki with newest tag.(see [wiki section](developer_guidelines.md/#wiki))
+5. Merge the dev branch into the master branch. (`git merge dev`)
+
+6. Push the merged branch to the master branch.
+
+7. Create a release on Github based on the master branch.
+
+8. Run `git fetch` on the master branch to get the latest tag.
+
+9. Run `make changelog` and paste the output on the Github release section.
+
+10. Once the Github release is created, publish the wiki with newest tag.(see [wiki section](developer_guidelines.md/#wiki))
 
 ```YAML
 ---8<--- ".chglog/config.yml"
