@@ -30,7 +30,7 @@ In the following case the Nextflow binary is placed on a share working directory
 ./nextflow run main.nf -work-dir /vol/spool/work \
     -profile slurm \
     -entry wFullPipeline \
-    -params-file default/fullPipeline_illumina_nanpore.yml \
+    -params-file default/fullPipeline_illumina_nanpore_getting_started.yml  \
     --s3SignIn false \
     --scratch /vol/scratch \
     --databases /vol/scratch/databases \
