@@ -36,20 +36,26 @@ def select(attributes):
 
 
 def remove_duplicates(tuples):
+    print(tuples)
     return list(set([tuple(sorted(list(x))) for x in tuples if x[0]!=x[1]]))
 
 
 def get_closest_representative_comparisons(representatives, distances):
-    genomes = [x[1] for x in representatives]
-    filtered_distances = distances.filter(items=genomes,axis=1).filter(items=genomes, axis=0)
-    float_distances = filtered_distances.values.astype(float)
-    np.fill_diagonal(float_distances, np.nan )
-    float_distances_df = pd.DataFrame(float_distances,
+    # If there is just one cluster then there is nothing to compare
+    if len(representatives) > 1:
+        genomes = [x[1] for x in representatives]
+        filtered_distances = distances.filter(items=genomes,axis=1).filter(items=genomes, axis=0)
+        float_distances = filtered_distances.values.astype(float)
+        np.fill_diagonal(float_distances, np.nan )
+        float_distances_df = pd.DataFrame(float_distances,
                                       index=filtered_distances.index,
                                       columns=filtered_distances.columns)
-    idx = float_distances_df.idxmin()
-    ls = list(idx.to_dict().items())
-    return remove_duplicates(ls)
+        idx = float_distances_df.idxmin()
+        ls = list(idx.to_dict().items())
+
+        return remove_duplicates(ls)
+    else:
+        return list()
 
 
 def get_path_for_binids(attributes, representatives_to_compare):
