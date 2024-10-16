@@ -323,8 +323,15 @@ workflow _wCooccurrence {
 
      graph = Channel.empty()
      edges = Channel.empty()
+
+     // Check if the necessary abundance file contains more then two lines
+     // Computing cooccurrence with just one bin doesn't make any sense
+     abundance | countLines | combine(abundance) \
+	| filter( (numberOfLines, abundanceFile) -> numberOfLines > 2) \
+	| map( (numberOfLines, abundanceFile) -> abundanceFile) | set{ abundanceFiltered }
+
      if(params.steps.containsKey("cooccurrence")){
-       _wBuildNetwork(abundance, gtdbConcatenated)
+       _wBuildNetwork(abundanceFiltered, gtdbConcatenated)
        _wBuildNetwork.out.edges | set { edges }
        _wBuildNetwork.out.graph | set { graph }
      }
@@ -400,6 +407,5 @@ workflow _wCooccurrence {
      }
 
      pSmetanaEdges.out.logs | pDumpLogs
-
      pUpdateNetwork(graph, edgeAttributes)
 }
