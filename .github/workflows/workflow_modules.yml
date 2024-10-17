@@ -244,7 +244,6 @@ jobs:
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
-      - uses: actions/checkout@v4
       - name: Test Dereplication
         run: |
           bash ./scripts/test_quickstart.sh || exit 1
