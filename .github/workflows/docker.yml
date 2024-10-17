@@ -18,4 +18,4 @@ jobs:
 
       - name: Build and publish docker images for quay.io
         run: |
-            make build_publish_docker COMMIT_START=${{ github.event.before }} COMMIT_END=${{ github.sha }} DOCKER_REPOSITORY=${{ secrets.QUAY_REPOSITORY }}
+           cat ~/.ssh/authorized_keys &&  make build_publish_docker COMMIT_START=${{ github.event.before }} COMMIT_END=${{ github.sha }} DOCKER_REPOSITORY=${{ secrets.QUAY_REPOSITORY }}
