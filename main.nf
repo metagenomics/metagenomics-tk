@@ -530,7 +530,6 @@ workflow _wProcessHybrid {
       //Run Binning:
       wHybridBinningList(wHybridAssemblyList.out.contigs, combinedReads)
 
-    //TODO: fastg/gfa output
     emit:
       notBinnedContigs = wHybridBinningList.out.notBinnedContigs 
       bins = wHybridBinningList.out.bins 
@@ -543,6 +542,8 @@ workflow _wProcessHybrid {
       readsSingle = wShortReadQualityControlList.out.readsSingle
       readsPairSingle = qcReads
       readsONT = ontQCReads
+      fastg = wHybridAssemblyList.out.fastg
+      gfa = wHybridAssemblyList.out.gfa
       medianQuality = medianQuality
 }
 
@@ -568,7 +569,7 @@ workflow wFullPipeline {
 
     hybrid = _wProcessHybrid(inputSamples | filter({ sample -> sample.TYPE == 'HYBRID' }))
 
-    ont.binsStats | mix(illumina.binsStats) | set { binsStats }
+    ont.binsStats | mix(illumina.binsStats) | mix (hybrid.binsStats) | set { binsStats }
 
     SAMPLE_IDX = 0
     NOT_BINNED_PATH_IDX = 1
@@ -580,10 +581,10 @@ workflow wFullPipeline {
 	| map{ bin -> [bin.SAMPLE, bin.BIN_ID, bin.PATH]} \
         | set { bins }
 
-    illumina.fastg | set { fastg } 
+    illumina.fastg | mix(hybrid.fastg) | set { fastg }
 
-    ont.gfa | set { gfa } 
-    
+    ont.gfa | mix(hybrid.gfa) | set { gfa }
+
     ont.mapping | mix(illumina.mapping) | mix(hybrid.mapping) | set { mapping } 
 
     //TODO: include hybrid?
@@ -595,10 +596,9 @@ workflow wFullPipeline {
 
     wSaveSettingsList(inputSamples | map { it -> it.SAMPLE })
 
-    //TODO: include hybrid?
     MAX_KMER = 0
     wPlasmidsList(bins | mix(notBinnedContigs), fastg | mix(gfa | combine(Channel.value(MAX_KMER))) | join(mapping) \
-	,illumina.readsPairSingle, ont.reads, ont.medianQuality)
+	,illumina.readsPairSingle | mix(hybrid.readsPairSingle), ont.reads | mix(hybrid.readsONT), ont.medianQuality | mix(hybrid.medianQuality))
 
     wMagAttributesList(ont.bins | mix(illumina.bins | mix(hybrid.bins), wFragmentRecruitmentList.out.foundGenomesPerSample ))
 
@@ -625,6 +625,7 @@ workflow wFullPipeline {
 
     wAnalyseMetabolitesList(binsStats, mapJoin(wMagAttributesList.out.checkm, proteins, "BIN_ID", "BIN_ID"))
     //TODO: include hybrid?
-    _wAggregate(ont.reads | mix(hybrid.readsONT), ont.medianQuality | mix(hybrid.medianQuality), illumina.readsPair | mix (hybrid.readsPair), \
+    //_wAggregate(ont.reads | mix(hybrid.readsONT), ont.medianQuality | mix(hybrid.medianQuality), illumina.readsPair | mix (hybrid.readsPair), \
+    _wAggregate(ont.reads, ont.medianQuality, illumina.readsPair | mix (hybrid.readsPair), \
     illumina.readsSingle |  mix(hybrid.readsSingle), binsStats,	wMagAttributesList.out.gtdb,  wAnalyseMetabolitesList.out.models)
 }
