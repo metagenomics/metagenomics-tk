@@ -64,6 +64,104 @@ process pMetaflyeHybrid {
     '''
 }
 
+/*
+*
+* Metaflye subassemblies assembles an Illumina and an ONT assembly together
+*
+*/
+process pMetaflyeSubassemblies {
+
+    label 'highmemLarge'
+
+    tag "Sample: $sample"
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaflyeSubassemblies", filename) }
+
+    when params?.steps.containsKey("assemblyHybrid") && params?.steps?.assemblyHybrid.containsKey("metaflyeSubassemblies") && params?.steps?.assemblyHybrid.containsKey("metaflye") && params?.steps?.assemblyHybrid.metaflyeSubassemblies.containsKey("metaspades")
+
+    container "${params.metaflye_image}"
+
+    input:
+    tuple val(sample), path(illuminaContigs, stageAs: 'illuminaContigs.fa.gz'), path(ontContigs, stageAs: 'ontContigs.fa.gz')
+
+    output:
+    tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs
+    tuple val("${sample}"), path("${sample}_assembly_info.txt"), emit: info
+    tuple val("${sample}"), path("${sample}_contigs_header_mapping.tsv"), emit: headerMapping
+    tuple val("${sample}"), path("${sample}_assembly_graph.gfa"), emit: graph
+    tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigsStats
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+    
+    shell:
+    '''
+    ASSEMBLY_OUTPUT="!{sample}_contigs.fa.gz"
+    HEADER_MAPPING_OUTPUT="!{sample}_contigs_header_mapping.tsv"
+    cat illuminaContigs.fa.gz ontContigs.fa.gz > combined_contigs.fa.gz
+    flye --meta --subassemblies combined_contigs.fa.gz -t !{task.cpus} -o out !{params.steps.assemblyHybrid.metaflye.additionalParams}
+
+    # The following function modifies the assembly fasta headers according to the pattern: SAMPLEID_SEQUENCECOUNTER_SEQUENCEHASH
+    transform.sh out/assembly.fasta ${ASSEMBLY_OUTPUT} ${HEADER_MAPPING_OUTPUT} !{sample} !{task.cpus}
+
+    mv out/assembly_graph.gfa !{sample}_assembly_graph.gfa
+
+    mv out/assembly_info.txt !{sample}_assembly_info.txt
+
+    # get basic contig stats 
+    paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") <(seqkit stat -Ta ${ASSEMBLY_OUTPUT}) > !{sample}_contigs_stats.tsv
+    '''
+}
+
+//metaspades for metaflye subassemblies with illumina only:
+//TODO: metaspades should better be generic in shortReadAssembler.nf and included here
+process pMetaspades {
+
+    label 'highmemLarge'
+
+    tag "$sample"
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaspades", filename) }
+
+    when params?.steps.containsKey("assemblyHybrid") && params?.steps?.assemblyHybrid.containsKey("metaflyeSubassemblies")
+
+    container "${params.metaspades_image}"
+
+    input:
+    tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz')
+
+    output:
+    tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs
+    tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigsStats
+    tuple val("${sample}"), path("${sample}_contigs.fastg"), env(maxKmer), emit: fastg, optional: true
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    shell:
+    outputFastg="TRUE"
+    '''
+    METASPADES_OUTPUT_DIR=output
+    ASSEMBLY_OUTPUT=${METASPADES_OUTPUT_DIR}/contigs.fasta
+    ASSEMBLY_GRAPH_OUTPUT=${METASPADES_OUTPUT_DIR}/assembly_graph.fastg
+
+    # run metaspades
+    spades.py -t !{task.cpus} --memory $(echo !{task.memory} | cut -f 1 -d ' ') --meta -o ${METASPADES_OUTPUT_DIR} --12 interleaved.fq.gz !{params.steps.assemblyHybrid.metaflyeSubassemblies.metaspades.additionalParams}
+
+    ASSEMBLY_GZIPPED_OUTPUT=!{sample}_contigs.fa.gz
+    HEADER_MAPPING_OUTPUT=!{sample}_contigs_header_mapping.tsv
+
+    # The following function modifies the assembly fasta headers according to the pattern: SAMPLEID_SEQUENCECOUNTER_SEQUENCEHASH
+    transform.sh ${ASSEMBLY_OUTPUT} ${ASSEMBLY_GZIPPED_OUTPUT} ${HEADER_MAPPING_OUTPUT} !{sample} !{task.cpus}
+
+    # get basic contig stats 
+    paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") <(seqkit stat -Ta ${ASSEMBLY_GZIPPED_OUTPUT}) > !{sample}_contigs_stats.tsv
+
+    # transform assembly to assembly graph
+    maxKmer="default"
+    if [[ "!{outputFastg}" == "TRUE" ]]; then
+	    # Maximum chosen Kmer
+	    maxKmer=$(ls -1  ${METASPADES_OUTPUT_DIR}* | grep "^K" | sed 's/K//g' | sort -n | tail -n 1)
+    	mv ${ASSEMBLY_GRAPH_OUTPUT} !{sample}_contigs.fastg
+    fi
+    '''
+}
 
 process pMetaspadesHybrid {
 
@@ -71,7 +169,7 @@ process pMetaspadesHybrid {
 
     tag "$sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaspades", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaspadesHybrid", filename) }
 
     when params?.steps.containsKey("assemblyHybrid") && params?.steps?.assemblyHybrid.containsKey("metaspades")
 
@@ -108,7 +206,7 @@ process pBwa2Index {
 
 //TODO: check if generic method is available
 process pMapBwa2 {
-    label 'large'
+    label 'highmemLarge'
     container "${params.samtools_bwa2_image}"
     when params.steps.containsKey("assemblyHybrid") && params.steps.assemblyHybrid.containsKey("bwa2")
     //publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid ,"bwa2", filename) }
@@ -177,6 +275,14 @@ process pMapMinimap2ONT {
       """
 }
 
+/*
+ * Input: 
+ *  - List of the format [SAMPLE, ONT Reads, CONTIGS, SAM mapping]
+ *
+ * Output is of the format [SAMPLE, CONTIGS].
+ * 
+ * Runs racon for polishing an assembly using ONT reads
+ */
 process pRacon {
     label 'large'
 
@@ -190,16 +296,24 @@ process pRacon {
       tuple val(sample), path(reads), path(contigs), path(sam)
 
     output:
-      tuple val("${sample}"), path("racon_polished.fasta"), emit: contigs
+      tuple val("${sample}"), path("racon_polished.fasta.gz"), emit: contigs
       tuple val("${sample}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
       """
-      racon -m 8 -x -6 -g -8 -w 500 -t !{task.cpus} !{reads} !{sam} !{contigs} > racon_polished.fasta
+      racon -m 8 -x -6 -g -8 -w 500 -t !{task.cpus} !{reads} !{sam} !{contigs} | gzip > racon_polished.fasta.gz
       """
 }
 
+/*
+ * Input: 
+ *  - List of the format [SAMPLE, ONT Reads, CONTIGS]
+ *
+ * Output is of the format [SAMPLE, CONTIGS].
+ * 
+ * Runs medaka for polishing an assembly using ONT reads
+ */
 //TODO: medaka model is currently a parameter, might be better to add it to the input file in order to be able to process ont data of different flowcells
 process pMedaka {
     label 'large'
@@ -211,21 +325,32 @@ process pMedaka {
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "medaka", filename) }
 
     input:
-      tuple val(sample), path(reads), path(contigs)
+      tuple val(sample), path(reads), path(contigs, stageAs: 'contigs.fasta.gz')
 
     output:
-      tuple val("${sample}"), path("medaka/consensus.fasta"), emit: contigs
+      tuple val("${sample}"), path("medaka/consensus.fasta.gz"), emit: contigs
       tuple val("${sample}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
       """
-      medaka_consensus -i !{reads} -d !{contigs} -o medaka -t !{task.cpus} -m !{params.steps.assemblyHybrid.medaka.model}
+      gunzip contigs.fasta.gz
+      medaka_consensus -i !{reads} -d contigs.fasta -o medaka -t !{task.cpus} -m !{params.steps.assemblyHybrid.medaka.model}
+      gzip contigs.fasta
+      gzip medaka/consensus.fasta
       """
 }
 
+/*
+ * Input: 
+ *  - List of the format [SAMPLE, Illumina Reads, CONTIGS, BAM, BAM Index]
+ *
+ * Output is of the format [SAMPLE, CONTIGS].
+ * 
+ * Runs pilon for polishing an assembly using Illumina reads
+ */
 process pPilon {
-    label 'small'
+    label 'highmemMedium'
 
     container "${params.pilon_image}"
 
@@ -237,13 +362,14 @@ process pPilon {
       tuple val(sample), path(reads), path(contigs), path(bam), path(bai)
 
     output:
-      tuple val("${sample}"), path("pilon.fasta"), emit: contigs
+      tuple val("${sample}"), path("pilon.fasta.gz"), emit: contigs
       tuple val("${sample}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
-
+    //TODO: memory of label should go in here, not fixed value
     shell:
       """
-      pilon --genome !{contigs} --fix all --changes --frags !{bam} --threads !{task.cpus} --output pilon
+      pilon -Xmx100g --genome !{contigs} --fix all --changes --frags !{bam} --threads !{task.cpus} --output pilon
+      gzip pilon.fasta
       """
 }
 
@@ -315,8 +441,9 @@ workflow wHybridAssemblyList {
        _wHybridAssembly(readsList)
     emit:
       contigs = _wHybridAssembly.out.contigs
-      graph = _wHybridAssembly.out.graph
-      contigsStats = _wHybridAssembly.out.graph
+      fastg = _wHybridAssembly.out.fastg
+      gfa = _wHybridAssembly.out.gfa
+      contigsStats = _wHybridAssembly.out.contigsStats
 }
 
 /*
@@ -344,26 +471,61 @@ workflow _wHybridAssembly {
          }
         }
 
-
        //start metaflye ONT assembly:
        readsList | map { seq -> [seq[SAMPLE_IDX], seq[ONT_IDX], seq[ONT_MEDIAN_QUALITY_IDX]] } | pMetaflyeHybrid
        //run Racon polishing:
        readsList | map { seq -> [seq[SAMPLE_IDX], seq[ONT_IDX]] } | join(pMetaflyeHybrid.out.contigs) | _wRaconPolishing
+       if(params.steps.containsKey("assemblyHybrid") && params?.steps?.assemblyHybrid.containsKey("racon")) {
+        medaka_input = readsList | map { seq -> [seq[SAMPLE_IDX], seq[ONT_IDX]] } | join(_wRaconPolishing.out.contigs)
+       } else {
+        medaka_input = readsList | map { seq -> [seq[SAMPLE_IDX], seq[ONT_IDX]] } | join(pMetaflyeHybrid.out.contigs)
+       }
        //run medaka polishing:
-       readsList | map { seq -> [seq[SAMPLE_IDX], seq[ONT_IDX]] } | join(_wRaconPolishing.out.contigs) |  pMedaka
+       medaka_input | pMedaka
+       if(params.steps.containsKey("assemblyHybrid") && params?.steps?.assemblyHybrid.containsKey("medaka")) {
+        pilon_input = readsList | map { seq -> [seq[SAMPLE_IDX], seq[PAIRED_END_IDX]] } | join(pMedaka.out.contigs)
+       } else if (params.steps.containsKey("assemblyHybrid") && params?.steps?.assemblyHybrid.containsKey("racon")) {
+        pilon_input = readsList | map { seq -> [seq[SAMPLE_IDX], seq[PAIRED_END_IDX]] } | join(_wRaconPolishing.out.contigs)
+       } else {
+        pilon_input = readsList | map { seq -> [seq[SAMPLE_IDX], seq[PAIRED_END_IDX]] } | join(pMetaflyeHybrid.out.contigs)
+       }
        //run pilon polishing (with bwa2 and minimap2 mappings)
-       readsList | map { seq -> [seq[SAMPLE_IDX], seq[PAIRED_END_IDX]] } | join(pMedaka.out.contigs) | _wPilonPolishing
+       pilon_input | _wPilonPolishing
+       //get final contigs, depending on what has been run last:
+       if(params.steps.containsKey("assemblyHybrid") && params?.steps?.assemblyHybrid.containsKey("pilon")) {
+        contig_output = _wPilonPolishing.out.contigs
+       } else if(params.steps.containsKey("assemblyHybrid") && params?.steps?.assemblyHybrid.containsKey("medaka")) {
+        contig_output = pMedaka.out.contigs
+       } else if (params.steps.containsKey("assemblyHybrid") && params?.steps?.assemblyHybrid.containsKey("racon")) {
+        contig_output = _wRaconPolishing.out.contigs
+       } else {
+        contig_output = pMetaflyeHybrid.out.contigs
+       }
 
-       //TODO: additional outputs for binning might be necessary?
-       pMetaspadesHybrid.out.contigs | mix(_wPilonPolishing.out.contigs) | set { contigs }
-       
-       //TODO: fastg output and gfa mixed together - problem?
-       pMetaspadesHybrid.out.fastg | mix(pMetaflyeHybrid.out.graph) | set { graph }
-       
-       pMetaspadesHybrid.out.contigsStats | mix(pMetaflyeHybrid.out.contigsStats) | set { contigsStats }
+       //start metaspades for metaflye subassemblies:
+       //TODO: put that in a sub-workflow:
+       readsList | map { seq -> [seq[SAMPLE_IDX], seq[PAIRED_END_IDX]] } | pMetaspades
+       //start metaflye subassemblies:
+       //pMetaspades.out.contigs | view
+
+       //pMetaspades.out.contigs | join (contig_output.out.contigs) | view
+       pMetaspades.out.contigs | join (contig_output) | pMetaflyeSubassemblies
+
+       //pMetaflyeSubassemblies | view
+
+       //set output, since metaflye and polishing steps are run for subassemblies as well, we need to decide, which to return
+       if(params?.steps?.assemblyHybrid.containsKey("metaflyeSubassemblies")) {
+        contigs = pMetaflyeSubassemblies.out.contigs
+        contigsStats = pMetaflyeSubassemblies.out.contigsStats
+       } else{
+        //TODO: additional outputs for binning might be necessary?
+        contigs = pMetaspadesHybrid.out.contigs | mix(contig_output)
+        contigsStats = pMetaspadesHybrid.out.contigsStats | mix(pMetaflyeHybrid.out.contigsStats)
+       }
 
     emit:
       contigs = contigs
-      graph = graph 
+      fastg = pMetaspadesHybrid.out.fastg
+      gfa =  pMetaflyeHybrid.out.graph 
       contigsStats = contigsStats
 }
