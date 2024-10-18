@@ -3,7 +3,8 @@ ASSEMBLY_OUTPUT=${METASPADES_OUTPUT_DIR}/contigs.fasta
 ASSEMBLY_GRAPH_OUTPUT=${METASPADES_OUTPUT_DIR}/assembly_graph.fastg
 
 # run metaspades
-spades.py -t !{task.cpus} --memory $(echo !{task.memory} | cut -f 1 -d ' ') --meta -o ${METASPADES_OUTPUT_DIR} --12 interleaved.fq.gz --nanopore ontReads.fq.gz !{params.steps.assemblyHybrid.metaspades.additionalParams}
+MEMORY=$(echo !{task.memory} | awk '{val=$1; unit=$2; if (unit == "TB") printf "%.0f\n", val*1000; else if (unit == "GB") printf "%.0f\n", val}')
+spades.py -t !{task.cpus} --memory ${MEMORY} --meta -o ${METASPADES_OUTPUT_DIR} --12 interleaved.fq.gz --nanopore ontReads.fq.gz !{params.steps.assemblyHybrid.metaspades.additionalParams}
 
 ASSEMBLY_GZIPPED_OUTPUT=!{sample}_contigs.fa.gz
 HEADER_MAPPING_OUTPUT=!{sample}_contigs_header_mapping.tsv
