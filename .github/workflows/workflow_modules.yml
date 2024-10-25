@@ -573,7 +573,7 @@ jobs:
           VERSION=$(sort VERSIONS.txt | tail -n 1)
           OUTPUT=outputEasy
           bash ./scripts/test_settings.sh \
-          " --preset --scratch /vol/scratch --input.paired.path test_data/fullPipeline/reads_split.tsv --highmemLarge=28,2000 --s3SignIn false  --databases=/vol/scratch/databases/ --output=${OUTPUT} " \
+          " --preset --template default/fullPipeline_illumina_nanpore.yml --scratch /vol/scratch --input.paired.path test_data/fullPipeline/reads_split.tsv --highmemLarge=28,2000 --s3SignIn false  --databases=/vol/scratch/databases/ --output=${OUTPUT} " \
           "   " "${WORK_DIR}" ${PROFILE} ${VERSION} "preset" || exit 1
           bash ./scripts/check_parameter.sh ${OUTPUT} || exit 1
       - name: Test whether settings in default mode can be updated
@@ -581,7 +581,7 @@ jobs:
           VERSION=$(sort VERSIONS.txt | tail -n 1)
           OUTPUT=outputDefault
           bash ./scripts/test_settings.sh \
-          "  --scratch /vol/scratch  --resources.highmemLarge.memory=2000 --s3SignIn false  --databases=/vol/scratch/databases/ --output=${OUTPUT}  " \
+          "  --scratch /vol/scratch --template default/fullPipeline_illumina_nanpore.yml --resources.highmemLarge.memory=2000 --s3SignIn false  --databases=/vol/scratch/databases/ --output=${OUTPUT}  " \
           "" "${WORK_DIR}" ${PROFILE} ${VERSION} "" || exit 1
           bash ./scripts/check_parameter.sh ${OUTPUT} || exit 1
 
