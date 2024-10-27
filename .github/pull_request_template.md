@@ -10,17 +10,15 @@ Thank you for submitting this PR.
 
 Before merge:
 
-* The PR must be reviewed by one of the team members.
+* A PR must be reviewed by one of the team members.
 
-* Please check if anything in the Readme must be adjusted, or added (development-setup, production-setup, user-guide).
+* Please check if anything in the documentation must be adjusted, or added (development-setup, production-setup, user-guide).
 
-* PRs with new modules or workflow interfaces must include tests according to the developer [guidelines](https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta-omics-toolkit/master.html#developer_guidelines).
+* PRs with new modules or workflow interfaces must include tests according to the developer [guidelines](https://metagenomics.github.io/metagenomics-tk/latest/developer_guidelines/).
 
-* The new code is readable, well commented and should adhere to our developer [guidelines](https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta-omics-toolkit/master.html#developer_guidelines).
+* The new code is readable, well commented and should adhere to our developer [guidelines](https://metagenomics.github.io/metagenomics-tk/latest/developer_guidelines/).
 
 * Before merging it must be checked if a squash of commits is required.
-
-
 
 
 
