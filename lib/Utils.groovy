@@ -31,6 +31,11 @@ class Utils {
       }
   }
 
+  static String getDockerNetwork(){
+    return " --net=host ";
+  }
+
+
   static String getCreateDatabaseDirCommand(db){
     return "if [ ! -z " + db + " ]; then mkdir " + db + " -p; fi"
   }
