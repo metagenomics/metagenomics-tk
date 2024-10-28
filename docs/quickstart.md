@@ -8,9 +8,8 @@ You will need at least 250 GB of disk space. The disk were your docker images an
 ## Requirements
 
 1. docker: Install Docker by following the official Docker installation [instructions](https://docs.docker.com/engine/install/ubuntu/).
-2. make: You can install make on Ubuntu via `sudo apt install make` 
-3. java: In order to run Nextflow you need to install Java on your machine which can be achieved via `sudo apt install default-jre`
-4. Resources:  
+2. make: You can install make on Ubuntu via `sudo apt install make`.
+3. java: In order to run Nextflow you need to install Java on your machine which can be achieved via `sudo apt install default-jre`.
 
 ## Preparation
 
