@@ -225,6 +225,10 @@ process pResistanceGeneIdentifier {
                --output_file ${RGI_OUTPUT} --input_type protein --local \
                --alignment_tool DIAMOND --num_threads !{task.cpus} --clean ${ADDITIONAL_RGI_PARAMS}
 
+   # Fix for ownership issue https://github.com/nextflow-io/nextflow/issues/4565
+   chmod a+rw -R output
+   chmod a+rw -R localDB
+
    RGI_OUT_TMP=!{binID}.rgi.tmp.tsv
    RGI_OUT=!{binID}.rgi.tsv
    # Produce files only if there is an actual output
@@ -243,7 +247,6 @@ process pResistanceGeneIdentifier {
      trap 'if [ "$?" == 1 ] && ( grep -q "ValueError: zero-size array to reduction operation fmin which has no identity" stderr.log ); then echo "Heatmap could not be produced"; exit 0; fi' EXIT
      rgi heatmap --input output --output ${OUTPUT_ID} 2> >(tee -a stderr.log >&2)
    fi
-
    '''
 }
 

@@ -57,6 +57,8 @@ OUTPUT_TSV="!{sample}_!{binType}.!{start}.!{stop}.!{dbType}.blast.tsv"
 RAM_LIMIT="$(awk -v RATIO=80 -v RAM=$(echo !{task.memory} | cut -f 1 -d ' ') 'BEGIN { print int(RAM / 100 * RATIO) }')G"
 
 mkdir tmp
+# Fix for ownership issue https://github.com/nextflow-io/nextflow/issues/4565
+chmod a+rw -R tmp
 
 # Create new input file
 cat !{fasta} | seqkit range -r !{start}:!{stop} > input.fa

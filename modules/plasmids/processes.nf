@@ -102,6 +102,9 @@ process pViralVerifyPlasmid {
         mv ${TMP_OUTPUT} ${FINAL_OUTPUT}
       fi
     fi
+
+    # Fix for ownership issue https://github.com/nextflow-io/nextflow/issues/4565
+    chmod a+rw -R Prediction_results_fasta
     '''
 }
 

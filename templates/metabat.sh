@@ -4,7 +4,8 @@ shopt -s nullglob
 !{percentIdentity}  runMetaBat.sh !{metabatParams} !{contigs} !{bam}
 
 # Create temporary directory
-TEMP_DIR=$(mktemp -d -p .)
+TEMP_DIR=$(basename $(mktemp))
+mkdir ${TEMP_DIR}
 
 BIN_CONTIG_MAPPING=!{sample}_bin_contig_mapping.tsv
 echo -e "BIN_ID\tCONTIG\tBINNER" > ${BIN_CONTIG_MAPPING}
@@ -44,3 +45,5 @@ else
 	seqkit replace  -p '(.*)' -r "\${1} MAG=NotBinned" !{contigs} > ${NOT_BINNED}
 fi
 
+# Fix for ownership issue https://github.com/nextflow-io/nextflow/issues/4565
+chmod a+rw -R ${TEMP_DIR}
