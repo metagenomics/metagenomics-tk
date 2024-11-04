@@ -38,6 +38,8 @@ process pMashScreen {
 
     container "${params.mash_image}"
 
+    containerOptions Utils.getDockerNetwork()
+
     when params?.steps?.fragmentRecruitment?.mashScreen != null
 
     input:

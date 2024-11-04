@@ -59,6 +59,8 @@ process pPorechopDownload {
 
     container "${params.porechop_image}"
 
+    containerOptions Utils.getDockerNetwork()
+
     input:
     tuple val(sample), env(readUrl)
 

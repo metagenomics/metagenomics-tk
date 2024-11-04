@@ -204,6 +204,8 @@ process pFastpSplitDownload {
 
     container "${params.fastp_image}"
 
+    containerOptions Utils.getDockerNetwork()
+
     input:
     tuple val(sample), env(read1Url), env(read2Url)
 
