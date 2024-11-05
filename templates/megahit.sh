@@ -21,3 +21,6 @@ if [[ "!{convertToFastg}" == "TRUE" ]]; then
 	intermediateContigs="${MEGAHIT_OUTPUT_DIR}/intermediate_contigs/k${maxKmer}.contigs.fa"
 	megahit_toolkit contig2fastg $maxKmer $intermediateContigs > !{sample}_contigs.fastg
 fi
+
+# Fix for ownership issue https://github.com/nextflow-io/nextflow/issues/4565
+chmod -R  a+rw ${MEGAHIT_OUTPUT_DIR} 

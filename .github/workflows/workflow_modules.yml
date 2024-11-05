@@ -6,7 +6,7 @@ concurrency:
 env:
   WORK_DIR: "/vol/spool/${{ github.ref_name }}"
   PROFILE: "slurm"
-  PR_NUMBER: ${{ github.event.pull_request.number }}
+  PR_NUMBER: ${{ github.run_id }}.${{ github.run_attempt }}
   EMGB_KEGG_DB: "/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2022-12" 
   EMGB_DB_TITLES: "/vol/spool/emgb/uniref90.titles.tsv.gz"
 jobs:

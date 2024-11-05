@@ -1,5 +1,6 @@
 # Create temporary directory
-TEMP_DIR=$(mktemp -d -p .)
+TEMP_DIR=$(basename $(mktemp))
+mkdir ${TEMP_DIR}
 
 DEPTH=!{sample}.depth.tsv
 jgi_summarize_bam_contig_depths !{percentIdentity} !{bam} --outputDepth $DEPTH
@@ -25,3 +26,6 @@ done | sed '1s/^/BIN_ID\tCOVERAGE\n/' > ${BIN_AVG_DEPTH}
 
 # Add average depth to seqkit stats
 csvtk  join -t -f "BIN_ID" ${SEQKIT_BIN_STATS} ${BIN_AVG_DEPTH} > !{sample}_bins_stats.tsv
+
+# Fix for ownership issue https://github.com/nextflow-io/nextflow/issues/4565
+chmod a+rw -R ${TEMP_DIR}

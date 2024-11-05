@@ -51,6 +51,9 @@ else
 fi
 
 mkdir tmp
+# Fix for ownership issue https://github.com/nextflow-io/nextflow/issues/4565
+chmod a+rw -R tmp
+
 # Only mmseqs2 databases can be used for every kind of search. Inputs have to be converted first.
 $MMSEQS_VERSION createdb !{fasta} queryDB
 # If the ramMode is set to true, the whole database will be loaded into the RAM. Do not forget to set the MMseqs2 parameter accordingly, --db-load-mode 3.

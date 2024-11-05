@@ -89,3 +89,6 @@ cat binNames.tsv <(cut -f 1 ${FOUND_TMP} | tail -n +2) \
 if [[ $(wc -l <${MISSING_OUTPUT_TMP}) -ge 2 ]]; then
 	        mv  ${MISSING_OUTPUT_TMP} ${MISSING_OUTPUT}
 fi
+
+# Fix for ownership issue https://github.com/nextflow-io/nextflow/issues/4565
+chmod a+rw -R output
