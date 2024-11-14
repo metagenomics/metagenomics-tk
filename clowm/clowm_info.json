@@ -13,7 +13,8 @@
         "steps.annotation.rgi.database.extractedDBPath",
         "steps.annotation.keggFromMMseqs2.database.extractedDBPath",
         "steps.plasmid.ViralVerifyPlasmid.database.extractedDBPath",
-        "steps.plasmid.PLSDB.database.extractedDBPath"
+        "steps.plasmid.PLSDB.database.extractedDBPath",
+        "steps.magAttributes.checkm2.database.extractedDBPath"
     ],
     "exampleParameters": {
         "input.paired.path": "https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/test_data/fullPipeline/reads_split.tsv"
