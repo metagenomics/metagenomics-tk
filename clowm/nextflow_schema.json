@@ -24,6 +24,12 @@
           "format": "directory-path",
           "fa_icon": "fas fa-folder"
         },
+        "s3SignIn": {
+          "type": "boolean",
+          "default": false,
+          "description": "Internal parameter. DO NOT CHANGE!",
+          "hidden": true
+        },
         "runid": {
           "type": "integer",
           "description": "An ID for this workflow run",
@@ -175,13 +181,13 @@
           "type": "string",
           "description": "Command line parameters for contigs coverage.",
           "displayName": "contigs coverage additional parameters",
-          "default": " --min-covered-fraction 0 "
+          "default": " --min-covered-fraction 0 --min-read-percent-identity 100 --min-read-aligned-percent 100 "
         },
         "steps.binning.genomeCoverage.additionalParams": {
           "type": "string",
           "description": "Command line parameters for genome coverage.",
           "displayName": "genome coverage additional parameters",
-          "default": " --min-covered-fraction 0 "
+          "default": " --min-covered-fraction 0 --min-read-percent-identity 100 --min-read-aligned-percent 100 "
         },
         "steps.binning.metabat.additionalParams": {
           "type": "string",
@@ -219,37 +225,16 @@
           "default": " --min_af 0.65 --scratch_dir . ",
           "hidden": false
         },
-        "steps.magAttributes.checkm.database.extractedDBPath": {
+        "steps.magAttributes.checkm2.database.extractedDBPath": {
           "type": "string",
-          "description": "checkm database path",
+          "description": "checkm2 database path",
           "displayName": "check-database",
           "hidden": true
         },
-        "steps.magAttributes.checkm.buffer": {
-          "type": "integer",
-          "description": "checkm buffer",
-          "displayName": "checkm buffer",
-          "default": 200,
-          "hidden": true
-        },
-        "steps.magAttributes.checkm.additionalParams.tree": {
+        "steps.magAttributes.checkm2.additionalParams": {
           "type": "string",
-          "description": "checkm tree parameter",
-          "displayName": "checkm tree parameter",
-          "default": " --reduced_tree ",
-          "hidden": true
-        },
-        "steps.magAttributes.checkm.additionalParams.lineage_set": {
-          "type": "string",
-          "description": "checkm lineage_set parameter",
-          "displayName": "checkm lineage_set parameter",
-          "default": " ",
-          "hidden": true
-        },
-        "steps.magAttributes.checkm.additionalParams.qa": {
-          "type": "string",
-          "description": "checkm qa parameter",
-          "displayName": "checkm qa parameter",
+          "description": "additional parameters",
+          "displayName": "checkm2 additional parameter",
           "default": " ",
           "hidden": true
         },
@@ -267,12 +252,28 @@
           "hidden": true,
           "default": " --mincontiglen 500 "
         },
-        "steps.annotation.mmseqs2.kegg.params": {
+        "steps.annotation.mmseqs2.chunkSize": {
+          "type": "integer",
+          "description": "Number of sequences per chunk as input for mmseqs2",
+          "displayName": "mmseqs2 chunksize",
+          "hidden": true,
+          "default": 20000,
+          "minimum": 10000,
+          "maximum": 30000
+        },
+        "steps.annotation.mmseqs2.kegg.additionalParams.search": {
           "type": "string",
           "description": "Command line parameters for mmseqs2 vs kegg.",
           "displayName": "mmseqs2 vs kegg parameters",
           "hidden": true,
-          "default": " --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 "
+          "default": " --max-seqs 300 --max-accept 50 -c 0 --cov-mode 2 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 "
+        },
+        "steps.annotation.mmseqs2.kegg.additionalParams.additionalColumns": {
+          "type": "string",
+          "description": "Additional Columns in output for mmseqs2 vs kegg.",
+          "displayName": "mmseqs2 vs kegg additional columns",
+          "hidden": true,
+          "default": ""
         },
         "steps.annotation.mmseqs2.kegg.database.extractedDBPath": {
           "type": "string",
@@ -280,12 +281,19 @@
           "displayName": "kegg mmseqs database path.",
           "hidden": true
         },
-        "steps.annotation.mmseqs2.vfdb.params": {
+        "steps.annotation.mmseqs2.vfdb.additionalParams.search": {
           "type": "string",
           "description": "Command line parameters for mmseqs2 vs vfdb.",
           "displayName": "mmseqs2 vs vfdb parameters",
           "hidden": true,
-          "default": " --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 "
+          "default": " --max-seqs 300 --max-accept 50 -c 0 --cov-mode 2 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 "
+        },
+        "steps.annotation.mmseqs2.vfdb.additionalParams.additionalColumns": {
+          "type": "string",
+          "description": "Additional Columns in output for mmseqs2 vs vfdb.",
+          "displayName": "mmseqs2 vs vfdb additional columns",
+          "hidden": true,
+          "default": ""
         },
         "steps.annotation.mmseqs2.vfdb.database.extractedDBPath": {
           "type": "string",
@@ -293,12 +301,19 @@
           "displayName": "vfdb mmseqs database path.",
           "hidden": true
         },
-        "steps.annotation.mmseqs2.bacmet20_experimental.params": {
+        "steps.annotation.mmseqs2.bacmet20_experimental.additionalParams.search": {
           "type": "string",
           "description": "Command line parameters for mmseqs2 vs bacmet20_experimental.",
           "displayName": "mmseqs2 vs bacmet20_experimental parameters",
           "hidden": true,
-          "default": " --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 "
+          "default": " --max-seqs 300 --max-accept 50 -c 0 --cov-mode 2 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 "
+        },
+        "steps.annotation.mmseqs2.bacmet20_experimental.additionalParams.additionalColumns": {
+          "type": "string",
+          "description": "Additional Columns in output for mmseqs2 vs bacmet20_experimental.",
+          "displayName": "mmseqs2 vs bacmet20_experimental additional columns",
+          "hidden": true,
+          "default": ""
         },
         "steps.annotation.mmseqs2.bacmet20_experimental.database.extractedDBPath": {
           "type": "string",
@@ -306,12 +321,19 @@
           "displayName": "bacmet20_experimental mmseqs database path.",
           "hidden": true
         },
-        "steps.annotation.mmseqs2.bacmet20_predicted.params": {
+        "steps.annotation.mmseqs2.bacmet20_predicted.additionalParams.search": {
           "type": "string",
           "description": "Command line parameters for mmseqs2 vs bacmet20_predicted.",
           "displayName": "mmseqs2 vs bacmet20_predicted parameters",
           "hidden": true,
-          "default": " --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 "
+          "default": " --max-seqs 300 --max-accept 50 -c 0 --cov-mode 2 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 "
+        },
+        "steps.annotation.mmseqs2.bacmet20_predicted.additionalParams.additionalColumns": {
+          "type": "string",
+          "description": "Additional Columns in output for mmseqs2 vs bacmet20_predicted",
+          "displayName": "mmseqs2 vs bacmet20_predicted additional columns",
+          "hidden": true,
+          "default": ""
         },
         "steps.annotation.mmseqs2.bacmet20_predicted.database.extractedDBPath": {
           "type": "string",
@@ -319,12 +341,19 @@
           "displayName": "bacmet20_predicted mmseqs database path.",
           "hidden": true
         },
-        "steps.annotation.mmseqs2.uniref90.params": {
+        "steps.annotation.mmseqs2.uniref90.additionalParams.search": {
           "type": "string",
           "description": "Command line parameters for mmseqs2 vs uniref90.",
           "displayName": "mmseqs2 vs uniref90 parameters",
           "hidden": true,
-          "default": " --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 "
+          "default": " --max-seqs 300 --max-accept 50 -c 0 --cov-mode 2 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 "
+        },
+        "steps.annotation.mmseqs2.uniref90.additionalParams.additionalColumns": {
+          "type": "string",
+          "description": "Additional Columns in output for mmseqs2 vs uniref90.",
+          "displayName": "mmseqs2 vs uniref90 additional columns",
+          "hidden": true,
+          "default": ""
         },
         "steps.annotation.mmseqs2.uniref90.database.extractedDBPath": {
           "type": "string",
@@ -357,13 +386,21 @@
           "description": "Command line parameters for mmseqs2_taxonomy vs gtdb.",
           "displayName": " mmseqs2_taxonomy vs gtdb parameters",
           "hidden": true,
-          "default": " --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies --max-seqs 300 --max-accept 50 --cov-mode 0 -e 0.001 --e-profile 0.01 "
+          "default": " --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies --max-seqs 300 --max-accept 50 --cov-mode 2 -e 0.001 --e-profile 0.01 "
         },
         "steps.annotation.mmseqs2_taxonomy.gtdb.ramMode": {
           "type": "boolean",
           "default": false,
           "description": "Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params",
           "displayName": "Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params",
+          "hidden": true
+        },
+        "steps.annotation.mmseqs2_taxonomy.gtdb.initialMaxSensitivity": {
+          "type": "integer",
+          "default": 6,
+          "minimum": 1,
+          "maximum": 12,
+          "description": "Initial maximum sensitivity for mmseqs",
           "hidden": true
         },
         "steps.annotation.mmseqs2_taxonomy.gtdb.database.extractedDBPath": {
@@ -394,19 +431,19 @@
           "hidden": true,
           "default": " "
         },
-        "steps.plasmid.SCAPP.additionalParams.SCAPP": {
+        "steps.plasmid.SCAPP.additionalParams.covermONT": {
           "type": "string",
-          "description": "Command line parameters for SCAPP.",
-          "displayName": "SCAPP additional parameters",
+          "description": "Command line parameters for SCAPP coverm.",
+          "displayName": "SCAPP covermONT additional parameters",
           "hidden": true,
-          "default": " "
+          "default": " --min-covered-fraction 0 --min-read-aligned-percent 100 "
         },
         "steps.plasmid.SCAPP.additionalParams.coverm": {
           "type": "string",
           "description": "Command line parameters for SCAPP coverm.",
           "displayName": "SCAPP coverm additional parameters",
           "hidden": true,
-          "default": " --min-covered-fraction 0 "
+          "default": " --min-covered-fraction 0 --min-read-percent-identity 100 --min-read-aligned-percent 100 "
         },
         "steps.plasmid.SCAPP.additionalParams.minimap": {
           "type": "string",
@@ -475,7 +512,7 @@
           "description": "PlasClass threshold",
           "displayName": "PlasClass threshold",
           "hidden": true,
-          "default": 0.90000000000000002220446049250313080847263336181640625
+          "default": 0.9
         },
         "steps.plasmid.Filter.method": {
           "type": "string",
