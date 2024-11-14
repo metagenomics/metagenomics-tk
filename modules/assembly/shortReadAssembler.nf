@@ -279,6 +279,8 @@ def getResources(predictedMemory, assembler, defaults, sample, attempt){
      // get memory values as list
      def memorySet = memoryLabelMap.keySet().sort()
 
+
+
      switch(assembler.resources.RAM.mode){
        case 'PREDICT':
      	  def predictedMemoryCeil = (int)Math.ceil(Float.parseFloat(predictedMemory))
@@ -317,13 +319,16 @@ def getResources(predictedMemory, assembler, defaults, sample, attempt){
        	  }
           break;
        case 'DEFAULT':
+
           // If the memory value is not predicted do the following
           def defaultCpus = defaults.cpus
+
           def defaultMemory = defaults.memory
 
      	  def defaultMemoryIndex = memorySet.findIndexOf({ it == defaultMemory })
 
  	  def nextHigherMemoryIndex = defaultMemoryIndex + attempt - 1 
+
 
      	  if(nextHigherMemoryIndex >= memorySet.size()){
              // In case it is already the highest possible memory setting
@@ -368,11 +373,11 @@ workflow _wCalculateMegahitResources {
          modelType = Channel.empty()
          if(params.steps.containsKey("assembly") && params.steps.assembly.containsKey("megahit") \
 		&& params?.steps?.assembly?.megahit?.additionalParams.contains("meta-sensitive")){
-         	model = Channel.value(file("${baseDir}/models/assembler/megahit/sensitive.pkl"))
+         	model = Channel.value(file("${projectDir}/models/assembler/megahit/sensitive.pkl"))
 		modelType = Channel.value("sensitive")
 	 } else {
 		modelType = Channel.value("default")
-         	model = Channel.value(file("${baseDir}/models/assembler/megahit/default.pkl"))
+         	model = Channel.value(file("${projectDir}/models/assembler/megahit/default.pkl"))
 	 }
    
          resourceType.predict | join(nonpareil | splitCsv(header: true, sep: '\t') \

@@ -251,13 +251,16 @@ workflow wCooccurrenceList {
     gtdb
     models
   main:
-     gtdb | collectFile(keepHeader: true) { file, dataset -> ["gtdb", file.text]}\
-       | set {gtdbConcatenated}
-
     MODEL_NAME_IDX = 0
     MODEL_PATH_IDX = 1
+
+    gtdb | map { bin -> bin.BIN_ID + "\t" + bin.DOMAIN + "\t" + bin.SAMPLE + "\t" + bin.user_genome + "\t" + bin.classification } \
+     | collectFile(seed: "BIN_ID\tDOMAIN\tSAMPLE\tuser_genome\tclassification", newLine: true) \
+     | set {gtdbConcatenated}
+
     models | map { model -> [fixModelID(model[MODEL_NAME_IDX]), model[MODEL_PATH_IDX]]} | set { fixedModel }
     _wCooccurrence(abundanceMatrix, gtdbConcatenated, fixedModel)
+
 }
 
 
@@ -283,7 +286,7 @@ workflow _wBuildNetwork {
        STABILITY_IDX = 1 
        NLAMBDA_IDX = 2
        pBuildSpiecEasiNetwork(nlambda, abundance, gtdbConcatenated)
-       pBuildSpiecEasiNetwork.out.edges | max { it[STABILITY_IDX] } | set {bestEdges}
+       pBuildSpiecEasiNetwork.out.edges | max { it[STABILITY_IDX] } | filter(it -> it!=null) | set {bestEdges}
 
        bestEdges | collectFile(storeDir: params.output + "/" + getOutput(params.runid, \
 	 "network/spiec-easi/final", "")){ network -> ["nlambda_" + network[NLAMBDA_IDX] + "_" + file(network[NETWORK_IDX]).name, network[NETWORK_IDX].text]}
@@ -320,8 +323,15 @@ workflow _wCooccurrence {
 
      graph = Channel.empty()
      edges = Channel.empty()
+
+     // Check if the necessary abundance file contains more then two lines
+     // Computing cooccurrence with just one bin doesn't make any sense
+     abundance | countLines | combine(abundance) \
+	| filter( (numberOfLines, abundanceFile) -> numberOfLines > 2) \
+	| map( (numberOfLines, abundanceFile) -> abundanceFile) | set{ abundanceFiltered }
+
      if(params.steps.containsKey("cooccurrence")){
-       _wBuildNetwork(abundance, gtdbConcatenated)
+       _wBuildNetwork(abundanceFiltered, gtdbConcatenated)
        _wBuildNetwork.out.edges | set { edges }
        _wBuildNetwork.out.graph | set { graph }
      }
@@ -397,6 +407,5 @@ workflow _wCooccurrence {
      }
 
      pSmetanaEdges.out.logs | pDumpLogs
-
      pUpdateNetwork(graph, edgeAttributes)
 }

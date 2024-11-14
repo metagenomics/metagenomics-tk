@@ -20,34 +20,46 @@ metabolic models and the SMETANA metrics.
     ```
 === "Configuration File for Cooccurrence"
 
+    !!! warning "Warning"
+     
+        **The configuration file shown here is for demonstration and testing purposes only. 
+          Parameters that should be used in production can be viewed in the cooccurrence section 
+          of one of the yaml files located in the `default` folder of the Toolkit's Github repository.**
+
     ```YAML
-    ---8<--- "../example_params/cooccurrence.yml"
+    ---8<--- "example_params/cooccurrence.yml"
     ```
 
 === "TSV Table"
 
     ```TSV
-    ---8<--- "../test_data/assembly/samples.tsv"
+    ---8<--- "test_data/assembly/samples.tsv"
     ```
     Contains abundance values of mags per sample.
  
 === "GTDB TSV Table"
 
     ```TSV
-    ---8<--- "../test_data/cooccurrence/gtdb.tsv"
+    ---8<--- "test_data/cooccurrence/gtdb.tsv"
     ```
     GTDB assignment of all samples that were produced by magAttributes module.
 
 === "Configuration File for analyzing edges in Cooccurrence Graph"
 
+    !!! warning "Warning"
+     
+        **The configuration file shown here is for demonstration and testing purposes only. 
+          Parameters that should be used in production can be viewed in the cooccurrence section 
+          of one of the yaml files located in the `default` folder of the Toolkit's Github repository.**
+
     ```YAML
-    ---8<--- "../example_params/cooccurrenceMetabolom.yml"
+    ---8<--- "example_params/cooccurrenceMetabolom.yml"
     ```
 
 === "GTDB TSV for analyzing Edges"
 
     ```TSV
-    ---8<--- "../test_data/cooccurrence/gtdb_large.tsv"
+    ---8<--- "test_data/cooccurrence/gtdb_large.tsv"
     ```
     GTDB assignment of all samples that were produced by the magAttributes module.
 
@@ -55,7 +67,7 @@ metabolic models and the SMETANA metrics.
 === "Model TSV for computing Metabolomics Metrics on Edges"
 
     ```TSV
-    ---8<--- "../test_data/cooccurrence/models.tsv"
+    ---8<--- "test_data/cooccurrence/models.tsv"
     ```
 
 The following parameters can be configured:

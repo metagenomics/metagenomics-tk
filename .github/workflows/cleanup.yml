@@ -1,12 +1,8 @@
 name: Close artifacts of closed Pull Requests
 
 # only trigger on pull request closed events
-on:
-  pull_request:
-    types: [ closed ]
-    branches: [ dev ]
-    paths-ignore: 
-       - 'docker/**/VERSION'
+#
+on: [workflow_dispatch]
 
 env:
   WORK_DIR: "/vol/spool"
@@ -18,7 +14,7 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
     - run: |
-        rm -rf  ${WORK_DIR}/${{ github.head_ref }}*
+        rm -rf  ${WORK_DIR}/${{ github.ref_name }}*
 
   close_job:
   # this job will only run if the PR has been closed without being merged
@@ -26,4 +22,4 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
     - run: |
-        rm -rf ${WORK_DIR}/${{ github.head_ref }}*
+        rm -rf ${WORK_DIR}/${{ github.ref_name }}*

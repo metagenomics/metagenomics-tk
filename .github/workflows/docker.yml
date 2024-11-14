@@ -1,17 +1,11 @@
 name: Build and push Docker images
 
-on:
-  push:
-    branches:
-      - master
-      - dev
-    paths:
-      - 'docker/**/VERSION'
+on: [workflow_dispatch]
 jobs:
   push:
     runs-on: [ self-hosted, dockerPush ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 

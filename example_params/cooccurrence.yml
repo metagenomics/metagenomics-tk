@@ -1,5 +1,6 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: false
 output: "output"
 runid: 1
 logLevel: 1
@@ -14,7 +15,7 @@ steps:
     inference:
        additionalParams: 
          method: 'correlation'
-         rscript: " --mincovthreshold 0.1 --maxzero 80 --minweight 0.4 "
+         rscript: " --mincovthreshold 0.1 --maxzero 110 --minweight 0.4 "
          timeLimit: "AUTO"
 
 resources:

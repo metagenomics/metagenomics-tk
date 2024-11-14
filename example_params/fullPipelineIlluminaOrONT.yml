@@ -1,5 +1,6 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: true
 input:
   paired:
     path: "test_data/fullPipeline/reads_split.tsv"
@@ -19,6 +20,12 @@ steps:
        # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
       additionalParams: "  "
       timeLimit: "AUTO"
+    filterHuman:
+      additionalParams: "  "
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/human_filter.db.20231218v2.gz
+          md5sum: cc92c0f926656565b1156d66a0db5a3c
     nonpareil:
        additionalParams: " -v 10 -r 1234 "
     kmc:
@@ -39,6 +46,12 @@ steps:
        additionalParams:
          porechop: ""
          filtlong: " --min_length 1000 --keep_percent 90  "
+    filterHumanONT:
+      additionalParams: "  "
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/human_filter.db.20231218v2.gz
+          md5sum: cc92c0f926656565b1156d66a0db5a3c
     nanoplot:
       additionalParams: ""
   assemblyONT:
@@ -91,16 +104,12 @@ steps:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
           md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
       additionalParams: " --min_af 0.65 --scratch_dir . "
-    checkm:
+    checkm2:
       database:
         download:
-          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz"
-          md5sum: 0963b301dfe9345ea4be1246e32f6728
-      buffer: 200
-      additionalParams:
-        tree: " --reduced_tree "
-        lineage_set: " " 
-        qa: "  "
+          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm2_v2.tar.gz"
+          md5sum: a634cb3d31a1f56f2912b74005f25f09
+      additionalParams: "  "
   dereplication:
     bottomUpClustering:
       minimumCompleteness: 0
@@ -127,6 +136,7 @@ steps:
         samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
         coverm: "  --min-covered-fraction 0 "
+        covermONT: "  --min-covered-fraction 0 "
         minimap: "  "
       mashDistCutoff: 0.05
       coveredBasesCutoff: 0.01
@@ -140,8 +150,8 @@ steps:
       additionalParams:
         bwa2_index: ""
         bwa2_mem: ""
-    coverm:
-      additionalParams: " --min-covered-fraction 0 "
+    coverm: " --min-covered-fraction 0 "
+    covermONT: " --min-covered-fraction 0 "
     minimap:
       additionalParams:
         minimap_index: ""
@@ -152,8 +162,11 @@ steps:
       defaultKingdom: false
       additionalParams: " --mincontiglen 200 "
     mmseqs2:
+      chunkSize: 20000
       kegg:
-        params: ' -s 2 --exact-kmer-matching 1 '
+        additionalParams:
+          search :  ' -s 2 --exact-kmer-matching 1 '
+          additionalColumns: ""
         database:
           extractedDBPath: '/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB'
 #      vfdb:
@@ -169,7 +182,9 @@ steps:
 #            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_experimental.tar.zst
 #            md5sum: 57a6d328486f0acd63f7e984f739e8fe
       bacmet20_predicted:
-        params: ' -s 2 --exact-kmer-matching 1 '
+        additionalParams:
+          search :  ' -s 2 --exact-kmer-matching 1 '
+          additionalColumns: ""
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
@@ -185,6 +200,7 @@ steps:
       gtdb:
         params: ' --orf-filter-s 1 -e 1e-15'
         ramMode: false
+        initialMaxSensitivity: 1
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
@@ -192,18 +208,19 @@ steps:
       ncbi_nr:
         params: ' --orf-filter-s 1 -e 1e-15'
         ramMode: false
+        initialMaxSensitivity: 1
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2023-04-29_mmseqs_taxonomy.tar.zst
             md5sum: 79b9fb6b3dada41e602d70e12e7351c2
-    keggFromBlast:
+    keggFromMMseqs2:
       database:
         extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 
   cooccurrence:
     inference:
       additionalParams: 
         method: 'correlation'
-        rscript: " --mincovthreshold 0.1 --maxzero 80 --minweight 0.4 "
+        rscript: " --mincovthreshold 0.1 --maxzero 110 --minweight 0.4 "
         timeLimit: "AUTO"
     metabolicAnnotation:
       additionalParams:

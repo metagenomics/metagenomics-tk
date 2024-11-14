@@ -23,10 +23,6 @@ class Utils {
               }
               volumeMountStr += " --volume " + params.polished.databases + ":" + params.polished.databases ;
 
-              if(config.download.containsKey("s5cmd") && config.download.s5cmd.containsKey("keyfile")){
-                  volumeMountStr += " --volume " + config.download.s5cmd.keyfile + ":/.aws/credentials" + " --volume " + config.download.s5cmd.keyfile + ":/root/.aws/credentials"
-              }
-
               return volumeMountStr;
           }
 
@@ -35,9 +31,15 @@ class Utils {
       }
   }
 
+  static String getDockerNetwork(){
+    return " --net=host ";
+  }
+
+
   static String getCreateDatabaseDirCommand(db){
     return "if [ ! -z " + db + " ]; then mkdir " + db + " -p; fi"
   }
+
 
   static String getModulePath(module){
     return module.name + '/' + module.version.major + "." +
@@ -99,6 +101,7 @@ class Utils {
         }
     }
   }
+
   static Object[] flattenTuple(tupl){
   	def chunkList = [];
   	def SAMPLE_IDX = 0;
@@ -108,6 +111,31 @@ class Utils {
   	}
   	return chunkList;
   }
+
+  /*
+  * This method takes the number of entries of an input file (e.g. fasta entries in multi-fasta file),
+  * the maximum number of allowed entries per chunk and the actual input (e.g. file).
+  * It creates a list of indices of chunks of the input file based on the input parameters.
+  */
+  static List splitFilesIndex(seqCount, chunkSize, sample){
+    int chunk=seqCount.intdiv(chunkSize)
+    if(seqCount.mod(chunkSize) != 0){
+      chunk = chunk + 1
+    }
+    def chunks = []
+    for(def n : 1..chunk){
+      int start = (n-1) * chunkSize + 1
+     
+      int end = n * chunkSize
+    
+      if(end > seqCount){
+          end=seqCount
+      }
+      chunks.add(sample + [start, end, chunk])
+    }
+    return chunks
+  }
+
 
   static getMappingIdentityParam(medianQuality) {
     if(medianQuality > 17){

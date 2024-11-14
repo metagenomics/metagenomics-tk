@@ -2,10 +2,19 @@
 mkdir header
 mkdir tmp
 mkdir missing
+mkdir input
+
 for file in !{contigHeaderFiles}; do
-        TMP_FILE=tmp/${file}
-        FINAL_FILE=header/${file}
-        MISSING_FILE=missing/${file}
+  if [ $(wc -l < ${file}) -gt 1 ]; then
+     mv ${file} input/${file}
+  fi
+done
+
+for file in $(ls -1 input/*); do
+	BASENAME=$(basename ${file})
+        TMP_FILE=tmp/${BASENAME}
+        FINAL_FILE=header/${BASENAME}
+        MISSING_FILE=missing/${BASENAME}
         METHOD="$(echo ${file} | rev | cut -d '_' -f 1 | rev | cut -d '.' -f 1)"
 	csvtk cut -f CONTIG --tabs ${file} | sed -e "2,$ s/$/\tTRUE/g"  -e "1 s/$/\t${METHOD}/g" > ${TMP_FILE}
 	csvtk cut -f CONTIG --tabs ${file} | tail -n +2 >> filtered_tools_header.tsv

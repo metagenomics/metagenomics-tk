@@ -20,16 +20,28 @@ Scope can for example represent a module, a configuration or a specific document
 
 A new release should be made the following way: 
 
-1. Update pipeline version in the nextflow manifest `nextflow.config`.
+1. Checkout the dev branch.
 
-2. Create a release on Github.
+2. Update pipeline version in the nextflow manifest `nextflow.config`.
 
-3. Run `git fetch` on the master branch to get the latest tag.
+3. Push the changes to the dev branch.
 
-4. Run `make changelog` and paste the output on the Github release section.
+4. Checkout the master branch.
+
+5. Merge the dev branch into the master branch. (`git merge dev`)
+
+6. Push the merged branch to the master branch.
+
+7. Create a release on Github based on the master branch.
+
+8. Run `git fetch` on the master branch to get the latest tag.
+
+9. Run `make changelog` and paste the output on the Github release section.
+
+10. Once the Github release is created, publish the wiki with newest tag.(see [wiki section](developer_guidelines.md/#wiki))
 
 ```YAML
----8<--- "../.chglog/config.yml"
+---8<--- ".chglog/config.yml"
 ```
 
 ### Versioning
@@ -245,8 +257,8 @@ An image build is only triggered if the version in the VERSION file is updated o
 ## Wiki
 
 For building the documentation we are using [mkdocs](https://www.mkdocs.org/) in combination with [mkdocs-material](https://squidfunk.github.io/mkdocs-material/)
-and a [plugin](https://timvink.github.io/mkdocs-print-site-plugin/index.html) for building static single page html files.
-The wiki HTML files are uploaded to S3 storage on pull request merge events in the master and dev branch (see Makefile commands using `make help`).
+and [mike](https://github.com/jimporter/mike) for building versioned wiki pages.
+Using `TOOLKIT_TAG=0.5.0 make wiki_publish` the local wiki pages are uploaded to Github pages. Please use semantic versioning for specifying the version number.
 
 You can work on these html files locally by running `make dev_wiki`. But please note that by build the static html file for upload, the navigation might change.
 You can view the final html file by building the html file (see Makefile `make help`). 
@@ -257,7 +269,7 @@ We do not want to duplicate code and thats why we should store methods in the li
 
 ## Database Download
 
-This section explains how a developer is able to implement the database download strategy as explained in the [user documentation](pipeline_configuration.md#database-input-configuration). 
+This section explains how a developer is able to implement the database download strategy as explained in the [user documentation](database.md/#database-input-configuration). 
 Example implementations can be found in the gtdb, checkm or rgi scripts.
 
 The first step is to check if the user provides an already extracted database: 

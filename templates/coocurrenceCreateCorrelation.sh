@@ -8,8 +8,10 @@ cut -f 1 gtdb.input.tsv  | rev \
 
 paste -d$'\t' classification.tsv binId.tsv > gtdb.tsv
 
+sed ':repeat; s/\tNaN\t/\t0\t/g; t repeat' abundance.tsv > abundance_replaced.tsv
+
 # Run the actual R coocurrence script
-Rscript /cooccurrence.R create --output $(pwd) --matrix abundance.tsv  --taxonomy gtdb.tsv --cores !{task.cpus} \
+Rscript /cooccurrence.R create --output $(pwd) --matrix abundance_replaced.tsv --taxonomy gtdb.tsv --cores !{task.cpus} \
 	--method !{method} !{params.steps.cooccurrence.inference.additionalParams.rscript}
 
 # Prepend row number to every line which should allow to batch the computation

@@ -1,5 +1,6 @@
 tempdir: "/tmp"
 summary: false
+s3SignIn: false
 output: "output"
 runid: 1
 logLevel: 0
@@ -15,7 +16,7 @@ steps:
      inference:
         additionalParams:
           method: 'spiec-easi'
-          rscript: " --mincovthreshold 0.1 --maxzero 80"
+          rscript: " --mincovthreshold 0.1 --maxzero 110"
           timeLimit: "AUTO"
      metabolicAnnotation:
        additionalParams:

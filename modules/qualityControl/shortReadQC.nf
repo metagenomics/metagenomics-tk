@@ -42,6 +42,50 @@ process pFastpSplit {
     template 'fastpSplit.sh'
 }
 
+/*
+*
+* This process removes sequences that originate from human DNA.
+*
+*/
+process pFilterHuman {
+
+    label 'medium'
+
+    tag "Sample: $sample"
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "filterHuman", filename) }
+
+    when params.steps.containsKey("qc") && params?.steps?.qc.containsKey("filterHuman")
+
+    container "${params.scrubber_image}"
+
+    input:
+    tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz'), path(unpairedReads)
+
+    output:
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
+    tuple val("${sample}"), path("*_interleaved.filtered.fq.gz"), path("*_unpaired.filtered.fq.gz"), emit: filteredSeqs
+    tuple val("${sample}"), path("*_interleaved.filtered.fq.gz"), emit: interleaved
+    tuple val("${sample}"), path("*_unpaired.filtered.fq.gz"), emit: unpaired
+    tuple val("${sample}"), path("*_interleaved_summary_before.tsv"), emit: interleavedSummaryBefore
+    tuple val("${sample}"), path("*_interleaved_summary_after.tsv"), emit: interleavedSummaryAfter
+    tuple val("${sample}"), path("*_unpaired_summary_after.tsv"), emit: unpairedSummaryAfter
+    tuple val("${sample}"), path("*_unpaired_summary_before.tsv"), emit: unpairedSummaryBefore
+    tuple val("${sample}"), path("*_interleaved.removed.fq.gz"), optional: true, emit: interleavedRemoved
+    tuple val("${sample}"), path("*_unpaired.removed.fq.gz"), optional: true, emit: unpairedRemoved
+
+    shell:
+    EXTRACTED_DB=params.steps?.qc?.filterHuman?.database?.extractedDBPath ?: ""
+    DOWNLOAD_LINK=params.steps?.qc?.filterHuman?.database?.download?.source ?: ""
+    MD5SUM=params?.steps?.qc?.filterHuman?.database?.download?.md5sum ?: ""
+    S5CMD_PARAMS=params.steps?.qc?.filterHuman?.database?.download?.s5cmd?.params ?: ""
+    output = getOutput("${sample}", params.runid, "filterHuman", "")
+    ADDITIONAL_PARAMS=params.steps?.qc?.filterHuman?.additionalParams ?: ""
+    S3_filter_ACCESS=params?.steps?.qc?.filterHuman?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_filter_ACCESS" : ""
+    S3_filter_SECRET=params?.steps?.qc?.filterHuman?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_filter_SECRET" : ""
+    template 'filterHuman.sh'
+}
+
 
 process pNonpareil {
 
@@ -160,6 +204,8 @@ process pFastpSplitDownload {
 
     container "${params.fastp_image}"
 
+    containerOptions Utils.getDockerNetwork()
+
     input:
     tuple val(sample), env(read1Url), env(read2Url)
 
@@ -209,10 +255,19 @@ workflow _wFastqSplit {
                 [ "fastp_summary_before.tsv", item[FASTP_FILE_IDX].text ]
                }
              }
+
              pFastpSplit.out.readsPair | mix(pFastpSplitDownload.out.readsPair) | set {readsPair}
              pFastpSplit.out.readsSingle | mix(pFastpSplitDownload.out.readsSingle) | set {readsSingle}
 
-             readsPair | join(readsSingle) | (pNonpareil & pKMC)
+             readsPair | join(readsSingle) | set{ singleAndPairReads }
+             filteredSeqs = Channel.empty()
+             if(params.steps.containsKey("qc") && params.steps.qc.containsKey("filterHuman")){
+	        singleAndPairReads | pFilterHuman
+		pFilterHuman.out.filteredSeqs | set {filteredSeqs}
+             } else {
+	        singleAndPairReads | set {filteredSeqs}
+             }
+             filteredSeqs | (pNonpareil & pKMC)
 
       emit:
         nonpareilIndex = pNonpareil.out.nonpareilIndex

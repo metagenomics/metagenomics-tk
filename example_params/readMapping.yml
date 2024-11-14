@@ -1,5 +1,6 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: false
 output: "output"
 logDir: log
 runid: 1
@@ -22,8 +23,8 @@ steps:
         minimap_index: ""
         minimap: ""
 
-    coverm:
-      additionalParams: " --min-covered-fraction 0 "
+    coverm: " --min-covered-fraction 0 "
+    covermONT: " --min-covered-fraction 0 "
 resources:
   highmemLarge:
     cpus: 28

@@ -3,6 +3,8 @@ include { wSaveSettingsList } from '../config/module'
 include { pBowtie2; pMinimap2; pBwa; pBwa2; pGetBinStatistics; \
 	pCovermGenomeCoverage; pCovermContigsCoverage; } from  '../binning/processes'
 
+include { pCovermCount as pCovermCount; pCovermCount as pCovermCountONT; } from './processes'
+
 include { pMashPaste as pMashPasteChunk; \
 	  pMashPaste as pMashPasteFinal; } from  '../dereplication/bottomUpClustering/processes'
 include { pDumpLogs } from '../utils/processes'
@@ -35,6 +37,8 @@ process pMashScreen {
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "mashScreen",  filename) }
 
     container "${params.mash_image}"
+
+    containerOptions Utils.getDockerNetwork()
 
     when params?.steps?.fragmentRecruitment?.mashScreen != null
 
@@ -163,72 +167,6 @@ workflow wMashScreenList {
      foundGenomesSeperated = _wMashScreen.out.foundGenomesSeperated
      binsStats = _wMashScreen.out.binsStats
      contigCoverage = _wMashScreen.out.contigCoverage
-}
-
-
-process pCovermCount {
-
-    label 'small'
-
-    container "${params.ubuntu_image}"
-
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "coverm", filename) }
-
-    input:
-      tuple val(sample), file(mapping), file(listOfRepresentatives), val(medianQuality)
-
-    output:
-      tuple val("${sample}"), path("${sample}_stats_out/coveredBases.tsv"), emit: mean
-      tuple val("${sample}"), path("${sample}_stats_out/metrics.tsv"), emit: metrics
-      tuple val("${sample}"), path("foundGenomes.tsv"), optional: true, emit: foundGenomes
-      tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-
-    shell:
-    DO_NOT_ESTIMATE_QUALITY = -1 
-    MEDIAN_QUALITY=Double.parseDouble(medianQuality)
-    percentIdentity = MEDIAN_QUALITY != DO_NOT_ESTIMATE_QUALITY ? \
-	" --min-read-percent-identity "+Utils.getMappingIdentityParam(MEDIAN_QUALITY) : " "
-    '''
-    OUT=!{sample}_stats_out
-    mkdir $OUT
-    readlink -f !{listOfRepresentatives} > list.txt 
-   
-    # Create a mapping between file path basename of the file without ending. (/path/test.1.tsv --> test.1) 
-    paste -d '\t' list.txt  <(cat list.txt  | rev | cut -d '/' -f 1  | cut -d '.' -f 2- | rev) > mapping.tsv
-    
-    # Get covered bases
-    coverm genome -t !{task.cpus} -b !{mapping} \
-         !{params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.coverm}  !{percentIdentity}  \
-        --genome-fasta-list list.txt --methods covered_bases --output-file covTmpContent.tsv \
-
-    # Get length
-    coverm genome -t !{task.cpus} -b !{mapping} --min-covered-fraction 0  \
-        --genome-fasta-list list.txt --methods length --output-file lengthTmpContent.tsv \
-
-    # Join length and covered bases
-    join -t$'\t' -1 1 -2 1 covTmpContent.tsv lengthTmpContent.tsv > covLengthTmpContent.tsv
-
-    # Exchange header ad add covered fraction column
-    sed -i  -e '1 s/^.*$/SAMPLE\tGENOME\tCOVERED_BASES\tLENGTH/' -e "2,$ s/^/!{sample}\t/g" covLengthTmpContent.tsv  \
-                && echo "COVERED_FRACTION" > covLengthTmp.tsv \
-		&& awk '(NR>1){ tmp=($3/($4/100)) ; printf"%0.2f\\n", tmp }' covLengthTmpContent.tsv >> covLengthTmp.tsv \
-                && paste -d$'\t' covLengthTmpContent.tsv covLengthTmp.tsv > $OUT/coveredBases.tsv || true
-
-    # Run other metrics like RPKM, TPM, ...
-    coverm genome  -t !{task.cpus} -b !{mapping} \
-         !{params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.coverm} !{percentIdentity} \
-	--genome-fasta-list list.txt --methods mean trimmed_mean variance length count reads_per_base rpkm tpm \
-	| sed -e '1 s/^.*$/SAMPLE\tGENOME\tMEAN\tTRIMMED_MEAN\tVARIANCE\tLENGTH\tREAD_COUNT\tREADS_PER_BASE\tRPKM\tTPM/' \
-	| sed -e "2,$ s/^/!{sample}\t/g" > $OUT/metrics.tsv || true
-
-    coveredBasesCutoff=!{params.steps?.fragmentRecruitment?.mashScreen?.coveredBasesCutoff}
-    FOUND_GENOMES=foundGenomes.tsv
-    for b in $(awk -v coveredBases=${coveredBasesCutoff} '(NR>1){if ($5 > coveredBases) print $2}' $OUT/coveredBases.tsv); do 
-        file=$(grep -P "\t$b$" mapping.tsv | cut -f 1);
-	echo $(basename $file)  >> ${FOUND_GENOMES} 
-    done
-    '''
-
 }
 
 
@@ -393,17 +331,23 @@ workflow _wGetStatistics {
 	| join(ontMedianQuality, by: SAMPLE_IDX) \
         | set { covermMinimapReadsInput }
 
-     covermBowtieReadsInput | mix(covermMinimapReadsInput) | pCovermCount
+     pCovermCount(Channel.value(params?.steps?.fragmentRecruitment?.mashScreen?.additionalParams.find{ it.key == "coverm"}?.value), \
+	covermBowtieReadsInput)
+
+     pCovermCountONT(Channel.value(params?.steps?.fragmentRecruitment?.mashScreen?.additionalParams.find{ it.key == "covermONT"}?.value), \
+	covermMinimapReadsInput)
+
+     pCovermCount.out.foundGenomes | mix(pCovermCountONT.out.foundGenomes) | set { foundGenomes } 
 
      // Found genomes reported by coverm are just file names. These lines join unique file names with file paths. 
-     pCovermCount.out.foundGenomes |  splitCsv(sep: '\t', header: false) \
+     foundGenomes |  splitCsv(sep: '\t', header: false) \
 	| map { genomes -> genomes[GENOMES_IDX] } | flatten | join(genomesMap) | map { genome -> genome[GENOMES_IDX] } \
 	| set { covermFilteredGenomes }
 
      // Get Bin coverage statistics of the alignment
      covermFilteredGenomes | map { genome -> ["EXTERNAL_GENOMES", file(genome).name, genome] } | set { genomesSeperated }
 
-     pCovermCount.out.foundGenomes | splitCsv(sep: '\t', header: false) \
+     foundGenomes | splitCsv(sep: '\t', header: false) \
         | map { genomes -> Utils.flattenTuple(genomes).flatten()} \
 	| combine(genomesMap | map { genome -> genome.reverse() }, by: GENOMES_IDX) \
 	| map { genomes -> [genomes[SAMPLE_2_IDX], genomes[GENOMES_2_IDX]]} \
@@ -544,7 +488,6 @@ workflow _wMashScreen {
      if(params?.steps.containsKey("fragmentRecruitment") \
 	&& params?.steps.fragmentRecruitment.containsKey("mashScreen") \
 	&& params?.steps.fragmentRecruitment.mashScreen.containsKey("genomes")){
-
 
        BUFFER = 500
        // Some tools can not handle gzipped files. Unzip genomes before fragment recruitment

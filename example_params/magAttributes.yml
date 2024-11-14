@@ -3,6 +3,7 @@ summary: true
 output: "output"
 logDir: log
 runid: 1
+s3SignIn: false
 logLevel: 1
 scratch: "/vol/scratch"
 publishDirMode: "symlink"
@@ -16,6 +17,12 @@ steps:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
           md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
       additionalParams: " --min_af 0.65 --scratch_dir . "
+    checkm2:
+      database:
+        download:
+          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm2_v2.tar.gz"
+          md5sum: a634cb3d31a1f56f2912b74005f25f09
+      additionalParams: "  "
     checkm:
       database:
         download:

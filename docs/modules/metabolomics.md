@@ -18,22 +18,27 @@ All generated models are used for further downstream analysis such as the "Minim
 
 === "Configuration file for providing genomes"
 
+    !!! warning "Warning"
+     
+        **The configuration file shown here is for demonstration and testing purposes only. 
+          Parameters that should be used in production can be viewed in the metabolomics section 
+          of one of the yaml files located in the `default` folder of the Toolkit's Github repository.**
+
     ```YAML
-    ---8<--- "../example_params/metabolomics.yml"
+    ---8<--- "example_params/metabolomics.yml"
     ```
 
 Almost all tools of this module are using linear programming solvers. The tool developers are recommending the use of the cplex solver
-that is included in the [IBM ILOG CPLEX Optimization Studio](https://www.ibm.com/de-de/products/ilog-cplex-optimization-studio) which is free for students and academics
-through the IBM Academic Initiative programm. 
+that is included in the [IBM ILOG CPLEX Optimization Studio](https://www.ibm.com/de-de/products/ilog-cplex-optimization-studio) which is free for students and academics through the IBM Academic Initiative programm. 
 Since the toolkit uses docker images that are downloaded from public Docker Hub repositories and the cplex license is not allowed
-to be distributed, we prepared a [Dockerfile](../cplex/docker/Dockerfile) that allows you to build your own local docker image with all metabolomics specific tools installed.
+to be distributed, we prepared a Dockerfile (see `cplex/docker/Dockerfile` in the Github repository) that allows you to build your own local docker image with all metabolomics specific tools installed.
 Just copy your cplex binary to the cplex docker folder and build your own docker image. You can override all existing images via the command line.
 
 In the following example your the image name is metabolomics:0.1.0:
 
 * `--gapseq_image=metabolomics:0.1.0` (Optional)
 * `--smetana_image=metabolomics:0.1.0` (Required)
-* `--carveme_image=metabolomics:0.1.0` (Required)
+* `--carveme_image=metabolomics:0.1.0` (Optional. Carveme is not able to detect the solver automatically. Please specify `--solver` in the configuration file if you want to use the scip solver.)
 * `--memote_image=metabolomics:0.1.0` (Optional. Memote is not able to detect the solver automatically. Please specify `--solver` in the configuration file if you are not using the glpk solver.)
 
 For gapseq and memote we are using a publicly available docker image that uses the freely available glkp solver which means that you don't have to provide this parameter.
@@ -59,5 +64,5 @@ and a human readable tsv (`*_metrics.tsv`) and html (`*_report.html`) file.
 
 ### Smetana
 
-Smetana is used for analysing possible interactions in microbial communities. Smetana`s global and detailed modes 
+Smetana is used for analysing possible interactions in microbial communities. Smetana's global and detailed modes 
 are executed per sample. The Smetana output is saved in `*_detailed.tsv` and `*_global.tsv`.

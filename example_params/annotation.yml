@@ -1,6 +1,7 @@
 output: "output"
 summary: false
 runid: 1
+s3SignIn: false
 logDir: log
 tempdir: "tmp"
 scratch: "/vol/scratch"
@@ -10,8 +11,11 @@ steps:
    annotation:
       input: "test_data/annotation/input_small.tsv"
       mmseqs2:
+        chunkSize: 20000
         kegg:
-          params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+          additionalParams:
+            search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+            additionalColumns: ""
           database:
             extractedDBPath: '/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB'
 #        bacmet20_experimental:
@@ -21,18 +25,21 @@ steps:
 #              source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_experimental.tar.zst
 #              md5sum: 57a6d328486f0acd63f7e984f739e8fe
         bacmet20_predicted:
-          params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
           database:
             download:
               source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
               md5sum: 55902401a765fc460c09994d839d9b64
+          additionalParams:
+            search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+            additionalColumns: ""
+
 #        vfdb:
 #          params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
 #          database:
 #            download:
 #              source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_2022_07_29.tar.zst
 #              md5sum: 7e32aaed112d6e056fb8764b637bf49e
-      keggFromBlast:
+      keggFromMMseqs2:
          database:
            extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/"
       rgi: 
@@ -46,6 +53,7 @@ steps:
         gtdb:
           params: ' --orf-filter-s 1 -e 1e-15'
           ramMode: false
+          initialMaxSensitivity: 1
           database:
             download:
               source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz

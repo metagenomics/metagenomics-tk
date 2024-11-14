@@ -1,9 +1,10 @@
 tempdir: "tmp"
 summary: false
+s3SignIn: true
 input:
   SRA:
     pattern:
-      ont: ".+[^(_1|_2)].+$fastq.gz"
+      ont: ".+[^(_1|_2)].+fastq.gz$"
       illumina: ".+(_1|_2).+fastq.gz$"
     S3:
       path: test_data/fullPipeline/production.tsv
@@ -70,9 +71,9 @@ steps:
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
     contigsCoverage:
-      additionalParams: " --min-covered-fraction 0 "
+      additionalParams: " --min-covered-fraction 0 --min-read-percent-identity 100 --min-read-aligned-percent 100 "
     genomeCoverage:
-      additionalParams: " --min-covered-fraction 0 "
+      additionalParams: " --min-covered-fraction 0 --min-read-percent-identity 100 --min-read-aligned-percent 100 "
     # Primary binning tool
     metabat:
       # Set --seed positive numbers to reproduce the result exactly. Otherwise, random seed will be set each time.
@@ -85,9 +86,9 @@ steps:
         # samtools flags are used to filter resulting bam file
         samtoolsView: " -F 3584 " 
     contigsCoverage:
-      additionalParams: " --min-covered-fraction 0 "
+      additionalParams: " --min-covered-fraction 0  --min-read-percent-identity 100 --min-read-aligned-percent 100 "
     genomeCoverage:
-      additionalParams: " --min-covered-fraction 0 "
+      additionalParams: " --min-covered-fraction 0  --min-read-percent-identity 100 --min-read-aligned-percent 100 "
     metabat:
       additionalParams: " --seed 234234  "
   magAttributes:
@@ -100,18 +101,12 @@ steps:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
           md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
       additionalParams: " --min_af 0.65 --scratch_dir . "
-    # checkm lineage_wf
-    checkm:
+    checkm2:
       database:
         download:
-                # Use Version number in databse names
-          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm_data_2015_01_16.tar.gz"
-          md5sum: 0963b301dfe9345ea4be1246e32f6728
-      buffer: 200
-      additionalParams:
-        tree: " --reduced_tree "
-        lineage_set: " " 
-        qa: "  "
+          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm2_v2.tar.gz"
+          md5sum: a634cb3d31a1f56f2912b74005f25f09
+      additionalParams: "  "
   fragmentRecruitment:
     mashScreen:
       genomes: test_data/fragmentRecruitment/mags.tsv
@@ -123,7 +118,8 @@ steps:
         bwa2: "  "
         # We demand that matches should be at least 70 percent to restrict the
         # search space. We further restrict all found matches in 'coveredBasesCutoff' parameter.
-        coverm: " --min-covered-fraction 70 "
+        coverm: " --min-covered-fraction 70 --min-read-percent-identity 95 --min-read-aligned-percent 95  "
+        covermONT: " --min-covered-fraction 70 --min-read-aligned-percent 95 "
         minimap: "   "
         samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
@@ -136,55 +132,65 @@ steps:
     # For final reporting of the covered fraction, the --min-covered-fraction parameter is set to the same value as 
     # in the binning and other sections
     genomeCoverage:
-      additionalParams: " --min-covered-fraction 0 "
+      additionalParams: " --min-covered-fraction 0 --min-read-percent-identity 95 --min-read-aligned-percent 95 "
     contigsCoverage:
-      additionalParams: " --min-covered-fraction 0 "
+      additionalParams: " --min-covered-fraction 0 --min-read-percent-identity 95 --min-read-aligned-percent 95 "
   annotation:
     prokka:
       defaultKingdom: false
       additionalParams: " --mincontiglen 500 "
     mmseqs2:
       kegg:
-        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+        additionalParams:
+          search : ' --max-seqs 300 --max-accept 50 -c 0 --cov-mode 2 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          additionalColumns: ""
         database:
           download:
             source: s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst
             md5sum: 0d20db97b3e7ee6571ca1fd5ad3a87f1
             s5cmd:
-              keyfile: /vol/spool/keyfile
               params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
       vfdb:
-        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+        additionalParams:
+          search : ' --max-seqs 300 --max-accept 50 -c 0 --cov-mode 2 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          additionalColumns: ""
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_2022_07_29.tar.zst
             md5sum: 7e32aaed112d6e056fb8764b637bf49e
       bacmet20_experimental:
-        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+        additionalParams:
+          search : ' --max-seqs 300 --max-accept 50 -c 0 --cov-mode 2 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          additionalColumns: ""
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_experimental.tar.zst
             md5sum: 57a6d328486f0acd63f7e984f739e8fe
       bacmet20_predicted:
-        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+        additionalParams:
+          search : ' --max-seqs 300 --max-accept 50 -c 0 --cov-mode 2 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          additionalColumns: ""
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
             md5sum: 55902401a765fc460c09994d839d9b64
-      ncbi_nr:
-        params: ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+      uniref90:
+        additionalParams:
+          search : ' --max-seqs 300 --max-accept 50 -c 0 --cov-mode 2 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          additionalColumns: ""
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2023-04-29_mmseqs_taxonomy.tar.zst
-            md5sum: 79b9fb6b3dada41e602d70e12e7351c2
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90_20231108_mmseqs.tar.zst
+            md5sum: 313f2c031361091af2d5f3c6f6f46013
     mmseqs2_taxonomy:
       # Run taxonomy classification on MAGs and unbinable contigs or just the later
       runOnMAGs: true
       gtdb:
         # High sensitivity mode parameters only work for quality MAGs, for unbinable contigs use default parameters
-        params: ' --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies  --max-seqs 300 --max-accept 50 --cov-mode 0 -e 0.001 --e-profile 0.01 '
+        params: ' --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies  --max-seqs 300 --max-accept 50 --cov-mode 2 -e 0.001 --e-profile 0.01 '
         # Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params
         ramMode: false
+        initialMaxSensitivity: 6
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
@@ -203,12 +209,15 @@ steps:
         download:
           source: s3://databases_internal/kegg-links-mirror-2021-01.tar.gz
           md5sum: 69538151ecf4128f4cb1e0ac21ff55b3
+          s5cmd:
+             params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
   plasmid:
     SCAPP:
       additionalParams:
         bwa2: "  "
         SCAPP: "  "
-        coverm: " --min-covered-fraction 0 "
+        coverm: " --min-covered-fraction 0 --min-read-percent-identity 100 --min-read-aligned-percent 100 "
+        covermONT: " --min-covered-fraction 0 --min-read-aligned-percent 100 "
         minimap: " "
         samtoolsViewBwa2: " -F 3584 " 
         samtoolsViewMinimap: " " 
@@ -253,19 +262,20 @@ steps:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20220929.gz
           md5sum: 21fcaf9c3754a985d1d6875939d71e28
   metabolomics:
-     beforeProcessScript: ""
      filter:
        minCompleteness: 50
        maxContamination: 5
-     gapseq:
-       additionalParams: ""
+     carveme:
+       additionalParams: " --solver scip "
      smetana:
+       beforeProcessScript: ""
        global: false
        detailed: false
        additionalParams:
          detailed: ""
          global: ""
      memote:
+       beforeProcessScript: ""
        additionalParams:
          run: ""
          report: ""

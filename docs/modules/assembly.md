@@ -16,32 +16,45 @@
 
 === "Megahit Configuration File"
 
+    !!! warning "Warning"
+     
+        **The configuration file shown here is for demonstration and testing purposes only. 
+          Parameters that should be used in production can be viewed in the assembly section 
+          of one of the yaml files located in the `default` folder of the Toolkit's Github repository.**
+
     ```YAML
-    ---8<--- "../example_params/assembly.yml"
+    ---8<--- "example_params/assembly.yml"
     ```
 
 === "Metaspades Configuration File"
 
     ```YAML
-    ---8<--- "../example_params/assemblyMetaspades.yml"
+    ---8<--- "example_params/assemblyMetaspades.yml"
     ```
 
 === "MetaFlye Configuration File"
 
+
+    !!! warning "Warning"
+     
+        **The configuration file shown here is for demonstration and testing purposes only. 
+          Parameters that should be used in production can be viewed in the assemblyONT section 
+          of one of the yaml files located in the `default` folder of the Toolkit's Github repository.**
+
     ```YAML
-    ---8<--- "../example_params/assemblyONT.yml"
+    ---8<--- "example_params/assemblyONT.yml"
     ```
 
 === "TSV Table Short Read"
 
     ```TSV
-    ---8<--- "../test_data/assembly/samples.tsv"
+    ---8<--- "test_data/assembly/samples.tsv"
     ```
 
 === "TSV Table Nanopore"
 
     ```TSV
-    ---8<--- "../test_data/assembly/samplesONT.tsv"
+    ---8<--- "test_data/assembly/samplesONT.tsv"
     ```
  
  
@@ -56,7 +69,7 @@ The output is a gzipped fasta file containing contigs.
 On error with exit codes ([-9, 137, 247]) (e.g. due to memory restrictions), the tool is executed again with higher cpu and memory values.
 The memory and cpu values are in case of a retry selected based on the flavor with the next higher memory value.
 The highest possible cpu/memory value is restricted by the highest cpu/memory value of all flavors defined in the resource section 
-(see global [configuration](../pipeline_configuration.md) section). 
+(see global [configuration](../configuration.md) section). 
 
 ### Peak memory usage prediction
 

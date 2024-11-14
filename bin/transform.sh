@@ -9,7 +9,8 @@ CORES=$5
 # The following function modifies the assembly fasta headers according to the pattern: SAMPLEID_SEQUENCECOUNTER_SEQUENCEHASH
 	 
 # Create temporary directory
-TEMP_DIR=$(mktemp -d -p .)
+TEMP_DIR=$(basename $(mktemp))
+mkdir ${TEMP_DIR}
 
 # Extract assembly header
 OLD_FASTA_HEADERS=${TEMP_DIR}/old_headers.tsv
@@ -34,3 +35,6 @@ csvtk concat --out-tabs -H <(csvtk transpose ${OLD_FASTA_HEADERS}) <(csvtk trans
 # Replace old with new fasta header
 seqkit replace -p '(.*)'  -r '{kv}' -k ${HEADER_MAPPING_OUTPUT} ${SEQS_INPUT} \
 		| pigz --best --processes $CORES > ${SEQS_OUTPUT} 
+
+# Fix for ownership issue https://github.com/nextflow-io/nextflow/issues/4565
+chmod a+rw -R ${TEMP_DIR}

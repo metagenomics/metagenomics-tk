@@ -24,11 +24,13 @@ process pViralVerifyPlasmid {
 
     shell = ['/bin/bash']
 
-    containerOptions Utils.getDockerMount(params?.steps?.plasmid?.ViralVerifyPlasmid?.database, params)
+    containerOptions Utils.getDockerMount(params?.steps?.plasmid?.ViralVerifyPlasmid?.database, params) + Utils.getDockerNetwork()
 
     container "${params.viralVerify_image}"
 
     beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
+
+    secret { "${S3_ViralVerifyPlasmid_ACCESS}"!="" ? ["S3_ViralVerifyPlasmid_ACCESS", "S3_ViralVerifyPlasmid_SECRET"] : [] } 
 
     input:
     tuple val(sample), val(binID), path(plasmids)
@@ -45,6 +47,8 @@ process pViralVerifyPlasmid {
     S5CMD_PARAMS=params.steps?.plasmid?.ViralVerifyPlasmid?.database?.download?.s5cmd?.params ?: ""
     output = getOutput("${sample}", params.runid, "ViralVerifyPlasmid", "")
     ADDITIONAL_PARAMS=params.steps?.plasmid?.ViralVerifyPlasmid?.additionalParams ?: ""
+    S3_ViralVerifyPlasmid_ACCESS=params?.steps?.plasmid?.ViralVerifyPlasmid?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_ViralVerifyPlasmid_ACCESS" : ""
+    S3_ViralVerifyPlasmid_SECRET=params?.steps?.plasmid?.ViralVerifyPlasmid?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_ViralVerifyPlasmid_SECRET" : ""
     '''
     FILTER_STRING="!{params.steps?.plasmid?.ViralVerifyPlasmid?.filterString}"
 
@@ -56,12 +60,19 @@ process pViralVerifyPlasmid {
          DATABASE=!{params.polished.databases}/pfam
          LOCK_FILE=${DATABASE}/lock.txt
 
+	 # Check if access and secret keys are necessary for s5cmd
+         if [ ! -z "!{S3_ViralVerifyPlasmid_ACCESS}" ]
+         then
+             export AWS_ACCESS_KEY_ID=!{S3_ViralVerifyPlasmid_ACCESS}
+             export AWS_SECRET_ACCESS_KEY=!{S3_ViralVerifyPlasmid_SECRET}
+         fi
+
          mkdir -p ${DATABASE}
          flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
             --link=!{DOWNLOAD_LINK} \
-            --httpsCommand="wget -O - !{DOWNLOAD_LINK} | pigz -fdc > pfam.hmm " \
-            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat !{DOWNLOAD_LINK} | pigz -fdc > pfam.hmm  " \
-            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} pfam.hmm.gz && pigz -fdc pfam.hmm.gz > pfam.hmm && rm pfam.hmm.gz " \
+            --httpsCommand="wgetStatic --no-check-certificate -qO- !{DOWNLOAD_LINK} | pigz -fdc > pfam.hmm " \
+            --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat --concurrency !{task.cpus} !{DOWNLOAD_LINK} | pigz -fdc > pfam.hmm  " \
+            --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . && mv * pfam.hmm " \
             --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
             --localCommand="gunzip -c !{DOWNLOAD_LINK} > ./pfam.hmm " \
             --expectedMD5SUM=!{MD5SUM}
@@ -78,6 +89,9 @@ process pViralVerifyPlasmid {
     TMP_OUTPUT="!{binID}_viralverifyplasmid_tmp.tsv"
     FINAL_OUTPUT="!{binID}_viralverifyplasmid.tsv"
 
+    # In case that no sequences could be found then at least an empty header file should be created
+    echo -e "CONTIG\tSAMPLE\tBIN_ID" > ${FINAL_OUTPUT} 
+
     if [ -n "$(find . -name '*.csv')" ]; then
       # Filter viral verify output by user provided strings 
       # and add Sample and BinID
@@ -88,6 +102,9 @@ process pViralVerifyPlasmid {
         mv ${TMP_OUTPUT} ${FINAL_OUTPUT}
       fi
     fi
+
+    # Fix for ownership issue https://github.com/nextflow-io/nextflow/issues/4565
+    chmod a+rw -R Prediction_results_fasta
     '''
 }
 
@@ -107,16 +124,18 @@ process pMobTyper {
 
     beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
-    containerOptions Utils.getDockerMount(params.steps?.plasmid?.MobTyper?.database, params)
+    containerOptions Utils.getDockerMount(params.steps?.plasmid?.MobTyper?.database, params) + Utils.getDockerNetwork()
+
+    secret { "${S3_MobTyper_ACCESS}"!="" ? ["S3_MobTyper_ACCESS", "S3_MobTyper_SECRET"] : [] } 
 
     input:
-    tuple val(sample), val(binID), path(plasmids), val(start), val(stop)
+    tuple val(sample), val(binID), path(plasmids), val(start), val(stop), val(chunkSize)
 
     output:
     tuple val("${binID}_chunk_${start}_${stop}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
       file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
     tuple val("${sample}"), val("${binID}"), val("MobTyper"), \
-	path("${binID}_chunk_${start}_${stop}_mobtyper.tsv"), emit: plasmidsStats, optional: true
+	path("${binID}_chunk_${start}_${stop}_mobtyper.tsv"), val("${chunkSize}"), emit: plasmidsStats, optional: true
 
     shell:
     EXTRACTED_DB=params.steps?.plasmid?.MobTyper?.database?.extractedDBPath ?: ""
@@ -126,6 +145,8 @@ process pMobTyper {
     ADDITIONAL_PARAMS=params.steps?.plasmid?.MobTyper?.additionalParams ?: ""
     MIN_LENGTH=params.steps?.plasmid?.MobTyper?.minLength ?: ""
     output = getOutput("${sample}", params.runid, "MobTyper", "")
+    S3_MobTyper_ACCESS=params.steps?.plasmid?.MobTyper?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_MobTyper_ACCESS" : ""
+    S3_MobTyper_SECRET=params.steps?.plasmid?.MobTyper?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_MobTyper_SECRET" : ""
     template("mobtyper.sh")
 }
 
@@ -144,13 +165,13 @@ process pPlasClass {
     container "${params.PlasClass_image}"
 
     input:
-    tuple val(sample), val(binID), path(assembly), val(start), val(stop)
+    tuple val(sample), val(binID), path(assembly), val(start), val(stop), val(chunkSize)
 
     output:
     tuple val("${binID}_chunk_${start}_${stop}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
       file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
     tuple val("${sample}"), val("${binID}"), val("PlasClass"), \
-	path("${binID}_chunk_${start}_${stop}_plasClass.tsv"), emit: probabilities, optional: true
+	path("${binID}_chunk_${start}_${stop}_plasClass.tsv"), val("${chunkSize}"), emit: probabilities, optional: true
 
     shell:
     output = getOutput("${sample}", params.runid, "PlasClass", "")
@@ -165,7 +186,7 @@ process pPlaton {
 
     tag "Sample: $sample, BinId: $binID"
 
-    containerOptions " --user root:root " + Utils.getDockerMount(params.steps?.plasmid?.Platon?.database, params)
+    containerOptions " --user root:root " + Utils.getDockerMount(params.steps?.plasmid?.Platon?.database, params) + Utils.getDockerNetwork()
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "Platon", filename) }, \
         pattern: "{**.tsv}"
@@ -175,6 +196,8 @@ process pPlaton {
     container "${params.platon_image}"
 
     beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
+
+    secret { "${S3_Platon_ACCESS}"!="" ? ["S3_Platon_ACCESS", "S3_Platon_SECRET"] : [] } 
 
     input:
     tuple val(sample), val(binID), path(assembly)
@@ -191,6 +214,8 @@ process pPlaton {
     DOWNLOAD_LINK=params?.steps?.plasmid?.Platon?.database?.download?.source ?: ""
     MD5SUM=params?.steps?.plasmid?.Platon?.database?.download?.md5sum ?: ""
     S5CMD_PARAMS=params.steps?.plasmid?.Platon?.database?.download?.s5cmd?.params ?: ""
+    S3_Platon_ACCESS=params.steps?.plasmid?.Platon?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_Platon_ACCESS" : ""
+    S3_Platon_SECRET=params.steps?.plasmid?.Platon?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_Platon_SECRET" : ""
     '''
     # --meta is not supported by Platon
     sed -i "458 i       '-p', 'meta', " /usr/local/lib/python3.9/site-packages/platon/functions.py
@@ -202,13 +227,20 @@ process pPlaton {
       DATABASE=!{params.polished.databases}/platon
       LOCK_FILE=${DATABASE}/checksum.txt
 
+      # Check if access and secret keys are necessary for s5cmd
+      if [ ! -z "!{S3_Platon_ACCESS}" ]
+      then
+          export AWS_ACCESS_KEY_ID=!{S3_Platon_ACCESS}
+          export AWS_SECRET_ACCESS_KEY=!{S3_Platon_SECRET}
+      fi
+
       # Download plsdb database if necessary
       mkdir -p ${DATABASE}
       flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
 	--link=!{DOWNLOAD_LINK} \
-	--httpsCommand="wget -qO- !{DOWNLOAD_LINK} | tar -xvz " \
+	--httpsCommand="wgetStatic --no-check-certificate -qO- !{DOWNLOAD_LINK} | tar -xvz " \
 	--s3FileCommand="s5cmd !{S5CMD_PARAMS} cat !{DOWNLOAD_LINK} | tar -xvz  " \
-	--s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} platon.tar.gz && tar -xzvf platon.tar.gz && rm platon.tar.gz " \
+	--s3DirectoryCommand="mkdir db && cd db && s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
 	--s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
 	--localCommand="tar xzvf !{DOWNLOAD_LINK} " \
 	--expectedMD5SUM=!{MD5SUM}
@@ -218,6 +250,8 @@ process pPlaton {
       PLATON_DB=!{EXTRACTED_DB}
     fi
 
+    FINAL_OUTPUT=!{binID}_platon.tsv
+
     pigz -p !{task.cpus} -fdc !{assembly} > assembly.fasta
 
     # In some cases prodigal fails because of a too short query sequence. In such cases the process should end with exit code 0.
@@ -226,7 +260,10 @@ process pPlaton {
 
     if [ -n "$(find . -name '*.tsv')" ]; then
       # Add Sample and BinId
-      sed -e '1 s/^/SAMPLE\tBIN_ID\t/g' -e "1 s/\tID\t/\tCONTIG\t/"  -e "2,$ s/^/!{sample}\t!{binID}\t/g" *.tsv > !{binID}_platon.tsv
+      sed -e '1 s/^/SAMPLE\tBIN_ID\t/g' -e "1 s/\tID\t/\tCONTIG\t/"  -e "2,$ s/^/!{sample}\t!{binID}\t/g" *.tsv > ${FINAL_OUTPUT}
+    else
+      # In case that no sequences could be found then at least an empty header file should be created
+      echo -e "SAMPLE\tBIN_ID\tCONTIG" > ${FINAL_OUTPUT} 
     fi
     '''
 }
@@ -264,13 +301,22 @@ process pFilter {
        mkdir header
        mkdir tmp
        mkdir missing
-       for file in !{contigHeaderFiles}; do 
-         TMP_FILE=tmp/${file}
-         FINAL_FILE=header/${file}
-         MISSING_FILE=missing/${file}
+       mkdir input
+
+       for file in !{contigHeaderFiles}; do
+	  if [ $(wc -l < ${file}) -gt 1 ]; then
+            mv ${file} input/${file}
+          fi
+       done
+
+       for file in $(ls -1 input/*); do 
+         BASENAME=$(basename ${file})
+         TMP_FILE=tmp/${BASENAME}
+         FINAL_FILE=header/${BASENAME}
+         MISSING_FILE=missing/${BASENAME}
          METHOD="$(echo ${file} | rev | cut -d '_' -f 1 | rev | cut -d '.' -f 1)"
          csvtk cut -f CONTIG --tabs ${file} | sed -e "2,$ s/$/\tTRUE/g"  -e "1 s/$/\t${METHOD}/g" > ${TMP_FILE}
-    	 csvtk cut -f CONTIG --tabs ${file} | tail -n +2 >> filtered_header.tsv
+	 csvtk cut -f CONTIG --tabs ${file} | tail -n +2 >> filtered_header.tsv
          if [ $(wc -l < ${TMP_FILE}) -gt 1 ]; then
                 mv ${TMP_FILE} ${FINAL_FILE}
          else
