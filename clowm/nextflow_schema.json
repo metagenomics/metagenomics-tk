@@ -24,6 +24,12 @@
           "format": "directory-path",
           "fa_icon": "fas fa-folder"
         },
+        "s3SignIn": {
+          "type": "boolean",
+          "default": false,
+          "description": "Internal parameter. DO NOT CHANGE!",
+          "hidden": true
+        },
         "runid": {
           "type": "integer",
           "description": "An ID for this workflow run",
