@@ -90,7 +90,7 @@ process pCheckM2 {
 
     containerOptions Utils.getDockerMount(params.steps?.magAttributes?.checkm2?.database, params) + Utils.getDockerNetwork()
 
-    beforeScript "mkdir -p ${params.polished.databases}"
+    beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
     label 'medium'
 
