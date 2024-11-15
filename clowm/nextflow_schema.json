@@ -1,10 +1,10 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/pbelmann/metagenomics-tk/master/nextflow_schema.json",
   "title": "Metagenomics Toolkit",
   "description": "This pipeline uses Nextflow to process metagenomic data.",
   "type": "object",
-  "definitions": {
+  "$defs": {
     "general_parameters": {
       "title": "General parameters",
       "type": "object",
@@ -428,6 +428,13 @@
           "type": "string",
           "description": "Command line parameters for SCAPP bwa2.",
           "displayName": "SCAPP bwa2 additional parameters",
+          "hidden": true,
+          "default": " "
+        },
+        "steps.plasmid.SCAPP.additionalParams.SCAPP": {
+          "type": "string",
+          "description": "Command line parameters for SCAPP.",
+          "displayName": "SCAPP additional parameters",
           "hidden": true,
           "default": " "
         },
