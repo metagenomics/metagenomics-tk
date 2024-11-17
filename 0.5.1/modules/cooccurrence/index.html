@@ -1,0 +1,1910 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../assembly/">
+      
+      
+        <link rel="next" href="../dereplication/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.14">
+    
+    
+      
+        <title>Cooccurrence - Metagenomics-Toolkit</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.10ba22f1.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cooccurrence" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+          <aside class="md-banner md-banner--warning">
+            <div class="md-banner__inner md-grid md-typeset">
+              
+  You're not viewing the latest version.
+    <a href="../../..">
+	        <strong>Click here to go to latest.</strong>
+    </a>
+
+            </div>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),outdated=__md_get("__outdated",sessionStorage);!0===outdated&&el&&(el.hidden=!1)</script>
+          </aside>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Metagenomics-Toolkit" class="md-header__button md-logo" aria-label="Metagenomics-Toolkit" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Metagenomics-Toolkit
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Cooccurrence
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  Introduction
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quickstart/" class="md-tabs__link">
+        
+  
+    
+  
+  Quickstart
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../concept/" class="md-tabs__link">
+          
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../configuration/" class="md-tabs__link">
+          
+  
+  Configuration
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../introduction/" class="md-tabs__link">
+          
+  
+  Modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../developer_guidelines/" class="md-tabs__link">
+          
+  
+  Developer
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Metagenomics-Toolkit" class="md-nav__button md-logo" aria-label="Metagenomics-Toolkit" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Metagenomics-Toolkit
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concept/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Concept
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../full_pipeline/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Full Pipeline
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../per_sample_and_aggregation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Per-Sample and Aggregation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../emgb/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EMGB
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Configuration
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Global Pipeline Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pipeline_input/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pipeline Input Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Database Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Modules
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../introduction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../qualityControl/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quality Control
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../annotation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Annotation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../assembly/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Assembly
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Cooccurrence
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Cooccurrence
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#input" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Output">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spiec-easi" class="md-nav__link">
+    <span class="md-ellipsis">
+      SPIEC-EASI
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dereplication/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dereplication
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fragment_recruitment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Fragment Recruitment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../magAttributes/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MagAttributes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plasmids/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Plasmids
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metabolomics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Metabolomics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../readMapping/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Read Mapping
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Developer
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Developer
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer_guidelines/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Guidelines
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../pipeline_specification/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pipeline Specification
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../module_specification/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Module Specification
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#input" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#output" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Output">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#spiec-easi" class="md-nav__link">
+    <span class="md-ellipsis">
+      SPIEC-EASI
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="cooccurrence">Cooccurrence<a class="headerlink" href="#cooccurrence" title="Permanent link">&para;</a></h1>
+<p>The Cooccurrence module builds a cooccurrence network where each node is a MAG
+and every edge represents an association between them. The network can be inferred based on
+correlation or inverse covariance estimation by SPIEC-EASI. SPIEC-EASI is executed multiple times
+based on different parameter settings in order to find the most stable network.
+In addition, it is possible to compute multiple metrics for every edge based on genome-scale
+metabolic models and the SMETANA metrics. </p>
+<div class="highlight"><pre><span></span><code>-entry wCooccurrence -params-file example_params/cooccurrence.yml
+</code></pre></div>
+<h2 id="input">Input<a class="headerlink" href="#input" title="Permanent link">&para;</a></h2>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:7"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><input id="__tabbed_1_4" name="__tabbed_1" type="radio" /><input id="__tabbed_1_5" name="__tabbed_1" type="radio" /><input id="__tabbed_1_6" name="__tabbed_1" type="radio" /><input id="__tabbed_1_7" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Command</label><label for="__tabbed_1_2">Configuration File for Cooccurrence</label><label for="__tabbed_1_3">TSV Table</label><label for="__tabbed_1_4">GTDB TSV Table</label><label for="__tabbed_1_5">Configuration File for analyzing edges in Cooccurrence Graph</label><label for="__tabbed_1_6">GTDB TSV for analyzing Edges</label><label for="__tabbed_1_7">Model TSV for computing Metabolomics Metrics on Edges</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>-entry wCooccurrence -params-file example_params/cooccurrence.yml
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>The configuration file shown here is for demonstration and testing purposes only. 
+  Parameters that should be used in production can be viewed in the cooccurrence section 
+  of one of the yaml files located in the <code>default</code> folder of the Toolkit's Github repository.</strong></p>
+</div>
+<div class="highlight"><pre><span></span><code><span class="nt">tempdir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;tmp&quot;</span>
+<span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="nt">s3SignIn</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="nt">output</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;output&quot;</span>
+<span class="nt">runid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">logLevel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">logDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">log</span>
+<span class="nt">scratch</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/vol/scratch&quot;</span>
+<span class="nt">publishDirMode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;symlink&quot;</span>
+<span class="nt">steps</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">cooccurrence</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">input</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">gtdb</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test_data/cooccurrence/gtdb.tsv</span>
+<span class="w">      </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test_data/cooccurrence/counts.tsv</span><span class="w"> </span>
+<span class="w">    </span><span class="nt">inference</span><span class="p">:</span>
+<span class="w">       </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span>
+<span class="w">         </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;correlation&#39;</span>
+<span class="w">         </span><span class="nt">rscript</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--mincovthreshold</span><span class="nv"> </span><span class="s">0.1</span><span class="nv"> </span><span class="s">--maxzero</span><span class="nv"> </span><span class="s">110</span><span class="nv"> </span><span class="s">--minweight</span><span class="nv"> </span><span class="s">0.4</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">         </span><span class="nt">timeLimit</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;AUTO&quot;</span>
+
+<span class="nt">resources</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">highmemLarge</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">28</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">230</span>
+<span class="w">  </span><span class="nt">highmemMedium</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">14</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">113</span>
+<span class="w">  </span><span class="nt">large</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">28</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">58</span>
+<span class="w">  </span><span class="nt">medium</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">14</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">29</span>
+<span class="w">  </span><span class="nt">small</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">14</span>
+<span class="w">  </span><span class="nt">tiny</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<p><div class="highlight"><pre><span></span><code>SAMPLE  READS
+test1   https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/interleaved.fq.gz
+</code></pre></div>
+Contains abundance values of mags per sample.</p>
+</div>
+<div class="tabbed-block">
+<p><div class="highlight"><pre><span></span><code>BIN_ID  DOMAIN  SAMPLE  user_genome classification  fastani_reference   fastani_reference_radius    fastani_taxonomy    fastani_ani fastani_af  closest_placement_reference closest_placement_radius    closest_placement_taxonomy  closest_placement_ani   closest_placement_af    pplacer_taxonomy    classification_method   note    other_related_references(genome_id,species_name,radius,ANI,AF)  msa_percent translation_table   red_value   warnings
+test1_bin.1.fa  BACTERIA    test2   test2_bin.1.fa  d__Bacteria;p__Actinobacteriota;c__Actinomycetia;o__Actinomycetales;f__Dermatophilaceae;g__Phycicoccus;s__Phycicoccus sp001428065   GCF_001428065.1 95.0    d__Bacteria;p__Actinobacteriota;c__Actinomycetia;o__Actinomycetales;f__Dermatophilaceae;g__Phycicoccus;s__Phycicoccus sp001428065   99.77   0.99    GCF_001428065.1 95.0    d__Bacteria;p__Actinobacteriota;c__Actinomycetia;o__Actinomycetales;f__Dermatophilaceae;g__Phycicoccus;s__Phycicoccus sp001428065   99.77   0.99    d__Bacteria;p__Actinobacteriota;c__Actinomycetia;o__Actinomycetales;f__Dermatophilaceae;g__Phycicoccus;s__  taxonomic classification defined by topology and ANI    topological placement and ANI have congruent species assignments    GCF_002846495.1, s__Phycicoccus duodecadis, 95.0, 90.33, 0.95; GCF_011383005.1, s__Phycicoccus sp011383005, 95.0, 82.92, 0.85; GCF_000720925.1, s__Phycicoccus jejuensis, 95.0, 82.49, 0.82; GCF_013201035.1, s__Phycicoccus sp013201035, 95.0, 82.18, 0.84; GCF_004025965.2, s__Phycicoccus sp004025965, 95.0, 81.96, 0.78; GCF_011326735.1, s__Phycicoccus endophyticus, 95.0, 81.12, 0.7 12.73   11  N/A N/A
+test2_bin.2.fa  BACTERIA    test2   test2_bin.2.fa  d__Bacteria;p__Firmicutes_C;c__Negativicutes;o__Selenomonadales;f__Selenomonadaceae;g__Schwartzia;s__Schwartzia succinivorans   GCF_900129225.1 95.0    d__Bacteria;p__Firmicutes_C;c__Negativicutes;o__Selenomonadales;f__Selenomonadaceae;g__Schwartzia;s__Schwartzia succinivorans   99.97   1.0 GCF_900129225.1 95.0    d__Bacteria;p__Firmicutes_C;c__Negativicutes;o__Selenomonadales;f__Selenomonadaceae;g__Schwartzia;s__Schwartzia succinivorans   99.97   1.0 d__Bacteria;p__Firmicutes_C;c__Negativicutes;o__Selenomonadales;f__Selenomonadaceae;g__;s__ taxonomic classification defined by topology and ANI    topological placement and ANI have congruent species assignments    N/A 91.94   11  N/A N/A
+</code></pre></div>
+GTDB assignment of all samples that were produced by magAttributes module.</p>
+</div>
+<div class="tabbed-block">
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>The configuration file shown here is for demonstration and testing purposes only. 
+  Parameters that should be used in production can be viewed in the cooccurrence section 
+  of one of the yaml files located in the <code>default</code> folder of the Toolkit's Github repository.</strong></p>
+</div>
+<div class="highlight"><pre><span></span><code><span class="nt">tempdir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/tmp&quot;</span>
+<span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="nt">s3SignIn</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="nt">output</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;output&quot;</span>
+<span class="nt">runid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">logLevel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="nt">logDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">log</span>
+<span class="nt">scratch</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/vol/scratch&quot;</span>
+<span class="nt">publishDirMode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;symlink&quot;</span>
+<span class="nt">steps</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">cooccurrence</span><span class="p">:</span>
+<span class="w">     </span><span class="nt">input</span><span class="p">:</span>
+<span class="w">       </span><span class="nt">gtdb</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test_data/cooccurrence/gtdb_large.tsv</span>
+<span class="w">       </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test_data/cooccurrence/countsMedium.tsv</span>
+<span class="w">       </span><span class="nt">models</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test_data/cooccurrence/models.tsv</span>
+<span class="w">     </span><span class="nt">inference</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">additionalParams</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;spiec-easi&#39;</span>
+<span class="w">          </span><span class="nt">rscript</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--mincovthreshold</span><span class="nv"> </span><span class="s">0.1</span><span class="nv"> </span><span class="s">--maxzero</span><span class="nv"> </span><span class="s">110&quot;</span>
+<span class="w">          </span><span class="nt">timeLimit</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;AUTO&quot;</span>
+<span class="w">     </span><span class="nt">metabolicAnnotation</span><span class="p">:</span>
+<span class="w">       </span><span class="nt">additionalParams</span><span class="p">:</span>
+<span class="w">         </span><span class="nt">metabolicEdgeBatches</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">         </span><span class="nt">metabolicEdgeReplicates</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">         </span><span class="nt">smetana</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--flavor</span><span class="nv"> </span><span class="s">bigg</span><span class="nv"> </span><span class="s">&quot;</span>
+
+<span class="nt">resources</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">highmemLarge</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">28</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">230</span>
+<span class="w">  </span><span class="nt">highmemMedium</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">14</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">113</span>
+<span class="w">  </span><span class="nt">large</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">28</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">58</span>
+<span class="w">  </span><span class="nt">medium</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">14</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">29</span>
+<span class="w">  </span><span class="nt">small</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">14</span>
+<span class="w">  </span><span class="nt">tiny</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<p><div class="highlight"><pre><span></span><code>DOMAIN  PHYLUM  CLASS   ORDER   FAMILY  GENUS   SPECIES BIN_ID
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__ ERR2592244_bin.1
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__Neisseria suis   ERR2592244_bin.10
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Formosimonas s__ ERR2592244_bin.11
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Formosimonas s__ ERR2592244_bin.12
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__JAGOEY01 s__ ERR2592244_bin.15
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__ ERR2592244_bin.16
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Acidovorax   s__Acidovorax defluvii  ERR2592244_bin.17
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Acidovorax   s__ ERR2592244_bin.18
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Flavobacteriaceae    g__Flavobacterium   s__ ERR2592244_bin.2
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Pseudomonadaceae g__Pseudomonas_E    s__ ERR2592244_bin.20
+d__Bacteria p__Campylobacterota c__Campylobacteria  o__Campylobacterales    f__Arcobacteraceae  g__Aliarcobacter    s__Aliarcobacter cryaerophilus_A    ERR2592244_bin.23
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Pseudomonadaceae g__Pseudomonas_E    s__Pseudomonas_E paracarnis ERR2592244_bin.25
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Formosimonas s__ ERR2592244_bin.26
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Kaistella    s__Kaistella chaponensis    ERR2592244_bin.27
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Formosimonas s__ ERR2592244_bin.28
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter celticus   ERR2592244_bin.29
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister invisus    ERR2592244_bin.3
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Psychrobacter    s__Psychrobacter faecalis   ERR2592244_bin.32
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Aerococcaceae    g__Trichococcus s__Trichococcus flocculiformis  ERR2592244_bin.33
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Streptococcaceae g__Lactococcus_A    s__Lactococcus_A raffinolactis  ERR2592244_bin.34
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter johnsonii  ERR2592244_bin.36
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Formosimonas s__ ERR2592244_bin.37
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Diaphorobacter_A s__ ERR2592244_bin.38
+d__Bacteria p__Fusobacteriota   c__Fusobacteriia    o__Fusobacteriales  f__Leptotrichiaceae g__JAGOYM01 s__JAGOYM01 sp018059165 ERR2592244_bin.4
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister sp000434475    ERR2592244_bin.40
+d__Bacteria p__Actinobacteriota c__Actinomycetia    o__Actinomycetales  f__Micrococcaceae   g__Galactobacter    s__ ERR2592244_bin.41
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister invisus    ERR2592244_bin.5
+d__Bacteria p__Fusobacteriota   c__Fusobacteriia    o__Fusobacteriales  f__Leptotrichiaceae g__JAGOYM01 s__ ERR2592244_bin.6
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Kaistella    s__ ERR2592244_bin.7
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister invisus    ERR2592244_bin.8
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Ottowia  s__Ottowia sp018060485  ERR2592244_bin.9
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Epilithonimonas  s__Epilithonimonas vandammei    ERR2592245_bin.11
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Empedobacter s__Empedobacter falsenii_A  ERR2592245_bin.12
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter parvus ERR2592245_bin.13
+d__Bacteria p__Campylobacterota c__Campylobacteria  o__Campylobacterales    f__Arcobacteraceae  g__Aliarcobacter    s__ ERR2592245_bin.14
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Cloacibacterium  s__ ERR2592245_bin.15
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Ottowia  s__Ottowia beijingensis ERR2592245_bin.16
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter harbinensis    ERR2592245_bin.17
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Streptococcaceae g__Streptococcus    s__Streptococcus parasuis   ERR2592245_bin.18
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__CTSOIL-112   s__ ERR2592245_bin.19
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Acidovorax   s__Acidovorax temperans ERR2592245_bin.2
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__26B  s__26B sp016894345  ERR2592245_bin.20
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter johnsonii  ERR2592245_bin.21
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter harbinensis    ERR2592245_bin.22
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__Neisseria suis   ERR2592245_bin.23
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Comamonas    s__Comamonas denitrificans_A    ERR2592245_bin.26
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter guillouiae ERR2592245_bin.27
+d__Bacteria p__Fusobacteriota   c__Fusobacteriia    o__Fusobacteriales  f__Leptotrichiaceae g__JAGOYM01 s__JAGOYM01 sp018059165 ERR2592245_bin.28
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Sphaerotilus s__Sphaerotilus sulfidivorans   ERR2592245_bin.29
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Psychrobacter    s__ ERR2592245_bin.3
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Psychrobacter    s__ ERR2592245_bin.30
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Acidovorax   s__Acidovorax defluvii  ERR2592245_bin.4
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__ ERR2592245_bin.5
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Moraxella_A  s__Moraxella_A sp002478835  ERR2592245_bin.6
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Vitreoscilla s__ ERR2592245_bin.8
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Flavobacteriaceae    g__Flavobacterium   s__Flavobacterium sp017997335   ERR2592245_bin.9
+d__Bacteria p__Verrucomicrobiota    c__Kiritimatiellae  o__LD1-PB3  f__Lenti-01 g__Lenti-01 s__ ERR2592249_bin.10
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__ ERR2592249_bin.11
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Ottowia  s__Ottowia beijingensis ERR2592249_bin.12
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__CTSOIL-112   s__ ERR2592249_bin.13
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Acidaminococcales    f__Acidaminococcaceae   g__RZYP01   s__ ERR2592249_bin.14
+d__Bacteria p__Chloroflexota    c__Anaerolineae o__Promineofilales  f__Promineofilaceae g__Promineofilum    s__ ERR2592249_bin.15
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Acidovorax   s__Acidovorax temperans ERR2592249_bin.16
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__UBA1444  f__UBA1444  g__UBA1444  s__ ERR2592249_bin.18
+d__Bacteria p__Desulfobacterota c__Desulfobulbia    o__Desulfobulbales  f__Desulfobulbaceae g__Desulfobulbus    s__Desulfobulbus sp017998195    ERR2592249_bin.19
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Selenomonadales  f__Selenomonadaceae g__ s__ ERR2592249_bin.20
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__ s__ ERR2592249_bin.21
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__Brachymonas sp017996515  ERR2592249_bin.22
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Peptostreptococcales f__Filifactoraceae  g__Acetoanaerobium  s__Acetoanaerobium noterae  ERR2592249_bin.23
+d__Bacteria p__Desulfobacterota c__Desulfobulbia    o__Desulfobulbales  f__Desulfobulbaceae g__Desulfobulbus    s__ ERR2592249_bin.25
+d__Bacteria p__Desulfobacterota c__Desulfobulbia    o__Desulfobulbales  f__Desulfobulbaceae g__Desulfobulbus    s__ ERR2592249_bin.27
+d__Bacteria p__Fusobacteriota   c__Fusobacteriia    o__Fusobacteriales  f__Leptotrichiaceae g__JAGOWQ01 s__ ERR2592249_bin.28
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__ ERR2592249_bin.29
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__Neisseria suis   ERR2592249_bin.3
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter towneri    ERR2592249_bin.30
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Enterobacterales f__Pasteurellaceae  g__Mesocricetibacter    s__ ERR2592249_bin.31
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Selenomonadales  f__JAGPMH01 g__JAGPMH01 s__JAGPMH01 sp018052945 ERR2592249_bin.33
+d__Bacteria p__Planctomycetota  c__Planctomycetia   o__Pirellulales f__PNKZ01   g__ s__ ERR2592249_bin.34
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Rhodocyclaceae   g__Propionivibrio   s__ ERR2592249_bin.36
+d__Bacteria p__Patescibacteria  c__Microgenomatia   o__UBA1406  f__ g__ s__ ERR2592249_bin.37
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__Brachymonas sp018054915  ERR2592249_bin.38
+d__Bacteria p__Acidobacteriota  c__Aminicenantia    o__ f__ g__ s__ ERR2592249_bin.39
+d__Bacteria p__Actinobacteriota c__Acidimicrobiia   o__Acidimicrobiales f__JAEUJM01 g__ s__ ERR2592249_bin.4
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Enterobacterales f__Enterobacteriaceae   g__Klebsiella   s__Klebsiella pneumoniae    ERR2592249_bin.6
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Streptococcaceae g__Streptococcus    s__ ERR2592249_bin.7
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Moraxella    s__ ERR2592249_bin.8
+d__Bacteria p__Patescibacteria  c__JAEDAM01 o__BD1-5    f__UBA2023  g__UBA5532  s__ ERR2592251_bin.1
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Flavobacteriaceae    g__Flavobacterium   s__ ERR2592251_bin.10
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Chitinophagales  f__Chitinophagaceae g__Niabella s__ ERR2592251_bin.11
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Aerococcaceae    g__Trichococcus s__Trichococcus flocculiformis  ERR2592251_bin.12
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Psychrobacter    s__Psychrobacter maritimus  ERR2592251_bin.13
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Xanthomonadales  f__Xanthomonadaceae g__Thermomonas  s__ ERR2592251_bin.14
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister invisus    ERR2592251_bin.16
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Ottowia  s__Ottowia sp018060485  ERR2592251_bin.17
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__ s__ ERR2592251_bin.18
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister invisus    ERR2592251_bin.19
+d__Bacteria p__Campylobacterota c__Campylobacteria  o__Campylobacterales    f__Arcobacteraceae  g__Aliarcobacter    s__Aliarcobacter acticola   ERR2592251_bin.2
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Oscillospirales  f__Acutalibacteraceae   g__Fimenecus    s__Fimenecus sp000432435    ERR2592251_bin.20
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Xanthomonadales  f__Xanthomonadaceae g__Thermomonas  s__ ERR2592251_bin.3
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Acidovorax   s__Acidovorax defluvii  ERR2592251_bin.4
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Lachnospirales   f__Lachnospiraceae  g__Agathobacter s__Agathobacter rectalis    ERR2592251_bin.6
+d__Bacteria p__Fusobacteriota   c__Fusobacteriia    o__Fusobacteriales  f__Leptotrichiaceae g__JAGOYM01 s__JAGOYM01 sp018059165 ERR2592251_bin.7
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__ ERR2592251_bin.8
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Streptococcaceae g__Lactococcus_A    s__Lactococcus_A raffinolactis  ERR2592251_bin.9
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Comamonas    s__Comamonas denitrificans_A    ERR2592252_bin.1
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__ ERR2592252_bin.11
+d__Bacteria p__Fusobacteriota   c__Fusobacteriia    o__Fusobacteriales  f__Leptotrichiaceae g__Leptotrichia_A   s__ ERR2592252_bin.12
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Acidaminococcales    f__Acidaminococcaceae   g__RZYP01   s__ ERR2592252_bin.13
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Moraxella_A  s__ ERR2592252_bin.14
+d__Bacteria p__Actinobacteriota c__Actinomycetia    o__Propionibacteriales  f__Propionibacteriaceae g__Brooklawnia  s__ ERR2592252_bin.15
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__JAABTG01 f__JAABTG01 g__JAGNLM01 s__ ERR2592252_bin.16
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__ ERR2592252_bin.17
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter towneri    ERR2592252_bin.18
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Veillonellaceae  g__Veillonella  s__Veillonella sp009929605  ERR2592252_bin.19
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Acidaminococcales    f__Acidaminococcaceae   g__RZYP01   s__ ERR2592252_bin.2
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__Neisseria suis   ERR2592252_bin.20
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Rhodocyclaceae   g__ s__ ERR2592252_bin.21
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Acidovorax   s__Acidovorax temperans ERR2592252_bin.22
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Moraxella    s__Moraxella porci  ERR2592252_bin.23
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__Brachymonas sp012729605  ERR2592252_bin.24
+d__Bacteria p__Desulfobacterota c__Desulfobulbia    o__Desulfobulbales  f__Desulfobulbaceae g__Desulfobulbus    s__Desulfobulbus sp017998195    ERR2592252_bin.25
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Enterobacterales f__Pasteurellaceae  g__Actinobacillus   s__ ERR2592252_bin.26
+d__Bacteria p__Verrucomicrobiota    c__Kiritimatiellae  o__RFP12    f__UBA3636  g__JAAZAI01 s__JAAZAI01 sp012514445 ERR2592252_bin.27
+d__Bacteria p__Acidobacteriota  c__Aminicenantia    o__ f__ g__ s__ ERR2592252_bin.28
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Moraxella_A  s__Moraxella_A sp002478835  ERR2592252_bin.29
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__CTSOIL-112   s__ ERR2592252_bin.3
+d__Bacteria p__Chloroflexota    c__Anaerolineae o__Anaerolineales   f__Anaerolineaceae  g__T78  s__ ERR2592252_bin.30
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__ ERR2592252_bin.31
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Streptococcaceae g__Streptococcus    s__ ERR2592252_bin.32
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__Brachymonas sp018054915  ERR2592252_bin.33
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Ottowia  s__Ottowia beijingensis ERR2592252_bin.34
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Moraxella    s__ ERR2592252_bin.35
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Sphaerotilus s__Sphaerotilus sulfidivorans   ERR2592252_bin.36
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Selenomonadales  f__Selenomonadaceae g__ s__ ERR2592252_bin.37
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__ ERR2592252_bin.38
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Diaphorobacter   s__ ERR2592252_bin.40
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Streptococcaceae g__Streptococcus    s__Streptococcus parasuis   ERR2592252_bin.41
+d__Bacteria p__Synergistota c__Synergistia  o__Synergistales    f__Synergistaceae   g__Syner-03 s__Syner-03 sp002316795 ERR2592252_bin.42
+d__Bacteria p__Campylobacterota c__Campylobacteria  o__Campylobacterales    f__Arcobacteraceae  g__Aliarcobacter    s__Aliarcobacter cryaerophilus_A    ERR2592252_bin.43
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__ ERR2592252_bin.44
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__Brachymonas chironomi    ERR2592252_bin.45
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__Brachymonas denitrificans    ERR2592252_bin.47
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Xanthomonadales  f__Xanthomonadaceae g__Pseudoxanthomonas    s__ ERR2592252_bin.49
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__Brachymonas sp017993135  ERR2592252_bin.5
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__ ERR2592252_bin.50
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Moraxella    s__ ERR2592252_bin.51
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Rhodocyclaceae   g__Azonexus s__Azonexus sp012839675 ERR2592252_bin.52
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Cloacibacterium  s__ ERR2592252_bin.53
+d__Bacteria p__Patescibacteria  c__Saccharimonadia  o__Saccharimonadales    f__Nanogingivalaceae    g__Nanogingivalis   s__ ERR2592252_bin.54
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Bacteroidales    f__Paludibacteraceae    g__UPXZ01   s__UPXZ01 sp009929445   ERR2592252_bin.55
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Enterobacterales f__Pasteurellaceae  g__Mesocricetibacter    s__ ERR2592252_bin.6
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Cloacibacterium  s__ ERR2592252_bin.7
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Xanthomonadales  f__Xanthomonadaceae g__Pseudoxanthomonas_A  s__ ERR2592252_bin.8
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Selenomonadales  f__JAGPMH01 g__JAGPMH01 s__JAGPMH01 sp018052945 ERR2592252_bin.9
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Cloacibacterium  s__ ERR2592253_bin.1
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister invisus    ERR2592253_bin.10
+d__Bacteria p__Campylobacterota c__Campylobacteria  o__Campylobacterales    f__Arcobacteraceae  g__Aliarcobacter    s__ ERR2592253_bin.11
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Kaistella    s__ ERR2592253_bin.12
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__ ERR2592253_bin.13
+d__Bacteria p__Fusobacteriota   c__Fusobacteriia    o__Fusobacteriales  f__Leptotrichiaceae g__JAGOYM01 s__JAGOYM01 sp018059165 ERR2592253_bin.14
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__JAAFJR01 s__JAAFJR01 sp016705065 ERR2592253_bin.15
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Moraxella_A  s__Moraxella_A sp002478835  ERR2592253_bin.16
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__UJ101    g__UJ101    s__ ERR2592253_bin.17
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister invisus    ERR2592253_bin.18
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Aerococcaceae    g__Trichococcus s__Trichococcus flocculiformis  ERR2592253_bin.19
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Acidovorax   s__Acidovorax defluvii  ERR2592253_bin.2
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__ ERR2592253_bin.20
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Comamonas    s__Comamonas denitrificans_A    ERR2592253_bin.21
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Bacteroidales    f__DTU049   g__DTU049   s__DTU049 sp001513285   ERR2592253_bin.22
+d__Bacteria p__Actinobacteriota c__Actinomycetia    o__Actinomycetales  f__Dermatophilaceae g__Phycicoccus_A    s__Phycicoccus_A elongatus  ERR2592253_bin.23
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Flavobacteriaceae    g__Flavobacterium   s__ ERR2592253_bin.24
+d__Bacteria p__Campylobacterota c__Campylobacteria  o__Campylobacterales    f__Arcobacteraceae  g__Aliarcobacter    s__Aliarcobacter sp017996075    ERR2592253_bin.25
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Cloacibacterium  s__ ERR2592253_bin.27
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Kaistella    s__ ERR2592253_bin.29
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Streptococcaceae g__Lactococcus_A    s__Lactococcus_A raffinolactis  ERR2592253_bin.3
+d__Bacteria p__Actinobacteriota c__Actinomycetia    o__Actinomycetales  f__Cellulomonadaceae    g__Timonella    s__ ERR2592253_bin.30
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Oscillospirales  f__Acutalibacteraceae   g__Fimenecus    s__Fimenecus sp000432435    ERR2592253_bin.31
+d__Bacteria p__Actinobacteriota c__Actinomycetia    o__Actinomycetales  f__Dermatophilaceae g__Phycicoccus_A    s__ ERR2592253_bin.33
+d__Bacteria p__Coprothermobacterota c__Coprothermobacteria  o__Coprothermobacterales    f__Coprothermobacteraceae   g__Coprothermobacter    s__Coprothermobacter proteolyticus  ERR2592253_bin.35
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__JAGOZY01 f__JAGOZY01 g__JAGOHU01 s__JAGOHU01 sp017995975 ERR2592253_bin.37
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Empedobacter s__ ERR2592253_bin.38
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__Neisseria suis   ERR2592253_bin.39
+d__Bacteria p__Fusobacteriota   c__Fusobacteriia    o__Fusobacteriales  f__Leptotrichiaceae g__Sebaldella   s__ ERR2592253_bin.4
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__CTSOIL-112   s__CTSOIL-112 sp017986195   ERR2592253_bin.40
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter sp009707625    ERR2592253_bin.5
+d__Bacteria p__Campylobacterota c__Campylobacteria  o__Campylobacterales    f__Sulfurospirillaceae  g__Sulfurospirillum s__ ERR2592253_bin.6
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__JAGOEY01 s__JAGOEY01 sp017997515 ERR2592253_bin.7
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Ottowia  s__Ottowia sp018060485  ERR2592253_bin.8
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__Brachymonas sp017993135  ERR2592253_bin.9
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Lactobacillaceae g__Lactobacillus    s__Lactobacillus delbrueckii    ERR2592258_bin.1
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__Brachymonas sp018054915  ERR2592258_bin.11
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Bacteroidales    f__Bacteroidaceae   g__Prevotella   s__Prevotella sp015074785   ERR2592258_bin.12
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister succinatiphilus    ERR2592258_bin.13
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Enterobacterales f__Aeromonadaceae   g__JAGOXX01 s__ ERR2592258_bin.16
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Acidaminococcales    f__Acidaminococcaceae   g__RZYP01   s__ ERR2592258_bin.17
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Enterobacterales f__Aeromonadaceae   g__JAGOXX01 s__ ERR2592258_bin.18
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Veillonellaceae  g__Veillonella_A    s__Veillonella_A sp900765165    ERR2592258_bin.19
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Lachnospirales   f__Lachnospiraceae  g__Butyrivibrio s__ ERR2592258_bin.2
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Veillonellaceae  g__Veillonella  s__Veillonella sp009929605  ERR2592258_bin.21
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Enterobacterales f__Succinivibrionaceae  g__Succinivibrio    s__Succinivibrio sp000431835    ERR2592258_bin.22
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Enterobacterales f__Aeromonadaceae   g__Tolumonas    s__Tolumonas sp008015085    ERR2592258_bin.23
+d__Bacteria p__Actinobacteriota c__Coriobacteriia   o__Coriobacteriales f__Atopobiaceae g__Olsenella_D  s__Olsenella_D sp002331575  ERR2592258_bin.25
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Selenomonadales  f__Selenomonadaceae g__ s__ ERR2592258_bin.26
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__CTSOIL-112   s__ ERR2592258_bin.27
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Enterobacterales f__Enterobacteriaceae   g__Escherichia  s__Escherichia coli ERR2592258_bin.28
+d__Bacteria p__Campylobacterota c__Campylobacteria  o__Campylobacterales    f__Sulfurospirillaceae  g__Sulfurospirillum s__Sulfurospirillum sp001548035 ERR2592258_bin.29
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Streptococcaceae g__Lactococcus  s__Lactococcus lactis   ERR2592258_bin.3
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Anaeromusales    f__Anaeromusaceae   g__Anaeromusa   s__ ERR2592258_bin.30
+d__Bacteria p__Desulfobacterota_I   c__Desulfovibrionia o__Desulfovibrionales   f__Desulfovibrionaceae  g__Desulfovibrio    s__ ERR2592258_bin.31
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Bacteroidales    f__Bacteroidaceae   g__Prevotella   s__Prevotella copri_A   ERR2592258_bin.32
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Enterobacterales f__Enterobacteriaceae   g__Klebsiella   s__Klebsiella pneumoniae    ERR2592258_bin.33
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Lachnospirales   f__Lachnospiraceae  g__Agathobacter s__Agathobacter rectalis    ERR2592258_bin.34
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Selenomonadales  f__Selenomonadaceae g__Megamonas    s__Megamonas funiformis ERR2592258_bin.35
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Cloacibacterium  s__ ERR2592258_bin.36
+d__Bacteria p__Actinobacteriota c__Actinomycetia    o__Actinomycetales  f__Bifidobacteriaceae   g__Bifidobacterium  s__Bifidobacterium thermophilum ERR2592258_bin.37
+d__Bacteria p__Patescibacteria  c__Saccharimonadia  o__Saccharimonadales    f__Nanosyncoccaceae g__UBA2834  s__ ERR2592258_bin.38
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Selenomonadales  f__Selenomonadaceae g__Mitsuokella  s__Mitsuokella multacida    ERR2592258_bin.39
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Bacteroidales    f__UBA932   g__Egerieousia  s__ ERR2592258_bin.4
+d__Bacteria p__Actinobacteriota c__Actinomycetia    o__Actinomycetales  f__Bifidobacteriaceae   g__Bifidobacterium  s__Bifidobacterium adolescentis ERR2592258_bin.40
+d__Bacteria p__Actinobacteriota c__Actinomycetia    o__Actinomycetales  f__Bifidobacteriaceae   g__Bifidobacterium  s__Bifidobacterium longum   ERR2592258_bin.42
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Bacteroidales    f__Tannerellaceae   g__Macellibacteroides   s__ ERR2592258_bin.43
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Bacteroidales    f__Bacteroidaceae   g__Prevotella   s__ ERR2592258_bin.44
+d__Bacteria p__Fusobacteriota   c__Fusobacteriia    o__Fusobacteriales  f__ g__ s__ ERR2592258_bin.45
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Bacteroidales    f__Rikenellaceae    g__Alistipes    s__Alistipes putredinis ERR2592258_bin.46
+d__Bacteria p__Actinobacteriota c__Actinomycetia    o__Actinomycetales  f__Bifidobacteriaceae   g__Bifidobacterium  s__Bifidobacterium sp002742445  ERR2592258_bin.47
+d__Bacteria p__Campylobacterota c__Campylobacteria  o__Campylobacterales    f__Arcobacteraceae  g__Aliarcobacter    s__Aliarcobacter cryaerophilus_A    ERR2592258_bin.48
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Bacteroidales    f__Bacteroidaceae   g__Prevotella   s__Prevotella sp018054505   ERR2592258_bin.5
+d__Bacteria p__Acidobacteriota  c__Aminicenantia    o__ f__ g__ s__ ERR2592258_bin.50
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Bacteroidales    f__Paludibacteraceae    g__ s__ ERR2592258_bin.51
+d__Bacteria p__Acidobacteriota  c__Mor1 o__J045 f__J045 g__JAGOJY01 s__ ERR2592258_bin.52
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister hominis    ERR2592258_bin.54
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Selenomonadales  f__Selenomonadaceae g__ s__ ERR2592258_bin.55
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Selenomonadales  f__JAGPMH01 g__JAGPMH01 s__JAGPMH01 sp018052945 ERR2592258_bin.56
+d__Bacteria p__Campylobacterota c__Campylobacteria  o__Campylobacterales    f__Arcobacteraceae  g__Aliarcobacter    s__ ERR2592258_bin.57
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Selenomonadales  f__Selenomonadaceae g__Selenomonas_A    s__Selenomonas_A sp018052705    ERR2592258_bin.58
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister hominis    ERR2592258_bin.6
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister hominis    ERR2592258_bin.7
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Bacteroidales    f__UBA932   g__Egerieousia  s__ ERR2592258_bin.8
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Selenomonadales  f__Selenomonadaceae g__ s__ ERR2592258_bin.9
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Acidovorax   s__Acidovorax defluvii  ERR2592260_bin.1
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Hydromonas   s__ ERR2592260_bin.11
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__UBA2334  s__ ERR2592260_bin.12
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter sp003987695    ERR2592260_bin.13
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Sphaerotilus s__Sphaerotilus montanus    ERR2592260_bin.14
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Flavobacteriaceae    g__Flavobacterium   s__Flavobacterium sp017997335   ERR2592260_bin.15
+d__Bacteria p__Fusobacteriota   c__Fusobacteriia    o__Fusobacteriales  f__Leptotrichiaceae g__JAGOYM01 s__JAGOYM01 sp018059165 ERR2592260_bin.16
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Acidovorax   s__Acidovorax temperans ERR2592260_bin.17
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Aerococcaceae    g__Trichococcus s__Trichococcus flocculiformis  ERR2592260_bin.19
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__JAGOEY01 s__ ERR2592260_bin.2
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Flavobacteriaceae    g__Flavobacterium   s__Flavobacterium sp017995345   ERR2592260_bin.20
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Streptococcaceae g__Lactococcus_A    s__Lactococcus_A raffinolactis  ERR2592260_bin.21
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Giesbergeria s__ ERR2592260_bin.23
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Aerococcaceae    g__Trichococcus s__Trichococcus flocculiformis  ERR2592260_bin.24
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Sphaerotilus s__Sphaerotilus sulfidivorans   ERR2592260_bin.25
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Sphaerotilus s__Sphaerotilus sulfidivorans   ERR2592260_bin.26
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter parvus ERR2592260_bin.3
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Cloacibacterium  s__ ERR2592260_bin.4
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Kaistella    s__Kaistella chaponensis    ERR2592260_bin.7
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Cloacibacterium  s__Cloacibacterium caeni_A  ERR2592260_bin.8
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Moraxella_A  s__Moraxella_A sp002478835  ERR2592260_bin.9
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__Neisseria suis   ERR2592262_bin.1
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Cloacibacterium  s__Cloacibacterium caeni_A  ERR2592262_bin.3
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Ottowia  s__Ottowia sp018060485  ERR2592262_bin.4
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Aerococcaceae    g__Trichococcus s__Trichococcus flocculiformis  ERR2592262_bin.5
+d__Bacteria p__Fusobacteriota   c__Fusobacteriia    o__Fusobacteriales  f__Leptotrichiaceae g__JAGOYM01 s__JAGOYM01 sp018059165 ERR2592262_bin.6
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__Brachymonas sp018054915  ERR2592264_bin.1
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Thiotrichales    f__Thiotrichaceae   g__ s__ ERR2592264_bin.10
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Xanthomonadales  f__Xanthomonadaceae g__Pseudoxanthomonas_A  s__ ERR2592264_bin.12
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Selenomonadales  f__JAGPMH01 g__JAGPMH01 s__JAGPMH01 sp018052945 ERR2592264_bin.13
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__CTSOIL-112   s__ ERR2592264_bin.14
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Lachnospirales   f__Lachnospiraceae  g__Agathobacter s__Agathobacter rectalis    ERR2592264_bin.15
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Thiotrichales    f__Thiotrichaceae   g__ s__ ERR2592264_bin.16
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister hominis    ERR2592264_bin.17
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Enterobacterales f__Enterobacteriaceae   g__Escherichia  s__Escherichia coli ERR2592264_bin.18
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__ ERR2592264_bin.19
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Streptococcaceae g__Streptococcus    s__ ERR2592264_bin.2
+d__Bacteria p__Actinobacteriota c__Actinomycetia    o__Actinomycetales  f__Bifidobacteriaceae   g__Bifidobacterium  s__Bifidobacterium adolescentis ERR2592264_bin.20
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Enterobacterales f__Enterobacteriaceae   g__Klebsiella   s__Klebsiella pneumoniae    ERR2592264_bin.21
+d__Bacteria p__Firmicutes   c__Bacilli  o__Erysipelotrichales   f__Coprobacillaceae g__Catenibacterium  s__Catenibacterium sp000437715  ERR2592264_bin.22
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter parvus ERR2592264_bin.24
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Sphaerotilus s__Sphaerotilus sulfidivorans   ERR2592264_bin.25
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Cloacibacterium  s__ ERR2592264_bin.26
+d__Bacteria p__Campylobacterota c__Campylobacteria  o__Campylobacterales    f__Arcobacteraceae  g__Aliarcobacter    s__Aliarcobacter cryaerophilus_A    ERR2592264_bin.27
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Oscillospirales  f__Acutalibacteraceae   g__Fimenecus    s__Fimenecus sp000432435    ERR2592264_bin.28
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister hominis    ERR2592264_bin.29
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Lachnospirales   f__Lachnospiraceae  g__Blautia_A    s__Blautia_A wexlerae   ERR2592264_bin.30
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Ottowia  s__ ERR2592264_bin.31
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Epilithonimonas  s__ ERR2592264_bin.32
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Selenomonadales  f__Selenomonadaceae g__Megamonas    s__Megamonas funiformis ERR2592264_bin.5
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Selenomonadales  f__Selenomonadaceae g__Megamonas    s__Megamonas funiformis ERR2592264_bin.7
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Thiotrichales    f__Thiotrichaceae   g__ s__ ERR2592264_bin.8
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister hominis    ERR2592264_bin.9
+d__Bacteria p__Desulfobacterota c__Syntrophia   o__Syntrophales f__UBA5619  g__UBA5619  s__ ERR2592265_bin.1
+d__Bacteria p__Desulfobacterota c__Syntrophia   o__Syntrophales f__Fen-1087 g__Fen-1087 s__ ERR2592265_bin.10
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__JAABTG01 f__JAABTG01 g__JAGNLM01 s__ ERR2592265_bin.11
+d__Bacteria p__Synergistota c__Synergistia  o__Synergistales    f__Synergistaceae   g__Syner-03 s__Syner-03 sp002316795 ERR2592265_bin.13
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister invisus    ERR2592265_bin.14
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__UBA1444  f__UBA1444  g__UBA1444  s__ ERR2592265_bin.15
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Ottowia  s__Ottowia sp018060485  ERR2592265_bin.16
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__Brachymonas sp012729605  ERR2592265_bin.17
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__Neisseria suis   ERR2592265_bin.18
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister hominis    ERR2592265_bin.19
+d__Bacteria p__UBA1439  c__UBA1439  o__UBA1439  f__UBA1439  g__UBA1439  s__UBA1439 sp002329605  ERR2592265_bin.20
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Lachnospirales   f__Lachnospiraceae  g__Eisenbergiella   s__Eisenbergiella sp900066775   ERR2592265_bin.21
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Lachnospirales   f__Lachnospiraceae  g__Agathobacter s__Agathobacter rectalis    ERR2592265_bin.22
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__Brachymonas denitrificans    ERR2592265_bin.23
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Oscillospirales  f__Ruminococcaceae  g__Gemmiger s__Gemmiger qucibialis  ERR2592265_bin.24
+d__Bacteria p__Verrucomicrobiota    c__Verrucomicrobiae o__Verrucomicrobiales   f__SLCJ01   g__ s__ ERR2592265_bin.25
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Xanthomonadales  f__Xanthomonadaceae g__Pseudoxanthomonas    s__Pseudoxanthomonas sp018060215    ERR2592265_bin.26
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__CTSOIL-112   s__ ERR2592265_bin.27
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__Brachymonas chironomi    ERR2592265_bin.28
+d__Bacteria p__Actinobacteriota c__Actinomycetia    o__Actinomycetales  f__Bifidobacteriaceae   g__Bifidobacterium  s__Bifidobacterium adolescentis ERR2592265_bin.29
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister hominis    ERR2592265_bin.3
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Enterobacterales f__Enterobacteriaceae   g__Escherichia  s__Escherichia coli ERR2592265_bin.30
+d__Bacteria p__Verrucomicrobiota    c__Kiritimatiellae  o__LD1-PB3  f__Lenti-01 g__Lenti-01 s__ ERR2592265_bin.4
+d__Bacteria p__Verrucomicrobiota    c__Verrucomicrobiae o__Verrucomicrobiales   f__Akkermansiaceae  g__Akkermansia  s__Akkermansia muciniphila  ERR2592265_bin.5
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister invisus    ERR2592265_bin.6
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Ottowia  s__Ottowia beijingensis ERR2592265_bin.8
+d__Bacteria p__Desulfobacterota c__Desulfobulbia    o__Desulfobulbales  f__Desulfobulbaceae g__Desulfobulbus    s__Desulfobulbus sp017998195    ERR2592265_bin.9
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Lachnospirales   f__Lachnospiraceae  g__Agathobacter s__Agathobacter rectalis    ERR2592268_bin.1
+d__Bacteria p__Firmicutes_E c__DTU015   o__D8A-2    f__D2   g__UBA3907  s__UBA3907 sp018052475  ERR2592268_bin.10
+d__Bacteria p__Synergistota c__Synergistia  o__Synergistales    f__Synergistaceae   g__Syner-03 s__Syner-03 sp002306075 ERR2592268_bin.12
+d__Bacteria p__Synergistota c__Synergistia  o__Synergistales    f__Synergistaceae   g__ s__ ERR2592268_bin.13
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Bacteroidales    f__Paludibacteraceae    g__UPXZ01   s__ ERR2592268_bin.14
+d__Bacteria p__Patescibacteria  c__Dojkabacteria    o__B142 f__OLB20    g__ s__ ERR2592268_bin.15
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Oscillospirales  f__Acutalibacteraceae   g__Fimenecus    s__Fimenecus sp000432435    ERR2592268_bin.16
+d__Bacteria p__Verrucomicrobiota    c__Verrucomicrobiae o__Verrucomicrobiales   f__Akkermansiaceae  g__Akkermansia  s__Akkermansia muciniphila  ERR2592268_bin.19
+d__Bacteria p__Desulfobacterota c__Desulfobulbia    o__Desulfobulbales  f__Desulfobulbaceae g__Desulfobulbus    s__ ERR2592268_bin.2
+d__Bacteria p__Patescibacteria  c__Saccharimonadia  o__Saccharimonadales    f__JAGPDM01 g__JAGPDM01 s__ ERR2592268_bin.20
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Xanthomonadales  f__Xanthomonadaceae g__Pseudoxanthomonas_A  s__ ERR2592268_bin.21
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Selenomonadales  f__JAGPMH01 g__JAGPMH01 s__JAGPMH01 sp018052945 ERR2592268_bin.23
+d__Bacteria p__Actinobacteriota c__Acidimicrobiia   o__Acidimicrobiales f__Microtrichaceae  g__Microthrix   s__ ERR2592268_bin.25
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Oscillospirales  f__Acutalibacteraceae   g__Fimenecus    s__Fimenecus sp000432435    ERR2592268_bin.26
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Cloacibacterium  s__Cloacibacterium caeni_A  ERR2592268_bin.27
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Tissierellales   f__Peptoniphilaceae g__JAAYEL01 s__ ERR2592268_bin.28
+d__Bacteria p__Campylobacterota c__Campylobacteria  o__Campylobacterales    f__Arcobacteraceae  g__Aliarcobacter    s__ ERR2592268_bin.29
+d__Bacteria p__Actinobacteriota c__Actinomycetia    o__Actinomycetales  f__Bifidobacteriaceae   g__Bifidobacterium  s__Bifidobacterium adolescentis ERR2592268_bin.3
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Bacteroidales    f__Dysgonomonadaceae    g__UBA5287  s__ ERR2592268_bin.30
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Peptostreptococcales f__Filifactoraceae  g__Proteocatella    s__Proteocatella sp009929415    ERR2592268_bin.31
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Bacteroidales    f__Paludibacteraceae    g__UPXZ01   s__ ERR2592268_bin.32
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Acidaminococcales    f__Acidaminococcaceae   g__ s__ ERR2592268_bin.33
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Lachnospirales   f__Lachnospiraceae  g__JAGOGN01 s__ ERR2592268_bin.34
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Oscillospirales  f__Ruminococcaceae  g__Gemmiger s__Gemmiger qucibialis  ERR2592268_bin.35
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Psychrobacter    s__Psychrobacter faecalis   ERR2592268_bin.36
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister invisus    ERR2592268_bin.37
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Bacteroidales    f__UBA4417  g__UBA4417  s__ ERR2592268_bin.38
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Comamonas    s__Comamonas denitrificans_A    ERR2592268_bin.39
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Ottowia  s__Ottowia sp018060485  ERR2592268_bin.40
+d__Bacteria p__Patescibacteria  c__ABY1 o__BM507    f__UBA917   g__UBA1359  s__ ERR2592268_bin.41
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Enterococcaceae  g__Enterococcus_I   s__Enterococcus_I aquimarinus   ERR2592268_bin.42
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__Brachymonas sp017993135  ERR2592268_bin.43
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister invisus    ERR2592268_bin.44
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Aerococcaceae    g__Trichococcus s__Trichococcus flocculiformis  ERR2592268_bin.45
+d__Bacteria p__Patescibacteria  c__Dojkabacteria    o__SC72 f__SC72 g__ s__ ERR2592268_bin.46
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Acidovorax   s__Acidovorax defluvii  ERR2592268_bin.47
+d__Bacteria p__Patescibacteria  c__Paceibacteria    o__UBA6257  f__ g__ s__ ERR2592268_bin.48
+d__Bacteria p__Patescibacteria  c__Saccharimonadia  o__Saccharimonadales    f__UBA7683  g__ s__ ERR2592268_bin.49
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__Neisseria suis   ERR2592268_bin.5
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter johnsonii  ERR2592268_bin.50
+d__Bacteria p__Fusobacteriota   c__Fusobacteriia    o__Fusobacteriales  f__Leptotrichiaceae g__JAGOYM01 s__JAGOYM01 sp018059165 ERR2592268_bin.6
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Peptostreptococcales f__Filifactoraceae  g__Proteocatella    s__ ERR2592268_bin.7
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Tissierellales   f__Peptoniphilaceae g__JAAYEL01 s__ ERR2592268_bin.8
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Streptococcaceae g__Lactococcus_A    s__Lactococcus_A raffinolactis  ERR2592268_bin.9
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__CTSOIL-112   s__ ERR2592269_bin.10
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__ ERR2592269_bin.11
+d__Bacteria p__Caldisericota    c__Caldisericia o__Caldisericales   f__Caldisericaceae  g__ s__ ERR2592269_bin.12
+d__Bacteria p__Chloroflexota    c__Anaerolineae o__Anaerolineales   f__Anaerolineaceae  g__ s__ ERR2592269_bin.13
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Enterobacterales f__Pasteurellaceae  g__Glaesserella s__ ERR2592269_bin.14
+d__Bacteria p__Desulfobacterota c__Syntrophia   o__Syntrophales f__UBA5619  g__UBA5619  s__ ERR2592269_bin.16
+d__Bacteria p__Verrucomicrobiota    c__Kiritimatiellae  o__LD1-PB3  f__Lenti-01 g__Lenti-01 s__ ERR2592269_bin.17
+d__Bacteria p__Bacteroidota c__Ignavibacteria   o__SJA-28   f__B-1AR    g__CAIKZJ01 s__ ERR2592269_bin.18
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Bacteroidales    f__VadinHA17    g__SR-FBR-E99   s__SR-FBR-E99 sp018262715   ERR2592269_bin.19
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Cloacibacterium  s__ ERR2592269_bin.2
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__CTSOIL-112   s__ ERR2592269_bin.20
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Enterobacterales f__Enterobacteriaceae   g__Klebsiella   s__Klebsiella quasipneumoniae   ERR2592269_bin.22
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__JAABTG01 f__JAABTG01 g__JAGNLM01 s__ ERR2592269_bin.23
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Xanthomonadales  f__Rhodanobacteraceae   g__ s__ ERR2592269_bin.24
+d__Bacteria p__Desulfobacterota c__Syntrophia   o__Syntrophales f__Fen-1087 g__Fen-1087 s__ ERR2592269_bin.25
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Xanthomonadales  f__Xanthomonadaceae g__Thermomonas  s__ ERR2592269_bin.26
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Streptococcaceae g__Streptococcus    s__ ERR2592269_bin.28
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Casimicrobiaceae g__VBCG01   s__ ERR2592269_bin.29
+d__Bacteria p__UBA1439  c__UBA1439  o__UBA1439  f__UBA1439  g__UBA1439  s__UBA1439 sp002329605  ERR2592269_bin.3
+d__Bacteria p__Spirochaetota    c__JAAYUW01 o__JAAYUW01 f__JAAYUW01 g__Exilispira   s__ ERR2592269_bin.30
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__ ERR2592269_bin.32
+d__Bacteria p__Desulfobacterota c__Syntrophia   o__Syntrophales f__Smithellaceae    g__UBA8904  s__UBA8904 sp002070455  ERR2592269_bin.35
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__Brachymonas sp018054915  ERR2592269_bin.4
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter harbinensis    ERR2592269_bin.5
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Streptococcaceae g__Streptococcus    s__ ERR2592269_bin.7
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Tissierellales   f__Sedimentibacteraceae g__Sedimentibacter  s__Sedimentibacter sp017995755  ERR2592269_bin.8
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter parvus ERR2592269_bin.9
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Flavobacteriaceae    g__Flavobacterium   s__Flavobacterium sp017997335   ERR2592273_bin.1
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter pullicarnis    ERR2592273_bin.10
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__ ERR2592273_bin.12
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Pseudomonadaceae g__Pseudomonas_E    s__ ERR2592273_bin.13
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter harbinensis    ERR2592273_bin.14
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Acidovorax   s__Acidovorax defluvii  ERR2592273_bin.15
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Flavobacteriaceae    g__Flavobacterium   s__ ERR2592273_bin.16
+d__Bacteria p__Campylobacterota c__Campylobacteria  o__Campylobacterales    f__Arcobacteraceae  g__Aliarcobacter    s__Aliarcobacter acticola   ERR2592273_bin.17
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__ ERR2592273_bin.19
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Comamonas    s__ ERR2592273_bin.2
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__Acinetobacter celticus   ERR2592273_bin.20
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Flavobacteriaceae    g__Flavobacterium   s__ ERR2592273_bin.21
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Flavobacteriaceae    g__Flavobacterium   s__ ERR2592273_bin.22
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Pseudomonadaceae g__Pseudomonas_E    s__ ERR2592273_bin.26
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Flavobacteriaceae    g__Flavobacterium   s__ ERR2592273_bin.27
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Evansiales   f__ g__ s__ ERR2592273_bin.28
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Flavobacteriaceae    g__Flavobacterium   s__ ERR2592273_bin.3
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Bergeyella_A s__ ERR2592273_bin.4
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Comamonas    s__ ERR2592273_bin.5
+d__Bacteria p__Actinobacteriota c__Actinomycetia    o__Actinomycetales  f__Microbacteriaceae    g__ s__ ERR2592273_bin.6
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Flavobacteriaceae    g__Flavobacterium   s__Flavobacterium sp017989775   ERR2592273_bin.7
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Kaistella    s__Kaistella chaponensis    ERR2592273_bin.8
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Psychrobacter    s__Psychrobacter faecalis   ERR2592273_bin.9
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Ottowia  s__ ERR2592274_bin.1
+d__Bacteria p__Actinobacteriota c__Actinomycetia    o__Mycobacteriales  f__Mycobacteriaceae g__Rhodococcus  s__Rhodococcus qingshengii  ERR2592274_bin.11
+d__Bacteria p__Actinobacteriota c__Actinomycetia    o__Actinomycetales  f__Dermatophilaceae g__Ornithinibacter  s__Ornithinibacter sp017989115  ERR2592274_bin.12
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Formosimonas s__ ERR2592274_bin.13
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Acidovorax   s__Acidovorax defluvii  ERR2592274_bin.14
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Acidovorax   s__Acidovorax temperans ERR2592274_bin.15
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Streptococcaceae g__Lactococcus_A    s__Lactococcus_A raffinolactis  ERR2592274_bin.16
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__JAGOEY01 s__ ERR2592274_bin.17
+d__Bacteria p__Fusobacteriota   c__Fusobacteriia    o__Fusobacteriales  f__Leptotrichiaceae g__JAGOYM01 s__JAGOYM01 sp018059165 ERR2592274_bin.18
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Moraxella_A  s__Moraxella_A sp002478835  ERR2592274_bin.19
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__ ERR2592274_bin.2
+d__Bacteria p__Chloroflexota    c__Anaerolineae o__Anaerolineales   f__Anaerolineaceae  g__Brevefilum   s__Brevefilum fermentans    ERR2592274_bin.20
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Oscillospirales  f__Ruminococcaceae  g__Faecalibacterium s__Faecalibacterium prausnitzii_G   ERR2592274_bin.21
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Kaistella    s__Kaistella chaponensis    ERR2592274_bin.22
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Flavobacteriaceae    g__Flavobacterium   s__Flavobacterium sp017997335   ERR2592274_bin.23
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Aerococcaceae    g__Trichococcus s__Trichococcus flocculiformis  ERR2592274_bin.25
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__ ERR2592274_bin.26
+d__Bacteria p__Firmicutes_A c__Clostridia   o__TANB77   f__CAG-508  g__CAG-273  s__ ERR2592274_bin.27
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Oscillospirales  f__Acutalibacteraceae   g__Ruminococcus_E   s__Ruminococcus_E sp003526955   ERR2592274_bin.3
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister invisus    ERR2592274_bin.4
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Hydromonas   s__ ERR2592274_bin.5
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Acinetobacter    s__ ERR2592274_bin.6
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister invisus    ERR2592274_bin.9
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__ ERR2592276_bin.1
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Streptococcaceae g__Streptococcus    s__Streptococcus parasuis   ERR2592276_bin.10
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__Neisseria suis   ERR2592276_bin.11
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__ ERR2592276_bin.12
+d__Bacteria p__Fusobacteriota   c__Fusobacteriia    o__Fusobacteriales  f__Leptotrichiaceae g__Sebaldella   s__Sebaldella termitidis    ERR2592276_bin.13
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Comamonas    s__Comamonas denitrificans_A    ERR2592276_bin.14
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Oscillospirales  f__Ruminococcaceae  g__Gemmiger s__Gemmiger qucibialis  ERR2592276_bin.16
+d__Bacteria p__Fusobacteriota   c__Fusobacteriia    o__Fusobacteriales  f__Leptotrichiaceae g__JAGOYM01 s__ ERR2592276_bin.17
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Peptostreptococcales f__Filifactoraceae  g__Proteocatella    s__Proteocatella sp009929415    ERR2592276_bin.18
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__ ERR2592276_bin.19
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Acidovorax   s__Acidovorax temperans ERR2592276_bin.2
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Lachnospirales   f__Lachnospiraceae  g__Agathobacter s__Agathobacter rectalis    ERR2592276_bin.20
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Enterobacterales f__Pasteurellaceae  g__Chelonobacter    s__ ERR2592276_bin.21
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Veillonellales   f__Dialisteraceae   g__Dialister    s__Dialister invisus    ERR2592276_bin.22
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Pseudomonadales  f__Moraxellaceae    g__Moraxella    s__ ERR2592276_bin.23
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Brachymonas  s__Brachymonas sp017996515  ERR2592276_bin.24
+d__Bacteria p__Bacteroidota c__Bacteroidia  o__Flavobacteriales f__Weeksellaceae    g__Cloacibacterium  s__Cloacibacterium caeni_A  ERR2592276_bin.27
+d__Bacteria p__Campylobacterota c__Campylobacteria  o__Campylobacterales    f__Arcobacteraceae  g__Aliarcobacter    s__Aliarcobacter cryaerophilus_A    ERR2592276_bin.28
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Lachnospirales   f__Lachnospiraceae  g__Blautia_A    s__Blautia_A wexlerae   ERR2592276_bin.29
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Burkholderiaceae g__Ottowia  s__Ottowia beijingensis ERR2592276_bin.3
+d__Bacteria p__Firmicutes_C c__Negativicutes    o__Selenomonadales  f__JAGPMH01 g__JAGPMH01 s__JAGPMH01 sp018052945 ERR2592276_bin.30
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Lachnospirales   f__Lachnospiraceae  g__Eisenbergiella   s__Eisenbergiella sp900066775   ERR2592276_bin.31
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Oscillospirales  f__Ruminococcaceae  g__Faecalibacterium s__Faecalibacterium prausnitzii_C   ERR2592276_bin.4
+d__Bacteria p__Proteobacteria   c__Gammaproteobacteria  o__Burkholderiales  f__Neisseriaceae    g__Neisseria    s__ ERR2592276_bin.5
+d__Bacteria p__Firmicutes   c__Bacilli  o__Lactobacillales  f__Streptococcaceae g__Streptococcus    s__ ERR2592276_bin.6
+d__Bacteria p__Fusobacteriota   c__Fusobacteriia    o__Fusobacteriales  f__Leptotrichiaceae g__JAGOYM01 s__ ERR2592276_bin.7
+d__Bacteria p__Firmicutes_A c__Clostridia   o__Peptostreptococcales f__Filifactoraceae  g__Acetoanaerobium  s__Acetoanaerobium noterae  ERR2592276_bin.8
+d__Bacteria p__Desulfobacterota c__Desulfobulbia    o__Desulfobulbales  f__Desulfobulbaceae g__Desulfobulbus    s__ ERR2592276_bin.9
+</code></pre></div>
+GTDB assignment of all samples that were produced by the magAttributes module.</p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>BIN_ID  PATH
+ERR2592244_bin.27   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592244_bin.27.fa.xml
+ERR2592244_bin.33   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592244_bin.33.fa.xml
+ERR2592245_bin.18   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592245_bin.18.fa.xml
+ERR2592249_bin.19   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592249_bin.19.fa.xml
+ERR2592249_bin.25   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592249_bin.25.fa.xml
+ERR2592249_bin.27   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592249_bin.27.fa.xml
+ERR2592249_bin.29   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592249_bin.29.fa.xml
+ERR2592249_bin.31   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592249_bin.31.fa.xml
+ERR2592249_bin.38   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592249_bin.38.fa.xml
+ERR2592251_bin.11   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592251_bin.11.fa.xml
+ERR2592251_bin.12   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592251_bin.12.fa.xml
+ERR2592251_bin.13   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592251_bin.13.fa.xml
+ERR2592252_bin.11   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592252_bin.11.fa.xml
+ERR2592252_bin.16   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592252_bin.16.fa.xml
+ERR2592252_bin.19   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592252_bin.19.fa.xml
+ERR2592252_bin.25   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592252_bin.25.fa.xml
+ERR2592252_bin.35   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592252_bin.35.fa.xml
+ERR2592252_bin.44   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592252_bin.44.fa.xml
+ERR2592252_bin.5    https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592252_bin.5.fa.xml
+ERR2592252_bin.6    https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592252_bin.6.fa.xml
+ERR2592253_bin.11   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592253_bin.11.fa.xml
+ERR2592253_bin.13   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592253_bin.13.fa.xml
+ERR2592253_bin.23   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592253_bin.23.fa.xml
+ERR2592253_bin.35   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592253_bin.35.fa.xml
+ERR2592253_bin.37   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592253_bin.37.fa.xml
+ERR2592253_bin.4    https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592253_bin.4.fa.xml
+ERR2592253_bin.6    https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592253_bin.6.fa.xml
+ERR2592253_bin.9    https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592253_bin.9.fa.xml
+ERR2592258_bin.2    https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592258_bin.2.fa.xml
+ERR2592258_bin.21   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592258_bin.21.fa.xml
+ERR2592258_bin.3    https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592258_bin.3.fa.xml
+ERR2592258_bin.5    https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592258_bin.5.fa.xml
+ERR2592258_bin.56   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592258_bin.56.fa.xml
+ERR2592260_bin.16   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592260_bin.16.fa.xml
+ERR2592262_bin.5    https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592262_bin.5.fa.xml
+ERR2592262_bin.6    https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592262_bin.6.fa.xml
+ERR2592264_bin.1    https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592264_bin.1.fa.xml
+ERR2592265_bin.11   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592265_bin.11.fa.xml
+ERR2592265_bin.13   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592265_bin.13.fa.xml
+ERR2592265_bin.7    https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592265_bin.7.fa.xml
+ERR2592265_bin.9    https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592265_bin.9.fa.xml
+ERR2592268_bin.23   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592268_bin.23.fa.xml
+ERR2592268_bin.38   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592268_bin.38.fa.xml
+ERR2592268_bin.45   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592268_bin.45.fa.xml
+ERR2592269_bin.12   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592269_bin.12.fa.xml
+ERR2592269_bin.19   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592269_bin.19.fa.xml
+ERR2592269_bin.4    https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592269_bin.4.fa.xml
+ERR2592274_bin.18   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592274_bin.18.fa.xml
+ERR2592274_bin.3    https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592274_bin.3.fa.xml
+ERR2592276_bin.23   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592276_bin.23.fa.xml
+ERR2592276_bin.28   https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592276_bin.28.fa.xml
+ERR2592276_bin.5    https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/medium/cooccurrence/ERR2592276_bin.5.fa.xml
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>The following parameters can be configured:</p>
+<ul>
+<li>
+<p>metabolicEdgeBatches: Batches of edges that are provided as input to SMETANA.</p>
+</li>
+<li>
+<p>metabolicEdgeReplicates: Number of replicates per edge that should be computed.</p>
+</li>
+</ul>
+<h2 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p>output_raw.graphml: Cooccurrence network unfiltered in graphml format</p>
+</li>
+<li>
+<p>output.graphml: Filtered cooccurrence network in graphml format</p>
+</li>
+<li>
+<p>edges_index.tsv: Edges of the graph</p>
+</li>
+<li>
+<p>edgeAttributes.tsv: Edge attributes of the graph containing metrics computed by SMETANA.</p>
+</li>
+</ul>
+<h3 id="spiec-easi">SPIEC-EASI<a class="headerlink" href="#spiec-easi" title="Permanent link">&para;</a></h3>
+<ul>
+<li>stability.txt: Network stability estimation</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "content.code.copy"], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.bd41221c.min.js"></script>
+      
+    
+  </body>
+</html>
