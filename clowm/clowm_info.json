@@ -1,0 +1,22 @@
+{
+    "inputParameters": ["input.paired.path"],
+    "outputParameters": ["output"],
+    "resourceParameters": [
+        "steps.magAttributes.gtdb.database.extractedDBPath",
+        "steps.magAttributes.checkm.database.extractedDBPath",
+        "steps.annotation.mmseqs2.kegg.database.extractedDBPath",
+        "steps.annotation.mmseqs2.vfdb.database.extractedDBPath",
+        "steps.annotation.mmseqs2.bacmet20_experimental.database.extractedDBPath",
+        "steps.annotation.mmseqs2.bacmet20_predicted.database.extractedDBPath",
+        "steps.annotation.mmseqs2.uniref90.database.extractedDBPath",
+        "steps.annotation.mmseqs2_taxonomy.gtdb.database.extractedDBPath",
+        "steps.annotation.rgi.database.extractedDBPath",
+        "steps.annotation.keggFromMMseqs2.database.extractedDBPath",
+        "steps.plasmid.ViralVerifyPlasmid.database.extractedDBPath",
+        "steps.plasmid.PLSDB.database.extractedDBPath",
+        "steps.magAttributes.checkm2.database.extractedDBPath"
+    ],
+    "exampleParameters": {
+        "input.paired.path": "https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/test_data/fullPipeline/reads_split.tsv"
+        }
+}
