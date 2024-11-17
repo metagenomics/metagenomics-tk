@@ -37,6 +37,8 @@ steps:
   qcONT:
     porechop:
        additionalParams:
+         # Input files are split into chunks because of RAM issues
+         chunkSize: 450000
          porechop: ""
         # --keep_percent Throw out the worst 10% of reads. This is measured by bp, not by read count. So this option throws out the worst 10% of read bases. 
         # 

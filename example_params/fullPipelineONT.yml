@@ -16,6 +16,7 @@ steps:
     porechop:
        additionalParams:
          porechop: ""
+         chunkSize: 450000
          filtlong: " --min_length 1000 --keep_percent 90  "
     nanoplot:
       additionalParams: ""
