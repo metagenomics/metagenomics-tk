@@ -18,6 +18,12 @@
           "format": "file-path",
           "fa_icon": "fas fa-file"
         },
+        "input.ont.path": {
+          "type": "string",
+          "description": "File with paths to ONT read files",
+          "format": "file-path",
+          "fa_icon": "fas fa-file"
+        },
         "output": {
           "type": "string",
           "description": "Directory for output",
@@ -67,7 +73,10 @@
           "type": "string",
           "description": "Store results as symlink (to work folder) or copy (in output folder)",
           "default": "copy",
-          "enum": ["symlink", "copy"],
+          "enum": [
+            "symlink",
+            "copy"
+          ],
           "hidden": true
         },
         "scratch": {
@@ -77,7 +86,24 @@
           "hidden": true
         }
       },
-      "required": ["input.paired.path", "output", "runid", "summary", "tempdir"]
+      "required": [
+        "output",
+        "runid",
+        "summary",
+        "tempdir"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "input.paired.path"
+          ]
+        },
+        {
+          "required": [
+            "input.ont.path"
+          ]
+        }
+      ]
     },
     "quality_control": {
       "title": "Quality control",
@@ -120,6 +146,40 @@
         }
       }
     },
+    "quality_control_ont ": {
+      "title": "Quality control ONT",
+      "type": "object",
+      "description": "",
+      "fa_icon": "fas fa-ranking-star",
+      "properties": {
+        "steps.qcONT.porechop.additionalParams.chunkSize": {
+          "type": "integer",
+          "default": 450000,
+          "description": "Number of sequences per chunk as input for porechop",
+          "maximum": 500000,
+          "minimum": 300000,
+          "hidden": true
+        },
+        "steps.qcONT.porechop.additionalParams.porechop": {
+          "type": "string",
+          "default": " ",
+          "description": "Command line parameters for porechop",
+          "hidden": true
+        },
+        "steps.qcONT.porechop.additionalParams.filtlong": {
+          "type": "string",
+          "default": " --min_length 1000  --keep_percent 90 ",
+          "description": "Command line parameters for porechop filtlong",
+          "hidden": true
+        },
+        "steps.qcONT.nanoplot.additionalParams": {
+          "type": "string",
+          "default": " ",
+          "description": "Command line parameters for nanoplot",
+          "hidden": true
+        }
+      }
+    },
     "assembly": {
       "title": "Assembly",
       "type": "object",
@@ -145,15 +205,48 @@
           "type": "string",
           "description": "Flag to predict resources",
           "displayName": "predict resource",
-          "enum": ["DEFAULT", "PREDICT"],
-          "default": "DEFAULT",
+          "enum": [
+            "DEFAULT",
+            "PREDICT"
+          ],
+          "default": "PREDICTED",
           "hidden": true
         },
         "steps.assembly.megahit.resources.RAM.predictMinLabel": {
           "type": "string",
           "description": "Default label for resource allocation",
           "displayName": "resource label",
-          "default": "highmemLarge",
+          "default": "medium",
+          "hidden": true
+        }
+      }
+    },
+    "assembly_ont": {
+      "title": "Assembly ONT",
+      "type": "object",
+      "description": "",
+      "default": "",
+      "fa_icon": "fas fa-bars-staggered",
+      "properties": {
+        "steps.assemblyONT.metaflye.additionalParams": {
+          "type": "string",
+          "description": "Command line parameters for metaflye",
+          "default": " -i 1 ",
+          "hidden": true
+        },
+        "steps.assemblyONT.metaflye.quality": {
+          "type": "string",
+          "description": "Quality mode for metaflye",
+          "default": "AUTO",
+          "enum": [
+            "AUTO",
+            "--pacbio-raw",
+            "--pacbio-corr",
+            "--pacbio-hifi",
+            "--nano-raw",
+            "--nano-corr",
+            "--nano-hq"
+          ],
           "hidden": true
         }
       }
@@ -195,6 +288,45 @@
           "displayName": "metabat additional parameters",
           "help_text": "Set --seed positive numbers to reproduce the result exactly. Otherwise, random seed will be set each time.",
           "default": "  --seed 234234 "
+        }
+      }
+    },
+    "binning_ont": {
+      "title": "Binning ONT",
+      "type": "object",
+      "description": "",
+      "default": "",
+      "fa_icon": "fas fa-layer-group",
+      "properties": {
+        "steps.binningONT.minimap.additionalParams.minimap": {
+          "type": "string",
+          "description": "Command line parameters for minimap.",
+          "default": "",
+          "hidden": true
+        },
+        "steps.binningONT.minimap.additionalParams.samtoolsView": {
+          "type": "string",
+          "description": "Command line parameters for minimap step samtools view.",
+          "default": " -F 3584 ",
+          "hidden": true
+        },
+        "steps.binningONT.contigsCoverage.additionalParams": {
+          "type": "string",
+          "description": "Command line parameters for contigs coverage.",
+          "default": " --min-covered-fraction 0  --min-read-aligned-percent 100 ",
+          "hidden": true
+        },
+        "steps.binningONT.genomeCoverage.additionalParams": {
+          "type": "string",
+          "description": "Command line parameters for genome coverage.",
+          "default": " --min-covered-fraction 0  --min-read-aligned-percent 100 ",
+          "hidden": true
+        },
+        "steps.binningONT.metabat.additionalParams": {
+          "type": "string",
+          "description": "Command line parameters for metabat.",
+          "default": " --seed 234234 ",
+          "hidden": true
         }
       }
     },
