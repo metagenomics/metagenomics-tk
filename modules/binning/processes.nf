@@ -26,7 +26,9 @@ process pGetBinStatistics {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${binner}", filename) }
 
-    label 'tiny'
+    memory { Utils.getMemoryResources(params.resources.tiny, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.tiny.tiny, "${sample}", task.attempt, params.resources) }
 
     input:
     val(module)

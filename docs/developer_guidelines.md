@@ -152,6 +152,25 @@ tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".comman
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 ```
 
+
+### Resources
+
+Usually all processes get a label that is linked to the flavor provided in the resources section of the configuration file (e.g. `small`, `medium`, `large`).
+In cases where we can foresee that a processes might need more RAM depending on the size of the input data, it is also possible to use
+the getMemoryResources and getCPUsResources methods provided by the Utils class:
+
+Example:
+
+```
+memory { Utils.getMemoryResources(params.resources.small, "${sample}", task.attempt, params.resources) }
+
+cpus { Utils.getCPUsResources(params.resources.tiny.small, "${sample}", task.attempt, params.resources) }
+```
+
+One example where it might make sense to use this option is when a process uses `csvtk join` and uses per default a label with
+little RAM assigned.
+
+
 ### Time Limit
 
 Every process must define a time limit which will never be reached on "normal" execution. This limit is only useful for errors in the execution environment  
