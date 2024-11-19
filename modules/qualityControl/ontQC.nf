@@ -10,8 +10,6 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 
 /*
 * This process runs Adapter trimming (Porechop) and quality control (filtlong) in one step in order to reduce disk space consumption of the work directory.
-*  
-*
 */
 process pPorechop {
 
@@ -21,52 +19,76 @@ process pPorechop {
 
     cache 'deep'
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "porechop", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "porechop", filename) }, \
+	pattern: "{.command.sh,.command.out,.command.err,.command.log}"
 
     when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("porechop")
 
     container "${params.porechop_image}"
 
     input:
-    tuple val(sample), path(read1, stageAs: "reads.fq.gz")
+    tuple val(sample), path(read1, stageAs: "reads.fq.gz"), val(start), val(stop), val(chunkSize)
 
     output:
-    tuple val("${sample}"), path("${sample}_qc.fq.gz"), emit: reads
+    tuple val("${sample}"), path("${sample}_qc.fq.gz"), val("${chunkSize}"), emit: reads
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
     '''
-    porechop -i reads.fq.gz -o reads.porechoped.fq.gz --threads !{task.cpus} !{params.steps.qcONT.porechop.additionalParams.porechop}
+    seqkit range -r !{start}:!{stop} !{read1} > reads_extracted.fq
+    porechop -i reads_extracted.fq -o reads.porechoped.fq.gz --threads !{task.cpus} !{params.steps.qcONT.porechop.additionalParams.porechop}
     filtlong !{params.steps.qcONT.porechop.additionalParams.filtlong} reads.porechoped.fq.gz | pigz --processes !{task.cpus} > !{sample}_qc.fq.gz
     '''
 }
 
+/**
+*
+* This process counts entries in a fastq file. 
+*
+**/
+process pCount {
 
-/*
-* See Porechop
-*/
-process pPorechopDownload {
-
-    label 'small'
+    label 'tiny'
 
     tag "Sample: $sample"
 
-    cache 'deep'
-
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "porechop", filename) }
+    container "${params.ubuntu_image}"
 
     when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("porechop")
 
-    container "${params.porechop_image}"
+    input:
+    tuple val(sample), path(fastq)
 
-    containerOptions Utils.getDockerNetwork()
+    output:
+    tuple val("${sample}"), path(fastq), env(COUNT) 
+
+    shell:
+    '''
+    set -o pipefail
+    COUNT=$(seqkit stats -T <(cat !{fastq}) | cut -d$'\t' -f 4 | tail -n 1)
+    '''
+}
+
+/**
+*
+* See pCount process
+*
+**/
+process pCountDownload {
+
+    label 'tiny'
+
+    tag "Sample: $sample"
+
+    container "${params.ubuntu_image}"
+
+    when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("porechop")
 
     input:
     tuple val(sample), env(readUrl)
 
     output:
-    tuple val("${sample}"), path("${sample}_qc.fq.gz"), emit: reads
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+    tuple val("${sample}"), path(fastq), env(COUNT) 
 
     shell:
     '''
@@ -82,9 +104,35 @@ process pPorechopDownload {
        echo "No network issue found";
     fi
 
-    porechop -i reads.fq.gz -o reads.porechoped.fq.gz --threads !{task.cpus} !{params.steps.qcONT.porechop.additionalParams.porechop}
-    filtlong !{params.steps.qcONT.porechop.additionalParams.filtlong} reads.porechoped.fq.gz \
-	| pigz --processes !{task.cpus} > !{sample}_qc.fq.gz
+    COUNT=$(seqkit stats -T <(cat reads.fq.gz) | cut -d$'\t' -f 4 | tail -n 1)
+    '''
+}
+
+/**
+*
+* The pCollectFile process is designed to collect and concatenate fastq files.
+*
+**/
+process pCollectFile {
+
+    label 'tiny'
+
+    tag "Sample: $sample"
+
+    container "${params.ubuntu_image}"
+    publishDir params.output, mode: "${params.publishDirMode}", \
+	saveAs: { filename -> getOutput("${sample}", params.runid, "porechop", filename) }, \
+        pattern: "{**_qc.fq.gz}"
+
+    input:
+    tuple val(sample), path(reads, stageAs: "reads_*")
+
+    output:
+    tuple val("${sample}"), path("${sample}_qc.fq.gz"), emit: reads
+
+    shell:
+    '''
+    cat !{reads} > !{sample}_qc.fq.gz
     '''
 }
 
@@ -160,6 +208,28 @@ process pNanoPlot {
     '''
 }
 
+/*
+*
+* This workflow splits input fastq files into chunks.
+*
+*/
+workflow _wSplit {
+  take:
+    sample
+    chunkSize
+  main:
+
+    SAMPLE_IDX = 0
+    FASTQ_FILE = 1
+    FASTQ_LENGTH_IDX = 2
+    CHUNK_SIZE_IDX = 3
+
+    sample | combine(chunkSize) \
+	| flatMap { sample -> Utils.splitFilesIndex(Integer.parseInt(sample[FASTQ_LENGTH_IDX]), sample[CHUNK_SIZE_IDX], [sample[SAMPLE_IDX], sample[FASTQ_FILE]]) } \
+        | set { chunks }
+  emit:
+    chunks = chunks
+}
 
 
 workflow _wONTFastq {
@@ -173,10 +243,22 @@ workflow _wONTFastq {
               noDownload: !params?.steps?.qcONT.porechop.containsKey("download")
              } | set { samples }
 
-             samples.noDownload | pPorechop
-             samples.download | pPorechopDownload
+             // Input files can either be directly provided as input or downloaded.
+             // Sequences are then split in chunks to avoid any RAM issues
+             samples.noDownload | pCount | set { notDownloadedSamples }
+             samples.download | pCountDownload | set { downloadedSamples }
 
-             pPorechop.out.reads | mix(pPorechopDownload.out.reads)  | set { reads }
+             PORECHOP_CHUNK_SIZE_DEFAULT=450000
+             _wSplit(notDownloadedSamples \
+		| mix(downloadedSamples), Channel.value(params.steps?.qcONT?.porechop?.additionalParams?.chunkSize?:PORECHOP_CHUNK_SIZE_DEFAULT)) \
+		| pPorechop
+
+             // Porechop processes chunks and the resulting fastq files are collected
+             pPorechop.out.reads | map { sample, fastq, chunkSize  ->  tuple(groupKey(sample, chunkSize.toInteger()), [sample, fastq])  } \
+              | groupTuple() | map { sample, dataset ->  [sample ,dataset.stream().map{ elem -> elem[FASTP_FILE_IDX] }.collect()] } \
+	      | pCollectFile
+
+             pCollectFile.out.reads | set { reads }
 
              filteredSeqs = Channel.empty()
              if(params.steps.containsKey("qcONT") && params.steps.qcONT.containsKey("filterHumanONT")){

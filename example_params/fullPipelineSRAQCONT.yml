@@ -21,6 +21,7 @@ steps:
   qcONT:
     porechop:
       additionalParams:
+        chunkSize: 450000
         porechop: ""
         filtlong: " --min_length 1000 --keep_percent 90 "
       download:

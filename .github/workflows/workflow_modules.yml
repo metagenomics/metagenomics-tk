@@ -96,18 +96,22 @@ jobs:
           " --output=output   --smetana_image=pbelmann/metabolomics:0.1.0 \
            --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh " ./example_params/fullPipelineAggregate.yml \
           "${WORK_DIR}" ${PROFILE} || exit 1
-
-
       - name: Test if SRA S3 Input module works with ONT data
         run: |
           bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config     "  \
           ./example_params/fullPipelineSRAQCONT.yml "${WORK_DIR}" ${PROFILE} || exit 1
+
 
   qc:
     timeout-minutes: 2500
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
+      - name: Test long reads chunking using porechop
+        run: |
+          bash ./scripts/test_qcONT.sh \
+          " --steps.qcONT.input=./test_data/qcONT/ontLarge.tsv   " \
+          "" "${WORK_DIR}" ${PROFILE} || exit 1
       - name: QC Filter DB Test
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/human_filter.db.20231218v2" \
