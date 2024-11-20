@@ -1,6 +1,6 @@
 # This file will be referenced on the online wiki
 
-git clone git@github.com:metagenomics/metagenomics-tk.git \
+git clone git@github.com:metagenomics/metagenomics-tk.git
 cd metagenomics-tk
 
 make nextflow
