@@ -28,7 +28,7 @@ process pGetBinStatistics {
 
     memory { Utils.getMemoryResources(params.resources.tiny, "${sample}", task.attempt, params.resources) }
 
-    cpus { Utils.getCPUsResources(params.resources.tiny.tiny, "${sample}", task.attempt, params.resources) }
+    cpus { Utils.getCPUsResources(params.resources.tiny, "${sample}", task.attempt, params.resources) }
 
     input:
     val(module)
