@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:18.10
 
 # metadata
 LABEL website="https://github.com/tseemann/prokka"
