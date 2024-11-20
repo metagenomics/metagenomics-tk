@@ -301,7 +301,7 @@
         "steps.binningONT.minimap.additionalParams.minimap": {
           "type": "string",
           "description": "Command line parameters for minimap.",
-          "default": "",
+          "default": " ",
           "hidden": true
         },
         "steps.binningONT.minimap.additionalParams.samtoolsView": {
