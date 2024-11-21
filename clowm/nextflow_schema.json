@@ -73,10 +73,7 @@
           "type": "string",
           "description": "Store results as symlink (to work folder) or copy (in output folder)",
           "default": "copy",
-          "enum": [
-            "symlink",
-            "copy"
-          ],
+          "enum": ["symlink", "copy"],
           "hidden": true
         },
         "scratch": {
@@ -86,22 +83,13 @@
           "hidden": true
         }
       },
-      "required": [
-        "output",
-        "runid",
-        "summary",
-        "tempdir"
-      ],
+      "required": ["output", "runid", "summary", "tempdir"],
       "anyOf": [
         {
-          "required": [
-            "input.paired.path"
-          ]
+          "required": ["input.paired.path"]
         },
         {
-          "required": [
-            "input.ont.path"
-          ]
+          "required": ["input.ont.path"]
         }
       ]
     },
@@ -146,7 +134,7 @@
         }
       }
     },
-    "quality_control_ont ": {
+    "quality_control_ont": {
       "title": "Quality control ONT",
       "type": "object",
       "description": "",
@@ -205,10 +193,7 @@
           "type": "string",
           "description": "Flag to predict resources",
           "displayName": "predict resource",
-          "enum": [
-            "DEFAULT",
-            "PREDICT"
-          ],
+          "enum": ["DEFAULT", "PREDICT"],
           "default": "PREDICT",
           "hidden": true
         },
