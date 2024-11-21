@@ -147,4 +147,77 @@ class Utils {
       return 90
     }
   }
+
+  /*
+  *
+  * This method returns the number of vCPUs according to the output of the getResources method.
+  *
+  */
+  static Integer getCPUsResources(defaults, sample, attempt, resources){
+     return getResources(defaults, sample, attempt, resources)["cpus"]
+  }
+
+
+  /*
+  *
+  * This method returns RAM value according to the output of the getResources method.
+  *
+  */
+  static String getMemoryResources(defaults, sample, attempt, resources){
+     return getResources(defaults, sample, attempt, resources)["memory"] + ' GB'
+  }
+
+  /*
+  *
+  * This method returns the flavor with more RAM provided in the resources section 
+  * of the configuration file.
+  *
+  * defaults: This variable contains the resources label object provided to the process (e.g. small, medium, ...).
+  * sample: This variable contains the sample name.
+  * attempt: This variable contains the number of attempts to run the process.
+  * resources: This variable represents all resources provied in the configuration file.
+  *
+  */
+  static Map<String, Integer> getResources(defaults, sample, attempt, resources){
+
+     // get map of memory values and flavor names (e.g. key: 256, value: large)
+     def memoryLabelMap = resources.findAll().collectEntries( { [it.value.memory, it.key] });
+
+     // Get map of resources with label as key
+     def labelMap = resources.findAll()\
+		.collectEntries( { [it.key, ["memory" : it.value.memory, "cpus" : it.value.cpus ] ] })
+
+     // get memory values as list
+     def memorySet = memoryLabelMap.keySet().sort()
+
+     // If the memory value is not predicted do the following
+     def defaultCpus = defaults.cpus
+
+     def defaultMemory = defaults.memory
+
+     def defaultMemoryIndex = memorySet.findIndexOf({ it == defaultMemory })
+
+     def nextHigherMemoryIndex = defaultMemoryIndex + attempt - 1 
+
+
+     if(nextHigherMemoryIndex >= memorySet.size()){
+        // In case it is already the highest possible memory setting
+        // then try the label with the highest memory
+        println("Warning: Highest possible memory setting " \
+		+ " of the dataset " + sample + " is already reached." \
+                + " Retry will be done using a flavor with the highest possible RAM configuration")
+
+        def label = memoryLabelMap[memorySet[memorySet.size()-1]]
+        def cpus =  labelMap[label]["cpus"]
+        def ram =  labelMap[label]["memory"]
+
+        return ["cpus": cpus, "memory": ram];
+     } else {
+   	def label = memoryLabelMap[memorySet[nextHigherMemoryIndex]];
+        def cpus = labelMap[label]["cpus"];
+        def memory = labelMap[label]["memory"];
+
+	return ["cpus": cpus, "memory": memory];
+     }
+  }
 }

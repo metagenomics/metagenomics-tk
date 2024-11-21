@@ -647,7 +647,9 @@ process pCount {
 **/
 process pCollectFile {
 
-    label 'highmemMedium'
+    memory { Utils.getMemoryResources(params.resources.small, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.small, "${sample}", task.attempt, params.resources) }
 
     tag "Sample: $sample, Database: $dbType"
 
