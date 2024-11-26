@@ -19,8 +19,8 @@ The output contains:
 
 ## Mag Attributes
 
-### CheckM
-The CheckM output adds a `BIN_ID` and `SAMPLE` column to the corresponding CheckM output file.
+### CheckM2
+The CheckM2 output adds a `BIN_ID` and `SAMPLE` column to the corresponding original CheckM2 output file.
 
 ### GTDB-Tk
 All GTDB .tsv files include the GTDB specific columns in addition to a `SAMPLE` column (`*_SAMPLE_gtdbtk.bac120.summary.tsv`,
