@@ -19,5 +19,6 @@
   "exampleParameters": {
     "input.paired.path": "${projectDir}/test_data/fullPipeline/reads_split.tsv",
     "input.ont.path": "${projectDir}/test_data/fullPipeline/ont.tsv"
-  }
+  },
+  "dois": ["10.1101/2024.10.22.619569"]
 }
