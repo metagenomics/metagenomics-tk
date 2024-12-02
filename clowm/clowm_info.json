@@ -1,5 +1,5 @@
 {
-  "inputParameters": ["input.paired.path"],
+  "inputParameters": ["input.paired.path", "input.ont.path"],
   "outputParameters": ["output"],
   "resourceParameters": [
     "steps.magAttributes.gtdb.database.extractedDBPath",
