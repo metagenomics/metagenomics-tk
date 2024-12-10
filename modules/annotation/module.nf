@@ -53,6 +53,7 @@ process pMMseqs2 {
    
       container "${params.mmseqs2_image}"
 
+     
       // Databases will be downloaded to a fixed place so that they can be used by future processes.
       // This fixed place has to be outside of the working-directory to be easy to find for every process.
       // Therefore this place has to be mounted to the docker container to be accessible during run time.
@@ -610,6 +611,11 @@ workflow wAnnotateList {
     emit:
       keggAnnotation = _wAnnotation.out.keggAnnotation
       proteins = _wAnnotation.out.prokka_faa
+      ffn = _wAnnotation.out.prokka_ffn
+      gff = _wAnnotation.out.prokka_gff
+      faa = _wAnnotation.out.prokka_faa
+      mmseqs2_taxonomy = _wAnnotation.out.mmseqs2_taxonomy
+      mmseqs2_blast = _wAnnotation.out.mmseqs2_blast
 }
 
 /**
@@ -702,7 +708,6 @@ workflow _wSplit {
 	| pCount | combine(chunkSize) | flatMap { sample -> \
    	Utils.splitFilesIndex(Integer.parseInt(sample[COUNT_IDX]), sample[CHUNK_SIZE_IDX], [sample[SAMPLE_IDX], sample[FILE_2_IDX], sample[FILE_3_IDX]]) } \
 	| set { chunks }   	
-
   emit:
     chunks
 }

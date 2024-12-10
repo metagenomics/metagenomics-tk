@@ -96,6 +96,14 @@ jobs:
           " --output=output   --smetana_image=pbelmann/metabolomics:0.1.0 \
            --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh " ./example_params/fullPipelineAggregate.yml \
           "${WORK_DIR}" ${PROFILE} || exit 1
+
+      - name: Test export workflow based on previous test
+        run: |
+          bash ./scripts/test_fullPipelineExport.sh \
+          " --output=output --input=output --smetana_image=pbelmann/metabolomics:0.1.0 \
+          "" " ./example_params/export.yml \
+          "${WORK_DIR}" ${PROFILE} || exit 1
+
       - name: Test if SRA S3 Input module works with ONT data
         run: |
           bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config     "  \

@@ -59,7 +59,7 @@ process pCheckM {
     tuple val(sample), val(ending), path(bins), val(chunkId)
 
     output:
-    tuple path("${sample}_checkm_*.tsv", type: "file"), val("${sample}"), emit: checkm
+    tuple val("${sample}"), path("${sample}_checkm_*.tsv", type: "file"), emit: checkm
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -98,7 +98,7 @@ process pCheckM2 {
     tuple val(sample), val(ending), path(bins), val(chunkId)
 
     output:
-    tuple path("${sample}_checkm2_*.tsv", type: "file"), val("${sample}"), emit: checkm
+    tuple val("${sample}"), path("${sample}_checkm2_*.tsv", type: "file"),  emit: checkm
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -136,12 +136,12 @@ process pGtdbtk {
     tuple val(sample), val(ending), path(bins), val(chunkId)
 
     output:
-    tuple path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val("${sample}"), optional: true, emit: bacteria
-    tuple path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), val("${sample}"), optional: true, emit: archea
-    tuple path("chunk_*_${sample}_gtdbtk_unclassified.tsv"), val("${sample}"), optional: true, emit: unclassified
-    tuple path("*.tree"), val("${sample}"), optional: true, emit: tree
-    tuple path("chunk_*_${sample}_gtdbtk_combined.tsv"), val("${sample}"), optional: true, emit: combined
-    tuple path("chunk_*_${sample}_missing_bins.tsv"), val("${sample}"), optional: true, emit: missing
+    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), optional: true, emit: bacteria
+    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), optional: true, emit: archea
+    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk_unclassified.tsv"), optional: true, emit: unclassified
+    tuple val("${sample}"), path("*.tree"), val("${sample}"), optional: true, emit: tree
+    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk_combined.tsv"), optional: true, emit: combined
+    tuple val("${sample}"), path("chunk_*_${sample}_missing_bins.tsv"), optional: true, emit: missing
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -259,6 +259,9 @@ workflow wMagAttributesList {
      checkm = _wMagAttributes.out.checkm
      gtdb = _wMagAttributes.out.gtdb
      gtdbMissing = _wMagAttributes.out.gtdbMissing
+     gtdbArcheaFiles = _wMagAttributes.out.gtdbArcheaFiles
+     gtdbBacteriaFiles = _wMagAttributes.out.gtdbBacteriaFiles
+     checkmFiles = _wMagAttributes.out.checkmFiles
 }
 
 
@@ -311,18 +314,22 @@ workflow _wMagAttributes {
 
      // Prepare checkm output file
      checkmSelected | splitCsv(sep: '\t', header: true) \
-	| map { checkmDict, sample -> checkmDict } \
+	| map { sample, checkmDict -> checkmDict } \
 	| set { checkmList }
 
      // Prepare gtdb output file
      gtdb.combined | splitCsv(sep: '\t', header: true) \
-	| map { gtdb, sample -> gtdb } \
+	| map { sample, gtdb -> gtdb } \
 	| set { gtdbCombinedList }
 
      // Prepare missing gtdb output file
      gtdb.missing | splitCsv(sep: '\t', header: true) \
-	| map { gtdb, sample -> gtdb } \
+	| map { sample, gtdb -> gtdb } \
 	| set { gtdbMissingList }
+
+     gtdb.bacteria | set { gtdbBacteriaFiles }
+
+     gtdb.archea | set { gtdbArcheaFiles }
 
      if(params.summary){
        // collect checkm files for checkm2 results across multiple datasets
@@ -347,4 +354,7 @@ workflow _wMagAttributes {
      checkm = checkmList
      gtdb = gtdbCombinedList
      gtdbMissing = gtdbMissingList
+     gtdbArcheaFiles = gtdbArcheaFiles
+     gtdbBacteriaFiles = gtdbBacteriaFiles
+     checkmFiles = checkmSelected
 }

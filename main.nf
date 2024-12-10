@@ -9,6 +9,7 @@ include { wShortReadAssemblyFile; wShortReadAssemblyList; wTestMemSelection } fr
 include { wOntAssemblyFile; wOntAssemblyList } from './modules/assembly/ontAssembler'
 include { wShortReadBinningList } from './modules/binning/shortReadBinning'
 include { wLongReadBinningList } from './modules/binning/ontBinning'
+include { wEMGBList } from './modules/export/emgb'
 include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
 include { wDereplicateFile; wDereplicateList} from './modules/dereplication/bottomUpClustering/module'
 include { wAnalyseMetabolitesList; wAnalyseMetabolitesFile } from './modules/metabolomics/module'
@@ -177,7 +178,7 @@ def getPath(f){
   return params.input.startsWith("s3://")? "s3:/" + f: f
 }
 
-workflow _wAggregateONT { 
+workflow _wFindSamplesONT { 
    take:
      sraFiles
    main:
@@ -195,7 +196,7 @@ workflow _wAggregateONT {
      | map{ sra,f -> [sra, getPath(f)] } | splitCsv(sep: '\t', header: true) \
      | map { sample -> [sample[SAMPLE_NAME], sample[SAMPLE_STATS].median_qual]} |set { ontMedianQuality }
 
-    Pattern binsONTPattern = Pattern.compile('.*/binningONT/' + params.modules.binning.version.major + '..*/.*/.*_bin.*.fa$')
+    Pattern binsONTPattern = Pattern.compile('.*/binningONT/' + params.modules.binningONT.version.major + '..*/.*/.*_bin.*.fa$')
     sraFiles | filter({ sra, path -> binsONTPattern.matcher(path.toString()).matches()}) \
      | map{ sra,f -> [SAMPLE:sra, PATH: getPath(f), BIN_ID:file(f).name] } \
      | set{ ontBins }
@@ -212,7 +213,26 @@ workflow _wAggregateONT {
      ontBinStats = ontBinStats
 }
 
-workflow _wAggregateIllumina { 
+workflow _wGetAssemblyFiles {
+  take:
+    assemblyFiles
+  main:
+    // get Illumina assembly files
+    Pattern assemblyIlluminaPattern = Pattern.compile('.*/assembly/' + params.modules.assembly.version.major + '..*/.*/.*_contigs.fa.gz$')
+    assemblyFiles | filter({ sra, path -> assemblyIlluminaPattern.matcher(path.toString()).matches()}) \
+     | map{ sra,f -> [sra, getPath(f)] } | set { illuminaAssembly }
+
+    // get ONT assembly files
+    Pattern assemblyONTPattern = Pattern.compile('.*/assemblyONT/' + params.modules.assemblyONT.version.major + '..*/.*/.*_contigs.fa.gz$')
+    assemblyFiles | filter({ sra, path -> assemblyONTPattern.matcher(path.toString()).matches()}) \
+      | map{ sra,f -> [sra, getPath(f)] } | set { ontAssembly }
+  emit:
+    illuminaAssembly    
+    ontAssembly
+}
+
+
+workflow _wFindSamplesIllumina { 
     take:
       binningFiles
       qcFiles
@@ -288,6 +308,61 @@ workflow _wFragmentRecruitment {
      recruitedGenomesStats = recruitedGenomesStats
 }
 
+workflow _wGetSamples() {
+  main:
+    def runID = params.runid
+    def input = params.input
+
+    // List all available SRAIDs
+    Channel.from(file(input).list()) | filter({ path -> !(path ==~ /.*summary$/) && !(path ==~ /null$/) }) \
+     | filter({ path -> !(path ==~ /.*AGGREGATED$/)}) \
+     | set { sraDatasets }
+
+    sraDatasets | map { sra ->  [sra, input + "/" + sra + "/" + runID + "/" ]} \
+     | set {sraIDs}
+  emit:
+    sraIDs
+    sraDatasets
+}
+
+
+workflow _wGetCheckm {
+  take:
+    selectedSRAMagAttributes
+  main:
+    // get Checkm results
+    Pattern checkmPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_checkm_.*.tsv$')
+    selectedSRAMagAttributes | filter({ sra, path -> checkmPattern.matcher(path.toString()).matches()}) \
+     | set { checkmFiles }
+
+    checkmFiles | splitCsv(header: ["SAMPLE", "BIN_ID", "Marker lineage", "# genomes", "# markers", \
+          "# marker sets", "0", "1", "2", "3", "4", "5+", "COMPLETENESS", "CONTAMINATION", "HETEROGENEITY"], sep: '\t') \
+     | map { sra, bins -> bins} \
+     | set { checkm }
+
+    // get Checkm2 results
+    Pattern checkm2Pattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_checkm2_.*.tsv$')
+    selectedSRAMagAttributes | filter({ sra, path -> checkm2Pattern.matcher(path.toString()).matches()}) \
+     | set { checkm2Files }
+
+    checkm2Files | splitCsv(header: true, sep: '\t') \
+     | map { sra, bins -> bins} \
+     | set { checkm2 }
+
+    // We allow only to execute checkm or checkm2 but not both
+    checkm \
+       | mix(checkm2) \
+       | set {checkm}
+
+    checkmFiles \
+       | mix(checkm2Files) \
+       | set {checkmFiles}
+
+  emit:
+    checkm
+    checkmFiles
+}
+
 /*
 * This workflow entry point allows to aggregate information of different samples.
 * It will perform analysis steps such as dereplication, read mapping and co-occurrence.
@@ -300,46 +375,30 @@ workflow wAggregatePipeline {
     // Save config File
     wSaveSettingsList(Channel.value("AGGREGATED"))
 
-    // List all available SRAIDs
-    Channel.from(file(input).list()) | filter({ path -> !(path ==~ /.*summary$/) && !(path ==~ /null$/) }) \
-     | filter({ path -> !(path ==~ /.*AGGREGATED$/)}) \
-     | set { sraDatasets }
-
-    sraDatasets | map { sra ->  [sra, input + "/" + sra + "/" + runID + "/" ]} \
-     | set {sraIDs}
+    _wGetSamples()
+    _wGetSamples.out.sraDatasets | set { sraDatasets }
+    _wGetSamples.out.sraIDs | set { sraIDs }
 
     // List all files in sample directories
-    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.qc])} | set { qcFiles }
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.qc]) } | set { qcFiles }
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binning]) } | set { binningFiles } 
 
-    _wAggregateIllumina(binningFiles, qcFiles)
+    _wFindSamplesIllumina(binningFiles, qcFiles)
 
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binningONT])} | set { binningONTFiles }
-    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.qcONT])} | mix(binningONTFiles) | _wAggregateONT
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.qcONT])} \
+	| mix(binningONTFiles) | set { binningONT }
+
+    _wFindSamplesONT(binningONT)
 
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.fragmentRecruitment])} |  _wFragmentRecruitment
 
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.magAttributes])} | set { selectedSRAMagAttributes}
 
-    // get Checkm results
-    Pattern checkmPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_checkm_.*.tsv$')
-     selectedSRAMagAttributes | filter({ sra, path -> checkmPattern.matcher(path.toString()).matches()}) \
-     | splitCsv(header: ["SAMPLE", "BIN_ID", "Marker lineage", "# genomes", "# markers", \
-          "# marker sets", "0", "1", "2", "3", "4", "5+", "COMPLETENESS", "CONTAMINATION", "HETEROGENEITY"], sep: '\t') \
-     | map { sra, bins -> bins} \
-     | set { checkm }
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.annotation])} | set { selectedAnnotation}
 
-    // get Checkm2 results
-    Pattern checkm2Pattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_checkm2_.*.tsv$')
-     selectedSRAMagAttributes | filter({ sra, path -> checkm2Pattern.matcher(path.toString()).matches()}) \
-     | splitCsv(header: true, sep: '\t') \
-     | map { sra, bins -> bins} \
-     | set { checkm2 }
-
-    // We allow only to execute checkm or checkm2 but not both
-    checkm \
-       | mix(checkm2) \
-       | set {checkm}
+    selectedSRAMagAttributes | _wGetCheckm 
+    _wGetCheckm.out.checkm | set { checkm }
 
     // get gtdbtk summary files
     Pattern gtdbPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_combined.tsv$' )
@@ -360,18 +419,161 @@ workflow wAggregatePipeline {
 
     recruitedGenomesStats =  _wFragmentRecruitment.out.recruitedGenomesStats
 
-    mapJoin(_wAggregateIllumina.out.illuminaBinStats | mix(_wAggregateONT.out.ontBinStats) \
+    mapJoin(_wFindSamplesIllumina.out.illuminaBinStats | mix(_wFindSamplesONT.out.ontBinStats) \
         | mix(recruitedGenomesStats), checkm, "BIN_ID", "BIN_ID") \
         | set {checkmBinStats}
 
-    mapJoin(checkmBinStats, _wAggregateIllumina.out.illuminaBins | mix(_wAggregateONT.out.ontBins) \
+    mapJoin(checkmBinStats, _wFindSamplesIllumina.out.illuminaBins | mix(_wFindSamplesONT.out.ontBins) \
         | mix(recruitedGenomes), "BIN_ID", "BIN_ID") \
         | set {binsStatsComplete}
 
-    _wAggregateIllumina.out.illuminaSamples | mix(_wAggregateONT.out.ontSamples) | view { sra, path -> "Files detected of SRA ID $sra" }
+    _wFindSamplesIllumina.out.illuminaSamples | mix(_wFindSamplesONT.out.ontSamples) | view { sra, path -> "Files detected of SRA ID $sra" }
 
-    _wAggregate(_wAggregateONT.out.ontSamples, _wAggregateONT.out.ontMedianQuality, _wAggregateIllumina.out.illuminaSamples, \
-        _wAggregateIllumina.out.unpairedIlluminaSamples, binsStatsComplete, gtdb, models)
+    _wAggregate(_wFindSamplesONT.out.ontSamples, _wFindSamplesONT.out.ontMedianQuality, _wFindSamplesIllumina.out.illuminaSamples, \
+        _wFindSamplesIllumina.out.unpairedIlluminaSamples, binsStatsComplete, gtdb, models)
+}
+
+
+/*
+* This workflow entry point allows to aggregate information of different samples.
+* It will perform analysis steps such as dereplication, read mapping and co-occurrence.
+* The input files are automatically fetched as long as they adhere to the pipeline specification document (see documentation).
+*/
+workflow wExportPipeline {
+    def input = params.input
+    def runID = params.runid
+
+    // List all available SRAIDs
+    Channel.from(file(input).list()) | filter({ path -> !(path ==~ /.*summary$/) && !(path ==~ /null$/) }) \
+     | filter({ path -> !(path ==~ /.*AGGREGATED$/)}) \
+     | set { sraDatasets }
+
+    // Save config File
+    wSaveSettingsList(sraDatasets)
+
+    sraDatasets | map { sra ->  [sra, input + "/" + sra + "/" + runID + "/" ]} \
+     | set {sraIDs}
+
+    // List all files in sample directories
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.qc])} | set { qcFiles }
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binning]) } \
+	| set { binningFiles } 
+
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.magAttributes])} \
+	| set { selectedSRAMagAttributes}
+
+    // Checkm files
+    selectedSRAMagAttributes | _wGetCheckm 
+    _wGetCheckm.out.checkmFiles | set { checkmFiles }
+
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.assemblyONT]) } | set { assemblyONTFiles } 
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.assembly]) } | set { assemblyIlluminaFiles }
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.annotation])} | set { selectedAnnotation}
+
+    assemblyONTFiles | mix(assemblyIlluminaFiles) | _wGetAssemblyFiles 
+    _wGetAssemblyFiles.out.illuminaAssembly | mix(_wGetAssemblyFiles.out.ontAssembly) | set { assembly } 
+
+    // get Bins
+    Pattern binsIlluminaPattern = Pattern.compile('.*/binning/' + params.modules.binning.version.major + '..*/.*/.*_bin.*.fa$')
+    binningFiles | filter({ sra, path -> binsIlluminaPattern.matcher(path.toString()).matches()}) \
+     | set{ illuminaBins }
+
+    Pattern binsONTPattern = Pattern.compile('.*/binningONT/' + params.modules.binningONT.version.major + '..*/.*/.*_bin.*.fa$')
+    binningFiles | filter({ sra, path -> binsONTPattern.matcher(path.toString()).matches()}) \
+     | mix(illuminaBins) | groupTuple(by: 0) | set{ binFiles }
+
+    // get not Binned gff files
+    Pattern annotationNotBinnedGffPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/prokka/.*_notBinned.gff.gz$' )
+    selectedAnnotation | filter({ sra, path -> annotationNotBinnedGffPattern.matcher(path.toString()).matches()}) \
+     | set { notBinnedGff }
+
+    // get Bin gff files
+    Pattern annotationGffPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/prokka/.*_bin..*.gff.gz$' )
+    selectedAnnotation | filter({ sra, path -> annotationGffPattern.matcher(path.toString()).matches()}) \
+     | mix(notBinnedGff) | map { sra, path -> [sra, file(path).baseName, path] }  | set { gff }
+
+    // get not binned ffn files
+    Pattern annotationNotBinnedFfnPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/prokka/.*_notBinned.ffn.gz$' )
+    selectedAnnotation | filter({ sra, path -> annotationNotBinnedFfnPattern.matcher(path.toString()).matches()}) \
+     | set { notBinnedFfn }
+
+    // get ffn files
+    Pattern annotationFfnPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/prokka/.*_bin..*.ffn.gz$' )
+    selectedAnnotation | filter({ sra, path -> annotationFfnPattern.matcher(path.toString()).matches()}) \
+     | mix(notBinnedFfn) | map { sra, path -> [sra, file(path).baseName, path] } | set { ffn }
+
+    // not Binned faa files
+    Pattern annotationNotBinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/prokka/.*_notBinned.faa.gz$' )
+    selectedAnnotation | filter({ sra, path -> annotationNotBinnedPattern.matcher(path.toString()).matches()}) \
+     | set { notBinnedFaa }
+
+    // get Bin faa files
+    Pattern annotationFnaPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/prokka/.*_bin..*.faa.gz$' )
+    selectedAnnotation | filter({ sra, path -> annotationFnaPattern.matcher(path.toString()).matches()}) \
+     | mix(notBinnedFaa) | map { sra, path -> [sra, file(path).baseName, path] } | set { faa }
+
+    // get MMseqs unbinned taxonomy files
+    Pattern annotationMmseqsUnbinnedTaxonomyPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/mmseqs2_taxonomy/.*/.*_unbinned.ncbi_nr.taxonomy.tsv$' )
+    selectedAnnotation | filter({ sra, path -> annotationMmseqsUnbinnedTaxonomyPattern.matcher(path.toString()).matches()}) \
+     | map { sra, path -> ["ncbi_nr", sra, path]  } | set { mmseqsUnbinnedTaxonomy }
+
+    // get MMseqs binned taxonomy files   output/test2/1/annotation/1.0.0/mmseqs2/ncbi_nr/   test2_unbinned.ncbi_nr.105001.112000.blast.tsv
+    Pattern annotationMmseqsBinnedTaxonomyPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/mmseqs2_taxonomy/.*/.*_binned.ncbi_nr.taxonomy.tsv$' )
+    selectedAnnotation | filter({ sra, path -> annotationMmseqsBinnedTaxonomyPattern.matcher(path.toString()).matches()}) \
+     | map { sra, path -> ["ncbi_nr", sra, path] } | mix(mmseqsUnbinnedTaxonomy) | set { mmseqsTaxonomy }
+
+    // get MMseqs unbinned blast files
+    Pattern annotationMmseqsUnirefUnbinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/mmseqs2/.*/.*_unbinned.uniref90.blast.tsv$' )
+    selectedAnnotation | filter({ sra, path -> annotationMmseqsUnirefUnbinnedPattern.matcher(path.toString()).matches()}) \
+     | map { sra, path -> ["uniref90", sra, "unbinned", 1, 1, 1, path] } | set { mmseqsUnirefUnbinnedBlast }
+
+    // get MMseqs binned blast files   output/test2/1/annotation/1.0.0/mmseqs2/ncbi_nr/   test2_unbinned.ncbi_nr.105001.112000.blast.tsv
+    Pattern annotationMmseqsUnirefBinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/mmseqs2/.*/.*_binned.uniref90.blast.tsv$' )
+    selectedAnnotation | filter({ sra, path -> annotationMmseqsUnirefBinnedPattern.matcher(path.toString()).matches()}) \
+     | map { sra, path -> ["uniref90", sra, "binned", 1, 1, 1, path] } \
+     | mix(mmseqsUnirefUnbinnedBlast) | set { mmseqsUnirefBlast }
+
+    // get MMseqs unbinned kegg blast files
+    Pattern annotationMmseqsKeggUnbinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/mmseqs2/.*/.*_unbinned.kegg.blast.tsv$' )
+    selectedAnnotation | filter({ sra, path -> annotationMmseqsKeggUnbinnedPattern.matcher(path.toString()).matches()}) \
+     | map { sra, path -> ["kegg", sra, "unbinned", 1, 1, 1, path] } \
+     | set { mmseqsKeggUnbinnedBlast }
+
+    // get MMseqs binned blast files   output/test2/1/annotation/1.0.0/mmseqs2/ncbi_nr/   test2_unbinned.ncbi_nr.105001.112000.blast.tsv
+    Pattern annotationMmseqsKeggBinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/mmseqs2/.*/.*_binned.kegg.blast.tsv$' )
+    selectedAnnotation | filter({ sra, path -> annotationMmseqsKeggBinnedPattern.matcher(path.toString()).matches()}) \
+     | map { sra, path -> ["kegg", sra, "binned", 1, 1, 1, path] } \
+     | mix(mmseqsKeggUnbinnedBlast) \
+     | set { mmseqsKeggBlast }
+
+    // get gtdbtk summary files
+    Pattern gtdbSummaryPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*.summary.tsv$' )
+    selectedSRAMagAttributes | filter({ sra, path -> gtdbSummaryPattern.matcher(path.toString()).matches()}) \
+     | groupTuple(by: 0) | set { gtdbSummaryFiles }
+
+    // get Mapping
+    Pattern mappingIlluminaPattern = Pattern.compile('.*/binning/' + params.modules.binning.version.major + '..*/.*/.*.bam$')
+    binningFiles | filter({ sra, path -> mappingIlluminaPattern.matcher(path.toString()).matches()}) \
+     | set{ illuminaMapping }
+
+    // get ONT mapping files
+    Pattern mappingONTPattern = Pattern.compile('.*/binningONT/' + params.modules.binningONT.version.major + '..*/.*/.*.bam$')
+    binningFiles | filter({ sra, path -> mappingONTPattern.matcher(path.toString()).matches()}) \
+     | set{ ontMapping }
+
+    illuminaMapping | mix(ontMapping) | set { mapping } 
+
+    _wExportEMGB(assembly, \
+	mapping, \
+        binFiles, \
+        gtdbSummaryFiles, \
+        checkmFiles, \
+        gff, \
+        ffn, \
+        faa, \
+        mmseqsTaxonomy, \
+        mmseqsUnirefBlast | mix(mmseqsKeggBlast) \
+    )
 
 }
 
@@ -448,7 +650,6 @@ workflow wSaveSettings {
 }
 
 
-
 def flattenBins(binning){
   def chunkList = [];
   def SAMPLE_IDX = 0;
@@ -470,6 +671,7 @@ workflow _wProcessIllumina {
       wShortReadAssemblyList(qcReads, wShortReadQualityControlList.out.nonpareil, wShortReadQualityControlList.out.kmerFrequencies)
       wShortReadBinningList(wShortReadAssemblyList.out.contigs, qcReads)
     emit:
+      contigs = wShortReadAssemblyList.out.contigs 
       notBinnedContigs = wShortReadBinningList.out.notBinnedContigs 
       bins = wShortReadBinningList.out.bins 
       binsStats = wShortReadBinningList.out.binsStats
@@ -493,6 +695,7 @@ workflow _wProcessOnt {
       wLongReadBinningList(wOntAssemblyList.out.contigs, ontQCReads, wOntAssemblyList.out.graph, \
 	 wOntAssemblyList.out.headerMapping, wOntAssemblyList.out.info, medianQuality)
     emit:
+      contigs = wOntAssemblyList.out.contigs
       notBinnedContigs = wLongReadBinningList.out.notBinnedContigs 
       bins = wLongReadBinningList.out.bins 
       binsStats = wLongReadBinningList.out.binsStats
@@ -502,6 +705,22 @@ workflow _wProcessOnt {
       reads = ontQCReads
       gfa = wOntAssemblyList.out.graph
       medianQuality = medianQuality
+}
+
+workflow _wExportEMGB {
+    take:
+      contigs
+      mapping
+      bins
+      gtdbtk
+      checkm
+      gff
+      ffn
+      faa
+      mmseqsTaxonomy
+      mmseqsBlast
+    main:
+    wEMGBList(contigs, mapping, bins, gtdbtk, checkm, gff, ffn, faa, mmseqsTaxonomy, mmseqsBlast)
 }
 
 /*
@@ -535,6 +754,8 @@ workflow wFullPipeline {
     ont.binsStats | mix(illumina.binsStats) 
 	| map{ bin -> [bin.SAMPLE, bin.BIN_ID, bin.PATH]} \
         | set { bins }
+
+    ont.bins | mix(illumina.bins) | set {binsFiles}
 
     illumina.fastg | set { fastg } 
 
@@ -581,6 +802,22 @@ workflow wFullPipeline {
 
     wAnalyseMetabolitesList(binsStats, mapJoin(wMagAttributesList.out.checkm, proteins, "BIN_ID", "BIN_ID"))
 
-    _wAggregate(ont.reads, ont.medianQuality, illumina.readsPair, illumina.readsSingle, binsStats, \
+    wMagAttributesList.out.gtdbArcheaFiles \
+	| mix(wMagAttributesList.out.gtdbBacteriaFiles) \
+	| groupTuple(by: 0) | set { gtdbSummaryFiles }
+
+   _wExportEMGB(illumina.contigs | mix(ont.contigs),\
+	mapping, \
+        binsFiles, \
+        gtdbSummaryFiles, \
+        wMagAttributesList.out.checkmFiles, \
+        wAnnotateBinsList.out.gff, \
+        wAnnotateBinsList.out.ffn, \
+        wAnnotateBinsList.out.faa, \
+        wAnnotateBinsList.out.mmseqs2_taxonomy, \
+        wAnnotateBinsList.out.mmseqs2_blast \
+   )
+
+   _wAggregate(ont.reads, ont.medianQuality, illumina.readsPair, illumina.readsSingle, binsStats, \
 	wMagAttributesList.out.gtdb,  wAnalyseMetabolitesList.out.models)
 }
