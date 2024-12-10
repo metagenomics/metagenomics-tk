@@ -28,9 +28,11 @@ scriptToTest="${11}"
 # Example: "/vol/spool/peter/meta-omics-toolkit/plasmid_yaml_database_tests"
 workDirBasePath="${12}"
 # Example: https,s3File
-skipTests="${13}"
+skipTests="${13:-noSkip}"
 # Example: true
 deleteScratchDir="${14:-no}"
+# Example: --steps.export.emgb.kegg.database = "/path/to/db"
+additionalYAMLParams="${15}"
 
 mkdir -p ${basePath}
 
@@ -46,7 +48,7 @@ for yml in ${basePath}/* ; do
         workDir=${workDirBasePath}/work_$(basename ${yml})
 	mkdir -p ${workDir}
 	databaseDir="/vol/scratch/databases_$(cat /proc/sys/kernel/random/uuid)/"
-	bash ${scriptToTest} " --databases=${databaseDir} " ${yml} "${workDir}" "slurm" || exit 1
+	bash ${scriptToTest} " --databases=${databaseDir} ${additionalYAMLParams} " ${yml} "${workDir}" "slurm" || exit 1
 	# Cleanup scratch directory
         if [[ "$deleteScratchDir" == "yes" ]]; then
 		sinfo -o " %n %t"   | tail -n +2 | sed 's/^ //g' | grep -v " down" \

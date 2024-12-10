@@ -331,23 +331,6 @@ workflow _wMagAttributes {
 
      gtdb.archea | set { gtdbArcheaFiles }
 
-     if(params.summary){
-       // collect checkm files for checkm2 results across multiple datasets
-       checkmSelected \
-          | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-         [ "checkm.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
-       }
-
-       // collect gtdb files for results across multiple datasets
-       gtdb.bacteria | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-         [ "${item[DATASET_IDX]}_bacteria_gtdbtk.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
-       }
-
-       gtdb.archea | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/"){ item ->
-         [ "${item[DATASET_IDX]}_archea_gtdbtk.tsv", item[BIN_FILES_OUTPUT_IDX].text  ]
-       }
-     }
-
      pGtdbtk.out.logs | mix(pCheckM.out.logs) | mix(pCheckM2.out.logs) | pDumpLogs 
 
    emit:
