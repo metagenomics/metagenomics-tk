@@ -127,9 +127,9 @@ process pMMseqs2_taxonomy {
       tuple val(sample), file(fasta), val(dbType), val(parameters), val(ramMode), val(initialMaxSensitivity), val(EXTRACTED_DB), val(DOWNLOAD_LINK), val(MD5SUM), val(S5CMD_PARAMS)
    
    output:
-      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.taxonomy.tsv"), optional:true, emit: taxonomy
-      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.krakenStyleTaxonomy.out"), optional:true, emit: krakenStyleTaxonomy
-      tuple val("${dbType}"), val("${sample}"), path("${sample}_${binType}.${dbType}.krona.html"), optional:true, emit: kronaHtml
+      tuple val("${sample}"), val("${dbType}"), path("${sample}_${binType}.${dbType}.taxonomy.tsv"), optional:true, emit: taxonomy
+      tuple val("${sample}"), val("${dbType}"), path("${sample}_${binType}.${dbType}.krakenStyleTaxonomy.out"), optional:true, emit: krakenStyleTaxonomy
+      tuple val("${sample}"), val("${dbType}"), path("${sample}_${binType}.${dbType}.krona.html"), optional:true, emit: kronaHtml
       tuple val("${sample}_${binType}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -792,9 +792,12 @@ workflow _wAnnotation {
         | map { key, dataset -> [dataset[FIRST_ELEM_IDX][FIRST_ELEM_DB_IDX], dataset[FIRST_ELEM_IDX][FIRST_ELEM_SAMPLE_IDX], \
 	dataset[FIRST_ELEM_IDX][FIRST_ELEM_TYPE_IDX], dataset.stream().map{ elem -> elem[ELEM_PATH_IDX] }.collect()] } \
 	| pCollectFile \
+	| flatMap({ sample, type, dbType, blastFiles -> blastFiles.stream().map({ fi -> [sample, type, dbType, fi] }).collect() }) \
+        | set { collectedMMseqsResults }
+
 	  // The kegg database result is selected and reordered for the pKEGGFromMMseqs2 process input
-	| filter({ sample, type, dbType, blastFiles -> dbType == "kegg" }) \
-	| flatMap({ sample, type, dbType, blastFiles -> blastFiles.stream().map({ fi -> [sample, type, fi] }).collect() }) \
+	collectedMMseqsResults | filter({ sample, type, dbType, blastFiles -> dbType == "kegg" }) \
+        | map { sample, type, dbType, blastFiles -> [sample, type, blastFiles]}
         | pKEGGFromMMseqs2
 
       combinedMMseqsTax = groupedProkkaFaa | combine(Channel.from(selectedTaxDBs))
@@ -808,12 +811,13 @@ workflow _wAnnotation {
         | mix(pMMseqs2_taxonomy.out.logs) \
 	| mix(pResistanceGeneIdentifier.out.logs) \
 	| mix(pKEGGFromMMseqs2.out.logs) | pDumpLogs
+
    emit:
       keggAnnotation = pKEGGFromMMseqs2.out.keggPaths
       mmseqs2_kronaHtml = pMMseqs2_taxonomy.out.kronaHtml
       mmseqs2_krakenTaxonomy = pMMseqs2_taxonomy.out.krakenStyleTaxonomy
       mmseqs2_taxonomy = pMMseqs2_taxonomy.out.taxonomy
-      mmseqs2_blast = pMMseqs2.out.blast
+      mmseqs2_blast = collectedMMseqsResults
       prokka_faa = pProkka.out.faa
       prokka_ffn = pProkka.out.ffn
       prokka_fna = pProkka.out.fna

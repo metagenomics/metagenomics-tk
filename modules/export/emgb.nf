@@ -1,5 +1,10 @@
+import java.util.regex.*;
+
 include { pDumpLogs } from '../utils/processes'
 
+include { wSaveSettingsList } from '../config/module'
+include { _wGetCheckm; _wGetAssemblyFiles; _wGetIlluminaBinningFiles } from '../utils/workflows'
+include { collectModuleFiles } from '../utils/processes'
 
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
@@ -28,12 +33,12 @@ process pEMGBAnnotatedContigs {
     tuple val(sample), path(contigs), path(mapping), path("bins/*")
 
     output:
-
     tuple val("${sample}"), path("${sample}.contigs.json.gz"), emit: json
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput("${sample}", params.runid, "emgb", "")
     template 'emgbAnnotatedContigs.sh'
 }
 
@@ -61,6 +66,7 @@ process pEMGBAnnotatedBins {
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
+    output = getOutput("${sample}", params.runid, "emgb", "")
     template 'emgbAnnotatedBins.sh'
 }
 
@@ -105,15 +111,183 @@ process pEMGBAnnotatedGenes {
     KEGG_MD5SUM=params.steps?.export?.emgb?.kegg?.database?.download?.md5sum ?: ""
     KEGG_EXTRACTED_DB=params.steps?.export?.emgb?.kegg?.database?.extractedDBPath ?: ""
  
-    TITLES_S3_EMGB_ACCESS=params?.steps?.export?.emgb?.titles?.database?.download?.s5cmd && TITLES_S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_EMGB_TITLES_ACCESS" : ""
-    TITLES_S3_EMGB_SECRET=params?.steps?.export?.emgb?.titles?.database?.download?.s5cmd && TITLES_S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_EMGB_TITLES_SECRET" : ""
+    TITLES_S3_EMGB_ACCESS=params?.steps?.export?.emgb?.titles?.database?.download?.s5cmd \
+	&& TITLES_S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_EMGB_TITLES_ACCESS" : ""
+    TITLES_S3_EMGB_SECRET=params?.steps?.export?.emgb?.titles?.database?.download?.s5cmd \
+	&& TITLES_S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_EMGB_TITLES_SECRET" : ""
 
     KEGG_S3_EMGB_ACCESS=params?.steps?.export?.emgb?.kegg?.database?.download?.s5cmd && KEGG_S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_EMGB_KEGG_ACCESS" : ""
     KEGG_S3_EMGB_SECRET=params?.steps?.export?.emgb?.kegg?.database?.download?.s5cmd && KEGG_S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_EMGB_KEGG_SECRET" : ""
+    output = getOutput("${sample}", params.runid, "emgb", "")
     template 'emgbAnnotatedGenes.sh'
 }
 
+/*
+* This workflow entry point allows to aggregate information of different samples.
+* It will perform analysis steps such as dereplication, read mapping and co-occurrence.
+* The input files are automatically fetched as long as they adhere to the pipeline specification document (see documentation).
+*/
+workflow _wExportPipeline {
+    def input = params.input
+    def runID = params.runid
 
+    SAMPLE_IDX = 0
+
+    // List all available SRAIDs
+    Channel.from(file(input).list()) | filter({ path -> !(path ==~ /.*summary$/) && !(path ==~ /null$/) }) \
+     | filter({ path -> !(path ==~ /.*AGGREGATED$/)}) \
+     | set { sraDatasets }
+
+    // Save config File
+    wSaveSettingsList(sraDatasets)
+
+    sraDatasets | map { sra ->  [sra, input + "/" + sra + "/" + runID + "/" ]} \
+     | set {sraIDs}
+
+    // List all files in sample directories
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.qc])} | set { qcFiles }
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binning]) } \
+	| set { binningFilesIllumina } 
+
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binningONT])} \
+        | set { binningONTFiles }
+
+    binningFilesIllumina | mix(binningONTFiles) | set {binningFiles}
+
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.magAttributes])} \
+	| set { selectedSRAMagAttributes}
+
+    // Checkm files
+    selectedSRAMagAttributes | _wGetCheckm 
+    _wGetCheckm.out.checkmFiles | set { checkmFiles }
+
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.assemblyONT]) } | set { assemblyONTFiles } 
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.assembly]) } | set { assemblyIlluminaFiles }
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.annotation])} | set { selectedAnnotation}
+
+    assemblyONTFiles | mix(assemblyIlluminaFiles) | _wGetAssemblyFiles 
+    _wGetAssemblyFiles.out.illuminaAssembly | mix(_wGetAssemblyFiles.out.ontAssembly) | set { assembly } 
+
+    // get Bins
+    Pattern binsIlluminaPattern = Pattern.compile('.*/binning/' + params.modules.binning.version.major + '..*/.*/.*_bin.*.fa$')
+    binningFiles | _wGetIlluminaBinningFiles | filter({ sra, path -> binsIlluminaPattern.matcher(path.toString()).matches()}) \
+     | set{ illuminaBins }
+
+    Pattern binsONTPattern = Pattern.compile('.*/binningONT/' + params.modules.binningONT.version.major + '..*/.*/.*_bin.*.fa$')
+    binningFiles | filter({ sra, path -> binsONTPattern.matcher(path.toString()).matches()}) \
+     | mix(illuminaBins) | groupTuple(by: SAMPLE_IDX) | set{ binFiles }
+
+    MAX_BIN_COUNTER = 1000000
+    // get not Binned gff files
+    Pattern annotationNotBinnedGffPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/prokka/.*_notBinned.gff.gz$' )
+    selectedAnnotation | filter({ sra, path -> annotationNotBinnedGffPattern.matcher(path.toString()).matches()}) \
+     | set { notBinnedGff }
+
+    // get Bin gff files
+    Pattern annotationGffPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/prokka/.*_bin..*.gff.gz$' )
+    selectedAnnotation | filter({ sra, path -> annotationGffPattern.matcher(path.toString()).matches()}) \
+     | mix(notBinnedGff) | map { sra, path -> [sra, file(path).baseName, path, MAX_BIN_COUNTER] }  | set { gff }
+
+    // get not binned ffn files
+    Pattern annotationNotBinnedFfnPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/prokka/.*_notBinned.ffn.gz$' )
+    selectedAnnotation | filter({ sra, path -> annotationNotBinnedFfnPattern.matcher(path.toString()).matches()}) \
+     | set { notBinnedFfn }
+
+    // get ffn files
+    Pattern annotationFfnPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/prokka/.*_bin..*.ffn.gz$' )
+    selectedAnnotation | filter({ sra, path -> annotationFfnPattern.matcher(path.toString()).matches()}) \
+     | mix(notBinnedFfn) | map { sra, path -> [sra, file(path).baseName, path, MAX_BIN_COUNTER] } | set { ffn }
+
+    // not Binned faa files
+    Pattern annotationNotBinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/prokka/.*_notBinned.faa.gz$' )
+    selectedAnnotation | filter({ sra, path -> annotationNotBinnedPattern.matcher(path.toString()).matches()}) \
+     | set { notBinnedFaa }
+
+    // get Bin faa files
+    Pattern annotationFnaPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/prokka/.*_bin..*.faa.gz$' )
+    selectedAnnotation | filter({ sra, path -> annotationFnaPattern.matcher(path.toString()).matches()}) \
+     | mix(notBinnedFaa) | map { sra, path -> [sra, file(path).baseName, path, MAX_BIN_COUNTER] } | set { faa }
+
+    def TAXONOMY_DB = "gtdb"
+    def BLAST_DB = "uniref90"
+    if(params.steps.containsKey("export") \
+	&& params.steps.export.containsKey("emgb") \
+        && params.steps.export.emgb.containsKey("additionalParams")){
+
+	if(!params.steps.export.emgb.additionalParams.taxonomyDB.isEmpty()){
+		TAXONOMY_DB = params.steps.export.emgb.additionalParams.taxonomyDB
+	}
+
+	if(!params.steps.export.emgb.additionalParams.blastDB.isEmpty()){
+		BLAST_DB = params.steps.export.emgb.additionalParams.blastDB
+	}
+    }
+
+    // get MMseqs unbinned taxonomy files
+    Pattern annotationMmseqsUnbinnedTaxonomyPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + \
+	'..*/mmseqs2_taxonomy/.*/.*_unbinned.' + TAXONOMY_DB + '.taxonomy.tsv$' )
+    selectedAnnotation | filter({ sra, path -> annotationMmseqsUnbinnedTaxonomyPattern.matcher(path.toString()).matches()}) \
+     | map { sra, path -> [sra, TAXONOMY_DB, path, MAX_BIN_COUNTER]  } | set { mmseqsUnbinnedTaxonomy }
+
+    // get MMseqs binned taxonomy files   output/test2/1/annotation/1.0.0/mmseqs2/ncbi_nr/   test2_unbinned.ncbi_nr.105001.112000.blast.tsv
+    Pattern annotationMmseqsBinnedTaxonomyPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major \
+	+ '..*/mmseqs2_taxonomy/.*/.*_binned.' + TAXONOMY_DB + '.taxonomy.tsv$' )
+    selectedAnnotation | filter({ sra, path -> annotationMmseqsBinnedTaxonomyPattern.matcher(path.toString()).matches()}) \
+     | map { sra, path -> [sra, TAXONOMY_DB, path, MAX_BIN_COUNTER] } | mix(mmseqsUnbinnedTaxonomy) | set { mmseqsTaxonomy }
+
+    // get MMseqs unbinned blast files
+    Pattern annotationMmseqsUnirefUnbinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/mmseqs2/.*/.*_unbinned.' + BLAST_DB + '.blast.tsv$' )
+    selectedAnnotation | filter({ sra, path -> annotationMmseqsUnirefUnbinnedPattern.matcher(path.toString()).matches()}) \
+     | map { sra, path -> [sra, BLAST_DB, path, MAX_BIN_COUNTER] } | set { mmseqsUnirefUnbinnedBlast }
+
+    // get MMseqs binned blast files   output/test2/1/annotation/1.0.0/mmseqs2/ncbi_nr/   test2_unbinned.ncbi_nr.105001.112000.blast.tsv
+    Pattern annotationMmseqsUnirefBinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/mmseqs2/.*/.*_binned.' + BLAST_DB + '.blast.tsv$' )
+    selectedAnnotation | filter({ sra, path -> annotationMmseqsUnirefBinnedPattern.matcher(path.toString()).matches()}) \
+     | map { sra, path -> [sra, BLAST_DB, path, MAX_BIN_COUNTER] } \
+     | mix(mmseqsUnirefUnbinnedBlast) | set { mmseqsUnirefBlast }
+
+    // get MMseqs unbinned kegg blast files
+    Pattern annotationMmseqsKeggUnbinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/mmseqs2/.*/.*_unbinned.kegg.blast.tsv$' )
+    selectedAnnotation | filter({ sra, path -> annotationMmseqsKeggUnbinnedPattern.matcher(path.toString()).matches()}) \
+     | map { sra, path -> [sra, "kegg", path, MAX_BIN_COUNTER] } \
+     | set { mmseqsKeggUnbinnedBlast }
+
+    // get MMseqs binned blast files
+    Pattern annotationMmseqsKeggBinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/mmseqs2/.*/.*_binned.kegg.blast.tsv$' )
+    selectedAnnotation | filter({ sra, path -> annotationMmseqsKeggBinnedPattern.matcher(path.toString()).matches()}) \
+     | map { sra, path -> [sra, "kegg", path, MAX_BIN_COUNTER] } \
+     | mix(mmseqsKeggUnbinnedBlast) \
+     | set { mmseqsKeggBlast }
+
+    // get gtdbtk summary files
+    Pattern gtdbSummaryPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_generated_summary_raw_combined.tsv$' )
+    selectedSRAMagAttributes | filter({ sra, path -> gtdbSummaryPattern.matcher(path.toString()).matches()}) \
+     | groupTuple(by: SAMPLE_IDX) | set { gtdbSummaryFiles }
+
+    // get Mapping
+    Pattern mappingIlluminaPattern = Pattern.compile('.*/binning/' + params.modules.binning.version.major + '..*/.*/.*.bam$')
+    binningFiles | filter({ sra, path -> mappingIlluminaPattern.matcher(path.toString()).matches()}) \
+     | set{ illuminaMapping }
+
+    // get ONT mapping files
+    Pattern mappingONTPattern = Pattern.compile('.*/binningONT/' + params.modules.binningONT.version.major + '..*/.*/.*.bam$')
+    binningFiles | filter({ sra, path -> mappingONTPattern.matcher(path.toString()).matches()}) \
+     | set{ ontMapping }
+
+    illuminaMapping | mix(ontMapping) | set { mapping } 
+
+    wEMGBList(assembly, \
+	mapping, \
+        binFiles, \
+        gtdbSummaryFiles, \
+        checkmFiles, \
+        gff, \
+        ffn, \
+        faa, \
+        mmseqsTaxonomy, \
+        mmseqsUnirefBlast | mix(mmseqsKeggBlast) \
+    )
+}
 
 // CONTIGS: [test1, /vol/spool/metagenomics-tk/work_wFullPipeline/cd/7c943c0808e6d36c72a64834e7a88e/test1_contigs.fa.gz]
 // [test2, /vol/spool/metagenomics-tk/work_wFullPipeline/00/71fd0e590f4f03fda4cb87903a3b38/test2_contigs.fa.gz]
@@ -147,19 +321,45 @@ workflow wEMGBList {
     contigs |  combine(mapping, by: SAMPLE_IDX) | combine(bins, by: SAMPLE_IDX) | pEMGBAnnotatedContigs
     checkm | combine(gtdbtk, by: SAMPLE_IDX) | combine(bins, by: SAMPLE_IDX) | pEMGBAnnotatedBins
 
-    mmseqsBlast | filter { db, sample, type, start, end, chunkNumber, blastResult -> db == "uniref90" } \
-	| map { db, sample, type, start, end, chunkNumber, blastResult -> [sample, blastResult] } \
-	| groupTuple(by: SAMPLE_IDX) | set { selectedDBBlastResults }
+    selectedDBBlastResults = Channel.empty()
+    if(params.steps.containsKey("export") \
+	&& params.steps.export.containsKey("emgb") \
+        && params.steps.export.emgb.containsKey("additionalParams")){
+          
+        BLAST_DB = "ncbi_nr"
+	if(!params.steps.export.emgb.additionalParams.blastDB.isEmpty()){
+		BLAST_DB = params.steps.export.emgb.additionalParams.blastDB
+	}
+    	mmseqsBlast | filter { sample, db, blastResult, counter -> db == BLAST_DB } \
+		| map { sample, db, blastResult, counter -> tuple(groupKey(sample.toString(), counter), blastResult) } \
+		| groupTuple(remainder: true) | map { sample, blastResult -> [sample.toString(), blastResult] } | set { selectedDBBlastResults }
+    }
 
-    mmseqsBlast | filter { db, sample, type, start, end, chunkNumber, blastResult -> db == "kegg" } \
-	| map { db, sample, type, start, end, chunkNumber, blastResult -> [sample, blastResult] } \
-	| groupTuple(by: SAMPLE_IDX) | set { selectedKeggBlastResults }
+    selectedTaxonomyDBResult = Channel.empty()
+    if(params.steps.containsKey("export") \
+	&& params.steps.export.containsKey("emgb") \
+        && params.steps.export.emgb.containsKey("additionalParams")){
+        TAXONOMY_DB = "gtdb"
+	if(!params.steps.export.emgb.additionalParams.taxonomyDB.isEmpty()){
+		TAXONOMY_DB = params.steps.export.emgb.additionalParams.taxonomyDB
+	}
+        mmseqsTaxonomy | filter { sample, db, blastRestults, counter -> db==TAXONOMY_DB } \
+		| map { sample, db, blastResults, counter -> tuple(groupKey(sample.toString(), counter), blastResults) } | groupTuple(remainder: true) \
+		| map { sample, blastResults -> [sample.toString(), blastResults]} | set { selectedTaxonomyDBResult }
+    }
 
-    gff | map { sample, bin, gff -> [sample, gff] } | groupTuple(by: SAMPLE_IDX) \
-	| combine(ffn | map { sample, bin, ffn -> [sample, ffn] } | groupTuple(by: SAMPLE_IDX), by: SAMPLE_IDX) \
-	| combine(faa | map { sample, bin, faa -> [sample, faa] } | groupTuple(by: SAMPLE_IDX), by: SAMPLE_IDX) \
-	| combine(mmseqsTaxonomy | map { db, sample, blastResult -> [sample, blastResult] } | groupTuple(by: SAMPLE_IDX), by: SAMPLE_IDX) \
+    mmseqsBlast | filter { sample, db, blastResult, counter -> db == "kegg" } \
+		| map { sample, db, blastResult, counter -> tuple(groupKey(sample, counter), blastResult) } \
+		| groupTuple(remainder: true) | map { sample, blastResult -> [sample.toString(), blastResult] } | set { selectedKeggBlastResults }
+
+    gff | map { sample, bin, gff, counter -> tuple(groupKey(sample, counter), gff) } | groupTuple(remainder: true) \
+	| combine(ffn | map { sample, bin, ffn, counter -> tuple(groupKey(sample, counter), ffn) } | groupTuple(remainder: true), by: SAMPLE_IDX) \
+	| combine(faa | map { sample, bin, faa, counter -> tuple(groupKey(sample, counter), faa) } | groupTuple(remainder: true), by: SAMPLE_IDX) \
+		| map { sample, ffn, faa, gff -> [sample.toString(), ffn, faa, gff] } \
+	| combine(selectedTaxonomyDBResult, by: SAMPLE_IDX) \
 	| combine(selectedDBBlastResults, by: SAMPLE_IDX) \
 	| combine(selectedKeggBlastResults, by: SAMPLE_IDX) \
 	| combine(bins, by: SAMPLE_IDX) | pEMGBAnnotatedGenes
+
+    pEMGBAnnotatedContigs.out.logs | mix(pEMGBAnnotatedBins.out.logs, pEMGBAnnotatedGenes.out.logs) | pDumpLogs
 }

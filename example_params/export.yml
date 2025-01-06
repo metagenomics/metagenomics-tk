@@ -12,6 +12,9 @@ publishDirMode: "symlink"
 steps:
   export:
     emgb:
+      additionalParams:
+              blastDB: "bacmet20_predicted"
+              taxonomyDB: "gtdb"
       titles:
         database:
           download:

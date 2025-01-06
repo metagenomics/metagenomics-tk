@@ -1,5 +1,13 @@
 include { wSaveSettingsList } from '../config/module'
 
+include { _wCollectFile as _wCollectCheckm; \
+        _wCollectFile as _wCollectCheckm2; \
+        _wCollectFile as _wCollectGtdbtkArchea
+	_wCollectFile as _wCollectGtdbtkBac
+	_wCollectFile as _wCollectGtdbtkUnclassified
+	_wCollectFile as _wCollectGtdbtkCombined
+	_wCollectFile as _wCollectGtdbtkMissing
+	_wCollectFile as _wCollectGtdbtkSummary; } from './processes'
 include { pDumpLogs } from '../utils/processes'
 include { pProkka; _wCreateProkkaInput } from '../annotation/module'
 
@@ -10,7 +18,6 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
          params.modules.magAttributes.version.patch +
          '/' + TOOL + '/' + filename
 }
-
 
 
 process pCmseq {
@@ -44,7 +51,7 @@ process pCheckM {
     secret { "${S3_checkm_ACCESS}"!="" ? ["S3_checkm_ACCESS", "S3_checkm_SECRET"] : [] } 
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "checkm", filename) }, \
-      pattern: "{**.tsv}"
+      pattern: "{}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm") \
 	&& !params.steps.magAttributes.containsKey("checkm2")
@@ -56,10 +63,10 @@ process pCheckM {
     label 'highmemMedium'
 
     input:
-    tuple val(sample), val(ending), path(bins), val(chunkId)
+    tuple val(sample), val(ending), path(bins), val(chunkId), val(type), val(size)
 
     output:
-    tuple val("${sample}"), path("${sample}_checkm_*.tsv", type: "file"), emit: checkm
+    tuple val("${sample}"), path("${sample}_checkm_*.tsv", type: "file"), val(size), emit: checkm
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -71,6 +78,7 @@ process pCheckM {
     EXTRACTED_DB=params.steps?.magAttributes?.checkm?.database?.extractedDBPath ?: ""
     S3_checkm_ACCESS=params?.steps?.magAttributes?.checkm?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm_ACCESS" : ""
     S3_checkm_SECRET=params?.steps?.magAttributes?.checkm?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm_SECRET" : ""
+    FILE_TYPE = type == "" ? "" : type + "_"
     template 'checkm.sh'
 }
 
@@ -84,7 +92,7 @@ process pCheckM2 {
     secret { "${S3_checkm2_ACCESS}"!="" ? ["S3_checkm2_ACCESS", "S3_checkm2_SECRET"] : [] } 
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "checkm2", filename) }, \
-      pattern: "{**.tsv}"
+      pattern: "{}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm2")
 
@@ -95,10 +103,10 @@ process pCheckM2 {
     label 'medium'
 
     input:
-    tuple val(sample), val(ending), path(bins), val(chunkId)
+    tuple val(sample), val(ending), path(bins), val(chunkId), val(type), val(size)
 
     output:
-    tuple val("${sample}"), path("${sample}_checkm2_*.tsv", type: "file"),  emit: checkm
+    tuple val("${sample}"), path("${sample}_checkm2_*.tsv", type: "file"), val(size), emit: checkm
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -110,6 +118,7 @@ process pCheckM2 {
     EXTRACTED_DB=params.steps?.magAttributes?.checkm2?.database?.extractedDBPath ?: ""
     S3_checkm2_ACCESS=params?.steps?.magAttributes?.checkm2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm2_ACCESS" : ""
     S3_checkm2_SECRET=params?.steps?.magAttributes?.checkm2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm2_SECRET" : ""
+    FILE_TYPE = type == "" ? "" : type + "_"
     template 'checkm2.sh'
 }
 
@@ -124,7 +133,7 @@ process pGtdbtk {
     secret { "${S3_gtdb_ACCESS}"!="" ? ["S3_gtdb_ACCESS", "S3_gtdb_SECRET"] : [] } 
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }, \
-      pattern: "{**.tsv,**.tree}"
+      pattern: "{**.tree}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("gtdb")
 
@@ -133,15 +142,16 @@ process pGtdbtk {
     beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
     input:
-    tuple val(sample), val(ending), path(bins), val(chunkId)
+    tuple val(sample), val(ending), path(bins), val(chunkId), val(type), val(size)
 
     output:
-    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), optional: true, emit: bacteria
-    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), optional: true, emit: archea
-    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk_unclassified.tsv"), optional: true, emit: unclassified
-    tuple val("${sample}"), path("*.tree"), val("${sample}"), optional: true, emit: tree
-    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk_combined.tsv"), optional: true, emit: combined
-    tuple val("${sample}"), path("chunk_*_${sample}_missing_bins.tsv"), optional: true, emit: missing
+    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk.bac120.summary.tsv"), val(size), optional: true, emit: bacteria
+    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk.ar122.summary.tsv"), val(size), optional: true, emit: archea
+    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk_summary_raw_combined.tsv"), val(size), optional: true, emit: summaryRawCombined
+    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk_unclassified.tsv"), val(size), optional: true, emit: unclassified
+    tuple val("${sample}"), path("*.tree"), val("${sample}"), val(size), optional: true, emit: tree
+    tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk_combined.tsv"), val(size), optional: true, emit: combined
+    tuple val("${sample}"), path("chunk_*_${sample}_missing_bins.tsv"), val(size), optional: true, emit: missing
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
@@ -154,6 +164,7 @@ process pGtdbtk {
     GTDB_PARAMS=params.steps.magAttributes.gtdb.additionalParams ?: ""
     S3_gtdb_ACCESS=params?.steps?.magAttributes?.gtdb?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_gtdb_ACCESS" : ""
     S3_gtdb_SECRET=params?.steps?.magAttributes?.gtdb?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_gtdb_SECRET" : ""
+    FILE_TYPE = type == "" ? "" : type + "_"
     template 'gtdb.sh'
 }
 
@@ -227,7 +238,7 @@ workflow wMagAttributesFile {
        | map { sample -> [sample.DATASET, file(sample.PATH)] } \
        | groupTuple(by: DATASET_IDX) | set { mags }
   
-     _wMagAttributes(mags)
+     _wMagAttributes(Channel.value(""), mags)
      wSaveSettingsList(mags | map { it -> it[DATASET_IDX] })
    emit:
      checkm = _wMagAttributes.out.checkm
@@ -252,18 +263,17 @@ workflow wMagAttributesFile {
 */
 workflow wMagAttributesList {
    take: 
+     type
      mags
    main:
-     mags | _wMagAttributes
+     _wMagAttributes(type, mags)
    emit:
      checkm = _wMagAttributes.out.checkm
      gtdb = _wMagAttributes.out.gtdb
      gtdbMissing = _wMagAttributes.out.gtdbMissing
-     gtdbArcheaFiles = _wMagAttributes.out.gtdbArcheaFiles
-     gtdbBacteriaFiles = _wMagAttributes.out.gtdbBacteriaFiles
      checkmFiles = _wMagAttributes.out.checkmFiles
+     gtdbCombinedSummaryFiles = _wMagAttributes.out.gtdbCombinedSummaryFiles
 }
-
 
 /*
 *
@@ -276,20 +286,28 @@ def groupBins(binning, buffer){
   def chunkList = [];
   def SAMPLE_IDX = 0;
   def BIN_PATHS_IDX = 1;
-  binning[BIN_PATHS_IDX].collate(buffer).eachWithIndex {  
+  def BIN_TYPE = 2;
+  binning[BIN_PATHS_IDX].collate(buffer).eachWithIndex {
        it, indexSample -> it.groupBy{ 
             bin -> file(bin).name.substring(file(bin).name.lastIndexOf(".")) 
        }.eachWithIndex {
             ending, group, indexFileEnding -> \
-	chunkList.add([binning[SAMPLE_IDX], ending, group, indexSample.toString() + indexFileEnding.toString()]);
+	chunkList.add([binning[SAMPLE_IDX], ending, group, \
+	indexSample.toString() + indexFileEnding.toString(), \
+	binning[BIN_TYPE]]);
        }
   }
+  
+  for (def List chunk: chunkList) {
+      chunk.add(chunkList.size())
+  } 
+
   return chunkList;
 }
 
-
 workflow _wMagAttributes {
    take: 
+     type
      bins
    main:
      GTDB_DEFAULT_BUFFER = 500
@@ -302,15 +320,21 @@ workflow _wMagAttributes {
      BIN_FILES_IDX = 2
      BIN_FILES_OUTPUT_IDX = 0
 
-     // get file ending of bin files (.fa, .fasta, ...) and group by file ending and dataset
-     bins | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.checkm?.buffer ?: CHECKM_DEFAULT_BUFFER)}) \
-       | pCheckM | set {checkm}
-     bins | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.checkm2?.buffer ?: CHECKM2_DEFAULT_BUFFER)}) \
-       | pCheckM2 | set { checkm2 }
-     bins | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.gtdb?.buffer ?: GTDB_DEFAULT_BUFFER )}) \
-       | pGtdbtk | set {gtdb}
+     bins | combine(type) | set { binsWithType } 
 
-     checkm2.checkm | mix(checkm.checkm) | set {checkmSelected}
+     // get file ending of bin files (.fa, .fasta, ...) and group by file ending and dataset
+     binsWithType | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.checkm?.buffer ?: CHECKM_DEFAULT_BUFFER)}) \
+       | pCheckM | set { checkm }
+     binsWithType | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.checkm2?.buffer ?: CHECKM2_DEFAULT_BUFFER)}) \
+       | pCheckM2 | set { checkm2 }
+     binsWithType | flatMap({n -> groupBins(n, params?.steps?.magAttributes?.gtdb?.buffer ?: GTDB_DEFAULT_BUFFER )}) \
+       | pGtdbtk | set { gtdb }
+
+     toolCheckm = Channel.value("checkm")
+     toolCheckm2 = Channel.value("checkm2")
+     _wCollectCheckm(type, checkm.checkm, toolCheckm, toolCheckm, Channel.value(".tsv")) \
+	| mix(_wCollectCheckm2(type, checkm2.checkm, toolCheckm2, toolCheckm2, Channel.value(".tsv"))) \
+	| set { checkmSelected }
 
      // Prepare checkm output file
      checkmSelected | splitCsv(sep: '\t', header: true) \
@@ -318,26 +342,50 @@ workflow _wMagAttributes {
 	| set { checkmList }
 
      // Prepare gtdb output file
-     gtdb.combined | splitCsv(sep: '\t', header: true) \
-	| map { sample, gtdb -> gtdb } \
+     gtdb.combined | map { sample, gtdb, size -> gtdb } \
+	| splitCsv(sep: '\t', header: true) \
 	| set { gtdbCombinedList }
 
      // Prepare missing gtdb output file
-     gtdb.missing | splitCsv(sep: '\t', header: true) \
-	| map { sample, gtdb -> gtdb } \
+     gtdb.missing | map { sample, gtdb, size -> gtdb } \
+	| splitCsv(sep: '\t', header: true) \
 	| set { gtdbMissingList }
 
-     gtdb.bacteria | set { gtdbBacteriaFiles }
+     _wCollectGtdbtkSummary(type, gtdb.summaryRawCombined, Channel.value("gtdb"), \
+	Channel.value("gtdbtk"), Channel.value("_summary_raw_combined.tsv")) \
+	| set { gtdbCombinedRawSummaryListFiles }
 
-     gtdb.archea | set { gtdbArcheaFiles }
+     _wCollectGtdbtkArchea(type, gtdb.archea, Channel.value("gtdb"), \
+	Channel.value("gtdbtk"), Channel.value(".ar122.summary.tsv")) \
+	| set { gtdbCombinedArchSummaryListFiles }
+
+     _wCollectGtdbtkBac(type, gtdb.bacteria, Channel.value("gtdb"), \
+	Channel.value("gtdbtk"), Channel.value(".bac120.summary.tsv")) \
+	| set { gtdbCombinedBacSummaryListFiles }
+
+     _wCollectGtdbtkUnclassified(type, gtdb.unclassified, Channel.value("gtdb"), \
+	Channel.value("gtdbtk"), Channel.value("_unclassified.tsv")) \
+	| set { gtdbCombinedUnclassifiedListFiles }
+
+     _wCollectGtdbtkCombined(type, gtdb.combined, Channel.value("gtdb"), \
+	Channel.value("gtdbtk"), Channel.value("_combined.tsv")) \
+	| set { gtdbCombinedListFiles }
+
+     _wCollectGtdbtkMissing(type, gtdb.missing, Channel.value("gtdb"), \
+	Channel.value("gtdbtk"), Channel.value("_missing_bins.tsv")) \
+	| set { gtdbMissingListFiles }
 
      pGtdbtk.out.logs | mix(pCheckM.out.logs) | mix(pCheckM2.out.logs) | pDumpLogs 
 
    emit:
      checkm = checkmList
-     gtdb = gtdbCombinedList
+     gtdb =  gtdbCombinedList
+     gtdbCombinedSummaryFiles = gtdbCombinedRawSummaryListFiles
      gtdbMissing = gtdbMissingList
-     gtdbArcheaFiles = gtdbArcheaFiles
-     gtdbBacteriaFiles = gtdbBacteriaFiles
      checkmFiles = checkmSelected
 }
+
+
+
+
+
