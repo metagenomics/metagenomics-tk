@@ -577,8 +577,8 @@ workflow wFullPipeline {
 
     wAnalyseMetabolitesList(binsStats, mapJoin(checkm, proteins, "BIN_ID", "BIN_ID"))
 
-
-    // Export json files for EMGB
+    // If mmseqs was also executed on MAGs then the groupTuple operator should be adjusted
+    // to wait for the correct number of MAGs. 
     ADDITIONAL_NOT_BINNED = 1
     MMSEQS_TAX_RUN_ON_MAGS = false 
     MMSEQS_TAX_RUN_ONLY_ON_NOT_BINNED = 1
@@ -588,6 +588,8 @@ workflow wFullPipeline {
         MMSEQS_TAX_RUN_ON_MAGS = true 
     }
 
+
+    // Export json files for EMGB
     wEMGBList(illumina.contigs | mix(ont.contigs),\
 	mapping, \
         generatedBinsFiles, \
@@ -607,6 +609,7 @@ workflow wFullPipeline {
 		| combine(binsCounter | map { sample, counter -> [sample, counter+ADDITIONAL_NOT_BINNED] }, by: SAMPLE_IDX),  \
    )
 
+   // Aggregate results of multiple samples (dereplication, read mapping, co-occurrence, ...)
    _wAggregate(ont.reads, ont.medianQuality, illumina.readsPair, illumina.readsSingle, binsStats, \
 	gtdb,  wAnalyseMetabolitesList.out.models)
 }

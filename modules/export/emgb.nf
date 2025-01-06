@@ -83,7 +83,8 @@ process pEMGBAnnotatedGenes {
 
     secret { "${S3_EMGB_KEGG_ACCESS}"!="" ? ["S3_EMGB_KEGG_ACCESS", "S3_EMGB_KEGG_SECRET"] : [] } 
 
-    containerOptions Utils.getDockerMount(params.steps?.export?.emgb?.titles?.database, params) + Utils.getDockerMount(params.steps?.export?.emgb?.kegg?.database, params) + Utils.getDockerNetwork() + " --entrypoint='' "
+    containerOptions Utils.getDockerMount(params.steps?.export?.emgb?.titles?.database, params) \
+	+ Utils.getDockerMount(params.steps?.export?.emgb?.kegg?.database, params) + Utils.getDockerNetwork() + " --entrypoint='' "
 
     when params.steps.containsKey("export") && params.steps.export.containsKey("emgb")
 
@@ -123,8 +124,7 @@ process pEMGBAnnotatedGenes {
 }
 
 /*
-* This workflow entry point allows to aggregate information of different samples.
-* It will perform analysis steps such as dereplication, read mapping and co-occurrence.
+* This entrypoint transforms toolkit outputs to json files that can be imported in emgb. 
 * The input files are automatically fetched as long as they adhere to the pipeline specification document (see documentation).
 */
 workflow _wExportPipeline {
@@ -208,6 +208,7 @@ workflow _wExportPipeline {
     selectedAnnotation | filter({ sra, path -> annotationFnaPattern.matcher(path.toString()).matches()}) \
      | mix(notBinnedFaa) | map { sra, path -> [sra, file(path).baseName, path, MAX_BIN_COUNTER] } | set { faa }
 
+    // Check config files for the database that should be used for emgb
     def TAXONOMY_DB = "gtdb"
     def BLAST_DB = "uniref90"
     if(params.steps.containsKey("export") \
@@ -289,21 +290,21 @@ workflow _wExportPipeline {
     )
 }
 
-// CONTIGS: [test1, /vol/spool/metagenomics-tk/work_wFullPipeline/cd/7c943c0808e6d36c72a64834e7a88e/test1_contigs.fa.gz]
-// [test2, /vol/spool/metagenomics-tk/work_wFullPipeline/00/71fd0e590f4f03fda4cb87903a3b38/test2_contigs.fa.gz]
-// mapping: [test2, /vol/spool/metagenomics-tk/work_wFullPipeline/7c/43a3513d49143a76a29c4404417997/test2.bam]
-// bins: [test1, [/vol/spool/metagenomics-tk/work_wFullPipeline/95/085ffbe17a6f2ebfb60709d3f33cf3/test1_bin.1.fa, /vol/spool/metagenomics-tk/work_wFullPipeline/95/085ffbe17a6f2ebfb60709d3f33cf3/test1_bin.2.fa]]
-// gtdbtk: [test2, [/vol/spool/metagenomics-tk/work_wFullPipeline/d2/5b5937c7a950d87cd796e2bf80cfcd/chunk_00_test2_gtdbtk.bac120.summary.tsv]]
-// checkm: [test2, /vol/spool/metagenomics-tk/work_wFullPipeline/ff/1292ed3399aada6fa1dffc18cfbc12/test2_checkm2_EfY2cPIh.tsv]
-// gff,ffn,faa: [test2, test2_bin.2.fa, /vol/spool/metagenomics-tk/work_wFullPipeline/78/1224783c7ae2d9e0a8d4264893e47a/test2_bin.2.gff.gz]
-// mmseqsTaxonomy: [ncbi_nr, test1, /vol/spool/metagenomics-tk/work_wFullPipeline/93/56bf5c34d7524930d73a6ef45ae23d/test1_binned.ncbi_nr.taxonomy.tsv]
-//mmseqsBlast:
-// [bacmet20_predicted, test2, binned, 1, 2922, 1, /vol/spool/metagenomics-tk/work_wFullPipeline/3c/e5221be7fd305dc056356201de7d61/test2_binned.1.2922.bacmet20_predicted.blast.tsv]
-// [uniref90, test1, binned, 1, 2923, 1, /vol/spool/metagenomics-tk/work_wFullPipeline/a0/8e7a2a7b928731dbcfd62cbf546d4f/test1_binned.1.2923.uniref90.blast.tsv]
-// [bacmet20_predicted, test1, binned, 1, 2923, 1, /vol/spool/metagenomics-tk/work_wFullPipeline/2f/dffc66ee85b2a1baf296323fcc894c/test1_binned.1.2923.bacmet20_predicted.blast.tsv]
-// [kegg, test2, binned, 1, 2922, 1, /vol/spool/metagenomics-tk/work_wFullPipeline/5a/74adca85c1b4005aa490440f8b05ba/test2_binned.1.2922.kegg.blast.tsv]
-// [uniref90, test2, binned, 1, 2922, 1, /vol/spool/metagenomics-tk/work_wFullPipeline/57/5f4e7f5ae75937613d7c813be6c8fd/test2_binned.1.2922.uniref90.blast.tsv]
-// [kegg, test1, binned, 1, 2923, 1, /vol/spool/metagenomics-tk/work_wFullPipeline/6b/41a5ce820f9fb5e897b6a9109e5678/test1_binned.1.2923.kegg.blast.tsv]
+/*
+* 
+* This entrypoint accepts the following channels with the following example inputs:
+*
+* contigs:  [test1, /path/to/test1_contigs.fa.gz]
+* mapping: [test2, /path/to/test2.bam]
+* bins: [test1, [/path/to/test1_bin.1.fa, /path/to/test1_bin.2.fa]]
+* gtdbtk: [test2, *_gtdbtk_generated_summary_raw_combined.tsv]
+* checkm: [test2, *_checkm_generated.tsv]
+* gff,ffn,faa: [test2, test2_bin.2.fa, /path/to/test2_bin.2.gff.gz, counter] where counter describes the number of input files to expect
+* mmseqsTaxonomy: [test1, ncbi_nr, /path/to/test1_binned.ncbi_nr.taxonomy.tsv, 10000]
+* mmseqsBlast:
+*  [test2, bacmet20_predicted, /path/to/*.bacmet20_predicted.blast.tsv]
+*  [test2, kegg, /path/to/*kegg.blast.tsv]
+*/
 workflow wEMGBList {
   take:
     contigs
