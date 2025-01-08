@@ -111,7 +111,7 @@ jobs:
            make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/emgb/uniref90.titles.tsv" \
                            MODULE_DB_TEST_MD5SUM="aaf1dd9021243def8e6c4e438b4b3669" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90.titles.tsv.gz" \
                            MODULE_DB_TEST_PATH="/vol/spool/emgb/uniref90.titles.tsv.gz" MODULE_DB_TEST_S3PATH="s3://databases/uniref90.titles.tsv.gz" \
-                           MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/uni*90.titles.tsv" \
+                           MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/uniref90.titles.tsv" \
                            MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                            MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/emgbTitles MODULE_DB_TEST_YML=example_params/export.yml \
                            MODULE_DB_TEST_YML_PATH="'.steps.export.emgb.titles.database=env(database)'" \
