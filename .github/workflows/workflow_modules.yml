@@ -71,6 +71,8 @@ jobs:
         run: |
           make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
           make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_EMGB_KEGG_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_EMGB_KEGG_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Test Full Pipeline ONT Run
         run: |
           VERSION=$(sort VERSIONS.txt | tail -n 1)
@@ -109,7 +111,7 @@ jobs:
            make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/emgb/uniref90.titles.tsv" \
                            MODULE_DB_TEST_MD5SUM="aaf1dd9021243def8e6c4e438b4b3669" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90.titles.tsv.gz" \
                            MODULE_DB_TEST_PATH="/vol/spool/emgb/uniref90.titles.tsv.gz" MODULE_DB_TEST_S3PATH="s3://databases/uniref90.titles.tsv.gz" \
-                           MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/uni*90.titles.tsv" \
+                           MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/uniref90.titles.tsv" \
                            MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                            MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/emgbTitles MODULE_DB_TEST_YML=example_params/export.yml \
                            MODULE_DB_TEST_YML_PATH="'.steps.export.emgb.titles.database=env(database)'" \
@@ -127,25 +129,11 @@ jobs:
                   MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                   MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/emgbKEGG \
                   MODULE_DB_TEST_YML=example_params/export.yml \
-                  MODULE_DB_TEST_YML_PATH="'.steps.export.emgb.titles.database=env(database)'" \
+                  MODULE_DB_TEST_YML_PATH="'.steps.export.emgb.kegg.database=env(database)'" \
                   MODULE_DB_TEST_YML_SCRIPT="./scripts/test_fullPipelineExport.sh" \
                   MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/emgb_kegg_yaml_database_tests" \
                   MODULE_DB_TEST_SKIP_TESTS="https" \
                   MODULE_DB_TEST_REMOVE_DB="yes"
-      - name: Test download kegg EMGB database
-        run: |
-           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/emgb/uniref90.titles.tsv" \
-                           MODULE_DB_TEST_MD5SUM="aaf1dd9021243def8e6c4e438b4b3669" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90.titles.tsv.gz" \
-                           MODULE_DB_TEST_PATH="/vol/spool/emgb/uniref90.titles.tsv.gz" MODULE_DB_TEST_S3PATH="s3://databases/uniref90.titles.tsv.gz" \
-                           MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/uni*90.titles.tsv" \
-                           MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
-                           MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/emgbTitles MODULE_DB_TEST_YML=example_params/export.yml \
-                           MODULE_DB_TEST_YML_PATH="'.steps.export.emgb.titles.database=env(database)'" \
-                           MODULE_DB_TEST_YML_SCRIPT="./scripts/test_fullPipelineExport.sh" \
-                           MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/_yaml_database_tests" \
-                           MODULE_DB_TEST_REMOVE_DB="yes" \ MODULE_DB_TEST_SKIP_TESTS="noSkip" \
-                           MODULE_DB_TEST_ADDITIONA_YAML_PARAMS=" --steps.export.emgb.kegg.database.extractedDBPath=/vol/spool/metagenomics-tk/emgb/kegg/annotatedgenes2json_db_kegg-mirror-2022-12"
-
 
       - name: Test if SRA S3 Input module works with ONT data
         run: |
