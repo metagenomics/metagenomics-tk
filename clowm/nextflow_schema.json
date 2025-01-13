@@ -70,7 +70,6 @@
           "default": "/tmp"
         },
         "publishDirMode": {
-          "type": "string",
           "description": "Store results as symlink (to work folder) or copy (in output folder)",
           "default": "copy",
           "enum": ["symlink", "copy"],
@@ -190,7 +189,6 @@
           "hidden": true
         },
         "steps.assembly.megahit.resources.RAM.mode": {
-          "type": "string",
           "description": "Flag to predict resources",
           "displayName": "predict resource",
           "enum": ["DEFAULT", "PREDICT"],
@@ -220,7 +218,6 @@
           "hidden": true
         },
         "steps.assemblyONT.metaflye.quality": {
-          "type": "string",
           "description": "Quality mode for metaflye",
           "default": "AUTO",
           "enum": [
@@ -530,6 +527,41 @@
           "type": "string",
           "description": "db path for kegg from mmseqs2.",
           "displayName": "db path for kegg from mmseqs2.",
+          "hidden": true
+        }
+      }
+    },
+    "export_emgb": {
+      "title": "Export Toolkit output to EMGB",
+      "type": "object",
+      "description": "",
+      "default": "",
+      "fa_icon": "fas fa-ranking-star",
+      "properties": {
+        "steps.export.emgb.titles.database.extractedDBPath": {
+          "type": "string",
+          "description": "Path to the titles database",
+          "displayName": "emgb-titles-database",
+          "hidden": true
+        },
+        "steps.export.emgb.kegg.database.extractedDBPath": {
+          "type": "string",
+          "description": "Path to the annotation of kegg genes",
+          "displayName": "emgb-kegg-annotation",
+          "hidden": true
+        },
+        "steps.export.emgb.additionalParams.blastDB": {
+          "type": "string",
+          "description": "MMseqs results based on which database should be used.",
+          "displayName": "Database of MMSeqs results",
+          "default": "",
+          "hidden": true
+        },
+        "steps.export.emgb.additionalParams.taxonomyDB": {
+          "type": "string",
+          "description": "MMseqs taxonomy results based on which database should be used.",
+          "displayName": "Database of MMSeqs taxonomy results",
+          "default": "",
           "hidden": true
         }
       }
