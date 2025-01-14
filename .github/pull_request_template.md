@@ -1,8 +1,6 @@
+## PR Description
 
-
-## Please provide a description for this PR
-
-Description goes here...
+Please provide a description for this PR
 
 ## PR review guidelines
 
@@ -20,6 +18,7 @@ Before merge:
 
 * Before merging it must be checked if a squash of commits is required.
 
+### Config updates
 
-
+If you update any of the config files in the default folder, please make sure to also update the `clowm/nextflow_schema.json` if necessary.  
 

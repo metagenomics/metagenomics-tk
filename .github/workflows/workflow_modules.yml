@@ -628,8 +628,6 @@ jobs:
           "" "${WORK_DIR}" ${PROFILE} ${VERSION} "" || exit 1
           bash ./scripts/check_parameter.sh ${OUTPUT} || exit 1
 
-
-
   codePolicy:
     runs-on: [ self-hosted, slurm]
     needs: [settings]
@@ -638,5 +636,7 @@ jobs:
       - name: Checks if every process defines a publishDirMode
         run: |
           make checkPublisDirMode || exit 1 
-
-
+      - name: Check the clowm json against json schema
+        run: |
+          make jsonValidate
+          trap 'if [[ $? == 1 ]]; then echo "Errors in clowm json found"; cat json.err; exit 1; fi' EXIT
