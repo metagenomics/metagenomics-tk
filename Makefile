@@ -17,6 +17,10 @@ ifndef ENTRY
 	override ENTRY = "wFullPipeline"
 endif
 
+ifndef JSONSCHEMA_TAG
+        override JSONSCHEMA_TAG = "v4.3.2"
+endif
+
 ifndef LOG_DIR
 	override LOG_DIR = "log"
 endif
@@ -105,6 +109,15 @@ checkPublisDirMode: ## Check if publishDirMode is set in process
 
 python_version_check:
 	./scripts/pythonVersionCheck.sh
+
+jsonschema:
+	git clone --depth 1 --branch ${JSONSCHEMA_TAG} https://github.com/sourcemeta/jsonschema.git
+
+jsonBuild: jsonschema ## Build Docker image for jsonschema validation
+	cd jsonschema && docker build -t jsonschema .
+
+jsonValidate: ## Validate clowm json with json schema
+	docker run --interactive --volume "$${PWD}:/workspace" jsonschema lint clowm/nextflow_schema.json > json.err
 
 wiki_venv: python_version_check ## Install virtual environment for wiki
 	python3 -m venv wiki_venv

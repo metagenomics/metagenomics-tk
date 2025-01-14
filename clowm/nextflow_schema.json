@@ -70,7 +70,6 @@
           "default": "/tmp"
         },
         "publishDirMode": {
-          "type": "string",
           "description": "Store results as symlink (to work folder) or copy (in output folder)",
           "default": "copy",
           "enum": ["symlink", "copy"],
@@ -190,7 +189,6 @@
           "hidden": true
         },
         "steps.assembly.megahit.resources.RAM.mode": {
-          "type": "string",
           "description": "Flag to predict resources",
           "displayName": "predict resource",
           "enum": ["DEFAULT", "PREDICT"],
@@ -220,7 +218,6 @@
           "hidden": true
         },
         "steps.assemblyONT.metaflye.quality": {
-          "type": "string",
           "description": "Quality mode for metaflye",
           "default": "AUTO",
           "enum": [
