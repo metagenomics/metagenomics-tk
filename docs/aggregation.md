@@ -3,7 +3,8 @@ There are two ways to execute the toolkit. You can either run all steps in one e
 The second option allows you to process multiple samples via independent toolkit executions on different infrastructures and combine all
 results afterwards.
 
-You could run first the wFullPipeline mode as described in the [full pipeline section](full_pipeline.md) but without dereplication, read mapping and co-occurrence modules and afterwards run the the aggregation as described below:
+You could run first the wFullPipeline mode as described in the [full pipeline section](full_pipeline.md) but without dereplication,
+read mapping and co-occurrence modules and afterwards run the the aggregation as described below:
 
 ## Requirements
 
@@ -21,23 +22,10 @@ You could run first the wFullPipeline mode as described in the [full pipeline se
 
 First checkout the Github repository in a directory which is shared by all worker nodes:
 
-```BASH
-git clone git@github.com:metagenomics/metagenomics-tk.git
-cd metagenomics-tk
-```
-
 ## Run the Toolkit
 
 ```BASH
-./nextflow run main.nf -work-dir /vol/spool/work \
-    -profile slurm \
-    -entry wAggregatePipeline \
-    -params-file default/fullPipelineAggregate.yml \
-    --s3SignIn false \
-    --scratch /vol/scratch \
-    --databases /vol/scratch/databases \
-    --input output \
-    --output output
+---8<--- "scripts/test_gettingStarted_aggregation.sh:1:11"
 ```
 
 where

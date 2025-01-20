@@ -51,7 +51,7 @@ nav:
   - "Getting Started":
     - "Concept": concept.md
     - "Full Pipeline": full_pipeline.md
-    - "Per-Sample and Aggregation": per_sample_and_aggregation.md
+    - "Aggregation": aggregation.md
     - "EMGB": emgb.md
   - "Configuration":
     - "Global Pipeline Configuration": configuration.md

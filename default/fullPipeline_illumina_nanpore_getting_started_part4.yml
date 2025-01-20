@@ -46,16 +46,9 @@ steps:
     nanoplot:
       additionalParams: ""
   assembly:
-    megahit:
-      # --mem-flag 0 to use minimum memory, --mem-flag 1 (default) moderate memory and --mem-flag 2 all memory.
-      # meta-sensitive: '--min-count 1 --k-list 21,29,39,49,...,129,141' 
-      # meta-large:  '--k-min  27  --k-max 127 --k-step 10' (large & complex metagenomes, like soil)
-      additionalParams: " --min-contig-len 1000 --presets meta-sensitive "
+    metaspades:
+      additionalParams: "  "
       fastg: true
-      resources:
-        RAM:
-          mode: 'PREDICT'
-          predictMinLabel: 'medium'
   assemblyONT:
     metaflye:
       additionalParams: " -i 1 "
@@ -103,6 +96,20 @@ steps:
           source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm2_v2.tar.gz"
           md5sum: a634cb3d31a1f56f2912b74005f25f09
       additionalParams: "  "
+  annotation:
+    prokka:
+      defaultKingdom: false
+      additionalParams: " --mincontiglen 500 "
+    mmseqs2:
+      chunkSize: 20000
+      bacmet20_experimental:
+        additionalParams:
+          search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
+          additionalColumns: ""
+        database:
+          download:
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_experimental.tar.zst
+            md5sum: 57a6d328486f0acd63f7e984f739e8fe
 resources:
   highmemLarge:
     cpus: 28

@@ -5,7 +5,7 @@ wget -P inputFiles https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta
 
 # Create a file that describes your input data 
 INPUT_FILES=$(pwd)/inputFiles/input.tsv
-echo -e "MYDATA\tREADS1\tREADS2" > $INPUT_FILES
+echo -e "SAMPLE\tREADS1\tREADS2" > $INPUT_FILES
 echo -e "MYDATA\t$(readlink -f inputFiles/read1*)\t$(readlink -f inputFiles/read2*)" >> $INPUT_FILES
 
 # Run the following command with files stored on local disk
