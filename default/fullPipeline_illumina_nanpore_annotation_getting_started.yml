@@ -1,0 +1,124 @@
+tempdir: "tmp"
+summary: false
+s3SignIn: false
+input:
+  paired:
+    path: "test_data/fullPipeline/reads_split.tsv"
+    watch: false
+output: output
+logDir: log
+runid: 1
+databases: "/vol/scratch/databases"
+publishDirMode: "symlink"
+logLevel: 1
+scratch: "/vol/scratch"
+steps:
+  qc:
+    fastp:
+       # For PE data, the adapter sequence auto-detection is disabled by default since the adapters can be trimmed by overlap analysis. However, you can specify --detect_adapter_for_pe to enable it.
+       # For PE data, fastp will run a little slower if you specify the sequence adapters or enable adapter auto-detection, but usually result in a slightly cleaner output, since the overlap analysis may fail due to sequencing errors or adapter dimers.
+       # -q, --qualified_quality_phred       the quality value that a base is qualified. Default 15 means phred quality >=Q15 is qualified.
+       # --cut_front move a sliding window from front (5') to tail, drop the bases in the window if its mean quality is below cut_mean_quality, stop otherwise.
+       # --length_required  reads shorter than length_required will be discarded, default is 15. (int [=15])
+       # PE data, the front/tail trimming settings are given with -f, --trim_front1 and -t, --trim_tail1
+       additionalParams: " --detect_adapter_for_pe -q 20 --cut_front --trim_front1 3 --cut_tail --trim_tail1 3 --cut_mean_quality 10 --length_required 50 "
+       timeLimit: "AUTO"
+    nonpareil:
+      additionalParams: " -v 10 -r 1234 "
+    kmc:
+      timeLimit: "AUTO"
+      additionalParams:
+        # Computes k-mer distribution based on k-mer length 13 and 21
+        #  -sm - use strict memory mode (memory limit from -m<n> switch will not be exceeded)
+        #  -cs<value> - maximal value of a counter
+        count: " -sm -cs10000 "
+        histo: " -cx50000 "
+
+  qcONT:
+    porechop:
+       additionalParams:
+         # Input files are split into chunks because of RAM issues
+         chunkSize: 450000
+         porechop: ""
+        # --keep_percent Throw out the worst 10% of reads. This is measured by bp, not by read count. So this option throws out the worst 10% of read bases. 
+        # 
+         filtlong: " --min_length 1000  --keep_percent 90 "
+    nanoplot:
+      additionalParams: ""
+  assembly:
+    megahit:
+      # --mem-flag 0 to use minimum memory, --mem-flag 1 (default) moderate memory and --mem-flag 2 all memory.
+      # meta-sensitive: '--min-count 1 --k-list 21,29,39,49,...,129,141' 
+      # meta-large:  '--k-min  27  --k-max 127 --k-step 10' (large & complex metagenomes, like soil)
+      additionalParams: " --min-contig-len 1000 --presets meta-sensitive "
+      fastg: true
+      resources:
+        RAM:
+          mode: 'PREDICT'
+          predictMinLabel: 'medium'
+  assemblyONT:
+    metaflye:
+      additionalParams: " -i 1 "
+      quality: "AUTO"
+  binning:
+    bwa2:
+      additionalParams: 
+        bwa2: " "
+        # samtools flags are used to filter resulting bam file
+        samtoolsView: " -F 3584 " 
+    contigsCoverage:
+      additionalParams: " --min-covered-fraction 0 --min-read-percent-identity 100 --min-read-aligned-percent 100 "
+    genomeCoverage:
+      additionalParams: " --min-covered-fraction 0 --min-read-percent-identity 100 --min-read-aligned-percent 100 "
+    # Primary binning tool
+    metabat:
+      # Set --seed positive numbers to reproduce the result exactly. Otherwise, random seed will be set each time.
+      additionalParams: " --seed 234234  "
+    # Secondary binning tool for use with MAGscot
+  binningONT:
+    minimap:
+      additionalParams: 
+        minimap: " "
+        # samtools flags are used to filter resulting bam file
+        samtoolsView: " -F 3584 " 
+    contigsCoverage:
+      additionalParams: " --min-covered-fraction 0  --min-read-aligned-percent 100 "
+    genomeCoverage:
+      additionalParams: " --min-covered-fraction 0  --min-read-aligned-percent 100 "
+    metabat:
+      additionalParams: " --seed 234234  "
+  magAttributes:
+    # gtdbtk classify_wf
+    # --min_af minimum alignment fraction to assign genome to a species cluster (0.5)
+    gtdb:
+      buffer: 1000
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
+          md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
+      additionalParams: " --min_af 0.65 --scratch_dir . "
+    checkm2:
+      database:
+        download:
+          source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm2_v2.tar.gz"
+          md5sum: a634cb3d31a1f56f2912b74005f25f09
+      additionalParams: "  "
+resources:
+  highmemLarge:
+    cpus: 28
+    memory: 230
+  highmemMedium:
+    cpus: 14
+    memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
+  small:
+    cpus: 7
+    memory: 14
+  tiny:
+    cpus: 1
+    memory: 1
