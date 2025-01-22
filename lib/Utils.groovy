@@ -47,6 +47,13 @@ class Utils {
           module.version.patch
   }
 
+  static String getAggregatedOutput(runid, tool, module, filename){
+    return "AGGREGATED" + '/' +  tool + '/' + module.name + '/' + 
+         module.version.major + "." +  
+         module.version.minor + "." +  
+         module.version.patch +  
+         '/' + tool + '/' + filename
+  }
 
   static String getBeforeScript(script, image){
     if(script.isEmpty()){
