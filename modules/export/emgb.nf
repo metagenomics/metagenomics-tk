@@ -328,7 +328,7 @@ workflow wEMGBList {
         && params.steps.export.emgb.containsKey("additionalParams")){
           
         BLAST_DB = "ncbi_nr"
-	if(!params.steps.export.emgb.additionalParams.blastDB.isEmpty()){
+	if(!params.steps.export.emgb.additionalParams.blastDB.trim().isEmpty()){
 		BLAST_DB = params.steps.export.emgb.additionalParams.blastDB
 	}
     	mmseqsBlast | filter { sample, db, blastResult, counter -> db == BLAST_DB } \
@@ -341,7 +341,7 @@ workflow wEMGBList {
 	&& params.steps.export.containsKey("emgb") \
         && params.steps.export.emgb.containsKey("additionalParams")){
         TAXONOMY_DB = "gtdb"
-	if(!params.steps.export.emgb.additionalParams.taxonomyDB.isEmpty()){
+	if(!params.steps.export.emgb.additionalParams.taxonomyDB.trim().isEmpty()){
 		TAXONOMY_DB = params.steps.export.emgb.additionalParams.taxonomyDB
 	}
         mmseqsTaxonomy | filter { sample, db, blastRestults, counter -> db==TAXONOMY_DB } \
