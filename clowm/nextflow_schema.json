@@ -554,14 +554,14 @@
           "type": "string",
           "description": "MMseqs results based on which database should be used.",
           "displayName": "Database of MMSeqs results",
-          "default": "",
+          "default": " ",
           "hidden": true
         },
         "steps.export.emgb.additionalParams.taxonomyDB": {
           "type": "string",
           "description": "MMseqs taxonomy results based on which database should be used.",
           "displayName": "Database of MMSeqs taxonomy results",
-          "default": "",
+          "default": " ",
           "hidden": true
         }
       }
