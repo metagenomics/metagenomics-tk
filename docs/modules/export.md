@@ -48,5 +48,5 @@ The following files are produced as output:
 
 where `SAMPLE` is the name of the sample.
 
-You can read [here](https://gitlab.ub.uni-bielefeld.de/cmg/emgb/emgb-server/-/tree/master#quick-start) how to 
-start EMGB and how to use these files to import a dataset. 
+You can read more [here](https://gitlab.ub.uni-bielefeld.de/cmg/emgb/emgb-server/-/tree/master#quick-start) about how to 
+start EMGB and use these files to import a dataset. 
