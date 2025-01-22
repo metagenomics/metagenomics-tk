@@ -1,6 +1,6 @@
 # Export
 
-This module exports a set of results produced by metagenomics-tk.
+This module exports a set of results produced by Metagenomics-tk.
 Currently the export for EMGB needs the results of the following tools:
 
 1. Assembly
