@@ -5,7 +5,7 @@ Currently, the export for EMGB needs the results of the following tools:
 
 1. Assembly
 2. Binning
-3. Checkm(2)
+3. Checkm (v1 or v2)
 4. Prokka output
 5. gtdb-tk 
 6. Mmseqs Taxonomy (Database: GTDB)
