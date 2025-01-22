@@ -8,8 +8,8 @@ Currently, the export for EMGB needs the results of the following tools:
 3. Checkm (v1 or v2)
 4. Prokka output
 5. GTDB-Tk 
-6. Mmseqs Taxonomy (Database: GTDB)
-7. MMseqs (Database: uniref90) 
+6. MMseqs Taxonomy (Database: GTDB)
+7. MMseqs (Database: UniRef90) 
 
 ## Input
 
