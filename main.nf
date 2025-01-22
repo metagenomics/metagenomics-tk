@@ -577,7 +577,7 @@ workflow wFullPipeline {
 
     wAnalyseMetabolitesList(binsStats, mapJoin(checkm, proteins, "BIN_ID", "BIN_ID"))
 
-    // If mmseqs was also executed on MAGs then the groupTuple operator should be adjusted
+    // If MMseqs was also executed on MAGs then the groupTuple operator should be adjusted
     // to wait for the correct number of MAGs. 
     ADDITIONAL_NOT_BINNED = 1
     MMSEQS_TAX_RUN_ON_MAGS = false 
