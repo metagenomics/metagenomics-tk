@@ -2,6 +2,8 @@
   "inputParameters": ["input.paired.path", "input.ont.path"],
   "outputParameters": ["output"],
   "resourceParameters": [
+    "steps.export.emgb.titles.database.extractedDBPath",
+    "steps.export.emgb.kegg.database.extractedDBPath",
     "steps.magAttributes.gtdb.database.extractedDBPath",
     "steps.magAttributes.checkm.database.extractedDBPath",
     "steps.annotation.mmseqs2.kegg.database.extractedDBPath",

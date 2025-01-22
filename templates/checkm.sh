@@ -2,7 +2,7 @@
 # Prepare checkm patch, output directory and output file name
 mkdir out
 FILE_ID=!{chunkId}
-FILE=!{sample}_checkm_${FILE_ID}.tsv
+FILE=!{sample}_checkm_!{FILE_TYPE}${FILE_ID}.tsv
 
 # Check developer documentation
 if [ -z "!{EXTRACTED_DB}" ]

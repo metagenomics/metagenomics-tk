@@ -69,6 +69,7 @@ nav:
     - modules/plasmids.md
     - modules/metabolomics.md
     - modules/readMapping.md
+    - modules/export.md
   - "Developer":
     - developer_guidelines.md
     - pipeline_specification.md

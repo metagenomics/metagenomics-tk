@@ -15,18 +15,20 @@ gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus} \
 # reformat gtdbtk output files
 touch output/gtdbtk.bac120.summary.tsv
 touch output/gtdbtk.ar53.summary.tsv
-FILE_ID=!{chunkId}
+FILE_ID=!{FILE_TYPE}!{chunkId}
 FILE_BAC=chunk_${FILE_ID}_!{sample}_gtdbtk.bac120.summary.tsv
 FILE_BAC_TMP=chunk_${FILE_ID}_!{sample}_gtdbtk.bac120.summary.tmp.tsv
 FILE_ARC=chunk_${FILE_ID}_!{sample}_gtdbtk.ar53.summary.tsv
 FILE_ARC_TMP=chunk_${FILE_ID}_!{sample}_gtdbtk.ar53.summary.tmp.tsv
 FILE_COMB_TMP=chunk_${FILE_ID}_!{sample}_gtdbtk_combined.tmp.tsv
 FILE_COMB=chunk_${FILE_ID}_!{sample}_gtdbtk_combined.tsv
+FILE_SUMMARY_COMBINED=chunk_${FILE_ID}_!{sample}_gtdbtk_summary_combined.tsv
+FILE_SUMMARY_RAW_COMBINED=chunk_${FILE_ID}_!{sample}_gtdbtk_summary_raw_combined.tsv
+FILE_SUMMARY_RAW_COMBINED_TMP=chunk_${FILE_ID}_!{sample}_gtdbtk_summary_raw_combined_tmp.tsv
 FILE_UNCLASSIFIED=chunk_${FILE_ID}_!{sample}_gtdbtk_unclassified.tsv
 FILE_UNCLASSIFIED_TMP=chunk_${FILE_ID}_!{sample}_gtdbtk_unclassified.tmp.tsv
 MISSING_OUTPUT=chunk_${FILE_ID}_!{sample}_missing_bins.tsv
 MISSING_OUTPUT_TMP=chunk_${FILE_ID}_!{sample}_missing_bins.tmp.tsv
-
 
 # Filter out unclassified
 head -n 1 output/gtdbtk.bac120.summary.tsv > output/unclassified.tsv
@@ -52,6 +54,19 @@ GTDB_SUMMARY_TMP=gtdbtk_tmp.tsv
 cat <(head -n 1 ${FILE_BAC_TMP}) <(head -n 1 ${FILE_ARC_TMP}) | sort | uniq | sed 's/^/DOMAIN\t/g' > $GTDB_SUMMARY_TMP
 cat <(tail -n +2  ${FILE_ARC_TMP} | sed 's/^/ARCHAEA\t/g') <(tail -n +2  ${FILE_BAC_TMP} | sed 's/^/BACTERIA\t/g')  >> $GTDB_SUMMARY_TMP
 paste -d$'\t' <(cut -f 3 $GTDB_SUMMARY_TMP | sed '1,1s/user_genome/BIN_ID/') $GTDB_SUMMARY_TMP > $FILE_COMB_TMP
+
+# Since EMGB importer doesn't work with additional columns, we also export the raw version of the summary (with the sample column).
+# Once EMGB support additional columns and only reads data by reading column names, the following block is no longer necessary.
+GTDB_SUMMARY_RAW_COMBINED=gtdbtk_raw_tmp.tsv
+cat <(head -n 1 ${FILE_BAC_TMP}) <(head -n 1 ${FILE_ARC_TMP}) | sort | uniq > ${FILE_SUMMARY_RAW_COMBINED_TMP}
+cat <(tail -n +2  ${FILE_ARC_TMP}) <(tail -n +2  ${FILE_BAC_TMP})  >> $FILE_SUMMARY_RAW_COMBINED_TMP
+if [[ $(wc -l <${FILE_SUMMARY_RAW_COMBINED_TMP}) -ge 2 ]]; then
+	mv $FILE_SUMMARY_RAW_COMBINED_TMP $FILE_SUMMARY_RAW_COMBINED
+fi
+
+if [[ $(wc -l <${GTDB_SUMMARY_TMP}) -ge 2 ]]; then
+	        mv ${GTDB_SUMMARY_TMP} ${FILE_SUMMARY_COMBINED}
+fi
 
 if [[ $(wc -l <${FILE_COMB_TMP}) -ge 2 ]]; then
 	        mv ${FILE_COMB_TMP} ${FILE_COMB}

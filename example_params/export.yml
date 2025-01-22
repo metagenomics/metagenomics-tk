@@ -1,0 +1,50 @@
+tempdir: "tmp"
+summary: false
+s3SignIn: false
+input: "output"
+output: "output"
+logDir: log
+runid: 1
+databases: "/mnt/databases"
+logLevel: 1
+scratch: "/vol/scratch"
+publishDirMode: "symlink"
+steps:
+  export:
+    emgb:
+      additionalParams:
+              blastDB: "bacmet20_predicted"
+              taxonomyDB: "gtdb"
+      titles:
+        database:
+          download:
+            source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90.titles.tsv.gz"
+            md5sum: aaf1dd9021243def8e6c4e438b4b3669
+      kegg:
+        database:
+          download:
+            source: s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2022-12.tar.zst
+            md5sum: 262dab8ca564fbc1f27500c22b5bc47b
+            s5cmd:
+              params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
+resources:
+  highmemLarge:
+    cpus: 28
+    memory: 230
+  highmemMedium:
+    cpus: 14
+    memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
+  small:
+    cpus: 7
+    memory: 14
+  tiny:
+    cpus: 1
+    memory: 1
+
+
