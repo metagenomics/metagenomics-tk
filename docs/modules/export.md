@@ -34,7 +34,7 @@ Currently, the export for EMGB needs the results of the following tools:
 
 ### Additional Parameters
 
-* blastDB: The toolkit runs mmseqs against multiple databases. You can specify here, which blast output should be used. (Default: uniref90)
+* blastDB: The toolkit runs MMseqs against multiple databases. You can specify here, which BLAST output should be used. (Default: UniRef90)
 
 * taxonomyDB: MMseqs is executed against a specific taxonomy database. (Default: gtdb)   
 
