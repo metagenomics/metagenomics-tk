@@ -2,14 +2,19 @@ nextflow.enable.dsl=2
 import java.util.regex.*;
 
 include { wSaveSettingsList } from './modules/config/module'
-include { pPublish as pPublishIllumina; pPublish as pPublishOnt; } from './modules/utils/processes'
+include { pPublish as pPublishIllumina; pPublish as pPublishOnt; collectModuleFiles } from './modules/utils/processes'
+include { _wGetCheckm; _wGetAssemblyFiles; _wGetIlluminaBinningFiles; } from './modules/utils/workflows'
 include { wShortReadQualityControlFile; wShortReadQualityControlList} from './modules/qualityControl/shortReadQC'
 include { wOntQualityControlFile; wOntQualityControlList} from './modules/qualityControl/ontQC'
 include { wShortReadAssemblyFile; wShortReadAssemblyList; wTestMemSelection } from './modules/assembly/shortReadAssembler'
 include { wOntAssemblyFile; wOntAssemblyList } from './modules/assembly/ontAssembler'
 include { wShortReadBinningList } from './modules/binning/shortReadBinning'
 include { wLongReadBinningList } from './modules/binning/ontBinning'
-include { wMagAttributesFile; wMagAttributesList; wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
+include { wEMGBList; _wExportPipeline } from './modules/export/emgb'
+include { wMagAttributesFile; \
+	wMagAttributesList as wMagAttributesList; \
+	wMagAttributesList as wRecruitedGenomesAttributesList; \
+	wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
 include { wDereplicateFile; wDereplicateList} from './modules/dereplication/bottomUpClustering/module'
 include { wAnalyseMetabolitesList; wAnalyseMetabolitesFile } from './modules/metabolomics/module'
 include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/mapping.nf'
@@ -138,46 +143,13 @@ workflow wCooccurrence {
 }
 
 /*
-* This method collects files of the modules specifified by the "modules" parameter.  
-* `dir` is the the path to the sra id
-* `sra` is the SRA ID
-*/
-def collectModuleFiles(dir, sra, modules){
-   def fileList = [];
-   def moduleList = [];
-   def moduleName = "";
-
-   params.modules.eachWithIndex { v, k -> moduleList.add(v.getKey() + "/" + v.getValue().version.major + ".") }
-
-   // iterate  over all specified modules
-   for(module in modules){
-     def moduleDir = file(dir + "/" + module.name + "/")
-     moduleName = module.name
-     // Check if the module exists
-     if(moduleDir.exists()){
-       // collect all files
-       moduleDir.eachFileRecurse { item ->
-           // make sure that only the module outputs of the specified version are collected.
-           def found = moduleList.any {  item ==~ '.*' +  it + '.*'  }
-           if(found){
-              fileList.add([sra, item]);
-           }
-       }
-     }
-   }
-   
-   return fileList;
-}
-
-
-/*
 * This method either returns file path or url
 */
 def getPath(f){
   return params.input.startsWith("s3://")? "s3:/" + f: f
 }
 
-workflow _wAggregateONT { 
+workflow _wFindSamplesONT { 
    take:
      sraFiles
    main:
@@ -195,7 +167,7 @@ workflow _wAggregateONT {
      | map{ sra,f -> [sra, getPath(f)] } | splitCsv(sep: '\t', header: true) \
      | map { sample -> [sample[SAMPLE_NAME], sample[SAMPLE_STATS].median_qual]} |set { ontMedianQuality }
 
-    Pattern binsONTPattern = Pattern.compile('.*/binningONT/' + params.modules.binning.version.major + '..*/.*/.*_bin.*.fa$')
+    Pattern binsONTPattern = Pattern.compile('.*/binningONT/' + params.modules.binningONT.version.major + '..*/.*/.*_bin.*.fa$')
     sraFiles | filter({ sra, path -> binsONTPattern.matcher(path.toString()).matches()}) \
      | map{ sra,f -> [SAMPLE:sra, PATH: getPath(f), BIN_ID:file(f).name] } \
      | set{ ontBins }
@@ -212,29 +184,14 @@ workflow _wAggregateONT {
      ontBinStats = ontBinStats
 }
 
-workflow _wAggregateIllumina { 
+
+workflow _wFindSamplesIllumina { 
     take:
       binningFiles
       qcFiles
     main:
-      // Figure out if binrefinement via magscot was used.
-      // Example Binning related file of the binningFiles channel:
-      // [test2, /vol/spool/peter/meta-omics-toolkit/output/test2/1/binning/0.5.0/magscot]
-      FILE_PATH_IDX = 1
-      IS_MAGSCOT = "magscot"
-      IS_NOT_MAGSCOT = "no_magscot"
-      binningFiles | filter( path -> path[FILE_PATH_IDX].endsWith(IS_MAGSCOT)) | map { it -> IS_MAGSCOT } \
-	| unique | ifEmpty(IS_NOT_MAGSCOT) | set { isMagscot }
-
-      // If magscot was used then get all files that are placed in the magscot folder. If magscot was not used then get all binning related files
-      MAGSCOT_FLAG = 2
-      BINNING_FILE_PATH = 1
-      SAMPLE_IDX = 0
-      Pattern magscotPattern = Pattern.compile('.*/binning/' + params.modules.binning.version.major + '..*/magscot/.*$')
-      binningFiles | combine(isMagscot) \
-	| filter( binningFile -> binningFile[MAGSCOT_FLAG] == IS_MAGSCOT ? magscotPattern.matcher(binningFile[BINNING_FILE_PATH].toString()).matches() : true ) \
-        | map { binFile -> [binFile[SAMPLE_IDX], binFile[BINNING_FILE_PATH]] } \
-	| mix(qcFiles) | set { sraFiles }
+      binningFiles | _wGetIlluminaBinningFiles \
+        | mix(qcFiles) | set { sraFiles }
 
       // get Illumina paired Fastq files
       Pattern illuminaPattern = Pattern.compile('.*/qc/' + params.modules.qc.version.major + '..*/.*/.*interleaved.qc.fq.gz$')
@@ -288,6 +245,25 @@ workflow _wFragmentRecruitment {
      recruitedGenomesStats = recruitedGenomesStats
 }
 
+workflow _wGetSamples() {
+  main:
+    def runID = params.runid
+    def input = params.input
+
+    // List all available SRAIDs
+    Channel.from(file(input).list()) | filter({ path -> !(path ==~ /.*summary$/) && !(path ==~ /null$/) }) \
+     | filter({ path -> !(path ==~ /.*AGGREGATED$/)}) \
+     | set { sraDatasets }
+
+    sraDatasets | map { sra ->  [sra, input + "/" + sra + "/" + runID + "/" ]} \
+     | set {sraIDs}
+  emit:
+    sraIDs
+    sraDatasets
+}
+
+
+
 /*
 * This workflow entry point allows to aggregate information of different samples.
 * It will perform analysis steps such as dereplication, read mapping and co-occurrence.
@@ -300,46 +276,30 @@ workflow wAggregatePipeline {
     // Save config File
     wSaveSettingsList(Channel.value("AGGREGATED"))
 
-    // List all available SRAIDs
-    Channel.from(file(input).list()) | filter({ path -> !(path ==~ /.*summary$/) && !(path ==~ /null$/) }) \
-     | filter({ path -> !(path ==~ /.*AGGREGATED$/)}) \
-     | set { sraDatasets }
-
-    sraDatasets | map { sra ->  [sra, input + "/" + sra + "/" + runID + "/" ]} \
-     | set {sraIDs}
+    _wGetSamples()
+    _wGetSamples.out.sraDatasets | set { sraDatasets }
+    _wGetSamples.out.sraIDs | set { sraIDs }
 
     // List all files in sample directories
-    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.qc])} | set { qcFiles }
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.qc]) } | set { qcFiles }
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binning]) } | set { binningFiles } 
 
-    _wAggregateIllumina(binningFiles, qcFiles)
+    _wFindSamplesIllumina(binningFiles, qcFiles)
 
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binningONT])} | set { binningONTFiles }
-    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.qcONT])} | mix(binningONTFiles) | _wAggregateONT
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.qcONT])} \
+	| mix(binningONTFiles) | set { binningONT }
+
+    _wFindSamplesONT(binningONT)
 
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.fragmentRecruitment])} |  _wFragmentRecruitment
 
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.magAttributes])} | set { selectedSRAMagAttributes}
 
-    // get Checkm results
-    Pattern checkmPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_checkm_.*.tsv$')
-     selectedSRAMagAttributes | filter({ sra, path -> checkmPattern.matcher(path.toString()).matches()}) \
-     | splitCsv(header: ["SAMPLE", "BIN_ID", "Marker lineage", "# genomes", "# markers", \
-          "# marker sets", "0", "1", "2", "3", "4", "5+", "COMPLETENESS", "CONTAMINATION", "HETEROGENEITY"], sep: '\t') \
-     | map { sra, bins -> bins} \
-     | set { checkm }
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.annotation])} | set { selectedAnnotation}
 
-    // get Checkm2 results
-    Pattern checkm2Pattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_checkm2_.*.tsv$')
-     selectedSRAMagAttributes | filter({ sra, path -> checkm2Pattern.matcher(path.toString()).matches()}) \
-     | splitCsv(header: true, sep: '\t') \
-     | map { sra, bins -> bins} \
-     | set { checkm2 }
-
-    // We allow only to execute checkm or checkm2 but not both
-    checkm \
-       | mix(checkm2) \
-       | set {checkm}
+    selectedSRAMagAttributes | _wGetCheckm 
+    _wGetCheckm.out.checkm | set { checkm }
 
     // get gtdbtk summary files
     Pattern gtdbPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_combined.tsv$' )
@@ -360,19 +320,28 @@ workflow wAggregatePipeline {
 
     recruitedGenomesStats =  _wFragmentRecruitment.out.recruitedGenomesStats
 
-    mapJoin(_wAggregateIllumina.out.illuminaBinStats | mix(_wAggregateONT.out.ontBinStats) \
+    mapJoin(_wFindSamplesIllumina.out.illuminaBinStats | mix(_wFindSamplesONT.out.ontBinStats) \
         | mix(recruitedGenomesStats), checkm, "BIN_ID", "BIN_ID") \
         | set {checkmBinStats}
 
-    mapJoin(checkmBinStats, _wAggregateIllumina.out.illuminaBins | mix(_wAggregateONT.out.ontBins) \
+    mapJoin(checkmBinStats, _wFindSamplesIllumina.out.illuminaBins | mix(_wFindSamplesONT.out.ontBins) \
         | mix(recruitedGenomes), "BIN_ID", "BIN_ID") \
         | set {binsStatsComplete}
 
-    _wAggregateIllumina.out.illuminaSamples | mix(_wAggregateONT.out.ontSamples) | view { sra, path -> "Files detected of SRA ID $sra" }
+    _wFindSamplesIllumina.out.illuminaSamples | mix(_wFindSamplesONT.out.ontSamples) | view { sra, path -> "Files detected of SRA ID $sra" }
 
-    _wAggregate(_wAggregateONT.out.ontSamples, _wAggregateONT.out.ontMedianQuality, _wAggregateIllumina.out.illuminaSamples, \
-        _wAggregateIllumina.out.unpairedIlluminaSamples, binsStatsComplete, gtdb, models)
+    _wAggregate(_wFindSamplesONT.out.ontSamples, _wFindSamplesONT.out.ontMedianQuality, _wFindSamplesIllumina.out.illuminaSamples, \
+        _wFindSamplesIllumina.out.unpairedIlluminaSamples, binsStatsComplete, gtdb, models)
+}
 
+
+/*
+* This workflow entry point allows to aggregate information of different samples.
+* It will perform analysis steps such as dereplication, read mapping and co-occurrence.
+* The input files are automatically fetched as long as they adhere to the pipeline specification document (see documentation).
+*/
+workflow wExportPipeline {
+    _wExportPipeline()
 }
 
 
@@ -448,7 +417,6 @@ workflow wSaveSettings {
 }
 
 
-
 def flattenBins(binning){
   def chunkList = [];
   def SAMPLE_IDX = 0;
@@ -460,6 +428,7 @@ def flattenBins(binning){
 }
 
 
+
 workflow _wProcessIllumina {
     take:
       reads
@@ -469,7 +438,9 @@ workflow _wProcessIllumina {
  	| join(wShortReadQualityControlList.out.readsSingle) | set { qcReads }
       wShortReadAssemblyList(qcReads, wShortReadQualityControlList.out.nonpareil, wShortReadQualityControlList.out.kmerFrequencies)
       wShortReadBinningList(wShortReadAssemblyList.out.contigs, qcReads)
+
     emit:
+      contigs = wShortReadAssemblyList.out.contigs 
       notBinnedContigs = wShortReadBinningList.out.notBinnedContigs 
       bins = wShortReadBinningList.out.bins 
       binsStats = wShortReadBinningList.out.binsStats
@@ -493,6 +464,7 @@ workflow _wProcessOnt {
       wLongReadBinningList(wOntAssemblyList.out.contigs, ontQCReads, wOntAssemblyList.out.graph, \
 	 wOntAssemblyList.out.headerMapping, wOntAssemblyList.out.info, medianQuality)
     emit:
+      contigs = wOntAssemblyList.out.contigs
       notBinnedContigs = wLongReadBinningList.out.notBinnedContigs 
       bins = wLongReadBinningList.out.bins 
       binsStats = wLongReadBinningList.out.binsStats
@@ -503,6 +475,23 @@ workflow _wProcessOnt {
       gfa = wOntAssemblyList.out.graph
       medianQuality = medianQuality
 }
+
+
+workflow _wMagAttributes {
+  take:
+    generatedBins
+    recruitedGenomes
+  main:
+    wMagAttributesList(Channel.value("generated"), generatedBins)
+    wRecruitedGenomesAttributesList(Channel.value("recruited"), recruitedGenomes)
+ emit:
+    checkm = wMagAttributesList.out.checkm | mix(wRecruitedGenomesAttributesList.out.checkm)
+    gtdb = wMagAttributesList.out.gtdb | mix(wRecruitedGenomesAttributesList.out.gtdb)
+    gtdbMissing = wMagAttributesList.out.gtdbMissing | mix(wRecruitedGenomesAttributesList.out.gtdbMissing)
+    generatedCheckmFiles = wMagAttributesList.out.checkmFiles
+    gtdbCombinedSummaryFiles = wMagAttributesList.out.gtdbCombinedSummaryFiles 
+}
+
 
 /*
 * 
@@ -554,17 +543,24 @@ workflow wFullPipeline {
     wPlasmidsList(bins | mix(notBinnedContigs), fastg | mix(gfa | combine(Channel.value(MAX_KMER))) | join(mapping) \
 	,illumina.readsPairSingle, ont.reads, ont.medianQuality)
 
-    wMagAttributesList(ont.bins | mix(illumina.bins, wFragmentRecruitmentList.out.foundGenomesPerSample ))
+    ont.bins | mix(illumina.bins) |  set {generatedBinsFiles}
 
-    mapJoin(wMagAttributesList.out.checkm, binsStats  | mix(wFragmentRecruitmentList.out.binsStats), "BIN_ID", "BIN_ID") \
+    _wMagAttributes(ont.bins | mix(illumina.bins), wFragmentRecruitmentList.out.foundGenomesPerSample)
+    _wMagAttributes.out.checkm | set { checkm }
+    _wMagAttributes.out.gtdb | set { gtdb }
+    _wMagAttributes.out.gtdbMissing | set { gtdbMissing }
+    _wMagAttributes.out.gtdbCombinedSummaryFiles | set { gtdbCombinedSummaryFiles }
+    _wMagAttributes.out.generatedCheckmFiles | set { generatedCheckmFiles }
+
+    mapJoin(checkm, binsStats | mix(wFragmentRecruitmentList.out.binsStats), "BIN_ID", "BIN_ID") \
 	 |  set { binsStats  }
      
     wAnnotatePlasmidList(Channel.value("plasmid"), Channel.value("meta"), \
     wPlasmidsList.out.newPlasmids | _wCreateProkkaInput, wPlasmidsList.out.newPlasmidsCoverage, wPlasmidsList.out.newPlasmids | map { [it[SAMPLE_IDX], 1] })
 
-    ont.bins | mix(illumina.bins) | map { sample, bins -> [sample, bins.size()] } | set { binsCounter }
+    generatedBinsFiles | map { sample, bins -> [sample, bins.size()] } | set { binsCounter }
 
-    _wCreateProkkaGtdbInput(bins, wMagAttributesList.out.gtdb, wMagAttributesList.out.gtdbMissing)
+    _wCreateProkkaGtdbInput(bins, gtdb, gtdbMissing)
     wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), _wCreateProkkaGtdbInput.out.prokkaInput, contigCoverage, binsCounter)
 
     wFragmentRecruitmentList.out.foundGenomesPerSample | map { sample, genomes -> [sample, genomes.size()] } | set { recruitedGenomesCounter }
@@ -579,8 +575,41 @@ workflow wFullPipeline {
     wAnnotateBinsList.out.proteins \
 	| map{ it -> [SAMPLE: it[SAMPLE_IDX], BIN_ID: it[BIN_ID_IDX], PROTEINS: it[PATH_IDX]] } | set { proteins}
 
-    wAnalyseMetabolitesList(binsStats, mapJoin(wMagAttributesList.out.checkm, proteins, "BIN_ID", "BIN_ID"))
+    wAnalyseMetabolitesList(binsStats, mapJoin(checkm, proteins, "BIN_ID", "BIN_ID"))
 
-    _wAggregate(ont.reads, ont.medianQuality, illumina.readsPair, illumina.readsSingle, binsStats, \
-	wMagAttributesList.out.gtdb,  wAnalyseMetabolitesList.out.models)
+    // If MMseqs was also executed on MAGs then the groupTuple operator should be adjusted
+    // to wait for the correct number of MAGs. 
+    ADDITIONAL_NOT_BINNED = 1
+    MMSEQS_TAX_RUN_ON_MAGS = false 
+    MMSEQS_TAX_RUN_ONLY_ON_NOT_BINNED = 1
+    if(params.steps.containsKey("annotation") \
+	&& params.steps.annotation.containsKey("mmseqs2_taxonomy") \
+	&& params.steps.annotation.mmseqs2_taxonomy.containsKey("runOnMAGs")){
+        MMSEQS_TAX_RUN_ON_MAGS = true 
+    }
+
+
+    // Export json files for EMGB
+    wEMGBList(illumina.contigs | mix(ont.contigs),\
+	mapping, \
+        generatedBinsFiles, \
+        gtdbCombinedSummaryFiles, \
+        generatedCheckmFiles, \
+        wAnnotateBinsList.out.gff | mix(wAnnotateUnbinnedList.out.gff) \
+		| combine(binsCounter | map { sample, counter -> [sample, counter+ADDITIONAL_NOT_BINNED] }, by: SAMPLE_IDX), \
+        wAnnotateBinsList.out.ffn | mix(wAnnotateUnbinnedList.out.ffn) 
+		| combine(binsCounter | map { sample, counter -> [sample, counter+ADDITIONAL_NOT_BINNED] }, by: SAMPLE_IDX), \
+        wAnnotateBinsList.out.faa | mix(wAnnotateUnbinnedList.out.faa) 
+		| combine(binsCounter | map { sample, counter -> [sample, counter+ADDITIONAL_NOT_BINNED] }, by: SAMPLE_IDX), \
+        wAnnotateBinsList.out.mmseqs2_taxonomy | mix(wAnnotateUnbinnedList.out.mmseqs2_taxonomy) \
+		| combine(binsCounter \
+		| map { sample, counter -> [sample, MMSEQS_TAX_RUN_ON_MAGS ? counter+ADDITIONAL_NOT_BINNED:MMSEQS_TAX_RUN_ONLY_ON_NOT_BINNED ] }, by: SAMPLE_IDX), \
+        wAnnotateBinsList.out.mmseqs2_blast | mix(wAnnotateUnbinnedList.out.mmseqs2_blast)\
+                | map { sample, type, db, blastResult -> [sample, db, blastResult] } \
+		| combine(binsCounter | map { sample, counter -> [sample, counter+ADDITIONAL_NOT_BINNED] }, by: SAMPLE_IDX),  \
+   )
+
+   // Aggregate results of multiple samples (dereplication, read mapping, co-occurrence, ...)
+   _wAggregate(ont.reads, ont.medianQuality, illumina.readsPair, illumina.readsSingle, binsStats, \
+	gtdb,  wAnalyseMetabolitesList.out.models)
 }

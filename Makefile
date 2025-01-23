@@ -17,6 +17,10 @@ ifndef ENTRY
 	override ENTRY = "wFullPipeline"
 endif
 
+ifndef JSONSCHEMA_TAG
+        override JSONSCHEMA_TAG = "v4.3.2"
+endif
+
 ifndef LOG_DIR
 	override LOG_DIR = "log"
 endif
@@ -53,29 +57,12 @@ ifndef VERSION
 	override VERSION = $(shell cat VERSIONS.txt | sort | tail -n 1)
 endif
 
-ifndef MODULE_DB_TEST_EXTRACTED
-	override MODULE_DB_TEST_EXTRACTED = "/vol/spool/peter/plsdb"
-	override MODULE_DB_TEST_MD5SUM = "caa846fbb689deba0e35ef559793b521"
-	override MODULE_DB_TEST_HTTPS = "https://openstack.cebitec.uni-bielefeld.de:8080/databases/plsdb.zip"
-	override MODULE_DB_TEST_PATH = "/vol/spool/peter/plsdb.zip"
-	override MODULE_DB_TEST_S3PATH = "s3://databases/plsdb.zip"
-	override MODULE_DB_TEST_S3_DIRECTORY_PATH = "s3://databases/plsdb/"
-	override MODULE_DB_TEST_S5CMD_COMMAND = " --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "
-	override MODULE_DB_TEST_GENERATED_YML = /vol/spool/peter/meta-omics-toolkit/generated_yamls/
-	override MODULE_DB_TEST_YML = example_params/plasmid.yml
-	override MODULE_DB_TEST_YML_PATH = ".steps.plasmid.PLSDB.database=env(database)"
-	override MODULE_DB_TEST_YML_SCRIPT = "./scripts/test_plasmids.sh" 
-	override MODULE_DB_TEST_GENERATED_YML_DIR = "plasmid_yaml_database_tests"
-	override MODULE_DB_TEST_SKIP_TESTS = ""
-	override MODULE_DB_TEST_REMOVE_DB = "no"
-endif
-
 runDatabaseTest: ## Run database tests
 	bash ./scripts/test_module_db.sh ${MODULE_DB_TEST_EXTRACTED} ${MODULE_DB_TEST_MD5SUM} \
 		${MODULE_DB_TEST_HTTPS} ${MODULE_DB_TEST_PATH} ${MODULE_DB_TEST_S3PATH} ${MODULE_DB_TEST_S3_DIRECTORY_PATH} \
 		${MODULE_DB_TEST_S5CMD_COMMAND} ${MODULE_DB_TEST_GENERATED_YML} \
 		${MODULE_DB_TEST_YML} ${MODULE_DB_TEST_YML_PATH} ${MODULE_DB_TEST_YML_SCRIPT} ${MODULE_DB_TEST_GENERATED_YML_DIR} \
-		${MODULE_DB_TEST_SKIP_TESTS} ${MODULE_DB_TEST_REMOVE_DB}
+		${MODULE_DB_TEST_SKIP_TESTS} ${MODULE_DB_TEST_REMOVE_DB} ${MODULE_DB_TEST_ADDITIONAL_YAML_PARAMS}
 
 .PHONY: list clean test_clean run_small_full_test check changelog python_version_check checkPublisDirMode
 
@@ -105,6 +92,15 @@ checkPublisDirMode: ## Check if publishDirMode is set in process
 
 python_version_check:
 	./scripts/pythonVersionCheck.sh
+
+jsonschema:
+	git clone --depth 1 --branch ${JSONSCHEMA_TAG} https://github.com/sourcemeta/jsonschema.git
+
+jsonBuild: jsonschema ## Build Docker image for jsonschema validation
+	cd jsonschema && docker build -t jsonschema .
+
+jsonValidate: ## Validate clowm json with json schema
+	docker run --interactive --volume "$${PWD}:/workspace" jsonschema lint clowm/nextflow_schema.json > json.err
 
 wiki_venv: python_version_check ## Install virtual environment for wiki
 	python3 -m venv wiki_venv

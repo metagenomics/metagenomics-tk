@@ -197,7 +197,7 @@ steps:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
           md5sum: d7e627221a1d4584d1c1795cda774cdb
     mmseqs2_taxonomy:
-      runOnMAGs: false
+      runOnMAGs: true
       gtdb:
         params: ' --orf-filter-s 1 -e 1e-15'
         ramMode: false
@@ -276,6 +276,23 @@ steps:
       additionalParams:
           mashSketch: " -S 42 -k 21 -s 1000 "
           mashDist: " -v 0.2 -d 0.2 "
+  export:
+    emgb:
+      additionalParams:
+              blastDB: "bacmet20_predicted"
+              taxonomyDB: "gtdb"
+      titles:
+        database:
+          download:
+            source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90.titles.tsv.gz"
+            md5sum: aaf1dd9021243def8e6c4e438b4b3669
+      kegg:
+        database:
+          download:
+            source: s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2022-12.tar.zst
+            md5sum: 262dab8ca564fbc1f27500c22b5bc47b
+            s5cmd:
+              params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
 resources:
   highmemLarge:
     cpus: 28
