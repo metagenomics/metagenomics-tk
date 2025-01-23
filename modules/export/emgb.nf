@@ -327,7 +327,7 @@ workflow wEMGBList {
 	&& params.steps.export.containsKey("emgb") \
         && params.steps.export.emgb.containsKey("additionalParams")){
           
-        BLAST_DB = "ncbi_nr"
+        BLAST_DB = "uniref90"
 	if(!params.steps.export.emgb.additionalParams.blastDB.trim().isEmpty()){
 		BLAST_DB = params.steps.export.emgb.additionalParams.blastDB
 	}
