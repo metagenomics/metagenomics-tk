@@ -55,13 +55,21 @@ class Utils {
          '/' + tool + '/' + filename
   }
 
+  static String getOutput(sample, runid, tool, module, filename){
+    return sample + '/' + runid + '/' + module.name + '/' + 
+           module.version.major + "." +
+           module.export.version.minor + "." +
+           module.export.version.patch + 
+           '/' + tool + '/' + filename
+  }
+
   /**
   * A function that takes a tool parameter key as input and extracts all underlying entries of said key.
   * Should these entries contain references to external databases, s3/aws key-files, etc. a docker volume mount string is returned,
   * so that docker processes run with this tool can include this string to have access to all external files. 
   **/
-  static String constructParametersObject(tool, annotationParameters){ 
-    return annotationParameters?.tool.findAll({ it.key != "runOnMAGs" && it.key != "chunkSize" }).collect{ Utils.getDockerMount(it.value?.database, params, 'true')}.join(" ")
+  static String constructParametersObject(tool, annotationParameters, params){ 
+    return annotationParameters[tool].findAll({ it.key != "runOnMAGs" && it.key != "chunkSize" }).collect{ Utils.getDockerMount(it.value?.database, params, 'true')}.join(" ")
   }
 
 
