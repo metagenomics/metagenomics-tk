@@ -7,13 +7,6 @@ include { _wGetCheckm; _wGetAssemblyFiles; _wGetIlluminaBinningFiles } from '../
 include { collectModuleFiles } from '../utils/processes'
 
 
-def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + params.modules.export.name + '/' + 
-           params.modules.export.version.major + "." +
-           params.modules.export.version.minor + "." +
-           params.modules.export.version.patch + 
-           '/' + TOOL + '/' + filename
-}
 
 process pEMGBAnnotatedContigs {
 
@@ -21,7 +14,7 @@ process pEMGBAnnotatedContigs {
 
     tag "Sample: $sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "emgb", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "emgb", params.modules.export, filename) }
 
     when params.steps.containsKey("export") && params.steps.export.containsKey("emgb")
 
@@ -38,7 +31,7 @@ process pEMGBAnnotatedContigs {
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
-    output = getOutput("${sample}", params.runid, "emgb", "")
+    output = Output.getOutput("${sample}", params.runid, "emgb", params.modules.export, "")
     template 'emgbAnnotatedContigs.sh'
 }
 
@@ -49,7 +42,7 @@ process pEMGBAnnotatedBins {
 
     tag "Sample: $sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "emgb", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "emgb", params.modules.export, filename) }
 
     when params.steps.containsKey("export") && params.steps.export.containsKey("emgb")
 
@@ -66,7 +59,7 @@ process pEMGBAnnotatedBins {
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
-    output = getOutput("${sample}", params.runid, "emgb", "")
+    output = Output.getOutput("${sample}", params.runid, "emgb", params.modules.export, "")
     template 'emgbAnnotatedBins.sh'
 }
 
@@ -77,7 +70,7 @@ process pEMGBAnnotatedGenes {
 
     tag "Sample: $sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "emgb", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "emgb", params.modules.export, filename) }
 
     secret { "${S3_EMGB_TITLES_ACCESS}"!="" ? ["S3_EMGB_TITLES_ACCESS", "S3_EMGB_TITLES_SECRET"] : [] } 
 
@@ -119,7 +112,7 @@ process pEMGBAnnotatedGenes {
 
     KEGG_S3_EMGB_ACCESS=params?.steps?.export?.emgb?.kegg?.database?.download?.s5cmd && KEGG_S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_EMGB_KEGG_ACCESS" : ""
     KEGG_S3_EMGB_SECRET=params?.steps?.export?.emgb?.kegg?.database?.download?.s5cmd && KEGG_S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_EMGB_KEGG_SECRET" : ""
-    output = getOutput("${sample}", params.runid, "emgb", "")
+    output = Output.getOutput("${sample}", params.runid, "emgb", params.modules.export, "")
     template 'emgbAnnotatedGenes.sh'
 }
 
