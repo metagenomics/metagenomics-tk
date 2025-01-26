@@ -5,10 +5,10 @@ then
   TITLES_DATABASE=!{params.databases}/emgb_titles
   TITLES_LOCK_FILE=${TITLES_DATABASE}/lock.txt
 
-  if [ ! -z "!{TITLES_S3_EMGB_ACCESS}" ]
+  if [ ! -z "!{S3_EMGB_TITLES_ACCESS}" ]
   then
-    export AWS_ACCESS_KEY_ID=!{TITLES_S3_EMGB_ACCESS}
-    export AWS_SECRET_ACCESS_KEY=!{TITLES_S3_EMGB_SECRET}
+    export AWS_ACCESS_KEY_ID=!{S3_EMGB_TITLES_ACCESS}
+    export AWS_SECRET_ACCESS_KEY=!{S3_EMGB_TITLES_SECRET}
   fi
 
   echo "${TITLES_DATABASE}"
@@ -36,10 +36,10 @@ then
   KEGG_DATABASE=!{params.databases}/emgb_kegg
   KEGG_LOCK_FILE=${KEGG_DATABASE}/lock.txt
 
-  if [ ! -z "!{KEGG_S3_EMGB_ACCESS}" ]
+  if [ ! -z "!{S3_EMGB_KEGG_ACCESS}" ]
   then
-    export AWS_ACCESS_KEY_ID=!{KEGG_S3_EMGB_ACCESS}
-    export AWS_SECRET_ACCESS_KEY=!{KEGG_S3_EMGB_SECRET}
+    export AWS_ACCESS_KEY_ID=!{S3_EMGB_KEGG_ACCESS}
+    export AWS_SECRET_ACCESS_KEY=!{S3_EMGB_KEGG_SECRET}
   fi
 
   # Download checkm database if necessary
