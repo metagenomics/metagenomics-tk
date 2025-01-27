@@ -1,27 +1,28 @@
 The full pipeline mode allows you to run the per-sample part and the aggregation part in one execution (see [schematic overview](README.md)).
-In contrast to the Quickstart section, this chapter refers to the execution of the toolkit on a cluster system.
+In contrast to the Quickstart section, this chapter refers to the execution of the Toolkit on a cluster system.
 In this section, you will first run the Toolkit with a remote dataset and then learn how to replace it with your own data. 
 You will then learn how to add additional analyses steps to your pipeline configuration how to add exchange tools of a module.
 
 ## Requirements
 
-* SLURM: The Toolkit was mainly developed for cloud-based clusters using SLURM as a resource orchestrator.
-
-* Docker: Docker must be available on all worker nodes.
-
-* Java: In order to run Nextflow you have to install Java.
-
-* Resources: scratch
-Todo: check amount of space used???
+1. SLURM: The Toolkit was mainly developed for cloud-based clusters using SLURM as a resource orchestrator.
+2. docker: Install Docker by following the official Docker installation [instructions](https://docs.docker.com/engine/install/ubuntu/).
+3. java: In order to run Nextflow you need to install Java on your machine which can be achieved via `sudo apt install default-jre`.
+4. Nextflow should be installed. Please check the official Nextflow [instructions](https://www.nextflow.io/docs/latest/install.html#install-nextflow)
+5. You will need at least 150 GB of scratch space on every worker node. 
 
 ## Part 1: Run the Toolkit with a basic config
 
-In this section you will learn how you can run the toolkit. The input data will be downloaded automatically.
-The following Toolkit analyses are performed: quality control, assembly, binning, taxonomic classification,
-contamination and completeness, and annotation via Prokka.
+In this section you will learn how to run the Toolkit. The input data will be downloaded automatically.
+The following Toolkit analyses will be performed: quality control, assembly, binning, taxonomic classification,
+contamination and completeness of MAGs, and gene prediction and annotation via Prokka.
+
+!!! note "Default Configuration"
+    Please note that in the following you will modify our default (best practice) configuration.  
+    For most cases you don't need to modify our default configuration, you might only need to remove or add analyses.
 
 ```BASH
----8<--- "scripts/test_gettingStarted_part1.sh:2:11"
+---8<--- "scripts/gettingStarted/test_gettingStarted_part1.sh:2:11"
 ```
 
 where
@@ -37,17 +38,15 @@ where
  * `--scratch` is the directory on the worker node where all intermediate results are saved.
  * `--databases` is the directory on the worker node where all databases are saved. Already downloaded databases on a shared file system can be configured in the database setting of the corresponding [database section](database.md) in the configuration file.
  * `--output` is the output directory where all results are saved. If you want to know more about which outputs are created, then please refer to the [modules section](modules/introduction.md).
- * `--input.paired.path` is the path to a tsv file that lists the datasets that should be processed. If you want to provide other parameters, please check the [input section](pipeline_input.md).
+ * `--input.paired.path` is the path to a tsv file that lists the datasets that should be processed. Besides paired end data there are also other input types. Please check the [input section](pipeline_input.md).
 
 !!! note "Parameter override"
     Any parameters defined with a double dash are parameters that override parameters that are already specified in the yaml file.
 
 ### Input
 
-Here you can see the the actual input tsv and yaml which will be provided as input.
-The tsv file only describes the input data while the yaml represents the Toolkit configuration.
-
-TODO: describe the toolkit input
+Here you can see the actual input tsv and yaml which will be automaitcally downloaded by Nextflow. 
+The tsv file only describes the input data while the yaml file represents the Toolkit configuration.
 
 === "TSV Table"
 
@@ -64,36 +63,36 @@ TODO: describe the toolkit input
     ---8<--- "default/fullPipeline_illumina_nanpore_getting_started_part1.yml"
     ```
 
-
 ### Output
 
-The produced output can be inspected on the respective [modules page](modules/introduction.md).
+You can read more about the produced output on the respective [modules page](modules/introduction.md).
 
-## Part 2: Run the toolkit with your own data. 
+## Part 2: Run the Toolkit with your own data
 
 Now that you have been able to run the Toolkit on your system, let's run the same configuration, but with your own data that may already be 
-already on your system. We will simulate the provisioning of local files by first downloading sample paired end fastq files (size: 1,2 GB). 
-
+on your system. We will simulate the provisioning of local files by first downloading sample paired end fastq files (size: 1,2 GB). 
+Please note that these are the same fastq files as in the previous part. The only difference to previous part is that you will download the
+data beforehand. 
 
 ```BASH
----8<--- "scripts/test_gettingStarted_part2.sh:2:4"
+---8<--- "scripts/gettingStarted/test_gettingStarted_part2.sh:2:4"
 ```
 
 In addition, you have to tell the Toolkit the name of the sample and the path to the files that are the subject of the analysis.
 For this reason, we will create a file that describes this in three columns (sample, path to left reads, path to right reads).
 
 ```BASH
----8<--- "scripts/test_gettingStarted_part2.sh:7:10"
+---8<--- "scripts/gettingStarted/test_gettingStarted_part2.sh:7:10"
 ```
 
 Now that the files are created, you are ready to execute the Toolkit on your data but with a modified command of the first part.
-The only difference is that you modify the `--input.paired.path`.
+The only difference is that you modify the `--input.paired.path` variable.
 
 ```BASH
----8<--- "scripts/test_gettingStarted_part2.sh:12:20"
+---8<--- "scripts/gettingStarted/test_gettingStarted_part2.sh:12:20"
 ```
 
-Now you can go through the `my_data_output` folder and cheche the results.
+Now you can go through the `my_data_output` folder and check the results.
 The next section describes how to modify the analysis that was performed.
 
 ## Part 3: Exchange tools of a module 
@@ -104,7 +103,7 @@ could work with another one like MetaSpades.
 In this case you could replace the MEGAHIT part with the MetaSpades config.
 
 ```BASH
----8<--- "scripts/test_gettingStarted_part3.sh:2:17"
+---8<--- "scripts/gettingStarted/test_gettingStarted_part3.sh:2:11"
 ```
 
 This is the MetaSpades part that is used instead of the MEGAHIT configuration:
@@ -114,39 +113,46 @@ This is the MetaSpades part that is used instead of the MEGAHIT configuration:
 ```
 
 If you now compare the contigs of the two assemblers with the following command, 
-you will notice that the MetaSpades assembly has a higher N50 than MEGAHIT. 
+you will notice that the MetaSpades assembly has a higher N50 than the MEGAHIT one. 
 
 ```BASH
----8<--- "scripts/test_gettingStarted_part3.sh:12:18"
+---8<--- "scripts/gettingStarted/test_gettingStarted_part3.sh:12:18"
 ```
 
 ## Part 4: Add further analysis 
 
-In the previous sections, you have performed quality control, assembly, binning, taxonomic classification of MAGs and also basic annotation of your contigs with Prokka.
-Now suppose you also want to check the presence of your genes in other databases. With the help of the Toolkit, you could create your own database with the syntax as described 
-in the [wiki](database.md/#database-input-configuration). In this example, we will use the bacmet database. What you need to do here is add the following
-part to the annotation section of the toolkit configuration.
+Now, suppose you also want to check the presence of your genes in other databases. With the help of the Toolkit, you could create your own database with the syntax as described 
+in the [wiki](database.md/#database-input-configuration). In this example, we will use the [bacmet database](http://bacmet.biomedicine.gu.se/).
+What you need to do here is to add the following part to the annotation section of the Toolkit configuration.
 
-The bacmet database snippet is the following
+The bacmet database snippet is the following:
 
 ```YAML
----8<--- "default/fullPipeline_illumina_nanpore_getting_started_part4.yml:110:119"
+---8<--- "default/fullPipeline_illumina_nanpore_getting_started_part4.yml:103:112"
 ```
 
-By re-running the toolkit with this configuration, you will see that the previous results were cached (see next snippet) and only the annotation part is reexecuted.
-Todo: mention that there is an actual default file that can be reused for all other cases.
+By re-running the Toolkit with this configuration, you will see that the previous results were cached (see next snippet) and only the annotation part is re-executed.
+
+```BASH
+...
+[a7/d8e782] Cached process > wFullPipeline:_wProcessIllumina:wShortReadBinningList:_wBinning:pMetabat (MYDATA)
+[c3/537cbc] Cached process > wFullPipeline:_wProcessIllumina:wShortReadBinningList:_wBinning:pCovermContigsCoverage (Sample: MYDATA)
+[bb/fcd1aa] Cached process > wFullPipeline:_wProcessIllumina:wShortReadBinningList:_wBinning:pCovermGenomeCoverage (Sample: MYDATA)
+[8c/08e157] Cached process > wFullPipeline:wMagAttributesList:_wMagAttributes:pGtdbtk (Sample: MYDATA)
+[4b/286c49] Cached process > wFullPipeline:wMagAttributesList:_wMagAttributes:pCheckM2 (Sample: MYDATA)
+...
+```
 
 ## Further Reading
 
+* Continue to the aggregation part of the getting started [tutorial](aggregation.md) to learn how to aggregate data of multiple samples.
+
 * Continue to the second part of this tutorial to learn to configure and optimize the Toolkit for your data. 
 
-#TODO: or your infrastructure you can continue with the [configuration](configuration.md) section.
+* You can check in our [configuration](configuration.md) section how to further adapt the Toolkit to your infrastructure.
 
 * In case you want to import the output to EMGB, please go on to the [EMGB](emgb.md) part.
 
 * If you want to add databases or more the pre-configured ones, you can read [here](database.md) how to do this.
 
 * You might want to adjust the [resource requirements](configuration.md/#configuration-of-computational-resources-used-for-pipeline-runs) of the Toolkit to your infrastructure.
-
-
-Todo: reference other input types.

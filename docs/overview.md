@@ -7,10 +7,21 @@ The Full Pipeline mode consists mainly of two parts. One part of the Toolkit pro
 co-occurrence analysis. You can either run the first and second part consecutively or seperately where the second part can be applyed on the output of first 
 part.
 
-## Error Strategy 
+*Note!* Please do never place sensitive information in any of the yml configuration files since the configuration is part of the pipeline output.
+
+### Error Strategy 
 
 All tools follow the same error strategy. The execution of a tool is retried three times. If the run fails the fourth time, it will be ignored.
 If the execution is ignored, the toolkit will continue to run all tools that do not depend on the output of the failed tool run.
 Exceptions of this handling are specified in the corresponding module section.
 
+## Content
 
+The Getting Started tutorial describes the first steps in running the Toolkit on a cloud-based cluster system.
+It consists of three main steps. 
+
+* In the [first part](full_pipeline.md) you will learn how to run and configure the Toolkit.
+* The [second part](aggregation.md) tells you how to aggregate multiple samples of a Toolkit output.
+* The third part describes how to export a Toolkit output to an EMGB compatible input.
+
+Other parameters can be found in the [configuration](configuration.md) part.

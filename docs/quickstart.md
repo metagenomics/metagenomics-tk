@@ -14,8 +14,8 @@ You will need at least 250 GB of disk space. The disk were your docker images an
 
 ## Run the Toolkit
 
-The following command will start a subset of all available modules
-offered by the Toolkit. All databases will be downloaded to the database directory in your current working directory.
+The following command will start a subset of all available modules offered by the Toolkit. 
+All databases will be downloaded to the database directory in your current working directory.
 
 ```BASH
 ---8<--- "scripts/test_quickstart.sh:2:17"
@@ -25,7 +25,7 @@ You can read more about the outputs, which are placed in a directory named `outp
 
 ## Further Reading
 
-* If you want to configure, add or remove modules, please check the [configuration](configuration.md section) and 
+* If you want to configure, add or remove modules, please check the [configuration](configuration.md) section and 
 check the [Getting Started](concept.md) section for an example.
 
 * If you want to use your own datasets, then you can read the input [configuration](configuration.md/#paired-end-input) sections. 

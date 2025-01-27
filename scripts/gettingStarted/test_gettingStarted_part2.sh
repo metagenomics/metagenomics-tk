@@ -12,7 +12,8 @@ echo -e "MYDATA\t$(readlink -f inputFiles/read1*)\t$(readlink -f inputFiles/read
 NXF_HOME=$PWD/.nextflow NXF_VER=23.10.0 nextflow run metagenomics/metagenomics-tk -work-dir $(pwd)/work \
     -profile slurm \
     -entry wFullPipeline \
-    -params-file  https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/feat/getting_started_guide/default/fullPipeline_illumina_nanpore_getting_started_part2.yml \
+    -ansi-log false \
+    -params-file  https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/default/fullPipeline_illumina_nanpore_getting_started_part2.yml \
     --s3SignIn false \
     --scratch /vol/scratch \
     --databases /vol/scratch/databases \

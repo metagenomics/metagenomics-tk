@@ -253,6 +253,25 @@ jobs:
         run: |
           bash ./scripts/test_quickstart.sh || exit 1
 
+  gettingStarted:
+    timeout-minutes: 800
+    runs-on: [ self-hosted, slurm]
+    needs: [codePolicy]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test Getting Started Part 1 
+        run: |
+          bash scripts/test_gettingStarted_part1.sh || exit 1
+      - name: Test Getting Started Part 2 
+        run: |
+          bash scripts/test_gettingStarted_part2.sh || exit 1
+      - name: Test Getting Started Part 3 
+        run: |
+          bash scripts/test_gettingStarted_part3.sh || exit 1
+      - name: Test Getting Started Aggregation Part 
+        run: |
+          bash scripts/test_gettingStarted_aggregation.sh || exit 1
+
   readmapping:
     timeout-minutes: 800
     needs: [codePolicy]
