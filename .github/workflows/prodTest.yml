@@ -16,6 +16,8 @@ jobs:
           make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
           make set_secrets SECRET_NAME=S3_kegg_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
           make set_secrets SECRET_NAME=S3_kegg_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_EMGB_KEGG_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_EMGB_KEGG_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: "Run full pipeline mode with all samples"
         run: |
           bash ./scripts/test_fullPipeline.sh \
@@ -26,11 +28,3 @@ jobs:
            --steps.cooccurrence.inference.additionalParams.rscript=' --mincovthreshold 0.9 --maxzero 100 ' \
            --steps.annotation.mmseqs2.kegg.database.extractedDBPath='/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB' " \
           ./default/fullPipeline_illumina_nanpore.yml "" slurm || exit 1
-
-      - name: Import in EMGB
-        run: |
-          ./bin/emgb.sh --output=output/ERR4229264 --runid=1 --binsdir=$(find output/ERR4229264/ -name "metabat") \
-                        --blastdb=uniref90 \
-                        --db=${EMGB_KEGG_DB} \
-                        --titles=${EMGB_DB_TITLES} \
-                        --workdir="${WORK_DIR}" --name=ERR4229264

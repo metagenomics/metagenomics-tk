@@ -71,6 +71,8 @@ jobs:
         run: |
           make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
           make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_EMGB_KEGG_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_EMGB_KEGG_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Test Full Pipeline ONT Run
         run: |
           VERSION=$(sort VERSIONS.txt | tail -n 1)
@@ -96,6 +98,43 @@ jobs:
           " --output=output   --smetana_image=pbelmann/metabolomics:0.1.0 \
            --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh " ./example_params/fullPipelineAggregate.yml \
           "${WORK_DIR}" ${PROFILE} || exit 1
+
+      - name: Test export workflow based on previous test
+        run: |
+          bash ./scripts/test_fullPipelineExport.sh \
+          " --output=output --input=output --smetana_image=pbelmann/metabolomics:0.1.0 \
+          "" " ./example_params/export.yml \
+          "${WORK_DIR}" ${PROFILE} || exit 1
+
+      - name: Test download titles EMGB database
+        run: |
+           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/emgb/uniref90.titles.tsv" \
+                           MODULE_DB_TEST_MD5SUM="aaf1dd9021243def8e6c4e438b4b3669" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90.titles.tsv.gz" \
+                           MODULE_DB_TEST_PATH="/vol/spool/emgb/uniref90.titles.tsv.gz" MODULE_DB_TEST_S3PATH="s3://databases/uniref90.titles.tsv.gz" \
+                           MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/uniref90.titles.tsv" \
+                           MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                           MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/emgbTitles MODULE_DB_TEST_YML=example_params/export.yml \
+                           MODULE_DB_TEST_YML_PATH="'.steps.export.emgb.titles.database=env(database)'" \
+                           MODULE_DB_TEST_YML_SCRIPT="./scripts/test_fullPipelineExport.sh" \
+                           MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/_yaml_database_tests" \
+                           MODULE_DB_TEST_REMOVE_DB="yes" \ MODULE_DB_TEST_SKIP_TESTS="noSkip" \
+                           MODULE_DB_TEST_ADDITIONA_YAML_PARAMS=" --steps.export.emgb.kegg.database.extractedDBPath=/vol/spool/metagenomics-tk/emgb/kegg/annotatedgenes2json_db_kegg-mirror-2022-12"
+      - name: Test download kegg EMGB database
+        run: |
+            make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2022-12" \
+                  MODULE_DB_TEST_MD5SUM="262dab8ca564fbc1f27500c22b5bc47b" \
+                  MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/annotatedgenes2json_db_kegg-mirror-2022-12.tar.zst" \
+                  MODULE_DB_TEST_PATH="/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2022-12.tar.zst" MODULE_DB_TEST_S3PATH="s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2022-12.tar.zst" \
+                  MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2022-12/*" \
+                  MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                  MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/emgbKEGG \
+                  MODULE_DB_TEST_YML=example_params/export.yml \
+                  MODULE_DB_TEST_YML_PATH="'.steps.export.emgb.kegg.database=env(database)'" \
+                  MODULE_DB_TEST_YML_SCRIPT="./scripts/test_fullPipelineExport.sh" \
+                  MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/emgb_kegg_yaml_database_tests" \
+                  MODULE_DB_TEST_SKIP_TESTS="https" \
+                  MODULE_DB_TEST_REMOVE_DB="yes"
+
       - name: Test if SRA S3 Input module works with ONT data
         run: |
           bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config     "  \
@@ -123,7 +162,7 @@ jobs:
                                MODULE_DB_TEST_YML_PATH="'.steps.qc.filterHuman.database=env(database)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_qc.sh" \
                                MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/qc_yaml_database_tests" \
-                               MODULE_DB_TEST_REMOVE_DB="yes"
+                               MODULE_DB_TEST_SKIP_TESTS="noSkip" MODULE_DB_TEST_REMOVE_DB="yes"
       - name: QC ONT Filter DB Test
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/human_filter.db.20231218v2" \
@@ -135,7 +174,7 @@ jobs:
                                MODULE_DB_TEST_YML_PATH="'.steps.qcONT.filterHumanONT.database=env(database)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_qcONT.sh" \
                                MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/qcONT_yaml_database_tests" \
-                               MODULE_DB_TEST_REMOVE_DB="yes"
+                               MODULE_DB_TEST_SKIP_TESTS="noSkip" MODULE_DB_TEST_REMOVE_DB="yes"
 
 
   external_SRA:
@@ -195,7 +234,7 @@ jobs:
                                MODULE_DB_TEST_YML=example_params/magAttributes.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.magAttributes.checkm.database=env(database),del(.steps.magAttributes.gtdb,.steps.magAttributes.checkm2,.steps.magAttributes.prokka)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/checkm_yaml_database_tests" \
-                               MODULE_DB_TEST_REMOVE_DB="yes"
+                               MODULE_DB_TEST_SKIP_TESTS="noSkip" MODULE_DB_TEST_REMOVE_DB="yes"
 
       - name: Test Checkm2 runs against different database parameters
         run: |
@@ -209,7 +248,7 @@ jobs:
                                MODULE_DB_TEST_YML=example_params/magAttributes.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.magAttributes.checkm2.database=env(database),del(.steps.magAttributes.gtdb,.steps.magAttributes.checkm,.steps.magAttributes.prokka)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/checkm2_yaml_database_tests" \
-                               MODULE_DB_TEST_REMOVE_DB="yes"
+                               MODULE_DB_TEST_SKIP_TESTS="noSkip" MODULE_DB_TEST_REMOVE_DB="yes"
  
       
       - name: Test GTDB runs against different database parameters
@@ -545,7 +584,7 @@ jobs:
                                MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/plasmids \
                                MODULE_DB_TEST_YML=example_params/plasmid.yml MODULE_DB_TEST_YML_PATH="'.steps.plasmid.PLSDB.database=env(database),del(.steps.plasmid.Platon,.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.MobTyper)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/plasmid_yaml_database_tests" \
-                               MODULE_DB_TEST_REMOVE_DB="yes"
+                               MODULE_DB_TEST_SKIP_TESTS="noSkip" MODULE_DB_TEST_REMOVE_DB="yes"
 
       - name: ViralVerify Plasmid Test
         run: |
@@ -558,7 +597,7 @@ jobs:
                                MODULE_DB_TEST_YML_PATH="'.steps.plasmid.ViralVerifyPlasmid.database=env(database),del(.steps.plasmid.Platon,.steps.plasmid.PlasClass,.steps.plasmid.MobTyper,.steps.plasmid.PLSDB)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" \
                                MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/plasmid_yaml_database_tests" \
-                               MODULE_DB_TEST_REMOVE_DB="yes"
+                               MODULE_DB_TEST_SKIP_TESTS="noSkip"  MODULE_DB_TEST_REMOVE_DB="yes"
 
       - name: Platon Test
         run: |
@@ -571,7 +610,7 @@ jobs:
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.plasmid.Platon.database=env(database),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.MobTyper,.steps.plasmid.PLSDB)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/plasmid_yaml_database_tests" \
-                               MODULE_DB_TEST_REMOVE_DB="yes"
+                               MODULE_DB_TEST_SKIP_TESTS="noSkip" MODULE_DB_TEST_REMOVE_DB="yes"
 
       - name: MobTyper Test
         run: |
@@ -584,7 +623,7 @@ jobs:
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.plasmid.MobTyper.database=env(database),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.Platon,.steps.plasmid.PLSDB)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_plasmids.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/plasmid_yaml_database_tests" \
-                               MODULE_DB_TEST_REMOVE_DB="yes"
+                               MODULE_DB_TEST_SKIP_TESTS="noSkip" MODULE_DB_TEST_REMOVE_DB="yes"
 
   settings:
     timeout-minutes: 2500
@@ -608,8 +647,6 @@ jobs:
           "" "${WORK_DIR}" ${PROFILE} ${VERSION} "" || exit 1
           bash ./scripts/check_parameter.sh ${OUTPUT} || exit 1
 
-
-
   codePolicy:
     runs-on: [ self-hosted, slurm]
     needs: [settings]
@@ -618,5 +655,7 @@ jobs:
       - name: Checks if every process defines a publishDirMode
         run: |
           make checkPublisDirMode || exit 1 
-
-
+      - name: Check the clowm json against json schema
+        run: |
+          make jsonValidate
+          trap 'if [[ $? == 1 ]]; then echo "Errors in clowm json found"; cat json.err; exit 1; fi' EXIT
