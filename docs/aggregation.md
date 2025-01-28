@@ -1,21 +1,15 @@
 There are two ways to execute the Toolkit. You can either run all steps in one execution or you run first the per-sample analysis
-(e.g. assembly, binning, annotation, etc.) and afterwards you combine the results (e.g. via dereplication and co-occurrence) in a second run.
+(e.g. assembly, binning, annotation, etc.) and afterwards combine the results (e.g. via dereplication and co-occurrence) in a second run.
 The second option allows you to process multiple samples via independent Toolkit executions on different infrastructures and combine all
 results afterwards.
 
 ## Requirements
 
-* SLURM: The Toolkit was mainly developed for cloud-based clusters using SLURM as a resource orchestrator.
-
-* Docker: Docker must be available on all worker nodes.
-
-* Java: In order to run Nextflow you have install Java.
-
-* Nextflow version: Please check in the nextflow.config file the supported Nextflow versions.
-
-* Resources: You will need enough disk space on every worker node for temporary data.
-
-* This tutorial assumes that you have already executed the Toolkit as described in the [full pipeline section](full_pipeline.md).
+1. SLURM: The Toolkit was mainly developed for cloud-based clusters using SLURM as a resource orchestrator.
+2. Docker: Install Docker by following the official Docker installation [instructions](https://docs.docker.com/engine/install/ubuntu/).
+3. Java: In order to run Nextflow you need to install Java on your machine which can be achieved via `sudo apt install default-jre`.
+4. Nextflow should be installed. Please check the official Nextflow [instructions](https://www.nextflow.io/docs/latest/install.html#install-nextflow)
+5. This tutorial assumes that you have already executed the Toolkit as described in the [full pipeline section](full_pipeline.md).
 
 ## Run the Toolkit
 
@@ -27,7 +21,7 @@ where
 
  * `-work-dir` points to a directory that is shared between multiple machines.
  * `-profile` defines the execution profile that should be used.
- * `-entry` is the entry point of the Toolkit.
+ * `-entry` is the entry point of the aggregation workflow.
  * `-params-file` sets the parameters file which defines the parameters for all tools. (see input section below)
  * `--s3SignIn` defines if any S3 login for retrieving inputs is necessary. See the [S3 configuration](configuration.md/#s3-configuration) section for more information on how to configure the Toolkit for possible S3 input data.
  * `--scratch` is the directory on the worker node where all intermediate results are saved.
@@ -65,6 +59,6 @@ cat  my_data_spades_output/AGGREGATED/1/dereplication/*/bottomUpClustering/clust
 
 * Pipeline Configuration: If you want to configure and optimize the Toolkit for your data or your infrastructure then you can continue with the [configuration](configuration.md) section.
 
-* In case you want to import the output to EMGB, please go on to the [EMGB](emgb.md) part. Please keep in mind that for EMGB only the per-sample part is necessary.
+* In case you want to import the output to EMGB, please go on to the [EMGB](modules/export.md) configuration section. Please keep in mind that for EMGB only the per-sample part is necessary.
 
 * You might want to adjust the [resource requirements](configuration.md/#configuration-of-computational-resources-used-for-pipeline-runs) of the Toolkit to your infrastructure.

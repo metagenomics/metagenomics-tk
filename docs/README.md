@@ -39,6 +39,6 @@ The platform provides access to different aspects of one or more datasets via an
 
 * If you are interested in testing the basic workflow, we recommend that you read the [Quickstart](quickstart.md) page.
 
-* In case you want to run the workflow on a cluster then you can skip the Quickstart page and start directly with the [Getting Started](concept.md) section.
+* In case you want to run the workflow on a cluster then you can skip the Quickstart page and start directly with the [Getting Started](overview.md) section.
 
 * If you want to run a specific module, then you can start with the [modules section](modules/introduction.md). 

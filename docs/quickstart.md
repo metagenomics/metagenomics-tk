@@ -7,10 +7,9 @@ You will need at least 250 GB of disk space. The disk were your docker images an
 
 ## Requirements
 
-1. docker: Install Docker by following the official Docker installation [instructions](https://docs.docker.com/engine/install/ubuntu/).
-2. make: You can install make on Ubuntu via `sudo apt install make`.
-3. java: In order to run Nextflow you need to install Java on your machine which can be achieved via `sudo apt install default-jre`.
-4. Nextflow should be installed. Please check the official Nextflow [instructions](https://www.nextflow.io/docs/latest/install.html#install-nextflow)
+1. Docker: Install Docker by following the official Docker installation [instructions](https://docs.docker.com/engine/install/ubuntu/).
+2. Java: In order to run Nextflow you need to install Java on your machine which can be achieved via `sudo apt install default-jre`.
+3. Nextflow should be installed. Please check the official Nextflow [instructions](https://www.nextflow.io/docs/latest/install.html#install-nextflow)
 
 ## Run the Toolkit
 
@@ -26,9 +25,9 @@ You can read more about the outputs, which are placed in a directory named `outp
 ## Further Reading
 
 * If you want to configure, add or remove modules, please check the [configuration](configuration.md) section and 
-check the [Getting Started](concept.md) section for an example.
+check the [Getting Started](overview.md) section for an example.
 
 * If you want to use your own datasets, then you can read the input [configuration](configuration.md/#paired-end-input) sections. 
-You check the [Getting Started](concept.md) section for an example.
+You check the [Getting Started](overview.md) section for an example.
 
-* In case you want to directly scale out your workflow on a cluster, you should continue with the [Getting Started](concept.md) section.
+* In case you want to directly scale out your workflow on a cluster, you should continue with the [Getting Started](overview.md) section.

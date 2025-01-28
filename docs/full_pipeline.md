@@ -1,13 +1,13 @@
 The full pipeline mode allows you to run the per-sample part and the aggregation part in one execution (see [schematic overview](README.md)).
 In contrast to the Quickstart section, this chapter refers to the execution of the Toolkit on a cluster system.
-In this section, you will first run the Toolkit with a remote dataset and then learn how to replace it with your own data. 
-You will then learn how to add additional analyses steps to your pipeline configuration how to add exchange tools of a module.
+In this section, you will first run the Toolkit with a dataset stored on a remote server and then learn how to replace it with your own local data. 
+You will then learn how to add additional analyses steps to your pipeline configuration and how to add exchange tools of a module.
 
 ## Requirements
 
 1. SLURM: The Toolkit was mainly developed for cloud-based clusters using SLURM as a resource orchestrator.
-2. docker: Install Docker by following the official Docker installation [instructions](https://docs.docker.com/engine/install/ubuntu/).
-3. java: In order to run Nextflow you need to install Java on your machine which can be achieved via `sudo apt install default-jre`.
+2. Docker: Install Docker by following the official Docker installation [instructions](https://docs.docker.com/engine/install/ubuntu/).
+3. Java: In order to run Nextflow you need to install Java on your machine which can be achieved via `sudo apt install default-jre`.
 4. Nextflow should be installed. Please check the official Nextflow [instructions](https://www.nextflow.io/docs/latest/install.html#install-nextflow)
 5. You will need at least 150 GB of scratch space on every worker node. 
 
@@ -36,7 +36,7 @@ where
  * `-params-file` sets the parameters file which defines the parameters for all tools. (see input section below)
  * `--s3SignIn` defines if any S3 login for retrieving inputs is necessary. See the [S3 configuration](configuration.md/#s3-configuration) section for more information on how to configure the Toolkit for possible S3 input data.
  * `--scratch` is the directory on the worker node where all intermediate results are saved.
- * `--databases` is the directory on the worker node where all databases are saved. Already downloaded databases on a shared file system can be configured in the database setting of the corresponding [database section](database.md) in the configuration file.
+ * `--databases` is the directory on the worker node where all databases are saved. Already downloaded and extracted databases on a shared file system can be configured in the database setting of the corresponding [database section](database.md) in the configuration file.
  * `--output` is the output directory where all results are saved. If you want to know more about which outputs are created, then please refer to the [modules section](modules/introduction.md).
  * `--input.paired.path` is the path to a tsv file that lists the datasets that should be processed. Besides paired end data there are also other input types. Please check the [input section](pipeline_input.md).
 
@@ -45,7 +45,7 @@ where
 
 ### Input
 
-Here you can see the actual input tsv and yaml which will be automaitcally downloaded by Nextflow. 
+Here you can see the actual input tsv and yaml which was used by the previous command and automaitcally downloaded by Nextflow. 
 The tsv file only describes the input data while the yaml file represents the Toolkit configuration.
 
 === "TSV Table"
@@ -69,7 +69,7 @@ You can read more about the produced output on the respective [modules page](mod
 
 ## Part 2: Run the Toolkit with your own data
 
-Now that you have been able to run the Toolkit on your system, let's run the same configuration, but with your own data that may already be 
+Now that you have been able to run the Toolkit on your system, let's use the same configuration, but with your own data that may already be 
 on your system. We will simulate the provisioning of local files by first downloading sample paired end fastq files (size: 1,2 GB). 
 Please note that these are the same fastq files as in the previous part. The only difference to previous part is that you will download the
 data beforehand. 
@@ -97,8 +97,7 @@ The next section describes how to modify the analysis that was performed.
 
 ## Part 3: Exchange tools of a module 
 
-In some cases, you may also be interested in replacing a tool from one module with another. For example, you might be interested in testing whether your selected assembler (MEGAHIT)
-could work with another one like MetaSpades.
+In some cases, you may also be interested in replacing a tool from one module with another. For example, you might be interested in comparing the assembler that is set as default with another one like MetaSpades.
 
 In this case you could replace the MEGAHIT part with the MetaSpades config.
 
@@ -106,7 +105,7 @@ In this case you could replace the MEGAHIT part with the MetaSpades config.
 ---8<--- "scripts/gettingStarted/test_gettingStarted_part3.sh:2:11"
 ```
 
-This is the MetaSpades part that is used instead of the MEGAHIT configuration:
+This is the MetaSpades part that was used by the previous command instead of the MEGAHIT configuration:
 
 ```YAML
 ---8<--- "default/fullPipeline_illumina_nanpore_getting_started_part3.yml:48:51"
@@ -119,7 +118,7 @@ you will notice that the MetaSpades assembly has a higher N50 than the MEGAHIT o
 ---8<--- "scripts/gettingStarted/test_gettingStarted_part3.sh:12:18"
 ```
 
-## Part 4: Add further analysis 
+## Part 4: Add further analyses 
 
 Now, suppose you also want to check the presence of your genes in other databases. With the help of the Toolkit, you could create your own database with the syntax as described 
 in the [wiki](database.md/#database-input-configuration). In this example, we will use the [bacmet database](http://bacmet.biomedicine.gu.se/).
@@ -145,14 +144,12 @@ By re-running the Toolkit with this configuration, you will see that the previou
 
 ## Further Reading
 
-* Continue to the aggregation part of the getting started [tutorial](aggregation.md) to learn how to aggregate data of multiple samples.
+* Continue to the aggregation part of the Getting Started [tutorial](aggregation.md) to learn how to aggregate data of multiple samples.
 
-* Continue to the second part of this tutorial to learn to configure and optimize the Toolkit for your data. 
+* You can check in our [configuration](configuration.md) section for how to further adapt the Toolkit to your infrastructure.
 
-* You can check in our [configuration](configuration.md) section how to further adapt the Toolkit to your infrastructure.
+* In case you want to import the output to EMGB, please visit the [EMGB](modules/export.md) section.
 
-* In case you want to import the output to EMGB, please go on to the [EMGB](emgb.md) part.
-
-* If you want to add databases or more the pre-configured ones, you can read [here](database.md) how to do this.
+* If you want to add your own sequence databases, you can read [here](database.md) how to do this.
 
 * You might want to adjust the [resource requirements](configuration.md/#configuration-of-computational-resources-used-for-pipeline-runs) of the Toolkit to your infrastructure.
