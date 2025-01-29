@@ -105,14 +105,14 @@ process pEMGBAnnotatedGenes {
     KEGG_MD5SUM=params.steps?.export?.emgb?.kegg?.database?.download?.md5sum ?: ""
     KEGG_EXTRACTED_DB=params.steps?.export?.emgb?.kegg?.database?.extractedDBPath ?: ""
  
-    TITLES_S3_EMGB_ACCESS=params?.steps?.export?.emgb?.titles?.database?.download?.s5cmd \
+    S3_EMGB_TITLES_ACCESS=params?.steps?.export?.emgb?.titles?.database?.download?.s5cmd \
 	&& TITLES_S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_EMGB_TITLES_ACCESS" : ""
-    TITLES_S3_EMGB_SECRET=params?.steps?.export?.emgb?.titles?.database?.download?.s5cmd \
+    S3_EMGB_TITLES_SECRET=params?.steps?.export?.emgb?.titles?.database?.download?.s5cmd \
 	&& TITLES_S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_EMGB_TITLES_SECRET" : ""
 
-    KEGG_S3_EMGB_ACCESS=params?.steps?.export?.emgb?.kegg?.database?.download?.s5cmd && KEGG_S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_EMGB_KEGG_ACCESS" : ""
-    KEGG_S3_EMGB_SECRET=params?.steps?.export?.emgb?.kegg?.database?.download?.s5cmd && KEGG_S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_EMGB_KEGG_SECRET" : ""
-    output = Output.getOutput("${sample}", params.runid, "emgb", params.modules.export, "")
+    S3_EMGB_KEGG_ACCESS=params?.steps?.export?.emgb?.kegg?.database?.download?.s5cmd && KEGG_S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_EMGB_KEGG_ACCESS" : ""
+    S3_EMGB_KEGG_SECRET=params?.steps?.export?.emgb?.kegg?.database?.download?.s5cmd && KEGG_S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_EMGB_KEGG_SECRET" : ""
+    output = getOutput("${sample}", params.runid, "emgb", "")
     template 'emgbAnnotatedGenes.sh'
 }
 

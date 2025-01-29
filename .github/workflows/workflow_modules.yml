@@ -146,6 +146,7 @@ jobs:
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
+      - uses: actions/checkout@v4
       - name: Test long reads chunking using porechop
         run: |
           bash ./scripts/test_qcONT.sh \
