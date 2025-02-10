@@ -289,6 +289,10 @@ jobs:
     needs: [codePolicy]
     steps:
       - uses: actions/checkout@v4
+      - name: Copy scm to circumvent API rate limit 
+        run: |
+          mkdir -p .nextflow
+          cp ~/.nextflow/scm .nextflow
       - name: Test Quickstart
         run: |
           bash ./scripts/test_quickstart.sh || exit 1
@@ -299,6 +303,10 @@ jobs:
     needs: [codePolicy]
     steps:
       - uses: actions/checkout@v4
+      - name: Copy scm to circumvent API rate limit 
+        run: |
+          mkdir -p .nextflow
+          cp ~/.nextflow/scm .nextflow
       - name: Test Getting Started Part 1 
         run: |
           bash scripts/gettingStarted/test_gettingStarted_part1.sh || exit 1
