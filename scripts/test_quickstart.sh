@@ -8,3 +8,6 @@ NXF_VER=23.10.0 nextflow run metagenomics/metagenomics-tk \
 	  --scratch false \
 	  --output output \
 	  --databases $(pwd)/databases
+
+
+make check LOG_DIR=$(pwd)/work/logs

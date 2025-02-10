@@ -17,3 +17,6 @@ cat my_data_spades_output/MYDATA/1/assembly/*/metaspades/MYDATA_contigs_stats.ts
 cat my_data_output/MYDATA/1/assembly/*/megahit/MYDATA_contigs_stats.tsv
 #SAMPLE  file                    format  type    num_seqs  sum_len    min_len avg_len max_len Q1      Q2      Q3      sum_gap N50     Q20(%)  Q30(%)  GC(%)
 #MYDATA  MYDATA_contigs.fa.gz    FASTA   DNA     95227     60110517   56      631.2   346664  234.0   286.0   439.0   0       1229    0.00    0.00    57.34
+
+
+make check LOG_DIR=$(pwd)/work/logs

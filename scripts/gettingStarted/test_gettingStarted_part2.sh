@@ -20,3 +20,5 @@ NXF_HOME=$PWD/.nextflow NXF_VER=23.10.0 nextflow run metagenomics/metagenomics-t
     --output my_data_output \
     --input.paired.path inputFiles/input.tsv
 
+
+make check LOG_DIR=$(pwd)/work/logs
