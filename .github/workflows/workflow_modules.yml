@@ -291,6 +291,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Copy scm to circumvent API rate limit 
         run: |
+          BRANCH=$(git rev-parse --abbrev-ref HEAD | sed 's/\//\\\//g')
+          sed -i "s/master/${BRANCH}/g" scripts/gettingStarted/test_gettingStarted_*.sh
           mkdir -p .nextflow
           cp ~/.nextflow/scm .nextflow
       - name: Test Quickstart
@@ -305,6 +307,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Copy scm to circumvent API rate limit 
         run: |
+          BRANCH=$(git rev-parse --abbrev-ref HEAD | sed 's/\//\\\//g')
+          sed -i "s/master/${BRANCH}/g" scripts/gettingStarted/test_gettingStarted_*.sh
           mkdir -p .nextflow
           cp ~/.nextflow/scm .nextflow
       - name: Test Getting Started Part 1 
