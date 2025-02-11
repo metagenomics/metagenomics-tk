@@ -85,6 +85,7 @@ nextflow: ## Downloads Nextflow binary
 	chmod a+x nextflow
 
 check: ## Checks if processes did fail and the current nextflow run returns exit code 1. (Useful in a github actions context)
+	if [ -d "${LOG_DIR}" ]; then echo "${LOG_DIR} does exist.";  else  exit 1; fi ; \
 	bash ./scripts/check_log.sh $$(ls -1 ${LOG_DIR}/trace.* | tail -n 1 ) || (echo "$?"; exit 1)
 
 checkPublisDirMode: ## Check if publishDirMode is set in process
