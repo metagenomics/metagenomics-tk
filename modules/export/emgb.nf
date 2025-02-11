@@ -72,9 +72,7 @@ process pEMGBAnnotatedGenes {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "emgb", params.modules.export, filename) }
 
-    secret { "${S3_EMGB_TITLES_ACCESS}"!="" ? ["S3_EMGB_TITLES_ACCESS", "S3_EMGB_TITLES_SECRET"] : [] } 
-
-    secret { "${S3_EMGB_KEGG_ACCESS}"!="" ? ["S3_EMGB_KEGG_ACCESS", "S3_EMGB_KEGG_SECRET"] : [] } 
+    secret { Utils.getSecrets(["${S3_EMGB_TITLES_ACCESS}", "${S3_EMGB_KEGG_ACCESS}"], ["S3_EMGB_TITLES_ACCESS", "S3_EMGB_KEGG_ACCESS"], ["S3_EMGB_TITLES_SECRET", "S3_EMGB_KEGG_SECRET"] ) }
 
     containerOptions Utils.getDockerMount(params.steps?.export?.emgb?.titles?.database, params) \
 	+ Utils.getDockerMount(params.steps?.export?.emgb?.kegg?.database, params) + Utils.getDockerNetwork() + " --entrypoint='' "
