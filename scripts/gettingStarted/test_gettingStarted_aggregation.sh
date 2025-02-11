@@ -5,6 +5,7 @@ NXF_HOME=$PWD/.nextflow NXF_VER=23.10.0 nextflow run metagenomics/metagenomics-t
     -ansi-log false \
     -entry wAggregatePipeline \
     -params-file  https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/default/fullPipelineAggregate.yml \
+    --logDir logs \
     --s3SignIn false \
     --scratch /vol/scratch \
     --databases /vol/scratch/databases \
@@ -15,4 +16,4 @@ NXF_HOME=$PWD/.nextflow NXF_VER=23.10.0 nextflow run metagenomics/metagenomics-t
 cat  my_data_spades_output/AGGREGATED/1/dereplication/*/bottomUpClustering/clusters/clusters.tsv
 
 
-make check LOG_DIR=$(pwd)/work/logs
+make check LOG_DIR=$(pwd)/logs

@@ -4,6 +4,7 @@ NXF_HOME=$PWD/.nextflow NXF_VER=23.10.0 nextflow run metagenomics/metagenomics-t
     -ansi-log false \
     -entry wFullPipeline \
     -params-file  https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/default/fullPipeline_illumina_nanpore_getting_started_part3.yml \
+    --logDir logs \
     --s3SignIn false \
     --scratch /vol/scratch \
     --databases /vol/scratch/databases \
@@ -19,4 +20,4 @@ cat my_data_output/MYDATA/1/assembly/*/megahit/MYDATA_contigs_stats.tsv
 #MYDATA  MYDATA_contigs.fa.gz    FASTA   DNA     95227     60110517   56      631.2   346664  234.0   286.0   439.0   0       1229    0.00    0.00    57.34
 
 
-make check LOG_DIR=$(pwd)/work/logs
+make check LOG_DIR=$(pwd)/logs
