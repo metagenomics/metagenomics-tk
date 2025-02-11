@@ -14,7 +14,7 @@ results afterwards.
 ## Run the Toolkit
 
 ```BASH
----8<--- "scripts/gettingStarted/test_gettingStarted_aggregation.sh:1:11"
+---8<--- "scripts/gettingStarted/test_gettingStarted_aggregation.sh:1:13"
 ```
 
 where
@@ -23,6 +23,7 @@ where
  * `-profile` defines the execution profile that should be used.
  * `-entry` is the entry point of the aggregation workflow.
  * `-params-file` sets the parameters file which defines the parameters for all tools. (see input section below)
+ * `--logDir` points to a directory where your trace tsv, a timeline html of the executed processes and a report regarding the resource consumption of the workflow is saved.
  * `--s3SignIn` defines if any S3 login for retrieving inputs is necessary. See the [S3 configuration](configuration.md/#s3-configuration) section for more information on how to configure the Toolkit for possible S3 input data.
  * `--scratch` is the directory on the worker node where all intermediate results are saved.
  * `--databases` is the directory on the worker node where all databases are saved. Already downloaded databases on a shared file system can be configured in the database setting of the corresponding [database section](database.md) in the configuration file.

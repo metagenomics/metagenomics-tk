@@ -22,10 +22,11 @@ contamination and completeness of MAGs, and gene prediction and annotation via P
     For most cases you don't need to modify our default configuration, you might only need to remove or add analyses.
 
 ```BASH
----8<--- "scripts/gettingStarted/test_gettingStarted_part1.sh:2:11"
+---8<--- "scripts/gettingStarted/test_gettingStarted_part1.sh:2:13"
 ```
 
 where
+
 
  * `NXF_HOME` points to the directory were Nextflow internal files and additional configs are stored. The default location is your home directory.
  However, it might be that your home directory is not shared among all worker nodes and is only on the master node available.  In this example
@@ -34,6 +35,7 @@ where
  * `-profile` defines the execution profile that should be used.
  * `-entry` is the entrypoint of the Toolkit.
  * `-params-file` sets the parameters file which defines the parameters for all tools. (see input section below)
+ * `--logDir` points to a directory where your trace tsv, a timeline html of the executed processes and a report regarding the resource consumption of the workflow is saved.
  * `--s3SignIn` defines if any S3 login for retrieving inputs is necessary. See the [S3 configuration](configuration.md/#s3-configuration) section for more information on how to configure the Toolkit for possible S3 input data.
  * `--scratch` is the directory on the worker node where all intermediate results are saved.
  * `--databases` is the directory on the worker node where all databases are saved. Already downloaded and extracted databases on a shared file system can be configured in the database setting of the corresponding [database section](database.md) in the configuration file.
@@ -89,7 +91,7 @@ Now that the files are created, you are ready to execute the Toolkit on your dat
 The only difference is that you modify the `--input.paired.path` variable.
 
 ```BASH
----8<--- "scripts/gettingStarted/test_gettingStarted_part2.sh:12:20"
+---8<--- "scripts/gettingStarted/test_gettingStarted_part2.sh:12:22"
 ```
 
 Now you can go through the `my_data_output` folder and check the results.
@@ -102,7 +104,7 @@ In some cases, you may also be interested in replacing a tool from one module wi
 In this case you could replace the MEGAHIT part with the MetaSpades config.
 
 ```BASH
----8<--- "scripts/gettingStarted/test_gettingStarted_part3.sh:2:11"
+---8<--- "scripts/gettingStarted/test_gettingStarted_part3.sh:2:13"
 ```
 
 This is the MetaSpades part that was used by the previous command instead of the MEGAHIT configuration:
@@ -115,8 +117,9 @@ If you now compare the contigs of the two assemblers with the following command,
 you will notice that the MetaSpades assembly has a higher N50 than the MEGAHIT one. 
 
 ```BASH
----8<--- "scripts/gettingStarted/test_gettingStarted_part3.sh:12:18"
+---8<--- "scripts/gettingStarted/test_gettingStarted_part3.sh:13:20"
 ```
+
 
 ## Part 4: Add further analyses 
 
