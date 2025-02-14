@@ -110,7 +110,7 @@ process pEMGBAnnotatedGenes {
 
     S3_EMGB_KEGG_ACCESS=params?.steps?.export?.emgb?.kegg?.database?.download?.s5cmd && KEGG_S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_EMGB_KEGG_ACCESS" : ""
     S3_EMGB_KEGG_SECRET=params?.steps?.export?.emgb?.kegg?.database?.download?.s5cmd && KEGG_S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_EMGB_KEGG_SECRET" : ""
-    output = Output.getOutput("${sample}", params.runid, "emgb", "")
+    output = Output.getOutput("${sample}", params.runid, "emgb", params.modules.export, "")
     template 'emgbAnnotatedGenes.sh'
 }
 
