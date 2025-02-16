@@ -56,7 +56,7 @@ class Utils {
     def resultingSecrets = [] 
     accessIdentifierToCheck.eachWithIndex { access, index ->
         if(access!=""){
-          resultingSecrets.add(access)		
+          resultingSecrets.add(accessIdentifier[index])		
           resultingSecrets.add(secretsIdentifier[index])		
         } 
     }

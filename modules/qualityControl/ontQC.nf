@@ -1,13 +1,5 @@
 include { wSaveSettingsList } from '../config/module'
 
-def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + params.modules.qcONT.name + '/' + 
-           params.modules.qcONT.version.major + "." +
-           params.modules.qcONT.version.minor + "." +
-           params.modules.qcONT.version.patch + 
-           '/' + TOOL + '/' + filename
-}
-
 /*
 * This process runs Adapter trimming (Porechop) and quality control (filtlong) in one step in order to reduce disk space consumption of the work directory.
 */
@@ -19,7 +11,7 @@ process pPorechop {
 
     cache 'deep'
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "porechop", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "porechop", params.modules.qcONT, filename) }, \
 	pattern: "{.command.sh,.command.out,.command.err,.command.log}"
 
     when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("porechop")
@@ -121,7 +113,7 @@ process pCollectFile {
 
     container "${params.ubuntu_image}"
     publishDir params.output, mode: "${params.publishDirMode}", \
-	saveAs: { filename -> getOutput("${sample}", params.runid, "porechop", filename) }, \
+	saveAs: { filename -> Output.getOutput("${sample}", params.runid, "porechop", params.modules.qcONT, filename) }, \
         pattern: "{**_qc.fq.gz}"
 
     input:
@@ -148,7 +140,7 @@ process pFilterHumanONT {
 
     tag "Sample: $sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "filterHumanONT", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "filterHumanONT", params.modules.qcONT, filename) }
 
     when params.steps.containsKey("qcONT") && params?.steps?.qcONT.containsKey("filterHumanONT")
 
@@ -169,7 +161,7 @@ process pFilterHumanONT {
     DOWNLOAD_LINK=params.steps?.qcONT?.filterHumanONT?.database?.download?.source ?: ""
     MD5SUM=params?.steps?.qcONT?.filterHumanONT?.database?.download?.md5sum ?: ""
     S5CMD_PARAMS=params.steps?.qcONT?.filterHumanONT?.database?.download?.s5cmd?.params ?: ""
-    output = getOutput("${sample}", params.runid, "filterHumanONT", "")
+    output = Output.getOutput("${sample}", params.runid, "filterHumanONT", params.modules.qcONT, "")
     ADDITIONAL_PARAMS=params.steps?.qcONT?.filterHumanONT?.additionalParams ?: ""
     S3_filter_ACCESS=params?.steps?.qcONT?.filterHumanONT?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_filter_ACCESS" : ""
     S3_filter_SECRET=params?.steps?.qcONT?.filterHumanONT?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_filter_SECRET" : ""
@@ -183,7 +175,7 @@ process pNanoPlot {
 
     tag "Sample: $sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "nanoplot", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "nanoplot", params.modules.qcONT, filename) }
 
     when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("nanoplot")
 

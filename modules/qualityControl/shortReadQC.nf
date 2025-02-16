@@ -1,13 +1,5 @@
 include { wSaveSettingsList } from '../config/module'
 
-def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + params.modules.qc.name + '/' + 
-           params.modules.qc.version.major + "." +
-           params.modules.qc.version.minor + "." +
-           params.modules.qc.version.patch + 
-           '/' + TOOL + '/' + filename
-}
-
 
 process pFastpSplit {
 
@@ -17,7 +9,7 @@ process pFastpSplit {
 
     cache "deep"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "fastp", params.modules.qc, filename) }
 
     when params?.steps.containsKey("qc") && params?.steps?.qc.containsKey("fastp")
 
@@ -53,7 +45,7 @@ process pFilterHuman {
 
     tag "Sample: $sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "filterHuman", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "filterHuman", params.modules.qc, filename) }
 
     when params.steps.containsKey("qc") && params?.steps?.qc.containsKey("filterHuman")
 
@@ -79,7 +71,7 @@ process pFilterHuman {
     DOWNLOAD_LINK=params.steps?.qc?.filterHuman?.database?.download?.source ?: ""
     MD5SUM=params?.steps?.qc?.filterHuman?.database?.download?.md5sum ?: ""
     S5CMD_PARAMS=params.steps?.qc?.filterHuman?.database?.download?.s5cmd?.params ?: ""
-    output = getOutput("${sample}", params.runid, "filterHuman", "")
+    output = Output.getOutput("${sample}", params.runid, "filterHuman", params.modules.qc, "")
     ADDITIONAL_PARAMS=params.steps?.qc?.filterHuman?.additionalParams ?: ""
     S3_filter_ACCESS=params?.steps?.qc?.filterHuman?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_filter_ACCESS" : ""
     S3_filter_SECRET=params?.steps?.qc?.filterHuman?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_filter_SECRET" : ""
@@ -93,7 +85,7 @@ process pNonpareil {
 
     tag "Sample: $sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "nonpareil", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "nonpareil", filename) }
 
     when params.steps.containsKey("qc") && params?.steps?.qc.containsKey("nonpareil")
 
@@ -123,7 +115,7 @@ process pKMC {
 
     tag "Sample: $sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "jellyfish", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "jellyfish", params.modules.qc, filename) }
 
     container "${params.kmc_image}"
 
@@ -196,7 +188,7 @@ process pFastpSplitDownload {
 
     cache 'deep'
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "fastp", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "fastp", params.modules.qc, filename) }
 
     time params.steps.containsKey("qc") ? Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastpDownload.defaults, params.resources.highmemMedium) : ""
 
