@@ -16,11 +16,13 @@ process pEMGBAnnotatedContigs {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "emgb", params.modules.export, filename) }
 
+    memory { Utils.getMemoryResources(params.resources.small, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.small, "${sample}", task.attempt, params.resources) }
+
     when params.steps.containsKey("export") && params.steps.export.containsKey("emgb")
 
     containerOptions  " --entrypoint='' "
-
-    label 'tiny'
 
     input:
     tuple val(sample), path(contigs), path(mapping), path("bins/*")
