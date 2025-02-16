@@ -85,7 +85,7 @@ process pNonpareil {
 
     tag "Sample: $sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "nonpareil", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "nonpareil", params.modules.qc, filename) }
 
     when params.steps.containsKey("qc") && params?.steps?.qc.containsKey("nonpareil")
 
