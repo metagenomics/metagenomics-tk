@@ -1,5 +1,5 @@
 # This file will be referenced on the online wiki
-NXF_HOME=$PWD/.nextflow NXF_VER=23.10.0 nextflow run metagenomics/metagenomics-tk -work-dir $(pwd)/work \
+NXF_HOME=$PWD/.nextflow NXF_VER=24.04.4 nextflow run metagenomics/metagenomics-tk -work-dir $(pwd)/work \
     -profile slurm \
     -entry wFullPipeline \
     -ansi-log false \
