@@ -49,10 +49,9 @@ nav:
   - "Introduction": README.md
   - "Quickstart": quickstart.md 
   - "Getting Started":
-    - "Concept": concept.md
+    - "Overview": overview.md
     - "Full Pipeline": full_pipeline.md
-    - "Per-Sample and Aggregation": per_sample_and_aggregation.md
-    - "EMGB": emgb.md
+    - "Aggregation": aggregation.md
   - "Configuration":
     - "Global Pipeline Configuration": configuration.md
     - "Pipeline Input Configuration": pipeline_input.md
