@@ -8,18 +8,18 @@ It consists of two main parts.
 
 Other parameters can be found in the [configuration](configuration.md) section.
 
-## Full Pipeline vs. Seperate Modules
+## Full Pipeline vs. Separate Modules
 
 The Metagenomics-Toolkit allows you to run either the full pipeline of assembly, binning and many other downstream analysis tasks or the individual modules.
-The Toolkit can be configured by providing the module configuration via a yml file and a flag for the corresponding [module](modules/introduction.md) or [full pipeline mode](full_pipeline.md). Options for the global pipeline configuration can be viewed [here](configuration.md).
+The Toolkit can be configured by providing the module configuration via a YAML file and a flag for the corresponding [module](modules/introduction.md) or [full pipeline mode](full_pipeline.md). Options for the global pipeline configuration can be viewed [here](configuration.md).
 
 The Full Pipeline mode consists mainly of two parts. One part (per-sample) of the Toolkit processes each dataset individually 
 by applying analyses such as quality control, assembly, binning and annotation. The second part aggregates and combines the results of the individual datasets by applying modules such as dereplication and
-co-occurrence analysis. You can either run the first and second part consecutively or seperately where the second part can be applied on the output of first 
+co-occurrence analysis. You can either run the first and second part consecutively or separately where the second part can be applied on the output of the first 
 part.
 
 !!! note "Sensitive data"
-    Please do never place sensitive information in any of the yml configuration files since the configuration is part of the pipeline output.
+    Please do never place sensitive information in any of the YAML configuration files since the configuration is part of the pipeline output.
 
 ### Error Strategy 
 
