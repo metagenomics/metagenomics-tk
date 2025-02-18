@@ -8,10 +8,18 @@ jobs:
   renovate:
     runs-on: ubuntu-latest
     steps:
+      - name: Get token
+        id: get_token
+        uses: actions/create-github-app-token@v1
+        with:
+          private-key: ${{ secrets.private_key }}
+          app-id: ${{ secrets.app_id }}
+          owner: ${{ github.repository_owner }}
+          repositories: 'metagenomics/metagenomics-tk'
       - name: Checkout
         uses: actions/checkout@v4
       - name: Self-hosted Renovate
-        uses: renovatebot/github-action@v27.31.10
+        uses: renovatebot/github-action@v41
         with:
           configurationFile: renovate-config.js
-          token: ${{ secrets.RENOVATE_TOKEN }}
+          token: '${{ steps.get_token.outputs.token }}'
