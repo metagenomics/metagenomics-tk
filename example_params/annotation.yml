@@ -1,5 +1,4 @@
 output: "output"
-summary: false
 runid: 1
 s3SignIn: false
 logDir: log

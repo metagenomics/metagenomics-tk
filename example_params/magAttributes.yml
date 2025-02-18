@@ -1,5 +1,4 @@
 tempdir: "tmp"
-summary: true
 output: "output"
 logDir: log
 runid: 1

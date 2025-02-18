@@ -51,12 +51,6 @@
           "minimum": 0,
           "maximum": 1
         },
-        "summary": {
-          "type": "boolean",
-          "description": "Summary",
-          "default": false,
-          "hidden": true
-        },
         "logDir": {
           "type": "string",
           "default": "log",
@@ -82,7 +76,7 @@
           "hidden": true
         }
       },
-      "required": ["output", "runid", "summary", "tempdir"],
+      "required": ["output", "runid", "tempdir"],
       "anyOf": [
         {
           "required": ["input.paired.path"]
