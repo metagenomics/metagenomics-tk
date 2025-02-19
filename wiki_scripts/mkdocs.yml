@@ -73,3 +73,7 @@ nav:
     - developer_guidelines.md
     - pipeline_specification.md
     - module_specification.md
+  - "Tutorials":
+    - "Tutorial 1": 
+      - "Introduction": tutorials/tutorial1/introduction.md 
+      - "Quality Control": tutorials/tutorial1/quality_control.md 
