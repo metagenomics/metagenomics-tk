@@ -19,12 +19,6 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
          '/' + TOOL + '/' + filename
 }
 
-def getModulePath(module){
-    return module.name + '/' + module.version.major + "." +
-          module.version.minor + "." +
-          module.version.patch
-}
-
 
 process pMashScreen {
 
@@ -201,10 +195,10 @@ workflow _wRunMash {
      pMashSketchGenomeGroup.out.sketches | flatten | toSortedList | flatten | buffer(size: BUFFER_SKETCH, remainder: true) | set { mashPasteInput }
 
      pMashPasteChunk(params?.steps.containsKey("fragmentRecruitment") &&  params?.steps.fragmentRecruitment.containsKey("mashScreen"), \
-	Channel.value([getModulePath(params.modules.fragmentRecruitment), "mash/paste"]),  mashPasteInput)
+	Channel.value([Utils.getModulePath(params.modules.fragmentRecruitment), "mash/paste"]),  mashPasteInput)
 
      pMashPasteFinal(params?.steps.containsKey("fragmentRecruitment") &&  params?.steps.fragmentRecruitment.containsKey("mashScreen"), \
-	Channel.value([getModulePath(params.modules.fragmentRecruitment), "mash/paste"]),  pMashPasteChunk.out.sketch | collect(flat: false))
+	Channel.value([Utils.getModulePath(params.modules.fragmentRecruitment), "mash/paste"]),  pMashPasteChunk.out.sketch | collect(flat: false))
 
      pMashPasteFinal.out.logs | pDumpLogs
 
@@ -372,10 +366,10 @@ workflow _wGetStatistics {
         | join(ontMedianQuality, by: SAMPLE_IDX)
         | set { minimapMappingStatsInput }
 
-     pGetBinStatistics(getModulePath(params.modules.fragmentRecruitment), shortReadMappingStatsInput | mix(minimapMappingStatsInput))
+     pGetBinStatistics(Utils.getModulePath(params.modules.fragmentRecruitment), shortReadMappingStatsInput | mix(minimapMappingStatsInput))
 
      pCovermContigsCoverage(Channel.value(params?.steps?.fragmentRecruitment.find{ it.key == "contigsCoverage"}?.value), \
-	Channel.value([getModulePath(params.modules.fragmentRecruitment), \
+	Channel.value([Utils.getModulePath(params.modules.fragmentRecruitment), \
 	"contigCoverage", params?.steps?.fragmentRecruitment?.contigsCoverage?.additionalParams]), \
 	mappedShortReads | combine(Channel.value(DO_NOT_SET_IDENTITY_AUTOMATICALLY)) \
 	| mix(minimapMappedReads | join(ontMedianQuality, by: SAMPLE_IDX)))
@@ -392,7 +386,7 @@ workflow _wGetStatistics {
      ALIGNMENT_INDEX = 2
      pCovermGenomeCoverage(Channel.value(params?.steps?.fragmentRecruitment.find{ it.key == "genomeCoverage"}?.value), \
         Channel.value(""), \
-	Channel.value([getModulePath(params.modules.fragmentRecruitment), \
+	Channel.value([Utils.getModulePath(params.modules.fragmentRecruitment), \
 	"genomeCoverage", params?.steps?.fragmentRecruitment?.genomeCoverage?.additionalParams]), \
 	 minimapMappedReadsCovInput | mix(mappedShortReadsCovInput) \
 	| map { sample -> sample.addAll(ALIGNMENT_INDEX, emptyFile); sample })

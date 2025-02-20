@@ -47,6 +47,51 @@ class Utils {
           module.version.patch
   }
 
+  /**
+  * This method checks whether a secret is requested and if so, it returns a List
+  * with the corresponing secret identfiers. 
+  *
+  **/
+  static Collection getSecrets(accessIdentifierToCheck, accessIdentifier, secretsIdentifier){
+    def resultingSecrets = [] 
+    accessIdentifierToCheck.eachWithIndex { access, index ->
+        if(access!=""){
+          resultingSecrets.add(accessIdentifier[index])		
+          resultingSecrets.add(secretsIdentifier[index])		
+        } 
+    }
+    return resultingSecrets;
+
+  } 
+
+  static String getAggregatedOutput(runid, tool, module, filename){
+    return "AGGREGATED" + '/' +  tool + '/' + module.name + '/' + 
+         module.version.major + "." +  
+         module.version.minor + "." +  
+         module.version.patch +  
+         '/' + tool + '/' + filename
+  }
+
+  static String getOutput(sample, runid, tool, module, filename){
+    return sample + '/' + runid + '/' + module.name + '/' + 
+           module.version.major + "." +
+           module.export.version.minor + "." +
+           module.export.version.patch + 
+           '/' + tool + '/' + filename
+  }
+
+  /**
+  * A function that takes a tool parameter key as input and extracts all underlying entries of said key.
+  * Should these entries contain references to external databases, s3/aws key-files, etc. a docker volume mount string is returned,
+  * so that docker processes run with this tool can include this string to have access to all external files. 
+  **/
+  static String constructParametersObject(tool, params){ 
+    if(params?.steps.containsKey("annotation")){
+       return params.steps.annotation[tool].findAll({ it.key != "runOnMAGs" && it.key != "chunkSize" }).collect{ Utils.getDockerMount(it.value?.database, params, 'true')}.join(" ");
+    } else {
+       return "";
+    }
+  }
 
   static String getBeforeScript(script, image){
     if(script.isEmpty()){
