@@ -1,14 +1,5 @@
 include { pDumpLogs } from '../utils/processes'
 
-def getOutput(RUNID, TOOL, filename){
-    return "AGGREGATED" + '/' +  RUNID + '/' + params.modules.cooccurrence.name + '/' + 
-         params.modules.cooccurrence.version.major + "." +  
-         params.modules.cooccurrence.version.minor + "." +  
-         params.modules.cooccurrence.version.patch +  
-         '/' + TOOL + '/' + filename
-}
-
-
 process pVerticalConcat {
 
     label 'tiny'
@@ -36,7 +27,7 @@ process pBuildCorrelationNetwork {
    
     container "${params.cooccurrence_image}"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "network/correlation", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Utils.getAggregatedOutput(params.runid, "network/correlation", params.modules.cooccurrence, filename) }
 
     when params.steps.containsKey("cooccurrence") && params.steps.cooccurrence.containsKey("inference") \
 	&& params.steps.cooccurrence.inference.additionalParams.method == 'correlation'
@@ -83,7 +74,7 @@ process pBuildSpiecEasiNetwork {
     container "${params.cooccurrence_image}"
 
     publishDir params.output, mode: "${params.publishDirMode}", \
-	saveAs: { filename -> getOutput(params.runid, "network/spiec-easi/nlambda_${nlambda}", filename) }
+	saveAs: { filename -> Utils.getAggregatedOutput(params.runid, "network/spiec-easi/nlambda_${nlambda}", params.modules.cooccurrence, filename) }
 
     when params.steps.containsKey("cooccurrence") && params.steps.cooccurrence.containsKey("inference") \
 	&& params.steps.cooccurrence.inference.additionalParams.method == 'spiec-easi'
@@ -117,7 +108,7 @@ process pUpdateNetwork {
     container "${params.cooccurrence_image}"
 
     publishDir params.output, mode: "${params.publishDirMode}",\
-	saveAs: { filename -> getOutput(params.runid, "network/${params.steps.cooccurrence.inference.additionalParams.method}/final/update", filename) }
+	saveAs: { filename -> Utils.getAggregatedOutput(params.runid, "network/${params.steps.cooccurrence.inference.additionalParams.method}/final/update", params.modules.cooccurrence, filename) }
 
     when params.steps.containsKey("cooccurrence") && params.steps.cooccurrence.containsKey("metabolicAnnotation")
 
@@ -141,7 +132,7 @@ process pVerticalConcatFinal {
 
     cache 'deep'
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "matrix", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Utils.getAggregatedOutput(params.runid, "matrix", params.modules.cooccurrence, filename) }
 
     when params.steps.containsKey("cooccurrence")
 
@@ -183,7 +174,7 @@ process pSmetanaEdges {
 
     output:
     path("edge_attributes.tsv"), emit: edgeAttributes
-    tuple val("${edges}_${repeat}"), val(getOutput(params.runid, "smetana", "")), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
+    tuple val("${edges}_${repeat}"), val(Utils.getAggregatedOutput(params.runid, "smetana", params.modules.cooccurrence, "")), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
     shell:
@@ -288,17 +279,17 @@ workflow _wBuildNetwork {
        pBuildSpiecEasiNetwork(nlambda, abundance, gtdbConcatenated)
        pBuildSpiecEasiNetwork.out.edges | max { it[STABILITY_IDX] } | filter(it -> it!=null) | set {bestEdges}
 
-       bestEdges | collectFile(storeDir: params.output + "/" + getOutput(params.runid, \
-	 "network/spiec-easi/final", "")){ network -> ["nlambda_" + network[NLAMBDA_IDX] + "_" + file(network[NETWORK_IDX]).name, network[NETWORK_IDX].text]}
+       bestEdges | collectFile(storeDir: params.output + "/" + Utils.getAggregatedOutput(params.runid, \
+	 "network/spiec-easi/final", params.modules.cooccurrence, "")){ network -> ["nlambda_" + network[NLAMBDA_IDX] + "_" + file(network[NETWORK_IDX]).name, network[NETWORK_IDX].text]}
        bestEdges | map { network -> network[NETWORK_IDX] } | set { edges } 
 
        pBuildSpiecEasiNetwork.out.graph | max { it -> it[STABILITY_IDX] } | set {bestGraph}
 
-       bestGraph | collectFile(storeDir: params.output + "/" + getOutput(params.runid, \
-	"network/spiec-easi/final", "")){ network -> ["nlambda_" + network[NLAMBDA_IDX] + "_" + file(network[NETWORK_IDX]).name, network[NETWORK_IDX].text]}
+       bestGraph | collectFile(storeDir: params.output + "/" + Utils.getAggregatedOutput(params.runid, \
+	"network/spiec-easi/final", params.modules.cooccurrence, "")){ network -> ["nlambda_" + network[NLAMBDA_IDX] + "_" + file(network[NETWORK_IDX]).name, network[NETWORK_IDX].text]}
 
-       pBuildSpiecEasiNetwork.out.graphRaw | max { it -> it[STABILITY_IDX] } | collectFile(storeDir: params.output + "/" + getOutput(params.runid, \
-	"network/spiec-easi/final", "")){ network -> ["nlambda_" + network[NLAMBDA_IDX] + "_" + file(network[NETWORK_IDX]).name, network[NETWORK_IDX].text]}
+       pBuildSpiecEasiNetwork.out.graphRaw | max { it -> it[STABILITY_IDX] } | collectFile(storeDir: params.output + "/" + Utils.getAggregatedOutput(params.runid, \
+	"network/spiec-easi/final", params.modules.cooccurrence, "")){ network -> ["nlambda_" + network[NLAMBDA_IDX] + "_" + file(network[NETWORK_IDX]).name, network[NETWORK_IDX].text]}
 
        bestGraph | map { network -> network[NETWORK_IDX] } | set { graph } 
 
@@ -400,7 +391,7 @@ workflow _wCooccurrence {
 	  | combine(modelNameToBinIdMap, by: MODEL_NAME_IDX) \
 	  | combine(modelNameToBinIdMap | map { model -> model.reverse()}, by: MODEL_NAME_1_IDX) \
 	  | map { edge -> edge.takeRight(METRICS) } \
-	  | collectFile(storeDir: params.output + "/" + getOutput(params.runid, "smetana", ""), \
+	  | collectFile(storeDir: params.output + "/" + Utils.getAggregatedOutput(params.runid, "smetana", params.modules.cooccurrence, ""), \
 	   seed: ["medium", "size", "mip", "mro", "V1", "V2"].join('\t'), \
 	   newLine: true){ line -> ['edgeAttributes.tsv', line.join("\t")] } \
 	  | set { edgeAttributes } 
