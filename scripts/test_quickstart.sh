@@ -3,7 +3,7 @@
 NXF_VER=24.04.4 nextflow run metagenomics/metagenomics-tk \
 	  -profile standard \
 	  -entry wFullPipeline \
-	  -params-file default/quickstart.yml \
+          -params-file  https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/default/quickstart.yml \
 	  --logDir logs \
 	  --s3SignIn false \
 	  --scratch false \
