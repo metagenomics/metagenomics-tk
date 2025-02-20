@@ -285,7 +285,7 @@ jobs:
 
   quickstart:
     timeout-minutes: 800
-    runs-on: [ self-hosted, slurm]
+    runs-on: [self-hosted, slurm]
     needs: [codePolicy]
     steps:
       - uses: actions/checkout@v4
@@ -298,6 +298,23 @@ jobs:
       - name: Test Quickstart
         run: |
           bash ./scripts/test_quickstart.sh || exit 1
+
+  tutorial1:
+    timeout-minutes: 800
+    runs-on: [self-hosted, slurm]
+    needs: [codePolicy]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy scm to circumvent API rate limit 
+        run: |
+          BRANCH=$(git rev-parse --abbrev-ref HEAD | sed 's/\//\\\//g')
+          sed -i "s/master/${BRANCH}/g" scripts/gettingStarted/test_gettingStarted_*.sh
+          mkdir -p .nextflow
+          cp ~/.nextflow/scm .nextflow
+      - name: Test Quality Control
+        run: |
+          bash ./scripts/tutorials/tutorial1/test_qc.sh || exit 1
+
 
   gettingStarted:
     timeout-minutes: 800
