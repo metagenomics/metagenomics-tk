@@ -5,6 +5,7 @@ docs_dir: ../docs
 markdown_extensions:
   - toc:
       permalink: "&para;"
+  - attr_list
   - admonition
   - pymdownx.inlinehilite
   - pymdownx.superfences:
