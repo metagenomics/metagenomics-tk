@@ -1,9 +1,5 @@
 name: Renovate
-on:
-  schedule:
-    # The "*" (#42, asterisk) character has special semantics in YAML, so this
-    # string has to be quoted.
-    - cron: '0 11 * * *'
+on: [workflow_dispatch]
 jobs:
   renovate:
     runs-on: ubuntu-latest
@@ -15,7 +11,7 @@ jobs:
           private-key: ${{ secrets.private_key }}
           app-id: ${{ secrets.app_id }}
           owner: ${{ github.repository_owner }}
-          repositories: 'metagenomics/metagenomics-tk'
+          repositories: 'metagenomics-tk'
       - name: Checkout
         uses: actions/checkout@v4
       - name: Self-hosted Renovate
