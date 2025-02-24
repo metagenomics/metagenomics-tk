@@ -421,12 +421,6 @@ workflow _wAssembly {
        SAMPLE_IDX = 0
        readsList | map { seq -> [seq[SAMPLE_IDX], seq[PAIRED_END_ID]] } | pMetaspades
 
-       if(params.summary){
-         pMegahit.out.contigsStats | mix(pMetaspades.out.contigsStats) | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
-           [ "contigs_stats.tsv", item[1].text ]
-         }
-       }
-      
        pMegahit.out.contigs | mix(pMetaspades.out.contigs) | set { contigs }
 
        pMegahit.out.fastg | mix(pMetaspades.out.fastg) | set { fastg }

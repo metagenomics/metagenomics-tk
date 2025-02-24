@@ -1,5 +1,4 @@
 tempdir: "tmp"
-summary: true
 s3SignIn: false
 output: "output"
 runid: 1

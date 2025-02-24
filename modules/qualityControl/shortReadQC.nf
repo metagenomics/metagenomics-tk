@@ -230,24 +230,6 @@ workflow _wFastqSplit {
              samples.noDownload | pFastpSplit 
              samples.download | pFastpSplitDownload
 
-             // Create summary files
-             if(params.summary){
-               pFastpSplit.out.fastpSummary | mix(pFastpSplitDownload.out.fastpSummary) \
-                | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
-                [ "fastp_summary.tsv", item[FASTP_FILE_IDX].text ]
-               }
-
-               pFastpSplit.out.fastpSummaryAfter | mix(pFastpSplitDownload.out.fastpSummaryAfter) \
-                | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
-                [ "fastp_summary_after.tsv", item[FASTP_FILE_IDX].text ]
-               }
-
-               pFastpSplit.out.fastpSummaryBefore | mix(pFastpSplitDownload.out.fastpSummaryBefore) \
-                | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
-                [ "fastp_summary_before.tsv", item[FASTP_FILE_IDX].text ]
-               }
-             }
-
              pFastpSplit.out.readsPair | mix(pFastpSplitDownload.out.readsPair) | set {readsPair}
              pFastpSplit.out.readsSingle | mix(pFastpSplitDownload.out.readsSingle) | set {readsSingle}
 

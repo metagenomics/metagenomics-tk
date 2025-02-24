@@ -1,5 +1,4 @@
 tempdir: "tmp"
-summary: true
 s3SignIn: true
 input:
   paired: 
