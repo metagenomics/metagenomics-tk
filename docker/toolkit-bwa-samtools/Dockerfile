@@ -1,4 +1,4 @@
-FROM quay.io/biocontainers/bwa:0.7.17--h5bf99c6_8 AS bwa
+FROM quay.io/biocontainers/bwa:0.7.18--he4a0461_1 AS bwa
 
 FROM ubuntu:20.04
 ENV SAMTOOLS=samtools-1.12
