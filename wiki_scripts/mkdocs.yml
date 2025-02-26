@@ -78,3 +78,7 @@ nav:
     - "Tutorial 1": 
       - "Introduction": tutorials/tutorial1/introduction.md 
       - "Quality Control": tutorials/tutorial1/quality_control.md 
+      - "Assembly": tutorials/tutorial1/assembly.md
+      - "Assembly Evaluation": tutorials/tutorial1/assembly_evaluation.md
+      - "Binning": tutorials/tutorial1/binning.md
+      - "Assessing Bin Quality": tutorials/tutorial1/bin_quality.md
