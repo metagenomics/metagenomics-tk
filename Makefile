@@ -81,7 +81,7 @@ changelogTag: ## Creates a new CHANGELOG by specifying a tag with the environmen
 	docker run -v "$${PWD}":/workdir quay.io/git-chglog/git-chglog:latest "${TAG}"
 
 nextflow: ## Downloads Nextflow binary
-	wget -qO- https://github.com/nextflow-io/nextflow/releases/download/v${VERSION}/nextflow-${VERSION}-all > nextflow
+	wget -qO- https://github.com/nextflow-io/nextflow/releases/download/v${VERSION}/nextflow-${VERSION}-dist > nextflow
 	chmod a+x nextflow
 
 check: ## Checks if processes did fail and the current nextflow run returns exit code 1. (Useful in a github actions context)
