@@ -1,4 +1,4 @@
-FROM biocontainers/bowtie2:v2.3.4.3-1-deb_cv2
+FROM biocontainers/bowtie2:v2.4.1_cv1
 USER root
 RUN apt update && apt install -y procps samtools
 USER biodocker
