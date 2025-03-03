@@ -1,5 +1,5 @@
 # run fastp
-fastp -i read1.fq.gz -I read2.fq.gz -o read1.fastp.fq.gz -O read2.fastp.fq.gz \
+fastp -i read1.fq.gz -I read2.fq.gz !{reportOnly} \
 	-w !{task.cpus} -h !{sample}_report.html \
 	--unpaired1 !{sample}_unpaired.qc.fq.gz --unpaired2 !{sample}_unpaired.qc.fq.gz !{params.steps.qc.fastp.additionalParams}
 

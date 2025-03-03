@@ -15,7 +15,9 @@ steps:
     interleaved: false
     fastp:
        # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
-       additionalParams: "  "
+       additionalParams:
+         fastp: "  "
+         reportOnly: false
        timeLimit: "AUTO"
   assembly:
     megahit:

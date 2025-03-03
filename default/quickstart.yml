@@ -20,7 +20,9 @@ steps:
        # --cut_front move a sliding window from front (5') to tail, drop the bases in the window if its mean quality is below cut_mean_quality, stop otherwise.
        # --length_required  reads shorter than length_required will be discarded, default is 15. (int [=15])
        # PE data, the front/tail trimming settings are given with -f, --trim_front1 and -t, --trim_tail1
-       additionalParams: " --detect_adapter_for_pe -q 20 --cut_front --trim_front1 3 --cut_tail --trim_tail1 3 --cut_mean_quality 10 --length_required 50 "
+       additionalParams:
+         fastp: " --detect_adapter_for_pe -q 20 --cut_front --trim_front1 3 --cut_tail --trim_tail1 3 --cut_mean_quality 10 --length_required 50 "
+         reportOnly: false 
        timeLimit: "AUTO"
     nonpareil:
       additionalParams: " -v 10 -r 1234 "
