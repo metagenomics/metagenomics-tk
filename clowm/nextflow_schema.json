@@ -93,11 +93,18 @@
       "default": "",
       "fa_icon": "fas fa-ranking-star",
       "properties": {
-        "steps.qc.fastp.additionalParams": {
+        "steps.qc.fastp.additionalParams.fastp": {
           "type": "string",
           "description": "Command line parameters for fastp.",
           "displayName": "fastp additional parameters",
           "default": "--detect_adapter_for_pe -q 20 --cut_front --trim_front1 3 --cut_tail --trim_tail1 3 --cut_mean_quality 10 --length_required 50"
+        },
+        "steps.qc.fastp.additionalParams.reportOnly": {
+          "type": "boolean",
+          "description": "Fastp should only generate a report.",
+          "displayName": "Fastp should only generate a report.",
+          "default": false,
+          "hidden": true
         },
         "steps.qc.fastp.timeLimit": {
           "type": "string",
