@@ -116,7 +116,7 @@ process pKMC {
 
     tag "Sample: $sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "jellyfish", params.modules.qc, filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "kmc", params.modules.qc, filename) }
 
     container "${params.kmc_image}"
 
