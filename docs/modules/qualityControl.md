@@ -1,15 +1,14 @@
 # Quality Control
 
-The quality control module removes adapters, trims and filters short and read long read data.
-Since quality control is the usual first step in the processing of sequencing data, the Toolkit offers a way to
+The quality control module removes adapters, trims and filters short and long-read data.
+Since quality control is typically the first step in the processing of sequencing data, the Toolkit offers a way to
 directly download the sequencing data (See `download` flag.). This allows the data to be downloaded in parallel on multiple machines,
 as opposed to the usual Nextflow mechanism of downloading input data only on the VM running Nextflow.
-In addition, the quality control module allows human reads to be filtered out and, with Nonpareil, provides diversity estimation of input sequences. 
+In addition, the quality control module enables the filtering of human reads and, with Nonpareil, provides diversity estimation of input sequences. 
 
 ## Short Reads
 
-For short reads we offer a way to only generate a quality report using fastp. This way no additional
-disk space for quality controlled reads is necessary. (See `reportOnly` flag in the configuration file below.)
+For short reads, we offer a way to generate only a quality report using fastp. This approach eliminates the need for additional disk space to store quality-controlled reads.  (See `reportOnly` flag in the configuration file below.)
 
 ### Input
 
@@ -43,15 +42,15 @@ disk space for quality controlled reads is necessary. (See `reportOnly` flag in 
 
 `SAMPLE_fastp.json`
 
-:  Contains quality statistics about the raw reads and the quality controlled reads in json format. 
+:  Contains quality statistics about the raw reads and the quality controlled reads in JSON format. 
 
 `SAMPLE_fastp_summary_after.tsv`
 
-:  Contains quality statistics about the quality controlled reads in tsv format. 
+:  Contains quality statistics about the quality controlled reads in TSV format. 
 
 `SAMPLE_fastp_summary_before.tsv`
 
-:  Contains quality statistics about the raw reads in tsv format. 
+:  Contains quality statistics about the raw reads in TSV format. 
 
 `SAMPLE_interleaved.qc.fq.gz`
 
@@ -97,7 +96,7 @@ K-mer frequency table with the columns `FREQUENCY`, `COUNT` and `SAMPLE`.
      
         **The configuration file shown here is for demonstration and testing purposes only. 
           Parameters that should be used in production can be viewed in the quality control section 
-          of one of the yaml files located in the `default` folder of the Toolkit's Github repository.**
+          of one of the YAML files located in the `default` folder of the Toolkit's GitHub repository.**
 
     ```YAML
     ---8<--- "example_params/qcONT.yml"
@@ -126,7 +125,7 @@ K-mer frequency table with the columns `FREQUENCY`, `COUNT` and `SAMPLE`.
 
 `plots`
 
-: Nanoplot offers a variety of plots that show the quality, length and number of the reads.
+: NanoPlot offers a variety of plots that show the quality, length and quantity of the reads.
 
 ## Output
 
@@ -158,12 +157,12 @@ The following output is produced for short and long reads.
 
 `SAMPLE_filtered.fq.gz`
 
-: Sequences without human dna.
+: Sequences without human DNA.
 
 `SAMPLE_removed.fq.gz`
 
-: Sequences that were classified as human dna. 
+: Sequences that were classified as human DNA. 
 
 `SAMPLE_summary_[after|before].tsv`
 
-: Statistics of the reads before and after quality control. 
+: Statistics of reads before and after quality control. 
