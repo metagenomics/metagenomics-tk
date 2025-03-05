@@ -1,5 +1,4 @@
 tempdir: "tmp"
-summary: false
 s3SignIn: true
 input:
   paired:
@@ -16,7 +15,9 @@ steps:
   qc:
     fastp:
        # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
-       additionalParams: "  "
+       additionalParams:
+         fastp: "  "
+         reportOnly: false
        timeLimit: "AUTO"
     nonpareil:
        additionalParams: " -v 10 -r 1234 "

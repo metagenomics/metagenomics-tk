@@ -2,8 +2,6 @@
 
  * `tempdir`: Temporary directory for storing files that are used to collect intermediate files.
 
- * `summary`: If true a summary folder is created storing results of all samples combined.
-
  * `output`: Output directory for storing pipeline results. If an S3 bucket is specified with the corresponding S3 credentials (See S3 configuration section) then
    the output is written to S3.
 

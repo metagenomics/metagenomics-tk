@@ -1,5 +1,4 @@
 tempdir: "tmp"
-summary: false
 s3SignIn: false
 output: "output"
 logDir: log
@@ -12,7 +11,9 @@ steps:
     input: "test_data/qc/reads_split.tsv"
     fastp:
        # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
-       additionalParams: "  "
+       additionalParams:
+         fastp: "  "
+         reportOnly: false
     filterHuman:
       additionalParams: "  "
       database:

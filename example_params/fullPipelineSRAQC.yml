@@ -1,5 +1,4 @@
 tempdir: "tmp"
-summary: false
 s3SignIn: true
 output: "output"
 logDir: log
@@ -21,5 +20,7 @@ steps:
     fastp:
       download:
         s5cmdParams: " --retry-count 30 --no-verify-ssl --no-sign-request --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "
-      additionalParams: " "
+      additionalParams:
+        fastp: "  "
+        reportOnly: false
       timeLimit: "AUTO"

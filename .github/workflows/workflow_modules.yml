@@ -147,6 +147,11 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v4
+      - name: Run fastp to generate the report only
+        run: |
+          bash ./scripts/test_qc.sh \
+          " --steps.qc.fastp.additionalParams.reportOnly=true " \
+          "" "${WORK_DIR}" ${PROFILE} || exit 1
       - name: Test long reads chunking using porechop
         run: |
           bash ./scripts/test_qcONT.sh \

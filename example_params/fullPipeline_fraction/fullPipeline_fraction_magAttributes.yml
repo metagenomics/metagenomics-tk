@@ -4,7 +4,6 @@ input:
   paired: 
     path: "test_data/fullPipeline/reads_split.tsv"
     watch: false
-summary: false
 output: "output"
 logDir: log
 runid: 1
@@ -16,7 +15,9 @@ steps:
   qc:
     fastp:
        # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
-       additionalParams: "  "
+       additionalParams:
+         fastp: "  "
+         reportOnly: false
        timeLimit: "AUTO"
   assembly:
     megahit:

@@ -1,5 +1,4 @@
 tempdir: "tmp"
-summary: false
 s3SignIn: false
 input: "output"
 output: "output"

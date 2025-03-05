@@ -21,8 +21,8 @@ process pFastpSplit {
     tuple val(sample), path(read1, stageAs: "read1.fq.gz"), path(read2, stageAs: "read2.fq.gz")
 
     output:
-    tuple val("${sample}"), path("${sample}_interleaved.qc.fq.gz"), emit: readsPair
-    tuple val("${sample}"), path("${sample}_unpaired.qc.fq.gz"), emit: readsSingle
+    tuple val("${sample}"), path("${sample}_interleaved.qc.fq.gz"), optional: true, emit: readsPair
+    tuple val("${sample}"), path("${sample}_unpaired.qc.fq.gz"), optional:true, emit: readsSingle
     tuple val("${sample}"), path("${sample}_fastp_summary_before.tsv"), emit: fastpSummaryBefore
     tuple val("${sample}"), path("${sample}_fastp_summary_after.tsv"), emit: fastpSummaryAfter
     tuple val("${sample}"), path("${sample}_unpaired_summary.tsv"), emit: fastpSummaryUnpaired
@@ -31,6 +31,7 @@ process pFastpSplit {
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
+    reportOnly=params.steps.qc?.fastp?.additionalParams?.reportOnly ? " " : " -o read1.fastp.fq.gz -O read2.fastp.fq.gz "
     template 'fastpSplit.sh'
 }
 
@@ -115,7 +116,7 @@ process pKMC {
 
     tag "Sample: $sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "jellyfish", params.modules.qc, filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "kmc", params.modules.qc, filename) }
 
     container "${params.kmc_image}"
 
@@ -202,8 +203,8 @@ process pFastpSplitDownload {
     tuple val(sample), env(read1Url), env(read2Url)
 
     output:
-    tuple val("${sample}"), path("${sample}_interleaved.qc.fq.gz"), emit: readsPair
-    tuple val("${sample}"), path("${sample}_unpaired.qc.fq.gz"), emit: readsSingle
+    tuple val("${sample}"), path("${sample}_interleaved.qc.fq.gz"), optional: true, emit: readsPair
+    tuple val("${sample}"), path("${sample}_unpaired.qc.fq.gz"), optional: true, emit: readsSingle
     tuple val("${sample}"), path("${sample}_fastp_summary_before.tsv"), emit: fastpSummaryBefore
     tuple val("${sample}"), path("${sample}_fastp_summary_after.tsv"), emit: fastpSummaryAfter
     tuple val("${sample}"), path("${sample}_unpaired_summary.tsv"), emit: fastpSummaryUnpaired
@@ -212,6 +213,7 @@ process pFastpSplitDownload {
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
+    reportOnly=params.steps.qc?.fastp?.additionalParams?.reportOnly ? " " : " -o read1.fastp.fq.gz -O read2.fastp.fq.gz "
     template 'fastpSplitDownload.sh'
 }
 
@@ -229,24 +231,6 @@ workflow _wFastqSplit {
 
              samples.noDownload | pFastpSplit 
              samples.download | pFastpSplitDownload
-
-             // Create summary files
-             if(params.summary){
-               pFastpSplit.out.fastpSummary | mix(pFastpSplitDownload.out.fastpSummary) \
-                | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
-                [ "fastp_summary.tsv", item[FASTP_FILE_IDX].text ]
-               }
-
-               pFastpSplit.out.fastpSummaryAfter | mix(pFastpSplitDownload.out.fastpSummaryAfter) \
-                | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
-                [ "fastp_summary_after.tsv", item[FASTP_FILE_IDX].text ]
-               }
-
-               pFastpSplit.out.fastpSummaryBefore | mix(pFastpSplitDownload.out.fastpSummaryBefore) \
-                | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
-                [ "fastp_summary_before.tsv", item[FASTP_FILE_IDX].text ]
-               }
-             }
 
              pFastpSplit.out.readsPair | mix(pFastpSplitDownload.out.readsPair) | set {readsPair}
              pFastpSplit.out.readsSingle | mix(pFastpSplitDownload.out.readsSingle) | set {readsSingle}

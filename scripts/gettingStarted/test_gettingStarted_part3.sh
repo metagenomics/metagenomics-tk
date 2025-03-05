@@ -1,5 +1,5 @@
 # Run the following command to test the MetaSpades assembler 
-NXF_HOME=$PWD/.nextflow NXF_VER=24.04.4 nextflow run metagenomics/metagenomics-tk -work-dir $(pwd)/work \
+NXF_HOME=$PWD/.nextflow NXF_VER=24.10.4 nextflow run metagenomics/metagenomics-tk -work-dir $(pwd)/work \
     -profile slurm \
     -ansi-log false \
     -entry wFullPipeline \
