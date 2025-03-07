@@ -1,57 +1,185 @@
-## FastQC
+Quality control (QC) of metagenomic short reads is a series of procedures that check the accuracy, reliability, and suitability of data from metagenomic studies for further analysis.
+In the case of metagenomics, QC is very important for distinguishing real biological signals from technical problems. 
+Effective QC makes the results of later analyses, such as assembly and binning, more reliable.
 
-FastQC aims to provide a simple way to do some quality control checks on raw sequence data coming from high throughput sequencing pipelines.
-It provides a modular set of analyses which you can use to give a quick impression of whether your data has any problems of which you should be aware before doing any further analysis.
+The key steps of quality control are
 
-The main functions of FastQC are
+* Trimming: Eliminate primer and adapter sequences and remove low-quality bases from the end of reads or entire low-quality reads.
 
-* Import of data from BAM, SAM or FastQ files (any variant)
+* Length Filtering: Remove reads that are too short after trimming.
 
-* Providing a quick overview to tell you in which areas there may be problems
+* Host DNA Removal: Remove contaminant sequences (e.g. mouse, human).
 
-* Summary graphs and tables to quickly assess your data
+In addition, the Toolkit provides with Nonpareil a way to estimate the sequencing effort necessary to theoretically retrieve all
+genomes. 
 
-* Export of results to an HTML based permanent report
+## Metagenomics-Toolkit 
 
-* Offline operation to allow automated generation of reports without running the interactive application
-
-See the FastQC home page for more info.
-
-To run FastQC on our data, simply type:
-
-```BASH
-fastqc read1.fq.gz read2.fq.gz      
-```
-Todo: Link the output of the smaller dataset.
-
-The output of fastqc for a large dataset looks like [this](https://s3.bi.denbi.de/cmg/mgcourses/mg2025/qc/DMC_BGA16_4_N_R1_fastqc.html){:target="_blank"}.
-
-## Metagenomics-Toolkit  
-
-The following command runs the quality control module of the Toolkit on one machine.
+The Metagenomics-Toolkit offers a tool for each of the aforementioned categories.
+You will now execute the following Toolkit configuration:
 
 ```BASH
----8<--- "scripts/tutorials/tutorial1/test_qc.sh:3:12"
+---8<--- "default/tutorials/tutorial1/fullpipeline_qc.yml"
 ```
+
+
+!!! question "Task 1"
+
+    You saw the introduction part of the tutorial regarding the structure of the config file. 
+    Can you tell which tools or methods are executed in the QC part?
+
+    ??? Solution 
+        Fastp, nonpareil, filterHuman 
+    
+The following configuration runs the tools 
+
+!!! question "Task 2"
+
+    Copy the following command to execute the Toolkit. The Toolkit will need about (TODO) X to complete.
+    
+
+    ```BASH
+    ---8<--- "scripts/tutorials/tutorial1/test_qc.sh:3:12"
+    ```
+
+In the following we will inspect the outputs of the mentioned tools.
 
 ### Output
 
 #### Fastp 
 
-For quality and adapter trimming the Toolkit uses the software fastp which trims reads from 5’ end to 3’ end using a sliding window. 
+Fastp is an efficient, versatile, open-source tool for preprocessing FASTQ files and quality control in next-generation sequencing (NGS) workflows.
+Written in C++, Fastp provides high-speed performance without compromising accuracy, making it suitable for handling large sequencing data sets.
+For quality and adapter trimming the Fastp trims reads from 5’ end to 3’ end using a sliding window. 
+
 If the mean quality of bases inside a window drops below a specific q-score, the remaining of the read will be trimmed.
 If a read get too short during this trimming, it will be discared.
 
-The fastp output for your data can be viewed [here](https://s3.bi.denbi.de/cmg/mgcourses/qc/data_report.html){:target="_blank"}.
+!!! info "Quality Report"
+    The Metagenomics-Toolkit allows you to run Fastp by only reporting the quality of the data. This way you can easily inspect the data
+    before actually further processing it. You can do this by setting the `reportOnly` parameter to `true` in the config below. 
 
-Todo: hint regarding differences.
 
-[Fastp Report](https://s3.bi.denbi.de/cmg/mgcourses/mg2025/qc/DMC_BGA16_4_N_report.html){:target="_blank"}
+!!! question "Task 3"
+
+    You can view the fastp output in the qc output directory:
+    ```BASH
+    $ls -1 output/data/1/qc/0.3.0/fastp/
+    ```
+
+    which results in the following output:
+
+    ```
+    data_fastp.json
+    data_fastp_summary_after.tsv
+    data_fastp_summary_before.tsv
+    data_interleaved.qc.fq.gz
+    data_report.html
+    data_unpaired.qc.fq.gz
+    data_unpaired_summary.tsv
+    ```
+
+The Fastp output for your data can be viewed [here](https://s3.bi.denbi.de/cmg/mgcourses/qc/data_report.html){:target="_blank"}.
+Since the data that you are using during this tutorial is simulated, we will inspect the Fastp output of a real dataset. 
+The following Fastp output belongs to a wastewater sequencing project: [Wastewater Fastp Output](https://s3.bi.denbi.de/cmg/mgcourses/qc/ERR8977433_report.html){:target="_blank"}.
+
+!!! question "Task 4"
+
+    How many reads passed the filter?
+    Between which quality scores ranges the read1 fastq file before and after qc.
+
+    ??? Solution
+        78.752339% of the reads passed the filter. The quality score for read1 ranges before filtering between 29 and 36 and after qc between 35 and 36. 
+
+#### Host DNA Removal
+
+The Toolkit uses the sra human-scrubber-tool that uses a k-mer based approach to search for human sequences against a k-mer database using human reference sequencs.
+
+!!! question "Task 5"
+
+    You can find the result of the tool in the **filterHuman** directory:
+    The output of the tool are the filtered sequences but also statistics about the sequences **before** and **after** filtering.   
+
+    ```BASH
+    ls output/data/1/qc/*/filterHuman/
+    ```
+
+    The following command tells you how many sequences are left **after** filtering:
+
+    ```BASH
+    column -t -s$'\t' output/data/1/qc/*/filterHuman/data_interleaved_summary_after.tsv 
+    ```
+
+    The **num_seqs** column tells you the number of sequences.
+
+    How many reads were removed after filtering?
+
+    ??? Solution 
+        Only 6 reads were removed, which are most likely false positives. 
 
 #### Nonpareil
 
-Nonpareil helps to get an estimation of what to expect from the dataset. Through a redundancy analysis of the reads, 
-you get an estimation of the average genome coverage (Todo: explain what it means) and the sequencing effort necessary to theoretically retrieve all
-genomes.
+Nonpareil provides an estimate of what to expect from a dataset.
+Through a redundancy analysis of the reads, you get an estimate of the average genome coverage and 
+the sequencing effort required to theoretically retrieve all genomes.
+In addition, Nonpareil provides a diversity estimate based solely on the read data. 
 
-[Nonpareil Curves](https://s3.bi.denbi.de/cmg/mgcourses/mg2025/qc/data_nonpareil_curves.pdf){:target="_blank"}
+!!! question "Task 6"
+
+    You can view the Nonpareil output in the following directory: 
+
+    ```BASH
+    ls -1 output/data/1/qc/*/nonpareil/
+    ```
+
+    The output of ls is the following:
+
+    ```BASH
+    data.npa
+    data.npc
+    data.npl
+    data_nonpareil_curves.pdf
+    data_nonpareil_index.tsv
+    ```
+
+The **data_nonpareil_curves.pdf** contains the Nonpareil curve for the dataset:
+
+![](https://s3.bi.denbi.de/cmg/mgcourses/qc/data_nonpareil_curves.png){ loading=lazy }
+
+The Nonpareil curves show the fit of coverage per sequencing effort to a sigmoidal model.
+The lines indicate coverage estimates from subsampling (solid) and Nonpareil projection curves (dashed), and the lower-end arrows indicate the sequence diversity.  
+Horizontal red dashed lines indicate 95 and 99% coverage.
+You can obtain the estimated average coverage for a given sequencing effort by inspecting the rightmost point of the solid line.
+
+!!! info "Sequencing Diversity Arrow"
+
+    The arrow that displays the sequencing diversity in the plot is only useful when comparing to other sequencing diversity arrows. 
+    
+
+!!! question "Task 7"
+
+    From the plot it is hard to get the exact numbers (e.g. average coverage for a given the sequencing effort) and does not provide
+    the diversity estimate.
+    
+    Instead of looking into the plot it is easier to check the **tsv** file. In the Toolkit [wiki](/modules/qualityControl/#output_2) we provide an explanation for the columns provided by Nonpareil.
+    View the file in order to get the following information:
+
+    * The estimated genome coverage for the current sequencing effort
+
+    * The diversity estimate.
+
+    ??? Solution 
+        You can view the file by using `cat` or `column`
+
+        ```BASH
+        column -t -s$'\t' output/data/1/qc/*/nonpareil/data_nonpareil_index.tsv
+        ```
+
+        With the help of the wiki you can get the questioned values:
+
+        * Estimated genome coverage for the current sequencing effort: 80% 
+
+        * Diversity Estimate: 17.3
+
+
+Todo: Maybe add another task regarding diversity estimate.

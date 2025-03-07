@@ -3,6 +3,7 @@ site_name: Metagenomics-Toolkit
 docs_dir: ../docs
 
 markdown_extensions:
+  - pymdownx.details
   - toc:
       permalink: "&para;"
   - attr_list
