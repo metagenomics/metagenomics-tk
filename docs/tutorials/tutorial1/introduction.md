@@ -4,10 +4,16 @@
 
 Todos:
 * Introduce the Toolkti
+
 * Introduce the data to process
 * Download gtdb!
 * Set a working directory to a volume like ~/mgc_workdir/
 
+* Explain sections of the config
+
+* Explain full pipeline and module specific executions.  
+
+* Explain the usual output structure.
 
 ## Download GTDB:
 TODO: Anpassen fuer toolkit, brauchen wir mash?

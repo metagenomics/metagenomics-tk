@@ -127,14 +127,6 @@ workflow _wOntAssembly {
        readsList
      main:
        readsList | pMetaflye 
-
-       if(params.summary){
-         pMetaflye.out.contigsStats | mix(pMetaflye.out.contigsStats) \
-	  | collectFile(newLine: false, keepHeader: true, storeDir: params.output + "/summary/" ){ item ->
-           [ "contigs_stats.tsv", item[1].text ]
-          }
-       }
-            
      emit:
        contigs = pMetaflye.out.contigs
        graph = pMetaflye.out.graph

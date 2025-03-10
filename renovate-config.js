@@ -6,7 +6,7 @@ module.exports = {
 		  onboarding: false,
 		  platform: 'github',
 		  requireConfig: false,
-	          repositories: ["pbelmann/meta-omics-toolkit"],
+	          repositories: ["metagenomics/metagenomics-tk"],
 		  baseBranches: ["dev"],
                   packageRules: [
                          {  "matchDatasources": ["docker"], versioning: "loose" }

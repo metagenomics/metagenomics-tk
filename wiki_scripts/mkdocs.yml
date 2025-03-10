@@ -3,23 +3,20 @@ site_name: Metagenomics-Toolkit
 docs_dir: ../docs
 
 markdown_extensions:
+  - pymdownx.details
   - toc:
       permalink: "&para;"
   - attr_list
   - admonition
   - pymdownx.inlinehilite
+  - def_list
   - pymdownx.superfences:
-    #        custom_fences:
-          #           - name: mermaid
-          #             class: mermaid
-          #             format: !!python/name:mermaid2.fence_mermaid
   - pymdownx.tabbed:
       alternate_style: true 
   - pymdownx.snippets:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-     # base_path: ..
 
 plugins:
   - search
