@@ -11,4 +11,4 @@ NXF_VER=24.04.0 nextflow run metagenomics/metagenomics-tk \
 	  --output output \
 	  --input.paired.path https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv
 
-make check LOG_DIR=$(pwd)/logs_map_to_assembly
+make check LOG_DIR=$(pwd)/logs_binning

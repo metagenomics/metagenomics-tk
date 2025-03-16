@@ -7,7 +7,7 @@ Todos:
 
 * Introduce the data to process
 * Download gtdb!
-* Set a working directory to a volume like ~/mgc_workdir/
+* Set a working directory to a volume : ~/mgcourse/ should link to /vol/mgcourse !!!
 
 * Explain sections of the config
 
