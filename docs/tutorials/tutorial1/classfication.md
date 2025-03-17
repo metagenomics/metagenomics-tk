@@ -1,69 +1,58 @@
-Taxonomonic classification tools assign taxonommic labels to reads or
-assembled contigs of metagenomic datasets.
+Taxonomonic classification tools assign taxonommic labels to reads or assembled contigs of metagenomic datasets.
+We will perform taxonomic classification of our genome bins using GTDBtk.
 
-
-Genome Taxonomy Database (GTDB)
-===============
+## Genome Taxonomy Database (GTDB)
 
 GTDB-Tk is a software toolkit for assigning objective taxonomic 
 classifications to bacterial and archaeal genomes based on the 
-`Genome Database Taxonomy GTDB <https://gtdb.ecogenomic.org>`_. 
-It is designed to work with recent 
-advances that allow hundreds or thousands of metagenome-assembled 
+[Genome Taxonomy Database GTDB](https://gtdb.ecogenomic.org>). 
+It is designed to work with recent advances that allow hundreds or thousands of metagenome-assembled 
 genomes (MAGs) to be obtained directly from environmental samples. 
 It can also be applied to isolate and single-cell genomes. 
 
-See the `GTDBTk homepage <https://ecogenomics.github.io/GTDBTk/index.html>`_ 
-for more info.
+See the [GTDBTk homepage](https://ecogenomics.github.io/GTDBTk/index.html) for more info.
+
 
 Next, let's assign taxonomic labels to our binning results using GTDB-TK. 
-We will now run a binnning using metabat, we add these lines below the assembly part of the parameter file (the bwa part has already been added, don't duplicate it):
+
+The following lines have to added to our parameter file in order to run the classification:
 ```BASH
 ---8<--- "default/tutorials/tutorial1/fullpipeline_classification.yml:60:66"
 ```
+TODO: passt das oben?
 
-The complete parameter file is appended at the end of this page.
-
-We can run it directly with:
-```BASH
----8<--- "scripts/tutorials/tutorial1/test_classification.sh:3:12"
-```
-
-TODO: do something with the results?
-
-TODO: check if the stuff below is still needed --> remove
-
-However, the classification was quite fast due to mash/ANI fast identification (see https://ecogenomics.github.io/GTDBTk/commands/classify_wf.html). Marker gene based classification did not happen, we will repeat the classification with another - non artifical - sample. 
-Create a new folder and download the data::
-
-  mkdir /mnt/mgexample/
-  cd /mnt/mgexample/
-  wget https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/mgexample/examplesample.tar.gz
-  tar -xzvf examplesample.tar.gz
-
-We will do the process for the maxbin results again, step by step::
-
-  gtdbtk classify_wf --extension fasta --cpus 28 --genome_dir examplesample --out_dir gtdbtk_out --mash_db /mnt/release207_v2/mash.msh
+!!! Question "Task 1"
+    Run the following command to for the classification:
+    ```BASH
+    ---8<--- "scripts/tutorials/tutorial1/test_classification.sh:3:12"
+    ```
+TODO: Datenbank Pfad unbedingt in diesem Aufruf anpassen! 
 
 
-Load gtdbtk.backbone.bac120.classify.tree, gtdbtk.bac120.classify.tree.3.tree into the ncbi taxonomy viewer:
+!!! Question "Task 2"
+    Why was the classification so fast?
+    !!! Solution
+        The classification was quite fast due to mash/ANI fast identification (see https://ecogenomics.github.io/GTDBTk/commands/classify_wf.html). Marker gene based classification did not happen, in a real world metagenome sample, the classification would take much longer.
+  
+!!! Question "Task 3"
+    Locate the classification results inside your `output` directory and find out the classfication for each bin.
+    ??? Solution
+        The results are stored in `TODO: Verzeichnis!!`. You can find the classification results in the file `TODO: file`:
+        ```BASH
+        cd ~/mgcourse/
+        TODO: anpassen
+        cut -f?,? ???
+        ...
+        ```
+!!! Question "Task 4"
+    Inspect the results in EMGB!
 
-https://www.ncbi.nlm.nih.gov/tools/treeviewer/
+For reference, your complete parameter file should look like this:
+??? Parameter-file
 
-Convert to itol format::
-
-  gtdbtk convert_to_itol --input_tree gtdbtk_out/classify/gtdbtk.backbone.bac120.classify.tree --output_tree test.itol
-
-Load into:
-
-https://itol.embl.de/upload.cgi
-
-
-## The complete parameter file
-```BASH
----8<--- "default/tutorials/tutorial1/fullpipeline_classification.yml:60:66"
-```
-
+    ```BASH
+    ---8<--- "default/tutorials/tutorial1/fullpipeline_classification.yml"
+    ```      
 
 
 
