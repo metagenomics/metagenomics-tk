@@ -18,7 +18,7 @@ genomes.
 The Metagenomics-Toolkit offers a tool for each of the aforementioned categories.
 You will now execute the following Toolkit configuration:
 
-```BASH
+```YAML
 ---8<--- "default/tutorials/tutorial1/fullpipeline_qc.yml"
 ```
 
@@ -36,7 +36,6 @@ The following configuration runs the tools
 !!! question "Task 2"
 
     Copy the following command to execute the Toolkit. The Toolkit will need about (TODO) X to complete.
-    
 
     ```BASH
     ---8<--- "scripts/tutorials/tutorial1/test_qc.sh:3:12"
@@ -161,7 +160,7 @@ You can obtain the estimated average coverage for a given sequencing effort by i
     From the plot it is hard to get the exact numbers (e.g. average coverage for a given the sequencing effort) and does not provide
     the diversity estimate.
     
-    Instead of looking into the plot it is easier to check the **tsv** file. In the Toolkit [wiki](/modules/qualityControl/#output_2) we provide an explanation for the columns provided by Nonpareil.
+    Instead of looking into the plot it is easier to check the **tsv** file. In the Toolkit [wiki](../../modules/qualityControl.md#output_2) we provide an explanation for the columns provided by Nonpareil.
     View the file in order to get the following information:
 
     * The estimated genome coverage for the current sequencing effort
