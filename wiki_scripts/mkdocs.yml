@@ -81,4 +81,3 @@ nav:
       - "Assessing Bin Quality": tutorials/tutorial1/bin_quality.md
       - "Classification": tutorials/tutorial1/classification.md
       - "Annotation": tutorials/tutorial1/annotation.md
-      - "Using another assembler": tutorials/tutorial1/assembly_2.md

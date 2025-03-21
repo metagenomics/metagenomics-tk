@@ -23,7 +23,7 @@ The complete parameter file is appended at the end of this page.
 !!! question "Task 1"
     We can run it directly with:
     ```BASH
-    ---8<--- "scripts/tutorials/tutorial1/test_binning.sh:3:12"
+    ---8<--- "scripts/tutorials/tutorial1/test_binning.sh:3:11"
     ```
 
 ## Assembly evaluation by read mapping
@@ -33,41 +33,49 @@ Before we have a look on the binning results, we will have a look on the assembl
 !!! question "Task 2"
     We first have to sort the BAM file by starting position of the alignments. This can be done using samtools.
     ```BASH
-      cd ~/mgcourse/
-      samtools sort -o output/data/1/binning/0.5.0/contigMapping/data_sorted.bam -@ 28 output/data/1/binning/0.5.0/contigMapping/data.bam 
+    cd ~/mgcourse/
+    ```
+    ```BASH
+    samtools sort -o output/data/1/binning/0.5.0/contigMapping/data_sorted.bam -@ 28 output/data/1/binning/0.5.0/contigMapping/data.bam 
     ```
 
 !!! question "Task 3"
     Now we have to index the sorted BAM file:
     ```BASH
-      cd ~/mgcourse/
-      samtools index output/data/1/binning/0.5.0/contigMapping/data_sorted.bam
+    cd ~/mgcourse/
+    ```
+    ```BASH
+    samtools index output/data/1/binning/0.5.0/contigMapping/data_sorted.bam
     ```
     
 !!! question "Task 4"
     To look at the BAM file use:
     ```BASH
-      cd ~/mgcourse/
-      samtools view output/data/1/binning/0.5.0/contigMapping/data_sorted.bam | less
+    cd ~/mgcourse/
+    ```
+    ```BASH
+    samtools view output/data/1/binning/0.5.0/contigMapping/data_sorted.bam | less
     ```
     
 !!! question "Task 5"
     Now copy/link everything you need for igv in a seperate folder:
     
     ```BASH
-      cd ~/mgcourse/
-      mkdir igv_data
-      cd igv_data
-      cp ../output/data/1/assembly/1.2.1/megahit/data_contigs.fa.gz .
-      gunzip data_contigs.fa.gz
-      ln -s ../output/data/1/binning/0.5.0/contigMapping/data_sorted.bam
-      ln -s ../output/data/1/binning/0.5.0/contigMapping/data_sorted.bam.bai
+    cd ~/mgcourse/
+    ```
+    ```BASH
+    mkdir igv_data
+    cd igv_data
+    cp ../output/data/1/assembly/1.2.1/megahit/data_contigs.fa.gz .
+    gunzip data_contigs.fa.gz
+    ln -s ../output/data/1/binning/0.5.0/contigMapping/data_sorted.bam
+    ln -s ../output/data/1/binning/0.5.0/contigMapping/data_sorted.bam.bai
     ```
        
 !!! question "Task 6"
     We will use the IGV genome browser to look at the mappings.
     ```BASH
-      igv
+    igv
     ```
     
     Now let's look at the mapped reads:
@@ -89,7 +97,11 @@ MetaBAT generated genome BINs for our assembly.
     ??? Solution
         ```BASH
         cd ~/mgcourse/
+        ```
+        ```BASH
         ls -l output/data/1/binning/0.5.0/metabat/
+        ```
+        ```BASH
         data_bin.1.fa
         data_bin.10.fa
         data_bin.2.fa
@@ -113,7 +125,11 @@ MetaBAT generated genome BINs for our assembly.
         You can have a look on some bin statistics with:
         ```
         cd ~/mgcourse/
+        ```
+        ```BASH
         less output/data/1/binning/0.5.0/metabat/data_bins_stats.tsv
+        ```
+        ```BASH
         SAMPLE  BIN_ID  format  type    num_seqs        sum_len min_len avg_len max_len Q1      Q2      Q3      sum_gap N50     Q20(%)  Q30(%)  GC(%)   COVERAGE
         data    data_bin.1.fa   FASTA   DNA     66      682946  2837    10347.7 31045   6083.0  8277.5  13778.0 0       13397   0.00    0.00    25.03   15.5969
         data    data_bin.10.fa  FASTA   DNA     280     944933  2505    3374.8  6899    2786.5  3165.0  3690.5  0       3346    0.00    0.00    57.96   6.37826

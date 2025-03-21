@@ -17,14 +17,13 @@ Next, let's assign taxonomic labels to our binning results using GTDB-TK.
 
 The following lines have to added to our parameter file in order to run the classification:
 ```BASH
----8<--- "default/tutorials/tutorial1/fullpipeline_classification.yml:60:66"
+---8<--- "default/tutorials/tutorial1/fullpipeline_classification.yml:61:68"
 ```
-TODO: passt das oben?
 
 !!! Question "Task 1"
     Run the following command to for the classification:
     ```BASH
-    ---8<--- "scripts/tutorials/tutorial1/test_classification.sh:3:12"
+    ---8<--- "scripts/tutorials/tutorial1/test_classification.sh:3:11"
     ```
 TODO: Datenbank Pfad unbedingt in diesem Aufruf anpassen! 
 
@@ -52,7 +51,7 @@ For reference, your complete parameter file should look like this:
 
     ```BASH
     ---8<--- "default/tutorials/tutorial1/fullpipeline_classification.yml"
-    ```      
+    ```
 
 
 

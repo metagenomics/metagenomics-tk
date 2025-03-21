@@ -32,7 +32,7 @@ The following lines need to be added to your parameter file in order to run the 
 
 
     ```BASH
-    ---8<--- "scripts/tutorials/tutorial1/test_assembly.sh:3:12"
+    ---8<--- "scripts/tutorials/tutorial1/test_assembly.sh:3:11"
     ```
 
 ## Assembly results
@@ -45,7 +45,11 @@ We will now have a first look on some assembly statistics. First of all, locate 
         The assembly results are stored in `output/data/1/assembly/1.2.1/megahit/`
         ```
         cd ~/mgcourse/
+        ```
+        ```BASH
         ls -l output/data/1/assembly/1.2.1/megahit/
+        ```
+        ```BASH
             data_contigs.fa.gz  # the assembled sequences as gzipped fasta
             data_contigs.fastg  # the assembly graph for inspection for example with Bandage
             data_contigs_stats.tsv  # some assembly statistics
@@ -54,15 +58,17 @@ We will now have a first look on some assembly statistics. First of all, locate 
     Have a look at the `data_contigs_stats.tsv` file - how large is the assembly and what is the N50?
     
     ??? Solution
-        ```
+        ```BASH
         cd ~/mgcourse/
+        ```
+        ```BASH
         less output/data/1/assembly/1.2.1/megahit/data_contigs_stats.tsv
-        
+        ```
+        ```BASH
         SAMPLE  file    format  type    num_seqs        sum_len min_len avg_len max_len Q1      Q2      Q3      sum_gap N50     Q20(%)  Q30(%)  GC(%)
         data    data_contigs.fa.gz      FASTA   DNA     9172    20146206        1000    2196.5  35033   1274.0  1670.0  2450.0  0       2346    0.00    0.00    42.26
         ```
-        In this assembly run, the assembly length is 20,146,206 bp and the N50 is 2,345 bp.
- 
+        In this assembly run, the assembly length is 20,146,206 bp and the N50 is 2,345 bp. 
  
         
 For reference, your complete parameter file should look like this:
