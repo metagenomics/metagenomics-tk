@@ -22,7 +22,6 @@ You will now execute the following Toolkit configuration:
 ---8<--- "default/tutorials/tutorial1/fullpipeline_qc.yml"
 ```
 
-
 !!! question "Task 1"
 
     You saw the introduction part of the tutorial regarding the structure of the config file. 
@@ -39,7 +38,7 @@ The following configuration runs the tools
     
 
     ```BASH
-    ---8<--- "scripts/tutorials/tutorial1/test_qc.sh:3:12"
+    ---8<--- "scripts/tutorials/tutorial1/test_qc.sh:3:11"
     ```
 
 In the following we will inspect the outputs of the mentioned tools.
