@@ -2,13 +2,13 @@
 
 NXF_VER=24.04.0 nextflow run metagenomics/metagenomics-tk \
 	  -profile standard \
-	  -params-file https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/default/tutorials/tutorial1/fullpipeline_map_to_assembly.yml \
+	  -params-file https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/default/tutorials/tutorial1/fullpipeline_classification.yml \
 	  -ansi-log false \
 	  -entry wFullPipeline \
-	  --logDir logs_assembly \
+	  --logDir logs_classification \
 	  --s3SignIn false \
 	  --scratch false \
 	  --output output \
 	  --input.paired.path https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv
 
-make check LOG_DIR=$(pwd)/logs_map_to_assembly
+make check LOG_DIR=$(pwd)/logs_classification

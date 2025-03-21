@@ -5,10 +5,10 @@ NXF_VER=24.04.0 nextflow run metagenomics/metagenomics-tk \
 	  -params-file https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/default/tutorials/tutorial1/fullpipeline_bin_quality.yml \
 	  -ansi-log false \
 	  -entry wFullPipeline \
-	  --logDir logs_binning \
+	  --logDir logs_bin_quality \
 	  --s3SignIn false \
 	  --scratch false \
 	  --output output \
 	  --input.paired.path https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv
 
-make check LOG_DIR=$(pwd)/logs_map_to_assembly
+make check LOG_DIR=$(pwd)/logs_bin_quality
