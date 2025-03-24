@@ -1,7 +1,7 @@
 # run fastp
 fastp -i read1.fq.gz -I read2.fq.gz !{reportOnly} \
 	-w !{task.cpus} -h !{sample}_report.html \
-	--unpaired1 !{sample}_unpaired.qc.fq.gz --unpaired2 !{sample}_unpaired.qc.fq.gz !{params.steps.qc.fastp.additionalParams}
+	--unpaired1 !{sample}_unpaired.qc.fq.gz --unpaired2 !{sample}_unpaired.qc.fq.gz !{params.steps.qc.fastp.additionalParams.fastp}
 
 # fix 'unexpected end of file' of unpaired reads gzip file
 touch empty.txt

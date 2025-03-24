@@ -8,7 +8,7 @@ s5cmd !{params.steps.qc.fastp.download.s5cmdParams} cat  --concurrency !{task.cp
 fastp -i inputReads1.fq.gz \
       -I inputReads2.fq.gz \
       -o read1.fastp.fq.gz -O read2.fastp.fq.gz -w !{task.cpus} -h !{sample}_report.html \
-         --unpaired1 !{sample}_unpaired.fastp.fq.gz --unpaired2 !{sample}_unpaired.qc.fq.gz !{params.steps.qc.fastp.additionalParams}
+         --unpaired1 !{sample}_unpaired.fastp.fq.gz --unpaired2 !{sample}_unpaired.qc.fq.gz !{params.steps.qc.fastp.additionalParams.fastp}
 
 # This if statement solves issue https://github.com/pbelmann/meta-omics-toolkit/issues/166
 if grep -q "reset by peer" error1.log error2.log; then
