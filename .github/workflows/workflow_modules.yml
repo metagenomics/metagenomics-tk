@@ -316,8 +316,12 @@ jobs:
         run: |
           BRANCH=$(git rev-parse --abbrev-ref HEAD)
           BRANCH_SED=$(echo $BRANCH | sed 's/\//\\\//g')
+          # Replace all references of the master branch to the current branch
           sed -i "s/master/${BRANCH_SED}/g"  scripts/tutorials/tutorial1/*.sh
+          # Set correct branch when testing the Toolkit
           sed -i "s/ nextflow run / nextflow run -r ${BRANCH_SED} /g" scripts/tutorials/tutorial1/*.sh
+          # Delete line with cd 
+          sed '/mgcourse/d' scripts/tutorials/tutorial1/test_qc.sh
           mkdir -p .nextflow
           cp ~/.nextflow/scm .nextflow
       - name: Test Quality Control
