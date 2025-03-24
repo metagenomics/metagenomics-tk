@@ -1,6 +1,6 @@
 tempdir: "tmp"
 summary: false
-s3SignIn: true
+s3SignIn: false
 input:
   paired:
     path: "test_data/tutorials/tutorial1/reads.tsv"
@@ -11,7 +11,7 @@ runid: 1
 databases: "/vol/scratch/databases"
 publishDirMode: "symlink"
 logLevel: 1
-scratch: "/vol/scratch"
+scratch: false 
 steps:
   qc:
     fastp:
