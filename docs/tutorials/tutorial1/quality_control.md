@@ -18,7 +18,7 @@ genomes.
 The Metagenomics-Toolkit offers a tool for each of the aforementioned categories.
 You will now execute the following Toolkit configuration:
 
-```YAML
+```YAML linenums="1" title="QC Configuration File Snippet 1"
 ---8<--- "default/tutorials/tutorial1/fullpipeline_qc.yml"
 ```
 
@@ -34,10 +34,10 @@ The following configuration runs the tools
 
 !!! question "Task 2"
 
-    Copy the following command to execute the Toolkit. The Toolkit will need about (TODO) X to complete.
+    Copy the following command to execute the Toolkit. The Toolkit will need about 3 to 5 minutes to complete.
 
     ```BASH
-    ---8<--- "scripts/tutorials/tutorial1/test_qc.sh:3:11"
+    ---8<--- "scripts/tutorials/tutorial1/test_qc.sh:3:10"
     ```
 
 In the following we will inspect the outputs of the mentioned tools.
@@ -62,7 +62,7 @@ If a read get too short during this trimming, it will be discared.
 
     You can view the fastp output in the qc output directory:
     ```BASH
-    $ls -1 output/data/1/qc/0.3.0/fastp/
+    ls -1 output/data/1/qc/*/fastp/
     ```
 
     which results in the following output:
@@ -83,7 +83,7 @@ The following Fastp output belongs to a wastewater sequencing project: [Wastewat
 
 !!! question "Task 4"
 
-    How many reads passed the filter?
+    How many reads of the wastewater dataset passed the filter?
     Between which quality scores ranges the read1 fastq file before and after qc.
 
     ??? Solution
@@ -159,7 +159,7 @@ You can obtain the estimated average coverage for a given sequencing effort by i
     From the plot it is hard to get the exact numbers (e.g. average coverage for a given the sequencing effort) and does not provide
     the diversity estimate.
     
-    Instead of looking into the plot it is easier to check the **tsv** file. In the Toolkit [wiki](../../modules/qualityControl.md#output_2) we provide an explanation for the columns provided by Nonpareil.
+    Instead of looking into the plot it is easier to check the **data_nonpareil_index.tsv** file. In the Toolkit [wiki](../../modules/qualityControl.md#output_2) we provide an explanation for the columns provided by Nonpareil.
     View the file in order to get the following information:
 
     * The estimated genome coverage for the current sequencing effort
@@ -179,5 +179,3 @@ You can obtain the estimated average coverage for a given sequencing effort by i
 
         * Diversity Estimate: 17.3
 
-
-Todo: Maybe add another task regarding diversity estimate.
