@@ -693,10 +693,23 @@ jobs:
     needs: [settings]
     steps:
       - uses: actions/checkout@v4
+        with:
+          repository: sourcemeta/jsonschema  
+          path: schema
+          ref: c45cdf741f0cf61c4e84f5af873edd5e07c23fbb 
+      - name: Build jsonschema container for testing
+        working-directory: ./schema 
+        run: |
+          docker build -t jsonschema:latest .
+      - uses: actions/checkout@v4
+        with:
+          path: toolkit
       - name: Checks if every process defines a publishDirMode
+        working-directory: ./toolkit
         run: |
           make checkPublisDirMode || exit 1 
       - name: Check the clowm json against json schema
+        working-directory: ./toolkit
         run: |
           make jsonValidate
           trap 'if [[ $? == 1 ]]; then echo "Errors in clowm json found"; cat json.err; exit 1; fi' EXIT
