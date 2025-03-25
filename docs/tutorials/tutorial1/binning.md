@@ -1,21 +1,18 @@
-We will now run a binning of our assembly.
 
-##Metabat
+We will now perform binning of our assembly.
+Binning is the process of grouping large genomic fragments assembled from shotgun metagenomic sequences to deconvolute complex microbial communities. 
 
-MetaBAT, An Efficient Tool for Accurately Reconstructing Single
-Genomes from Complex Microbial Communities.
+## MetaBAT
 
-Grouping large genomic fragments assembled from shotgun metagenomic
-sequences to deconvolute complex microbial communities, or metagenome
-binning, enables the study of individual organisms and their
-interactions. MetaBAT is an automated metagenome binning software
+MetaBAT is an automated metagenome binning software
 which integrates empirical probabilistic distances of genome abundance
-and tetranucleotide frequency. See the [MetaBAT home page](https://bitbucket.org/berkeleylab/metabat>) for more info.
+and tetranucleotide frequency. See the [MetaBAT home page](https://bitbucket.org/berkeleylab/metabat>) for more information.
   
-We will now run a binnning using metabat, these lines need to be added below the assembly part of the parameter file:
+We will now perform a binnning of our assembly with MetaBAT using the Metagenomics-Toolkit.
+The following snippet represents the Toolkit contiguration for the binning module:
 
-```BASH
----8<--- "default/tutorials/tutorial1/fullpipeline_binning.yml:41:54"
+```YAML linenums="1" title="Binning Configuration File Snippet 1"
+---8<--- "default/tutorials/tutorial1/fullpipeline_binning.yml:47:60"
 ```
 
 The complete parameter file is appended at the end of this page.
@@ -23,41 +20,50 @@ The complete parameter file is appended at the end of this page.
 !!! question "Task 1"
     We can run it directly with:
     ```BASH
-    ---8<--- "scripts/tutorials/tutorial1/test_binning.sh:3:11"
+    ---8<--- "scripts/tutorials/tutorial1/test_binning.sh:3:12"
     ```
+
+For reference, your complete parameter file looks like this:
+??? Parameter-file
+
+    ```BASH
+    ---8<--- "default/tutorials/tutorial1/fullpipeline_binning.yml"
+    ```    
 
 ## Assembly evaluation by read mapping
 
-Before we have a look on the binning results, we will have a look on the assembly results again, we now have a mapping of the reads back to the assembly which has been computed for the binning process. We will load that data after some preprocessing into the IGV genome browser.
+Before we take a closer look at the binning results, 
+let us first check the mapping of the reads to the assembly (alignment) that was computed as part of the binning process and saved in file with the `.bam` prefix.
+The number of reads mapped to the contigs of the assembly is called the contig abundance and is also used as input to a binning tool to separate contigs.
 
 !!! question "Task 2"
-    We first have to sort the BAM file by starting position of the alignments. This can be done using samtools.
+    First we have to index the sorted BAM file:
     ```BASH
     cd ~/mgcourse/
     ```
     ```BASH
-    samtools sort -o output/data/1/binning/0.5.0/contigMapping/data_sorted.bam -@ 28 output/data/1/binning/0.5.0/contigMapping/data.bam 
+    samtools index output/data/1/binning/*/contigMapping/data.bam
     ```
 
+Usually a bam file has to be sorted before it can be indexed. The sorting has already been done for you by the Toolkit.
+    
 !!! question "Task 3"
-    Now we have to index the sorted BAM file:
+    To look at the BAM file you can use the following command (You can quit less with `q`):
     ```BASH
     cd ~/mgcourse/
     ```
     ```BASH
-    samtools index output/data/1/binning/0.5.0/contigMapping/data_sorted.bam
+    samtools view output/data/1/binning/*/contigMapping/data.bam | less
     ```
+
+IGV, or Integrated Genome Viewer, is an open-source bioinformatics tool designed for the interactive visualization and exploration of genomic data.
+It primarily serves as a platform to view alignments of sequencing reads against a reference genome,
+aiding in the identification of genetic variants such as SNPs (Single Nucleotide Polymorphisms) and indels (insertions and deletions).
+Beyond read alignment, IGV supports various data types, including gene annotations and expression levels, 
+offering a comprehensive view that enhances understanding of the genomic context.
+In our case, we are only interested in the alignment.
     
 !!! question "Task 4"
-    To look at the BAM file use:
-    ```BASH
-    cd ~/mgcourse/
-    ```
-    ```BASH
-    samtools view output/data/1/binning/0.5.0/contigMapping/data_sorted.bam | less
-    ```
-    
-!!! question "Task 5"
     Now copy/link everything you need for igv in a seperate folder:
     
     ```BASH
@@ -66,13 +72,13 @@ Before we have a look on the binning results, we will have a look on the assembl
     ```BASH
     mkdir igv_data
     cd igv_data
-    cp ../output/data/1/assembly/1.2.1/megahit/data_contigs.fa.gz .
+    cp ../output/data/1/assembly/*/megahit/data_contigs.fa.gz .
     gunzip data_contigs.fa.gz
-    ln -s ../output/data/1/binning/0.5.0/contigMapping/data_sorted.bam
-    ln -s ../output/data/1/binning/0.5.0/contigMapping/data_sorted.bam.bai
+    ln -s ../output/data/1/binning/*/contigMapping/data.bam
+    ln -s ../output/data/1/binning/*/contigMapping/data.bam.bai
     ```
        
-!!! question "Task 6"
+!!! question "Task 5"
     We will use the IGV genome browser to look at the mappings.
     ```BASH
     igv
@@ -83,23 +89,24 @@ Before we have a look on the binning results, we will have a look on the assembl
     1. Load the contig sequences into IGV. Use the menu `Genomes->Load Genome from File...`
     2. Load the BAM file into IGV. Use menu `File->Load from File...`
     
-!!! question "Task 7"
+!!! question "Task 6"
     Look for errors in the mappings - are all those error sequencing errors?
     ??? Solution
-        Some errors are due to merging multiple strains into one contig, this can be clearly seen, when there are a large number of errors at one position with different possibilities for that base.
+        Some errors are due to merging multiple strains into one contig, this can be clearly seen, 
+        when there are a large number of errors at one position with different possibilities for that base.
 
-## Metabat results
+## MetaBAT Results
 
-MetaBAT generated genome BINs for our assembly. 
+Let's now inspect the bins created by MetaBAT:
 
 !!! question "Task 8"
-    How many BINs did metabat generate? Locate the metabat results and the fasta files for each bin in the output folder.
+    How many bins did metabat generate? Locate the metabat results and the fasta files for each bin in the output folder.
     ??? Solution
         ```BASH
         cd ~/mgcourse/
         ```
         ```BASH
-        ls -l output/data/1/binning/0.5.0/metabat/
+        ls -l output/data/1/binning/*/metabat/
         ```
         ```BASH
         data_bin.1.fa
@@ -117,10 +124,13 @@ MetaBAT generated genome BINs for our assembly.
         data_contigs_depth.tsv
         data_notBinned.fa
         ```
-        So MetaBAT did generate 10 contigs.
 
-!!! question "Task 8"
-    There is also a file containing some statistics on the generated BINs `data_bins_stats.tsv`. Find out, which BIN has the highest coverage and which hast the highest N50.
+MetaBAT has generated 10 bins. The next question you might want to ask is whether you can trust these bins and which organism they represent according to a taxonomy.
+Before that, let's have a look at what other information the Metagenomics-Toolkit provides as part of the binning output.
+
+!!! question "Task 9"
+    There is a file containing some statistics on the generated Bins `data_bins_stats.tsv`. 
+    Find out, which bin has the highest coverage and which one has the highest N50.
     ??? Solution    
         You can have a look on some bin statistics with:
         ```
@@ -142,14 +152,5 @@ MetaBAT generated genome BINs for our assembly.
         data    data_bin.8.fa   FASTA   DNA     180     958807  2514    5326.7  17160   3436.0  4467.0  6472.5  0       5965    0.00    0.00    33.35   10.8953
         data    data_bin.9.fa   FASTA   DNA     224     717735  2500    3204.2  6592    2692.0  2958.5  3442.0  0       3109    0.00    0.00    50.72   5.11192
         ```
-        In this result, bin 1 has the highest coverage (15.5969) and bin 4 hast the highes N50 (10241). Also note, that some of the bins highly differ in their GC content.
-
-
-        
-For reference, your complete parameter file should look like this:
-??? Parameter-file
-
-    ```BASH
-    ---8<--- "default/tutorials/tutorial1/fullpipeline_binning.yml"
-    ```       
+        In this result, bin 8 has the highest coverage (15.5364) and highest N50 (13397). Also note, that some of the bins highly differ in their GC content.
 
