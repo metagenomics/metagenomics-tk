@@ -333,6 +333,9 @@ jobs:
       - name: Test Binning
         run: |
           bash ./scripts/tutorials/tutorial1/test_binning.sh || exit 1
+      - name: Test Binning Evaluation
+        run: |
+          bash ./scripts/tutorials/tutorial1/test_bin_quality.sh || exit 1
 
 
 
