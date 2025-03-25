@@ -321,12 +321,16 @@ jobs:
           # Set correct branch when testing the Toolkit
           sed -i "s/ nextflow run / nextflow run -r ${BRANCH_SED} /g" scripts/tutorials/tutorial1/*.sh
           # Delete line with cd 
-          sed '/mgcourse/d' scripts/tutorials/tutorial1/test_qc.sh
+          sed -i '/mgcourse/d' scripts/tutorials/tutorial1/*.sh
           mkdir -p .nextflow
           cp ~/.nextflow/scm .nextflow
       - name: Test Quality Control
         run: |
           bash ./scripts/tutorials/tutorial1/test_qc.sh || exit 1
+      - name: Test Assembly
+        run: |
+          bash ./scripts/tutorials/tutorial1/test_assembly.sh || exit 1
+
 
 
   gettingStarted:

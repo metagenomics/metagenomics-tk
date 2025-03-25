@@ -67,10 +67,6 @@ nav:
     - modules/metabolomics.md
     - modules/readMapping.md
     - modules/export.md
-  - "Developer":
-    - developer_guidelines.md
-    - pipeline_specification.md
-    - module_specification.md
   - "Tutorials":
     - "Tutorial 1": 
       - "Introduction": tutorials/tutorial1/introduction.md 
@@ -81,3 +77,7 @@ nav:
       - "Assessing Bin Quality": tutorials/tutorial1/bin_quality.md
       - "Classification": tutorials/tutorial1/classification.md
       - "Annotation": tutorials/tutorial1/annotation.md
+  - "Developer":
+    - developer_guidelines.md
+    - pipeline_specification.md
+    - module_specification.md
