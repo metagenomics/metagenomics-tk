@@ -330,6 +330,9 @@ jobs:
       - name: Test Assembly
         run: |
           bash ./scripts/tutorials/tutorial1/test_assembly.sh || exit 1
+      - name: Test Binning
+        run: |
+          bash ./scripts/tutorials/tutorial1/test_binning.sh || exit 1
 
 
 

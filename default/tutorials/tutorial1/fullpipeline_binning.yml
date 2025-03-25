@@ -1,6 +1,6 @@
 tempdir: "tmp"
 summary: false
-s3SignIn: true
+s3SignIn: false
 input:
   paired:
     path: "test_data/tutorials/tutorial1/reads.tsv"
@@ -11,7 +11,7 @@ runid: 1
 databases: "/vol/scratch/databases"
 publishDirMode: "symlink"
 logLevel: 1
-scratch: "/vol/scratch"
+scratch: false
 steps:
   qc:
     fastp:
@@ -27,6 +27,12 @@ steps:
        timeLimit: "AUTO"
     nonpareil:
       additionalParams: " -v 10 -r 1234 "
+    filterHuman:
+      additionalParams: "  "
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/human_filter.db.20231218v2.gz
+          md5sum: cc92c0f926656565b1156d66a0db5a3c
   assembly:
     megahit:
       # --mem-flag 0 to use minimum memory, --mem-flag 1 (default) moderate memory and --mem-flag 2 all memory.
