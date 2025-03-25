@@ -37,7 +37,7 @@ The following configuration runs the tools
     Copy the following command to execute the Toolkit. The Toolkit will need about 3 to 5 minutes to complete.
 
     ```BASH
-    ---8<--- "scripts/tutorials/tutorial1/test_qc.sh:3:10"
+    ---8<--- "scripts/tutorials/tutorial1/test_qc.sh:3:11"
     ```
 
 In the following we will inspect the outputs of the mentioned tools.

@@ -81,6 +81,9 @@ NXF_VER=NEXTFLOW_VERSION nextflow run metagenomics/metagenomics-tk NEXTFLOW_OPTI
 
 	  * `-params-file` points to a configuration file that tells the Toolkit which analyses to run and which resources it should use. An example configuration file will be explained in the next section.
 
+      * `-resume` In some cases, you may want to resume the workflow execution, such as when you add an analysis.
+                  Resuming the workflow forces Nextflow to reuse the results of the analyses that the new analysis depends on, rather than starting from scratch. 
+
 	  * `-ansi-log` accepts a boolean (default: **true**) that tells Nextflow on **true** to print every update as a new line on the terminal. If **false** then Nextflow
                   prints a line for every process and updates the specific line on an update. We recommend to set **-ansi-log** to **false** because it is not possible to
                   print all possible processes on a terminal at once when running the Toolkit.

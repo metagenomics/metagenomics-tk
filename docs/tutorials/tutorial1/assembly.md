@@ -1,41 +1,53 @@
-We are going to run an assembly with the metagenomics toolkit using MEGAHIT as an assembler, the toolkit is also capable of running metaSPades. 
+Once your raw reads have been quality controlled, we will now perform an assembly using the Metagenomics-Toolkit.
+The Toolkit supports several assemblers, one of which is the MEGAHIT assembler, which we will run in this section.
 
 ## MEGAHIT 
 
 MEGAHIT is a single node assembler for large and complex metagenomics
 NGS reads, such as soil. It makes use of succinct de Bruijn graph
 (SdBG) to achieve low memory assembly. MEGAHIT can optionally utilize
-a CUDA-enabled GPU to accelerate its SdBG contstruction. See the
+a CUDA-enabled GPU to accelerate its SdBG construction. See the
 [MEGAHIT home page](https://github.com/voutcn/megahit/) for more
 info.
 
 
 ## Metagenomics-Toolkit  
 
+The following lines represent the part of the configuration that tells the Toolkit to run the assembly:
 
-The following lines need to be added to your parameter file in order to run the assembly (below the qc-part):
-```BASH
----8<--- "default/tutorials/tutorial1/fullpipeline_assembly.yml:30:40"
+```YAML linenums="1" title="Assembly Configuration File Snippet 1"
+---8<--- "default/tutorials/tutorial1/fullpipeline_assembly.yml:36:46"
 ```
 !!! question "Task 1"
 
-    Which tool is used for the Assembly? What additional parameters are used?
+    Which tool is used for the assembly? What additional parameters are used?
 
     ??? Solution 
-        MEGAHIT with the additional parameters: minimum contig length of 1000bp and --meta-sensitive: which sets the following parameters: '--min-count 1 --k-list 21,29,39,49,...,129,141'
+        MEGAHIT with the additional parameters: minimum contig length of 1000bp and the preset `meta-sensitive`.
+        `meta-sensitive` sets the following parameters: '--min-count 1 --k-list 21,29,39,49,...,129,141' which causes 
+        MEGAHIT to use a longer list of k-mers.
     
 
 !!! question "Task 2"
 
-    Copy the following command to run the quality control and assembly module of the Toolkit on one machine
+    Copy the following command to run the quality control and assembly module of the Toolkit on your machine
     
-
-
     ```BASH
-    ---8<--- "scripts/tutorials/tutorial1/test_assembly.sh:3:11"
+    ---8<--- "scripts/tutorials/tutorial1/test_assembly.sh:3:13"
     ```
 
-## Assembly results
+Note that you have used the `resume` flag this time, which causes Nextflow to reuse the results of the QC analysis. 
+That's why you'll see several processes labeled **Cache process** on the Toolkit execution screen.
+
+For reference, your complete parameter file looks like this:
+??? Parameter-file
+
+    ```BASH
+    ---8<--- "default/tutorials/tutorial1/fullpipeline_assembly.yml"
+    ```    
+
+## Assembly Results
+
 We will now have a first look on some assembly statistics. First of all, locate your assembly results somewhere in your `output` directory.
 
 !!! question "Task 3"
@@ -62,19 +74,14 @@ We will now have a first look on some assembly statistics. First of all, locate 
         cd ~/mgcourse/
         ```
         ```BASH
-        less output/data/1/assembly/1.2.1/megahit/data_contigs_stats.tsv
+        cat output/data/1/assembly/1.2.1/megahit/data_contigs_stats.tsv | column -s$'\t' -t
         ```
         ```BASH
-        SAMPLE  file    format  type    num_seqs        sum_len min_len avg_len max_len Q1      Q2      Q3      sum_gap N50     Q20(%)  Q30(%)  GC(%)
-        data    data_contigs.fa.gz      FASTA   DNA     9172    20146206        1000    2196.5  35033   1274.0  1670.0  2450.0  0       2346    0.00    0.00    42.26
+        SAMPLE  file                format  type  num_seqs  sum_len   min_len  avg_len  max_len  Q1      Q2      Q3      sum_gap  N50   Q20(%)  Q30(%)  GC(%)
+        data    data_contigs.fa.gz  FASTA   DNA   9172      20146206  1000     2196.5   35033    1274.0  1670.0  2450.0  0        2346  0.00    0.00    42.26
         ```
-        In this assembly run, the assembly length is 20,146,206 bp and the N50 is 2,345 bp. 
+        In this assembly run, the assembly length is 20,146,206 bp and the N50 is 2,346 bp. 
  
         
-For reference, your complete parameter file should look like this:
-??? Parameter-file
-
-    ```BASH
-    ---8<--- "default/tutorials/tutorial1/fullpipeline_assembly.yml"
-    ```       
+   
     
