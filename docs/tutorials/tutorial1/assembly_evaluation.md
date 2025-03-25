@@ -1,13 +1,17 @@
-We will then compare the results of our assembly with those of other assemblers and inspect mappings of reads to the assembly.
+We will now compare the results of our assembly with those of other assemblers and inspect mappings of reads to the corresponding assembly.
 
-##MetaQUAST
+## MetaQUAST
+
 QUAST stands for QUality ASsessment Tool. The tool evaluates genome
 assemblies by computing various metrics.  You can find all project
-news and the latest version of the tool at [sourceforge](http://sourceforge.net/projects/quast).  QUAST utilizes MUMmer,
-GeneMarkS, GeneMark-ES, GlimmerHMM, and GAGE. In addition, MetaQUAST
-uses MetaGeneMark, Krona tools, BLAST, and SILVA 16S rRNA
-database. See the [metaQuast home page](http://quast.sourceforge.net/metaquast/)
-for more info.
+news and the latest version of the tool at [sourceforge](http://sourceforge.net/projects/quast). 
+QUAST is a comprehensive quality assessment tool for genome assemblies that employs several bioinformatics utilities to evaluate assembly accuracy and quality.
+It utilizes MUMmer (for genome alignment), GeneMarkS (self-training gene prediction in prokaryotes), GeneMark-ES (gene prediction in eukaryotes),
+GlimmerHMM (gene finding using Hidden Markov Models), and GAGE (a pipeline for comparing gene predictions across multiple annotations).
+
+Additionally, MetaQUAST extends QUAST's capabilities to metagenomic assemblies by incorporating tools such as MetaGeneMark (specialized for gene prediction in metagenomes),
+Krona Tools (for taxonomic classification visualization), BLAST (for sequence similarity searches against reference databases),
+and the SILVA 16S rRNA database (for identifying microbial communities).
 
 !!! question "Task 1"
     Copy the pre-computed assembly results to your local directory.
@@ -26,7 +30,7 @@ for more info.
     ```
     ```BASH
     cp output/data/1/assembly/1.2.1/megahit/data_contigs.fa.gz assembly_results/megahit_out/final.contigs.fa.gz
-    gunzip assembly_results/megahit_out/final.contigs.fa.gz
+    gunzip -fd assembly_results/megahit_out/final.contigs.fa.gz
     ```
     
 !!! question "Task 3"
@@ -39,10 +43,8 @@ for more info.
     tar -xzvf genomes.tar.gz
     ```
 
-To call `metaquast.py` we have to provide reference genomes which
-are used to calculate a number of different metrics for evaluation of
-the assembly. In real-world metagenomics, these references are usually
-not available, of course.
+To call the `metaquast.py` script, we have to provide reference genomes which are used to calculate a number of different metrics for evaluation of the assembly.
+In real-world metagenomics, these references are not available, of course.
 
 !!! question "Task 4"
     Run metaquast:
@@ -52,7 +54,7 @@ not available, of course.
     ```BASH
     metaquast.py --threads 28 --gene-finding \
     -R genomes/Aquifex_aeolicus_VF5.fna,\
-    sgenomes/Bdellovibrio_bacteriovorus_HD100.fna,\
+    genomes/Bdellovibrio_bacteriovorus_HD100.fna,\
     genomes/Chlamydia_psittaci_MN.fna,\
     genomes/Chlamydophila_pneumoniae_CWL029.fna,\
     genomes/Chlamydophila_pneumoniae_J138.fna,\
@@ -80,17 +82,15 @@ not available, of course.
 We will now inspect the QUAST reports.
 
 !!! question "Task 5"
-    QUAST generates HTML reports including a number of interactive graphics. To access these reports, locate the html report in the `quast` directory load the reports in your web browser.
-    ??? Solution
-        ```
-        firefox quast/report.html
-        ```
+    QUAST generates HTML reports including a number of interactive graphics. To access these reports, locate the html report in the `quast` directory and load the reports in your web browser
+    via the following command:
+    ```
+    firefox quast/report.html
+    ```
+
 !!! question "Task 6"
     Which of the assemblers performs best in terms of coverage of genome fraction of the reference genomes? Which assembly result would you prefer from all of them?
     ??? Solution
-        MegaHit, metaSPAdes and idba_ud perform best in terms of covered genome fraction. MegaHit tends to generate larger contigs along with misassemblies, metaSPAdes creates shorter
-        contigs with less misassemblies, idba_is quite similar to MegaHit.
-
-
-
+        MEGAHIT, metaSPAdes and idba_ud perform best in terms of covered genome fraction. MEGAHIT tends to generate larger contigs along with misassemblies, metaSPAdes creates shorter
+        contigs with less misassemblies, idba_ud is quite similar to metaSPades.
 
