@@ -120,7 +120,7 @@ In our case, we are only interested in the alignment.
 
 Let's now inspect the bins created by MetaBAT:
 
-!!! question "Task 8"
+!!! question "Task 7"
     How many bins did metabat generate? Locate the metabat results and the fasta files for each bin in the output folder.
     ??? Solution
         ```BASH
@@ -152,7 +152,7 @@ next section of this tutorial.
 The next question you might want to ask is whether you can trust these bins and which organism they represent according to a taxonomy.
 Before that, let's have a look at what other information the Metagenomics-Toolkit provides as part of the binning output.
 
-!!! question "Task 9"
+!!! question "Task 8"
     There is a file containing some statistics on the generated Bins `data_bins_stats.tsv`. 
     Find out, which bin has the highest coverage and which one has the highest N50.
     ??? Solution    
