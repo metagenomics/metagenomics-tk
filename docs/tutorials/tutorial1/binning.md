@@ -1,6 +1,27 @@
 
 We will now perform binning of our assembly.
-Binning is the process of grouping large genomic fragments assembled from shotgun metagenomic sequences to deconvolute complex microbial communities. 
+
+Binning is a critical process in metagenomics that involves grouping DNA fragments, known as contigs,
+into bins that likely originate from the same organism or genome.
+This technique is essential for reconstructing genomes from mixed microbial communities,
+where DNA from various organisms is intermingled,
+and there is often no prior knowledge of the species present.
+
+The binning process primarily utilizes two types of information: composition and coverage of the assembled contigs.
+
+ * **Composition:** This refers to the analysis of k-mer frequency profiles within the contigs. K-mers are short DNA sequences of a fixed length (commonly tetranucleotides, or sequences of four nucleotides). These k-mer frequencies are generally conserved within a single genome, meaning that different regions of the same genome will share similar sequence composition.
+
+ * **Coverage:** This reflects the abundance of each contig in the assembly. Organisms that are more abundant in the environment contribute more DNA to the metagenomic sample,
+resulting in their sequences being represented more frequently in the data.
+
+During binning, binning tools look for DNA fragments that, despite not being assembled together,
+exhibit similar composition and occur at approximately equal abundances.
+These similarities suggest that such contigs likely originate from the same genome,
+enabling accurate grouping into bins.
+
+By integrating both composition and coverage information, 
+binning provides a powerful approach to distinguish between different organisms within a mixed sample. This method is particularly valuable as it allows researchers to reconstruct genomes without prior knowledge of the microbial community, making it an indispensable tool in metagenomic studies.
+
 
 ## MetaBAT
 
@@ -15,8 +36,6 @@ The following snippet represents the Toolkit contiguration for the binning modul
 ---8<--- "default/tutorials/tutorial1/fullpipeline_binning.yml:47:60"
 ```
 
-The complete parameter file is appended at the end of this page.
-
 !!! question "Task 1"
     We can run it directly with:
     ```BASH
@@ -30,11 +49,13 @@ For reference, your complete parameter file looks like this:
     ---8<--- "default/tutorials/tutorial1/fullpipeline_binning.yml"
     ```    
 
-## Assembly evaluation by read mapping
+## Assembly Evaluation by Read Mapping
 
 Before we take a closer look at the binning results, 
-let us first check the mapping of the reads to the assembly (alignment) that was computed as part of the binning process and saved in file with the `.bam` prefix.
+let us first check the mapping of the reads to the assembly (alignment) that was computed as part of the binning process and saved in the file with the `.bam` prefix.
 The number of reads mapped to the contigs of the assembly is called the contig abundance and is also used as input to a binning tool to separate contigs.
+From this alignment we get the contig **coverage** (read depth) which refers to the number of times each nucleotide position in a contig is covered by sequencing reads on average.
+It quantifies how many reads align to each base pair in the assembled sequence.
 
 !!! question "Task 2"
     First we have to index the sorted BAM file:
@@ -124,8 +145,11 @@ Let's now inspect the bins created by MetaBAT:
         data_contigs_depth.tsv
         data_notBinned.fa
         ```
+        MetaBAT generated 10 bins.
 
-MetaBAT has generated 10 bins. The next question you might want to ask is whether you can trust these bins and which organism they represent according to a taxonomy.
+You might have noticed that there is also a `data_notBinned.fa` file that represents contigs that could not be binned. We will investigate these contigs in the
+next section of this tutorial.
+The next question you might want to ask is whether you can trust these bins and which organism they represent according to a taxonomy.
 Before that, let's have a look at what other information the Metagenomics-Toolkit provides as part of the binning output.
 
 !!! question "Task 9"

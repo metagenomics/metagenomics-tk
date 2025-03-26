@@ -1,58 +1,72 @@
-To get an impression about the quality of our bins, we compute the completeness and contamination values for our bins. 
+To get an impression of the quality of our bins, we compute the completeness and contamination values for our bins. 
 
-## Computing completeness and contamination using CheckM
-CheckM provides a set of tools for assessing the quality of genomes recovered from isolates, single cells, or metagenomes. It provides robust estimates of genome completeness and contamination by using collocated sets of genes that are ubiquitous and single-copy within a phylogenetic lineage. Assessment of genome quality can also be examined using plots depicting key genomic characteristics (e.g., GC, coding density) which highlight sequences outside the expected distributions of a typical genome. CheckM also provides tools for identifying genome bins that are likely candidates for merging based on marker set compatibility, similarity in genomic characteristics, and proximity within a reference genome tree.
-See the [CheckM home page](https://ecogenomics.github.io/CheckM/) for more info.
+## Computing Completeness and Contamination using CheckM2
 
-We will now run CheckM2 using the Metagenomics Toolkit - we need to add these lines below the binning part of the parameter file:
-```BASH
----8<--- "default/tutorials/tutorial1/fullpipeline_bin_quality.yml:55:61"
+CheckM 1 and 2 provide a set of tools to assess the quality of genomes recovered from isolates, single cells, or metagenomes.
+While the first version relies on collocated sets of genes that are ubiquitous and single-copy within a phylogenetic lineage,
+the second version uses a machine learning based approach that was trained on all available genomic information such as multi-copy genes,
+biological pathways and modules. Both versions are supported by the Metagenomics-Toolkit and we will use the second version for this part of the tutorial.
+
+
+The following lines represent the part of the configuration that tells the Toolkit to run the MagAttributes module that also includes
+the CheckM2 tool:
+
+```YAML linenums="1" title="MagAttributes Configuration File Snippet 1"
+---8<--- "default/tutorials/tutorial1/fullpipeline_bin_quality.yml:61:67"
 ```
     
-The complete parameter file is appended at the end of this page.
+For reference, your complete parameter file looks like this:
+??? Parameter-file
+
+    ```BASH
+    ---8<--- "default/tutorials/tutorial1/fullpipeline_bin_quality.yml"
+    ```    
 
 !!! Question "Task 2"
-    Run CheckM2 with the Metagenomics-Toolkit directly with:
+    Run CheckM2 with the Metagenomics-Toolkit using the following command:
     ```BASH
-    ---8<--- "scripts/tutorials/tutorial1/test_bin_quality.sh:3:11"
+    ---8<--- "scripts/tutorials/tutorial1/test_bin_quality.sh:3:13"
     ```
 
+
 !!! Question "Task 3"
-    Locate the checkm results inside the `output` directory and find out the completeness and contamination values for all of our bins.
+    Locate the CheckM results inside the `output` directory and find out the completeness and contamination values for all of our bins.
     ??? Solution
         ```BASH
         cd ~/mgcourse
         ```
         ```BASH
-        cut -f2,3,4 output/data/1/magAttributes/3.0.0/checkm2/data_checkm2_generated.tsv
+        cut -f2,3,4 output/data/1/magAttributes/*/checkm2/data_checkm2_generated.tsv
         ```
         ```BASH        
-        BIN_ID	COMPLETENESS	CONTAMINATION
-        data_bin.1.fa	85.4	0.28
-        data_bin.10.fa	20.69	0.74
-        data_bin.2.fa	20.58	0.01
-        data_bin.3.fa	23.17	0.05
-        data_bin.4.fa	81.91	0.46
-        data_bin.5.fa	52.73	6.07
-        data_bin.6.fa	11.09	0.0
-        data_bin.7.fa	16.83	0.01
-        data_bin.8.fa	34.49	0.03
-        data_bin.9.fa	12.81	0.12
+        BIN_ID  COMPLETENESS    CONTAMINATION
+        data_bin.1.fa   12.81   0.12
+        data_bin.10.fa  52.12   5.63
+        data_bin.2.fa   11.09   0.0
+        data_bin.3.fa   81.91   0.46
+        data_bin.4.fa   20.82   0.01
+        data_bin.5.fa   16.83   0.01
+        data_bin.6.fa   20.7    0.74
+        data_bin.7.fa   35.3    0.04
+        data_bin.8.fa   85.63   0.28
+        data_bin.9.fa   22.62   0.05
         ```        
 
 !!! Question "Task 4"
-    Compare the CheckM2 completeness/contamination results with the genome fraction results from QUAST - do they match your expectations?
+    Compare the CheckM2 completeness results with the genome fraction results from QUAST. Do they match your expectations?
     ??? Solution
-        No, completeness and contamination are much lower than expected from the covered genome fraction we observed in the QUAST results (see Assembly evaluation part).
+        No, completeness is much lower than expected in comparison to the genome fraction we observed in the QUAST results (see Assembly evaluation part).
 
-We will now run QUAST again on one of the BINs and on the unbinned contigs.
+We will now run QUAST again but this time we specify the bins and the unbinned contigs instead of the assemblies as input.
+By doing this, QUAST can tell us which reference genome the bin belongs to.
 
 !!! Question "Task 5"
-    Run metaquast with individual BINS as input:
+    Run metaquast with the individual bins as input:
     
     ```BASH
     cd ~/mgcourse/
     ```
+
     ```BASH
     metaquast.py --threads 28 --gene-finding \
     -R genomes/Aquifex_aeolicus_VF5.fna,\
@@ -72,17 +86,17 @@ We will now run QUAST again on one of the BINs and on the unbinned contigs.
     genomes/Wigglesworthia_glossinidia.fna \
     -o quast_bins \
     -l BIN1,BIN2,BIN3,BIN4,BIN5,BIN6,BIN7,BIN8,BIN9,BIN10,UNBINNED \
-    output/data/1/binning/0.5.0/metabat/data_bin.1.fa \
-    output/data/1/binning/0.5.0/metabat/data_bin.2.fa \
-    output/data/1/binning/0.5.0/metabat/data_bin.3.fa \
-    output/data/1/binning/0.5.0/metabat/data_bin.4.fa \
-    output/data/1/binning/0.5.0/metabat/data_bin.5.fa \
-    output/data/1/binning/0.5.0/metabat/data_bin.6.fa \
-    output/data/1/binning/0.5.0/metabat/data_bin.7.fa \
-    output/data/1/binning/0.5.0/metabat/data_bin.8.fa \
-    output/data/1/binning/0.5.0/metabat/data_bin.9.fa \
-    output/data/1/binning/0.5.0/metabat/data_bin.10.fa \
-    output/data/1/binning/0.5.0/metabat/data_notBinned.fa
+    output/data/1/binning/*/metabat/data_bin.1.fa \
+    output/data/1/binning/*/metabat/data_bin.2.fa \
+    output/data/1/binning/*/metabat/data_bin.3.fa \
+    output/data/1/binning/*/metabat/data_bin.4.fa \
+    output/data/1/binning/*/metabat/data_bin.5.fa \
+    output/data/1/binning/*/metabat/data_bin.6.fa \
+    output/data/1/binning/*/metabat/data_bin.7.fa \
+    output/data/1/binning/*/metabat/data_bin.8.fa \
+    output/data/1/binning/*/metabat/data_bin.9.fa \
+    output/data/1/binning/*/metabat/data_bin.10.fa \
+    output/data/1/binning/*/metabat/data_notBinned.fa
     ```
 
 !!! Question "Task 6"
@@ -94,9 +108,6 @@ We will now run QUAST again on one of the BINs and on the unbinned contigs.
     ??? Solution
         Large parts of the the contigs have been assigned to the unbinned fraction. The reason for that is the small contig size, metabat2 uses 2500 bp as default cutoff for contigs that can be assigned to genome bins, other contigs are automatically assigned to the unbinned fraction. This cutoff can be lowered to 1500 bp but would not improve the results very much here, since so many contigs are smaller than that.
 
-
-For reference, your complete parameter file should look like this:
-??? Parameter-file
-    ```BASH
-    ---8<--- "default/tutorials/tutorial1/fullpipeline_bin_quality.yml"
-    ```
+In summary, three of your bins meet at least the completeness and contamination criteria to be considered as medium quality (Completeness > 50% and Contamination < 10%) 
+according to the [**Minimum Information about a Metagenome-Assembled Genome (MIMAG)**](https://www.gensc.org//pages/standards/checklists.html) standard. 
+In the next section we will examine their taxonomy. 
