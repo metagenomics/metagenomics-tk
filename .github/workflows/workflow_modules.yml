@@ -336,6 +336,10 @@ jobs:
       - name: Test Binning Evaluation
         run: |
           bash ./scripts/tutorials/tutorial1/test_bin_quality.sh || exit 1
+      - name: Test Classification 
+        run: |
+          bash ./scripts/tutorials/tutorial1/test_classification.sh || exit 1
+
 
 
 
