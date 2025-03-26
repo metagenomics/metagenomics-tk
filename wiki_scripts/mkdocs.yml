@@ -2,6 +2,9 @@ use_directory_urls: true
 site_name: Metagenomics-Toolkit
 docs_dir: ../docs
 
+repo_url: https://github.com/metagenomics/metagenomics-tk
+repo_name: Metagenomics-Tk
+
 markdown_extensions:
   - pymdownx.details
   - toc:
