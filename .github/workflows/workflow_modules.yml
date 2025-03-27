@@ -339,9 +339,9 @@ jobs:
       - name: Test Classification 
         run: |
           bash ./scripts/tutorials/tutorial1/test_classification.sh || exit 1
-
-
-
+      - name: Test Annotation 
+        run: |
+          bash ./scripts/tutorials/tutorial1/test_annotation.sh || exit 1
 
   gettingStarted:
     timeout-minutes: 800
