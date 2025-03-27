@@ -1,10 +1,10 @@
-We will now compare the results of our assembly with those of other assemblers and inspect mappings of reads to the corresponding assembly.
+We will now compare the results of our assembly with those of other assemblers and inspect mappings of reads to the corresponding assemblies.
 
 ## MetaQUAST
 
 QUAST stands for QUality ASsessment Tool. The tool evaluates genome
 assemblies by computing various metrics.  You can find all project
-news and the latest version of the tool at [sourceforge](http://sourceforge.net/projects/quast). 
+news and the latest version of the tool at [SourceForge](http://sourceforge.net/projects/quast). 
 QUAST is a comprehensive quality assessment tool for genome assemblies that employs several bioinformatics utilities to evaluate assembly accuracy and quality.
 It utilizes MUMmer (for genome alignment), GeneMarkS (self-training gene prediction in prokaryotes), GeneMark-ES (gene prediction in eukaryotes),
 GlimmerHMM (gene finding using Hidden Markov Models), and GAGE (a pipeline for comparing gene predictions across multiple annotations).
@@ -24,7 +24,7 @@ and the SILVA 16S rRNA database (for identifying microbial communities).
     ```
 
 !!! question "Task 2"
-    Then copy your assembly result from the toolkit run to the assembly_results directory:
+    Then copy your assembly results from the toolkit run to the assembly_results directory:
     ```BASH
     cd ~/mgcourse/
     ```
@@ -43,7 +43,7 @@ and the SILVA 16S rRNA database (for identifying microbial communities).
     tar -xzvf genomes.tar.gz
     ```
 
-To call the `metaquast.py` script, we have to provide reference genomes which are used to calculate a number of different metrics for evaluation of the assembly.
+To call the `metaquast.py` script, we have to provide reference genomes which are used to calculate a variety of different metrics for evaluating the assembly.
 In real-world metagenomics, these references are not available, of course.
 
 !!! question "Task 4"
@@ -89,8 +89,11 @@ We will now inspect the QUAST reports.
     ```
 
 !!! question "Task 6"
-    Which of the assemblers performs best in terms of coverage of genome fraction of the reference genomes? Which assembly result would you prefer from all of them?
+    Which of the assemblers performs best in terms of coverage of genome fraction of the reference genomes? Which assembly result would you prefer among them?
     ??? Solution
-        MEGAHIT, metaSPAdes and idba_ud perform best in terms of covered genome fraction. MEGAHIT tends to generate larger contigs along with misassemblies, metaSPAdes creates shorter
-        contigs with less misassemblies, idba_ud is quite similar to metaSPades.
+        MEGAHIT, metaSPAdes and idba_ud perform best in terms of covered genome fraction. MEGAHIT tends to generate larger contigs along with misassemblies, while metaSPAdes creates shorter
+        contigs with fewer misassemblies, idba_ud is quite similar to metaSPades.
 
+---
+
+➡️ [**Continue to: Binning**](./binning.md)

@@ -3,7 +3,7 @@ In this part you will learn how to configure and run the Toolkit and what the ou
 
 ## Tutorial Scope and Requirements
 
-The Metagenomics-Toolkit allows you to run either the full pipeline of assembly, binning and many other downstream analysis tasks or the individual analyses seperately. 
+The Metagenomics-Toolkit allows you to run either the full pipeline of assembly, binning and many other downstream analysis tasks or the individual analyses separately. 
 In this tutorial you will only use the *full pipeline* mode. The *full pipeline* mode itself is structured into two parts. The first part runs the Toolkit on each
 sample separately (*per-sample*), and the second part runs a combined downstream analysis on the output of the *per-sample* part, called *aggregation*. 
 In this tutorial, you will only run the *per-sample* part. While there are several optimizations for running the Toolkit on a cloud-based setup, 
@@ -18,7 +18,7 @@ during this workshop you will run the Toolkit on a single machine.
 
 * Basic Linux command line usage
 
-* This tutorial has been tested on a machine with 28 cpus and 64 GBs of RAM with Ubuntu installed on it.
+* This tutorial has been tested on a machine with 28 CPUs and 64 GBs of RAM with Ubuntu installed on it.
 
 * Docker: Install Docker by following the official Docker installation [instructions](https://docs.docker.com/engine/install/ubuntu/).
 
@@ -33,8 +33,8 @@ For this tutorial, we need some preparations on our machine.
 
 #### Link to your volume
 
-We are using the location `~/mgcourse/` as directory, where all the analysis is stored. We assume that there is a larger storage volume mounted at `/vol/mgcourse`. 
-If your preferred volume is at another location, change the `/vol/mgcourse` to a different path accordingly. If you don't have a another volume with more storage available
+We are using the location `~/mgcourse/` as the directory, where all the analysis is stored. We assume that there is a larger storage volume mounted at `/vol/mgcourse`. 
+If your preferred volume is at another location, change `/vol/mgcourse` to a different path accordingly. If you don't have another volume with more storage available
 you can also simply leave out the following command and create the directory with `mkdir ~/mgcourse`.
 
 !!! warning "Course Participants"
@@ -43,9 +43,10 @@ you can also simply leave out the following command and create the directory wit
 
 
 !!! question "Task 1"
-    We will link the volume to `~/mgcourse`, so we can use that link for the rest of this tutorial:
+    We will link the volume to `~/mgcourse` and get ownership, so we can use that link for the rest of this tutorial:
     ```BASH
     sudo ln -s /vol/mgcourse/ ~/mgcourse
+    sudo chown -R ubuntu:ubuntu ~/mgcourse
     ```
 
 #### Database directory link
@@ -55,9 +56,9 @@ In addition, we need a symlink for the directory where the databases should be s
 !!! question "Task 2"
     Create a `databases` and `/vol/scratch` directory and create a link to the database directory:
     ```BASH
-    sudo mkdir ~/mgcourse/databases
-    sudo mkdir -p /vol/scratch
-    sudo ln -s ~/mgcourse/databases/ /vol/scratch/databases
+    mkdir ~/mgcourse/databases
+    mkdir -p /vol/scratch
+    ln -s ~/mgcourse/databases/ /vol/scratch/databases
     ```
  
 
@@ -65,7 +66,7 @@ In addition, we need a symlink for the directory where the databases should be s
 
 ### Execution
 
-The Toolkit is based on Nextflow and you can execute the Toolkit based on the following commandline schema:
+The Toolkit is based on Nextflow and you can execute the Toolkit based on the following command line schema:
 
 ```BASH
 NXF_VER=NEXTFLOW_VERSION nextflow run metagenomics/metagenomics-tk NEXTFLOW_OPTIONS TOOLKIT_OPTIONS 
@@ -77,28 +78,28 @@ NXF_VER=NEXTFLOW_VERSION nextflow run metagenomics/metagenomics-tk NEXTFLOW_OPTI
 * `NEXTFLOW_OPTIONS` are options that are implemented by Nextflow:
 
     * `-profile` determines the technology which is used to execute the Toolkit. Here we support **standard** for running the workflow on a single machine and
-                 **slurm** for running the Toolkit on a cluster which uses SLURM to distribute jobs. 
+                 **slurm** for running the Toolkit on a cluster which uses [SLURM](https://slurm.schedmd.com/documentation.html) to distribute jobs. 
 
 	  * `-params-file` points to a configuration file that tells the Toolkit which analyses to run and which resources it should use. An example configuration file will be explained in the next section.
 
       * `-resume` In some cases, you may want to resume the workflow execution, such as when you add an analysis.
-                  Resuming the workflow forces Nextflow to reuse the results of the analyses that the new analysis depends on, rather than starting from scratch. 
+                  Resuming the workflow forces Nextflow to reuse the results of the previous analyses that the new analysis depends on, rather than starting from scratch. 
 
 	  * `-ansi-log` accepts a boolean (default: **true**) that tells Nextflow on **true** to print every update as a new line on the terminal. If **false** then Nextflow
-                  prints a line for every process and updates the specific line on an update. We recommend to set **-ansi-log** to **false** because it is not possible to
+                  prints a line for every process and updates the specific line on an update. We recommend to setting **-ansi-log** to **false** because it is not possible to
                   print all possible processes on a terminal at once when running the Toolkit.
 
 	  * `-entry` specifies which entrypoint Nextflow should use to run the workflow. For running the *full pipeline*, that you will use in this workshop, you use the **wFullPipeline** entrypoint. 
-               If you ever want to run seperate modules, you can check on the modules specifc page (e.g. [assembly](../../modules/assembly.md/#assembly)).
+               If you ever want to run separate modules, you can check on the modules specific page (e.g. [assembly](../../modules/assembly.md/#assembly)).
 
-* `TOOLKIT_OPTIONS` are options that are provided by the Toolkit. All Toolkit options are either in a configuration file or can be provided on the commandline which will be explained in the following section. 
+* `TOOLKIT_OPTIONS` are options that are provided by the Toolkit. All Toolkit options are either in a configuration file or can be provided on the command line which will be explained in the following section. 
 
 
 !!! question "Task 3"
 
     Open the Metagenomics-Toolkit wiki on a second browser tab by a click on this
     [link](https://metagenomics.github.io/metagenomics-tk/latest/){:target="_blank"}.
-    Imagine you need only to run the quality-control part seperately. Can you tell the name of the **entrypoint**? 
+    Imagine you need to run the quality-control part separately. Can you tell the name of the **entrypoint**? 
     Use the wiki page you have opened on another tab to answer the question.
 
     ??? Solution
@@ -114,7 +115,7 @@ The configuration file is divided into three parts:
 
 #### Part 1: Global Workflow Parameters
 
-The following snippet shows parameters that effect the whole execution of the 
+The following snippet shows parameters that affect the whole execution of the 
 workflow. All parameters are explained in a dedicated Toolkit wiki [section](../../configuration.md). 
 
 ```YAML linenums="1" title="Example Configuration File Snippet 1"
@@ -137,7 +138,7 @@ Since you will work with short read data in this tutorial, your input file looks
 ---8<--- "test_data/tutorials/tutorial1/reads.tsv"
 ```
 
-The first columns (SAMPLE) specifies the name of the dataset. The second (READS1) and third (READS2) column specify the files
+The first column (SAMPLE) specifies the name of the dataset. The second (READS1) and third (READS2) column specify the files
 containing the forward and reverse reads.
 
 #### Part 2: Toolkit Analyses Steps 
@@ -169,7 +170,7 @@ You can read more  about resource parameters [here](../../configuration.md/#conf
     Is there enough RAM on your machine to run the Toolkit? 
 
     ??? Solution
-        If you are using a machine as described in the Requirements section, then yes, there is enough RAM available for the workflow. 
+        If you are using a machine as described in the "Requirements" section, then yes, there is enough RAM available for the workflow (more than 60 GBs). 
 
 
 #### Configuration File vs. Commandline Parameters
@@ -182,11 +183,13 @@ The corresponding command-line argument would be `--resources.highmemLarge.cpus`
 
 !!! question "Task 5"
 
-    Let`s say you want to specify a path to a different input tsv file (see **Example Configuration File Snippet 1**) that contains a different set of input datasets. 
-    How would you specify the parameter on the commandline?
+    Let`s say you want to specify a path to a different input TSV file (see **Example Configuration File Snippet 1**) that contains a different set of input datasets. 
+    How would you specify the parameter on the command line?
 
     ??? Solution
         `--input.paired.path`
+
+Command line arguments supersede the configuration file. This is a quick, temporary way to change variables without touching files. 
 
 
 ### Output
@@ -270,6 +273,6 @@ output/
 
 ```
 
-  
+---
 
-
+➡️ [**Continue to: Quality Control**](./quality_control.md)

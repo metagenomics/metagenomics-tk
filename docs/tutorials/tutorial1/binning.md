@@ -27,10 +27,10 @@ binning provides a powerful approach to distinguish between different organisms 
 
 MetaBAT is an automated metagenome binning software
 which integrates empirical probabilistic distances of genome abundance
-and tetranucleotide frequency. See the [MetaBAT home page](https://bitbucket.org/berkeleylab/metabat>) for more information.
+and tetranucleotide frequency. See the [MetaBAT home page](https://bitbucket.org/berkeleylab/metabat) for more information.
   
-We will now perform a binnning of our assembly with MetaBAT using the Metagenomics-Toolkit.
-The following snippet represents the Toolkit contiguration for the binning module:
+We will now perform a binning of our assembly with MetaBAT using the Metagenomics-Toolkit.
+The following snippet represents the Toolkit configuration for the binning module:
 
 ```YAML linenums="1" title="Binning Configuration File Snippet 1"
 ---8<--- "default/tutorials/tutorial1/fullpipeline_binning.yml:47:60"
@@ -85,7 +85,7 @@ offering a comprehensive view that enhances understanding of the genomic context
 In our case, we are only interested in the alignment.
     
 !!! question "Task 4"
-    Now copy/link everything you need for igv in a seperate folder:
+    Now copy/link everything you need for igv in a separate folder:
     
     ```BASH
     cd ~/mgcourse/
@@ -113,7 +113,7 @@ In our case, we are only interested in the alignment.
 !!! question "Task 6"
     Look for errors in the mappings - are all those error sequencing errors?
     ??? Solution
-        Some errors are due to merging multiple strains into one contig, this can be clearly seen, 
+        Some errors are due to merging multiple strains into one contig. This can be clearly seen 
         when there are a large number of errors at one position with different possibilities for that base.
 
 ## MetaBAT Results
@@ -177,4 +177,8 @@ Before that, let's have a look at what other information the Metagenomics-Toolki
         data    data_bin.9.fa   FASTA   DNA     224     717735  2500    3204.2  6592    2692.0  2958.5  3442.0  0       3109    0.00    0.00    50.72   5.11192
         ```
         In this result, bin 8 has the highest coverage (15.5364) and highest N50 (13397). Also note, that some of the bins highly differ in their GC content.
+
+---
+
+➡️ [**Continue to: Assessing Bin Quality**](./bin_quality.md)
 

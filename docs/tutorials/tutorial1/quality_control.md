@@ -10,8 +10,7 @@ The key steps of quality control are
 
 * Host DNA Removal: Remove contaminant sequences (e.g. mouse, human).
 
-In addition, the Toolkit provides with Nonpareil a way to estimate the sequencing effort necessary to theoretically retrieve all
-genomes. 
+In addition, the Toolkit provides a way to estimate the sequencing effort necessary to theoretically retrieve all genomes, with Nonpareil. 
 
 ## Metagenomics-Toolkit 
 
@@ -44,17 +43,17 @@ In the following we will inspect the outputs of the mentioned tools.
 
 ### Output
 
-#### Fastp 
+#### fastp 
 
-Fastp is an efficient, versatile, open-source tool for preprocessing FASTQ files and quality control in next-generation sequencing (NGS) workflows.
-Written in C++, Fastp provides high-speed performance without compromising accuracy, making it suitable for handling large sequencing data sets.
-For quality and adapter trimming the Fastp trims reads from 5’ end to 3’ end using a sliding window. 
+fastp is an efficient, versatile, open-source tool for preprocessing FASTQ files and quality control in next-generation sequencing (NGS) workflows.
+Written in C++, fastp provides high-speed performance without compromising accuracy, making it suitable for handling large sequencing data sets.
+For quality and adapter trimming fastp trims reads from 5’ end to 3’ end using a sliding window. 
 
-If the mean quality of bases inside a window drops below a specific q-score, the remaining of the read will be trimmed.
-If a read get too short during this trimming, it will be discared.
+If the mean quality of bases inside a window drops below a specific q-score, the remainder of the read will be trimmed.
+If a read gets too short during this trimming, it will be discarded.
 
 !!! info "Quality Report"
-    The Metagenomics-Toolkit allows you to run Fastp by only reporting the quality of the data. This way you can easily inspect the data
+    The Metagenomics-Toolkit allows you to run fastp by only reporting the quality of the data. This way you can easily inspect the data
     before actually further processing it. You can do this by setting the `reportOnly` parameter to `true` in the config below. 
 
 
@@ -77,26 +76,26 @@ If a read get too short during this trimming, it will be discared.
     data_unpaired_summary.tsv
     ```
 
-The Fastp output for your data can be viewed [here](https://s3.bi.denbi.de/cmg/mgcourses/qc/data_report.html){:target="_blank"}.
-Since the data that you are using during this tutorial is simulated, we will inspect the Fastp output of a real dataset. 
-The following Fastp output belongs to a wastewater sequencing project: [Wastewater Fastp Output](https://s3.bi.denbi.de/cmg/mgcourses/qc/ERR8977433_report.html){:target="_blank"}.
+The fastp output for your data can be viewed [here](https://s3.bi.denbi.de/cmg/mgcourses/qc/data_report.html){:target="_blank"}.
+Since the data that you are using during this tutorial is simulated, we will inspect the fastp output of a real dataset. 
+The following fastp output belongs to a wastewater sequencing project: [Wastewater Fastp Output](https://s3.bi.denbi.de/cmg/mgcourses/qc/ERR8977433_report.html){:target="_blank"}.
 
 !!! question "Task 4"
 
     How many reads of the wastewater dataset passed the filter?
-    Between which quality scores ranges the read1 fastq file before and after qc.
+    Between which quality score ranges does the read1 FASTQ file fall before and after QC.
 
     ??? Solution
-        78.752339% of the reads passed the filter. The quality score for read1 ranges before filtering between 29 and 36 and after qc between 35 and 36. 
+        78.752339% of the reads passed the filter. The quality score for read1 ranges between 29 and 36 before filtering and after QC between 35 and 36. 
 
 #### Host DNA Removal
 
-The Toolkit uses the sra human-scrubber-tool that uses a k-mer based approach to search for human sequences against a k-mer database using human reference sequencs.
+The Toolkit provides the SRA human-scrubber tool that uses a k-mer based approach to search for human sequences against a k-mer database using human reference sequences.
 
 !!! question "Task 5"
 
     You can find the result of the tool in the **filterHuman** directory:
-    The output of the tool are the filtered sequences but also statistics about the sequences **before** and **after** filtering.   
+    The output of the tool are the filtered sequences, and it also includes statistics about the sequences **before** and **after** filtering.   
 
     ```BASH
     ls output/data/1/qc/*/filterHuman/
@@ -156,7 +155,7 @@ You can obtain the estimated average coverage for a given sequencing effort by i
 
 !!! question "Task 7"
 
-    From the plot it is hard to get the exact numbers (e.g. average coverage for a given the sequencing effort) and does not provide
+    From the plot, it is hard to get the exact numbers (e.g. average coverage for a given sequencing effort) and does not provide
     the diversity estimate.
     
     Instead of looking into the plot it is easier to check the **data_nonpareil_index.tsv** file. In the Toolkit [wiki](../../modules/qualityControl.md#output_2) we provide an explanation for the columns provided by Nonpareil.
@@ -178,4 +177,6 @@ You can obtain the estimated average coverage for a given sequencing effort by i
         * Estimated genome coverage for the current sequencing effort: 80% 
 
         * Diversity Estimate: 17.3
+---
 
+➡️ [**Continue to: Assembly**](./assembly.md)
