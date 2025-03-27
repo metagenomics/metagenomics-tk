@@ -1,4 +1,4 @@
-Taxonomonic classification tools assign taxonommic labels to reads or assembled contigs of metagenomic datasets.
+Taxonomic classification tools assign taxonomic labels to reads or assembled contigs of metagenomic datasets.
 We will perform taxonomic classification of our genome bins using GTDB-Tk.
 
 ## Genome Taxonomy Database (GTDB)
@@ -11,16 +11,16 @@ It uses metrics like average nucleotide identity (ANI) and other phylogenetic ma
 This tool is particularly useful for researchers who want to assign taxonomic labels to their sequences within a consistent and widely-accepted framework,
 facilitating better understanding of microbial diversity and evolution.
 
-See the [GTDB-Tk homepage](https://ecogenomics.github.io/GTDBTk/index.html) for more info.
+See the [GTDB-Tk homepage](https://ecogenomics.github.io/GTDBTk/index.html) for more information.
 
 Next, let's assign taxonomic labels to our binning results using GTDB-Tk. 
-The following snippet represents the Toolkit contiguration for the classification part of the MagAttributes module:
+The following snippet represents the Toolkit configuration for the classification part of the MagAttributes module:
 ```YAML linenums="1" title="Classification Configuration File Snippet 1"
 ---8<--- "default/tutorials/tutorial1/fullpipeline_classification.yml:68:74"
 ```
 
 !!! Question "Task 1"
-    Run the following command to for the classification:
+    Run the following command for the classification:
     ```BASH
     ---8<--- "scripts/tutorials/tutorial1/test_classification.sh:3:12"
     ```
@@ -49,7 +49,7 @@ You can read [here](https://ecogenomics.github.io/GTDBTk/commands/classify_wf.ht
     ```
 
     ??? Solution
-        For example the column `fastani_ani` reports that 9 out of 10 genomes were processed using ANI. 
+        For example, the column `fastani_ani` reports that 9 out of 10 genomes were processed using ANI. 
         ```TSV
         fastani_ani
         98.4
@@ -68,7 +68,7 @@ Now, of course, you are interested in the classification of your genomes. The re
 You already have an estimate of the completeness and contamination of your genomes from the bin quality sections and can use this information for the next task.
   
 !!! Question "Task 3"
-    Check the classification and BIN_ID column of the gtdb output. What is the classification of genomes that are at least 50% complete and are at most 10% contaminated.
+    Check the classification and BIN_ID column of the gtdb output. What is the classification of genomes that are at least 50% complete and are at most 10% contaminated?
  
     ??? Solution
         ```BASH
@@ -123,4 +123,6 @@ You already have an estimate of the completeness and contamination of your genom
 !!! Question "Task 4"
     Inspect the results in EMGB!
 
+---
 
+➡️ [**Continue to: Annotation**](./annotation.md)
