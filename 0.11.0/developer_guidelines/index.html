@@ -1,0 +1,2293 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../tutorials/tutorial1/annotation/">
+      
+      
+        <link rel="next" href="../pipeline_specification/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.14">
+    
+    
+      
+        <title>Guidelines - Metagenomics-Toolkit</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.10ba22f1.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#guidelines" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+          <aside class="md-banner md-banner--warning">
+            <div class="md-banner__inner md-grid md-typeset">
+              
+  You're not viewing the latest version.
+    <a href="../..">
+	        <strong>Click here to go to latest.</strong>
+    </a>
+
+            </div>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),outdated=__md_get("__outdated",sessionStorage);!0===outdated&&el&&(el.hidden=!1)</script>
+          </aside>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Metagenomics-Toolkit" class="md-header__button md-logo" aria-label="Metagenomics-Toolkit" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Metagenomics-Toolkit
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Guidelines
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/metagenomics/metagenomics-tk" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Metagenomics-Tk
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+    
+  
+  Introduction
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../quickstart/" class="md-tabs__link">
+        
+  
+    
+  
+  Quickstart
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../overview/" class="md-tabs__link">
+          
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../configuration/" class="md-tabs__link">
+          
+  
+  Configuration
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../modules/introduction/" class="md-tabs__link">
+          
+  
+  Modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorials/tutorial1/introduction/" class="md-tabs__link">
+          
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  Developer
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Metagenomics-Toolkit" class="md-nav__button md-logo" aria-label="Metagenomics-Toolkit" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Metagenomics-Toolkit
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/metagenomics/metagenomics-tk" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Metagenomics-Tk
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../overview/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../full_pipeline/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Full Pipeline
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../aggregation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Aggregation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Configuration
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Global Pipeline Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pipeline_input/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pipeline Input Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../database/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Database Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Modules
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/introduction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/qualityControl/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quality Control
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/annotation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Annotation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/assembly/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Assembly
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/cooccurrence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cooccurrence
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/dereplication/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dereplication
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/fragment_recruitment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Fragment Recruitment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/magAttributes/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MagAttributes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/plasmids/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Plasmids
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/metabolomics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Metabolomics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/readMapping/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Read Mapping
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/export/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Exploratory Metagenome Browser (EMGB)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tutorial 1
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorial 1
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/tutorial1/introduction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/tutorial1/quality_control/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quality Control
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/tutorial1/assembly/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Assembly
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/tutorial1/assembly_evaluation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Assembly Evaluation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/tutorial1/binning/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Binning
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/tutorial1/bin_quality/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Assessing Bin Quality
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/tutorial1/classification/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Classification
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/tutorial1/annotation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Annotation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Developer
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Developer
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Guidelines
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Guidelines
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#commit-and-release-guidelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      Commit and Release Guidelines
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Commit and Release Guidelines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Versioning
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nextflow-versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Nextflow Versions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Modules
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflows
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Process
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#processes-should-publish-process-specific-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Processes should publish process specific files
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Processes should publish process specific files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Logs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#log-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      Log Level
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resources
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-limit" class="md-nav__link">
+    <span class="md-ellipsis">
+      Time Limit
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#databases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Databases
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#internal-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Internal Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#toolkit-docker-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      Toolkit Docker Images
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wiki" class="md-nav__link">
+    <span class="md-ellipsis">
+      Wiki
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#utils" class="md-nav__link">
+    <span class="md-ellipsis">
+      Utils
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#database-download" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database Download
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Database Download">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#filesystem-locks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filesystem locks
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#polished-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Polished Variables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other" class="md-nav__link">
+    <span class="md-ellipsis">
+      Other
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pipeline_specification/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pipeline Specification
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../module_specification/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Module Specification
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#commit-and-release-guidelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      Commit and Release Guidelines
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Commit and Release Guidelines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#versioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      Versioning
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nextflow-versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Nextflow Versions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Modules
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflows
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Process
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#processes-should-publish-process-specific-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Processes should publish process specific files
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Processes should publish process specific files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Logs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Logs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#log-level" class="md-nav__link">
+    <span class="md-ellipsis">
+      Log Level
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resources
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-limit" class="md-nav__link">
+    <span class="md-ellipsis">
+      Time Limit
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#databases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Databases
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#internal-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Internal Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#toolkit-docker-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      Toolkit Docker Images
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wiki" class="md-nav__link">
+    <span class="md-ellipsis">
+      Wiki
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#utils" class="md-nav__link">
+    <span class="md-ellipsis">
+      Utils
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#database-download" class="md-nav__link">
+    <span class="md-ellipsis">
+      Database Download
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Database Download">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#filesystem-locks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Filesystem locks
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#polished-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      Polished Variables
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other" class="md-nav__link">
+    <span class="md-ellipsis">
+      Other
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="guidelines">Guidelines<a class="headerlink" href="#guidelines" title="Permanent link">&para;</a></h1>
+<h2 id="commit-and-release-guidelines">Commit and Release Guidelines<a class="headerlink" href="#commit-and-release-guidelines" title="Permanent link">&para;</a></h2>
+<p>We are using <a href="https://github.com/git-chglog/git-chglog">git-chglog</a> to automatically generate a changelog for the latest released based on our commit messages.
+Commit messages should follow the following format:</p>
+<div class="highlight"><pre><span></span><code>feat(scope): feature added in the scope
+</code></pre></div>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code>feat(assembly): megahit added
+</code></pre></div>
+<p><code>feat</code> can be replaced by one of the formats specified in the options sections of the config file (see example below).
+Scope can for example represent a module, a configuration or a specific document.</p>
+<p>A new release should be made the following way: </p>
+<ol>
+<li>
+<p>Checkout the dev branch.</p>
+</li>
+<li>
+<p>Update pipeline version in the nextflow manifest <code>nextflow.config</code>.</p>
+</li>
+<li>
+<p>Push the changes to the dev branch.</p>
+</li>
+<li>
+<p>Checkout the master branch.</p>
+</li>
+<li>
+<p>Merge the dev branch into the master branch. (<code>git merge dev</code>)</p>
+</li>
+<li>
+<p>Push the merged branch to the master branch.</p>
+</li>
+<li>
+<p>Create a release on Github based on the master branch.</p>
+</li>
+<li>
+<p>Run <code>git fetch</code> on the master branch to get the latest tag.</p>
+</li>
+<li>
+<p>Run <code>make changelog</code> and paste the output on the Github release section.</p>
+</li>
+<li>
+<p>Once the Github release is created, publish the wiki with newest tag.(see <a href="./#wiki">wiki section</a>)</p>
+</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="nt">style</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">github</span>
+<span class="nt">template</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CHANGELOG.tpl.md</span>
+<span class="nt">info</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CHANGELOG</span>
+<span class="w">  </span><span class="nt">repository_url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://github.com/pbelmann/meta-omics-toolkit</span>
+<span class="nt">options</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">commits</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">filters</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Type</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">feat</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fix</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">refactor</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">doc</span>
+<span class="w">  </span><span class="nt">commit_groups</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">title_maps</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">feat</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Features</span>
+<span class="w">      </span><span class="nt">fix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Bug Fixes</span>
+<span class="w">      </span><span class="nt">refactor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Code Refactoring</span>
+<span class="w">      </span><span class="nt">doc</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Documentation</span>
+<span class="w">  </span><span class="nt">header</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">pattern</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;^(\\w*)(?:\\(([\\w\\$\\.\\-\\*\\s]*)\\))?\\:\\s(.*)$&quot;</span>
+<span class="w">    </span><span class="nt">pattern_maps</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Type</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Scope</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Subject</span>
+</code></pre></div>
+<h3 id="versioning">Versioning<a class="headerlink" href="#versioning" title="Permanent link">&para;</a></h3>
+<p>Following <a href="https://semver.org/">semantic versioning</a>, we define the configuration input file and the output folder structure as our public <code>API</code>.
+Changes to the version numbers reflect updates to the config or the output folders and files.
+The toolkit consists of many modules that can be used in different combinations and
+because of this flexibility, we had to come up with a detailed versioning system. We version each module separately, as well as the pipeline itself.</p>
+<p>Module MAJOR version numbers are updated when a module-specific input parameter is updated or the output folder or file structure is changed.
+All module version numbers can be retrieved by running the toolkit with the <code>wGetModuleVersion</code> entry point and should be reported on the release page. </p>
+<p>The module version number is incorporated in the output directory (see <a href="../pipeline_specification/">output specification</a>) 
+for easier parsing of the output directory. In the following we give examples when to increment which part of the version identifier:</p>
+<p>Given a version number MAJOR.MINOR.PATCH, increment the:</p>
+<ul>
+<li>MAJOR version when you make incompatible changes, as for example modifying the output structure. A script that was build to parse the output structure must be adapted then.</li>
+<li>MINOR version when you add functionality in a backward compatible manner. One example is adding an additional tool to the module. </li>
+<li>PATCH version when you make backwards compatible bug fixes. This is necessary when you for example increment the docker container version number that fixes a bug or increases the
+    speed of the tool.</li>
+</ul>
+<p>The pipeline specific version number defined in the manifest part of the nextflow.config should be changed
+if either any module specific version number is incremented or any module-independent parameter (e.g. <code>tempdir</code>) or output structure is changed. </p>
+<h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
+<p>Tests for local use are specified in the <code>scripts</code> folder. These scripts are also used as part of the continuous integration tests.
+If you want to run these scripts locally, you will have to override the paths to the databases you have downloaded:</p>
+<p>Examples:
+<div class="highlight"><pre><span></span><code>bash<span class="w"> </span>scripts/test_fullPipeline.sh<span class="w">  </span><span class="s2">&quot; --steps.magAttributes.checkm.database=/vol/spool/checkm --steps.magAttributes.gtdb.database=/vol/spool/gtdb/release202 &quot;</span>
+bash<span class="w"> </span>scripts/test_fragmentRecruitment.sh<span class="w">  </span><span class="s2">&quot; --steps.fragmentRecruitment.frhit.genomes=test/bins/small/bin.*.fa --steps.fragmentRecruitment.frhit.samples=test/reads/small/reads.tsv &quot;</span>
+bash<span class="w"> </span>scripts/test_dereplication.sh<span class="w"> </span><span class="s2">&quot;  --steps.dereplication.pasolli.input=test/bins/small/attributes.tsv &quot;</span>
+bash<span class="w"> </span>scripts/test_magAttributes.sh<span class="w"> </span><span class="s2">&quot;  --steps.magAttributes.input=test/bins/small/attributes.tsv &quot;</span>
+</code></pre></div></p>
+<h3 id="nextflow-versions">Nextflow Versions<a class="headerlink" href="#nextflow-versions" title="Permanent link">&para;</a></h3>
+<p>The toolkit is tested against the lowest and highest Nextflow version number specified in VERSIONS.txt.</p>
+<h2 id="modules">Modules<a class="headerlink" href="#modules" title="Permanent link">&para;</a></h2>
+<p>Functionality is structured in modules (assembly, binning, dereplication, .etc). Each module can have multiple workflows.
+Every module follows the output definition specified in the <a href="../pipeline_specification/">output specification</a>  document. The name and the version of the
+module is specified in the <code>modules</code> section of the <code>nextflow.config</code> file.</p>
+<h3 id="workflows">Workflows<a class="headerlink" href="#workflows" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p>Worfklow names that can not be used directly and are just meant for internal use should start with an underscore.</p>
+</li>
+<li>
+<p>At least every workflow that can be used by other external workflows should contain a short description of the functionality. </p>
+</li>
+<li>
+<p>Workflow names must start with <code>w</code>. </p>
+</li>
+</ol>
+<h2 id="process">Process<a class="headerlink" href="#process" title="Permanent link">&para;</a></h2>
+<p>Process names should start <code>p</code>. The in- and output of processes should contain a sample and/or a bin and contig id.
+Custom error strategies that do not follow the strategy defined in nextflow.config, should be documented (see Megahit example).</p>
+<h3 id="processes-should-publish-process-specific-files">Processes should publish process specific files<a class="headerlink" href="#processes-should-publish-process-specific-files" title="Permanent link">&para;</a></h3>
+<p>Processes should publish <code>.command.sh</code>, <code>.command.out</code>, <code>.command.log</code> and <code>.command.err</code> files but never <code>.command.run</code>.
+In cases where processes process different data but publish it to the same folder these files would be overwritten on every run.
+For example when Prokka publishes log files of every genome to the same sample directory.
+For that reason these files need to be renamed, so that their names include a unique id (e.g. bin id). 
+Please output those files to channel with the following entries and connect this channel to the pDumpLogs process that you can import
+from the utils module:</p>
+<div class="highlight"><pre><span></span><code><span class="n">include</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">pDumpLogs</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="n">from</span><span class="w"> </span><span class="err">&#39;</span><span class="p">..</span><span class="o">/</span><span class="n">utils</span><span class="o">/</span><span class="n">processes</span><span class="err">&#39;</span>
+
+<span class="p">...</span>
+
+<span class="n">tuple</span><span class="w"> </span><span class="nf">env</span><span class="p">(</span><span class="n">FILE_ID</span><span class="p">),</span><span class="w"> </span><span class="n">val</span><span class="p">(</span><span class="s">&quot;${output}&quot;</span><span class="p">),</span><span class="w"> </span><span class="n">val</span><span class="p">(</span><span class="n">params</span><span class="p">.</span><span class="na">LOG_LEVELS</span><span class="p">.</span><span class="na">INFO</span><span class="p">),</span><span class="w"> </span><span class="n">file</span><span class="p">(</span><span class="s">&quot;.command.sh&quot;</span><span class="p">),</span><span class="w"> </span><span class="err">\</span>
+<span class="w">        </span><span class="n">file</span><span class="p">(</span><span class="s">&quot;.command.out&quot;</span><span class="p">),</span><span class="w"> </span><span class="n">file</span><span class="p">(</span><span class="s">&quot;.command.err&quot;</span><span class="p">),</span><span class="w"> </span><span class="n">file</span><span class="p">(</span><span class="s">&quot;.command.log&quot;</span><span class="p">),</span><span class="w"> </span><span class="n">emit</span><span class="p">:</span><span class="w"> </span><span class="n">logs</span>
+</code></pre></div>
+<p>Examples can be viewed in the Checkm and Prokka process.</p>
+<h4 id="logs">Logs<a class="headerlink" href="#logs" title="Permanent link">&para;</a></h4>
+<p>Log files should be stored in the user provided <code>logDir</code> directory.</p>
+<h5 id="log-level">Log Level<a class="headerlink" href="#log-level" title="Permanent link">&para;</a></h5>
+<p>Every configuration file must have a <code>logLevel</code> attribute that can have the following values:</p>
+<div class="highlight"><pre><span></span><code>ALL = 0  All logs are published
+INFO = 1 Just necessary logs are published
+</code></pre></div>
+<p>These values can be used in the publish dir directive to enable or disable the output of logs.</p>
+<div class="highlight"><pre><span></span><code><span class="w">   </span><span class="n">publishDir</span><span class="w"> </span><span class="n">params</span><span class="p">.</span><span class="na">output</span><span class="p">,</span><span class="w"> </span><span class="n">mode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${params.publishDirMode}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">saveAs</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">filename</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">getOutput</span><span class="p">(</span><span class="n">params</span><span class="p">.</span><span class="na">runid</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;pasolli/mash/sketch&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">filename</span><span class="p">)</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="err">\</span>
+<span class="w">        </span><span class="n">pattern</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{**.out,**.err, **.sh, **.log}&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">enabled</span><span class="p">:</span><span class="w"> </span><span class="n">params</span><span class="p">.</span><span class="na">logLevel</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">params</span><span class="p">.</span><span class="na">LOG_LEVELS</span><span class="p">.</span><span class="na">ALL</span>
+</code></pre></div>
+<p>Furthermore the <code>params.LOG_LEVELS.*</code> parameters can be used inside of a process to enable or disable intermediate results for debugging purposes.
+In cases where the log is send to the pDumpLogs process (see Process section), you can specify the log level as part of the tuple:</p>
+<div class="highlight"><pre><span></span><code>tuple env(FILE_ID), val(&quot;${output}&quot;), val(params.LOG_LEVELS.INFO), file(&quot;.command.sh&quot;), \
+        file(&quot;.command.out&quot;), file(&quot;.command.err&quot;), file(&quot;.command.log&quot;), emit: logs
+</code></pre></div>
+<h3 id="resources">Resources<a class="headerlink" href="#resources" title="Permanent link">&para;</a></h3>
+<p>Usually all processes get a label that is linked to the flavor provided in the resources section of the configuration file (e.g. <code>small</code>, <code>medium</code>, <code>large</code>).
+In cases where we can foresee that a processes might need more RAM depending on the size of the input data, it is also possible to use
+the getMemoryResources and getCPUsResources methods provided by the Utils class:</p>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code>memory { Utils.getMemoryResources(params.resources.small, &quot;${sample}&quot;, task.attempt, params.resources) }
+
+cpus { Utils.getCPUsResources(params.resources.tiny.small, &quot;${sample}&quot;, task.attempt, params.resources) }
+</code></pre></div>
+<p>One example where it might make sense to use this option is when a process uses <code>csvtk join</code> and uses per default a label with
+little RAM assigned.</p>
+<h3 id="time-limit">Time Limit<a class="headerlink" href="#time-limit" title="Permanent link">&para;</a></h3>
+<p>Every process must define a time limit which will never be reached on "normal" execution. This limit is only useful for errors in the execution environment<br />
+which could lead to an endless execution of the process.</p>
+<p>You can use the setTimeLimit helper method to add a user configurable time limit.</p>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code>time Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastp.defaults, params.resources.highmemMedium)
+</code></pre></div>
+<h2 id="databases">Databases<a class="headerlink" href="#databases" title="Permanent link">&para;</a></h2>
+<p>If the same database is downloaded during runtime by multiple processes, it takes up an unnecessary ammount of disc space.
+One idea is too always use the same place to store these databases. This place should be described in <code>params.databases</code>.
+If other processes try to use this databases they can look at <code>params.databases</code> on the current machine. 
+If it is present it can be used, if not it should be downloaded. Through this procedure only one copy of each databases is used,
+which is space-saving. Links to the actual database should contain the database version number or the date of download.</p>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<p>Every process should be configurable by providing a parameters string to the tool in the process.
+Every module should use the following specification in the configuration file:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">steps</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">moduleName</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">parameter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">42</span>
+<span class="w">    </span><span class="nt">processName</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--super-flag</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">      </span><span class="nt">timeLimit</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;AUTO&quot;</span>
+</code></pre></div>
+<p>Please check the process chapter regarding possible values for the time limit attribute.
+Additional params can have a string value (like the example above) that is provided to the tool:</p>
+<div class="highlight"><pre><span></span><code><span class="n">pProcess</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="p">...</span>
+
+<span class="w">  </span><span class="nl">shell</span><span class="p">:</span>
+<span class="w">  </span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">  supertool !{params.steps.moduleName.processName.parameter}  !{params.steps.moduleName.processName.additionalParams}</span>
+<span class="s">  &quot;&quot;&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The value of the <code>additionalParams</code> key can also be a map if multiple tools are used in the same process:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">steps</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">moduleName</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">parameter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">42</span>
+<span class="w">    </span><span class="nt">processName</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span>
+<span class="w">         </span><span class="nt">toolNameA</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">-c</span><span class="nv"> </span><span class="s">84</span><span class="nv">  </span><span class="s">&quot;</span>
+<span class="w">         </span><span class="nt">toolNameB</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--super-flag</span><span class="nv"> </span><span class="s">&quot;</span>
+</code></pre></div>
+<p><code>parameter</code> fields can hold hardcoded parameters that hold a defined value like a number that should not be a string.
+One use case of those parameters is that they can be reused for multiple tools.</p>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code>pProcess {
+
+   ...
+
+  shell:
+  &quot;&quot;&quot;
+  toolNameA --super-specific-number-flag !{params.steps.moduleName.parameter}
+  toolNameB --similar-flag-to-toolA !{params.steps.moduleName.parameter} 
+  &quot;&quot;&quot;
+}
+</code></pre></div>
+<h3 id="internal-configuration">Internal Configuration<a class="headerlink" href="#internal-configuration" title="Permanent link">&para;</a></h3>
+<p>The <code>_wConfigurePipeline</code> workflow in the main.nf file should be used for setting 
+pipeline parameters that are need for fullfilling the user provided configuration.</p>
+<p>Example:
+Lets assume the user enables the plasmid module. In that case it is mandatory that 
+the assembler produces a fastg file independend of the user provided settings of the assembler.
+In that case the fastg parameter of any assembler will be set to <code>true</code> by the <code>_wConfigurePipeline</code> method.</p>
+<h2 id="toolkit-docker-images">Toolkit Docker Images<a class="headerlink" href="#toolkit-docker-images" title="Permanent link">&para;</a></h2>
+<p>Dockerfiles of Docker images that are build by toolkit developers can be found in the <code>docker</code> directory.
+The name of the directory (i.e.: <code>toolkit-python-env</code> in <code>docker/toolkit-python-env</code>) is used for the docker image name. All images belong to the
+<a href="https://quay.io/organization/metagenomics">metagenomics</a> quay.io organisation which is owned by the Computational Metagenomics group in Bielefeld.
+A docker repository in the <code>metagenomics</code> orginsation must be created by the organisation owner, before the actual image can be build.
+The version of the image specified in the <code>VERSION</code> file (i.e. <code>docker/toolkit-python-env/VERSION</code>) is used for the image tag (<code>metagenomics/toolkit-python-env:VERSION</code>).
+An image build is only triggered if the version in the VERSION file is updated on the dev or master branch.</p>
+<h2 id="wiki">Wiki<a class="headerlink" href="#wiki" title="Permanent link">&para;</a></h2>
+<p>For building the documentation we are using <a href="https://www.mkdocs.org/">mkdocs</a> in combination with <a href="https://squidfunk.github.io/mkdocs-material/">mkdocs-material</a>
+and <a href="https://github.com/jimporter/mike">mike</a> for building versioned wiki pages.
+Using <code>TOOLKIT_TAG=0.5.0 make wiki_publish</code> the local wiki pages are uploaded to Github pages. Please use semantic versioning for specifying the version number.</p>
+<p>You can work on these html files locally by running <code>make dev_wiki</code>. But please note that by build the static html file for upload, the navigation might change.
+You can view the final html file by building the html file (see Makefile <code>make help</code>). </p>
+<h2 id="utils">Utils<a class="headerlink" href="#utils" title="Permanent link">&para;</a></h2>
+<p>We do not want to duplicate code and thats why we should store methods in the lib/Utils.groovy file. The Utils class can be used in any module. </p>
+<h2 id="database-download">Database Download<a class="headerlink" href="#database-download" title="Permanent link">&para;</a></h2>
+<p>This section explains how a developer is able to implement the database download strategy as explained in the <a href="../database/#database-input-configuration">user documentation</a>. 
+Example implementations can be found in the gtdb, checkm or rgi scripts.</p>
+<p>The first step is to check if the user provides an already extracted database: </p>
+<div class="highlight"><pre><span></span><code><span class="nv">DB_PATH</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-z<span class="w"> </span><span class="s2">&quot;!{EXTRACTED_DB}&quot;</span><span class="w"> </span><span class="o">]</span>
+<span class="k">then</span>
+<span class="w">   </span><span class="c1"># Fetch user parameter for not extracted db path and run flock (see next section)</span>
+<span class="w">   </span><span class="nv">DB_PATH</span><span class="o">=</span><span class="s2">&quot;not extracted&quot;</span>
+<span class="k">else</span>
+<span class="w">  </span><span class="c1"># Set variable to extracted db path</span>
+<span class="k">fi</span>
+</code></pre></div>
+<p>Since the download is not directly handled by nextflow and paths to the files need to be downloaded, any file or directory must be
+mounted first to the container. For this reason you have to add the <code>setDockerMount</code> function with the database config as input to 
+the <code>containerOptions</code> parameter:</p>
+<div class="highlight"><pre><span></span><code>containerOptions<span class="w"> </span><span class="s2">&quot; other container options &quot;</span><span class="w"> </span>+<span class="w"> </span>setDockerMount<span class="o">(</span>params.steps?.magAttributes?.checkm?.database<span class="o">)</span>
+</code></pre></div>
+<h3 id="filesystem-locks">Filesystem locks<a class="headerlink" href="#filesystem-locks" title="Permanent link">&para;</a></h3>
+<p>Multiple jobs of the same process (e.g. GTDB) are able to synchronize the download of a database by using filesystem locks.
+The download is handled by the <code>concurrentDownload.sh</code> script and should be executed the following way:</p>
+<div class="highlight"><pre><span></span><code>flock<span class="w"> </span>LOCK_FILE<span class="w"> </span>concurrentDownload.sh<span class="w"> </span>--output<span class="o">=</span>DATABASE<span class="w"> </span><span class="se">\</span>
+<span class="w">           </span>--httpsCommand<span class="o">=</span>COMMAND<span class="w"> </span><span class="se">\</span>
+<span class="w">           </span>--localCommand<span class="o">=</span>COMMAND<span class="w"> </span><span class="se">\</span>
+<span class="w">           </span>--s3FileCommand<span class="o">=</span>COMMAND<span class="w"> </span><span class="se">\</span>
+<span class="w">           </span>--s3DirectoryCommand<span class="o">=</span>COMMAND<span class="w"> </span><span class="se">\</span>
+<span class="w">           </span>--s5cmdAdditionalParams<span class="o">=</span>S5CMD_PARAMS<span class="w"> </span><span class="se">\</span>
+<span class="w">           </span>--link<span class="o">=</span>LINK<span class="w"> </span><span class="se">\</span>
+<span class="w">           </span>--expectedMD5SUM<span class="o">=</span>USER_VERIFIED_DATABASE_MD5SUM
+</code></pre></div>
+<p>where
+  * <code>LOCK_FILE</code> is a file that is used for locking. Processes will check if the file is currently locked before trying to download anything.
+    This file should ideally placed in the <code>params.database</code> directory of the specific tool (e.g. !{params.databases}/rgi).</p>
+<ul>
+<li>
+<p><code>DATABASE</code> is the directory that is used for placing the specific database.</p>
+</li>
+<li>
+<p><code>COMMAND</code> is the command used to download and extract the database and to remove it afterwards. 
+    (e.g. "wget -O data.tar.gz $DOWNLOAD_LINK &amp;&amp; tar -xvf data.tar.gz ./card.json &amp;&amp; rm data.tar.gz" for the <code>--httpsCommand</code> flag)</p>
+</li>
+<li>
+<p><code>USER_VERIFIED_DATABASE_MD5SUM</code> is the MD5SUM of the <em>extracted</em> database that the user should test manually before executing the pipeline.</p>
+</li>
+<li>
+<p><code>S5CMD_PARAMS</code> allows you to set s5cmd specific parameters. For more information check the s5cmd documentation. </p>
+</li>
+<li>
+<p><code>LINK</code> is the link that will be used to test if the file is accessible by S3, HTTPS or is available via a local path.</p>
+</li>
+<li>
+<p><code>USER_VERIFIED_DATABASE_MD5SUM</code> Before a database is downloaded, the script checks the MD5SUM of an already downloaded database against a user specified one.
+     If it does not equal, the script will download the database again.</p>
+</li>
+</ul>
+<h3 id="tests">Tests<a class="headerlink" href="#tests" title="Permanent link">&para;</a></h3>
+<p>You can test your tool against different database inputs by using the <code>make runDatabaseTest</code> command. You will have to specify multiple databases 
+that are accessible via https, S3, local path etc. Please check github actions file for how to run these tests.</p>
+<h2 id="polished-variables">Polished Variables<a class="headerlink" href="#polished-variables" title="Permanent link">&para;</a></h2>
+<p>Sometimes user input variables must be polished before they can used in our code.
+Thats why the nextflow config adds a namespace to the params namespace called <code>polished</code>.
+For example the params.databases variable must end with a slash in order to be used as part of a docker mount.
+Thats why there is a variable <code>params.polished.databases</code> that should be used instead.  </p>
+<h2 id="other">Other<a class="headerlink" href="#other" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p>Magic numbers should not be used.</p>
+</li>
+<li>
+<p>Variable, method, workflow, folder and process names should be written in camelcase.</p>
+</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "content.code.copy"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.bd41221c.min.js"></script>
+      
+    
+  </body>
+</html>
