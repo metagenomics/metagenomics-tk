@@ -43,9 +43,9 @@ In the following we will inspect the outputs of the mentioned tools.
 
 ### Output
 
-#### fastp 
+#### Fastp 
 
-fastp is an efficient, versatile, open-source tool for preprocessing FASTQ files and quality control in next-generation sequencing (NGS) workflows.
+Fastp is an efficient, versatile, open-source tool for preprocessing FASTQ files and quality control in next-generation sequencing (NGS) workflows.
 Written in C++, fastp provides high-speed performance without compromising accuracy, making it suitable for handling large sequencing data sets.
 For quality and adapter trimming fastp trims reads from 5’ end to 3’ end using a sliding window. 
 

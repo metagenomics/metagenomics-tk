@@ -43,10 +43,9 @@ you can also simply leave out the following command and create the directory wit
 
 
 !!! question "Task 1"
-    We will link the volume to `~/mgcourse` and get ownership, so we can use that link for the rest of this tutorial:
+    We will link the volume to `~/mgcourse`, so we can use that link for the rest of this tutorial:
     ```BASH
-    sudo ln -s /vol/mgcourse/ ~/mgcourse
-    sudo chown -R ubuntu:ubuntu ~/mgcourse
+    ln -s /vol/mgcourse/ ~/mgcourse
     ```
 
 #### Database directory link
@@ -149,7 +148,7 @@ that are used as part of the module can be considered as a property of the modul
 The level below the tool names is for configuring the tools and methods. Each analysis is listed on the [modules page](../../modules/introduction.md). 
 
 ```YAML linenums="14" title="Example Configuration File Snippet 2"
----8<--- "default/tutorials/tutorial1/fullpipeline_assembly.yml:15:40"
+---8<--- "default/tutorials/tutorial1/fullpipeline_assembly.yml:15:46"
 ```
 
 #### Part 3: Computational Resources
@@ -160,7 +159,7 @@ Predefined labels are listed in the following example snippet. These labels are 
 You can read more  about resource parameters [here](../../configuration.md/#configuration-of-computational-resources-used-for-pipeline-runs).
 
 ```YAML linenums="40" title="Example Configuration File Snippet 3"
----8<--- "default/tutorials/tutorial1/fullpipeline_assembly.yml:41"
+---8<--- "default/tutorials/tutorial1/fullpipeline_assembly.yml:47"
 ```
 
 !!! question "Task 4"
