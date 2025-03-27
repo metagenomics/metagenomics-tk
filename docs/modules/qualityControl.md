@@ -153,6 +153,22 @@ The following output is produced for short and long reads.
 
 : Nonpareil statistics including the Nonpareil diversity index. 
 
+  Columns: 
+
+  * `SAMPLE` sample name
+
+  * `C` Average coverage of the entire dataset.
+
+  * `diversity` is the Nonpareil diversity index. 
+
+  * `LR` Actual sequencing effort of the dataset. 
+
+  * `LRstar` is the sequencing effort for nearly complete coverage.
+
+  * `modelR` Pearson’s R coefficient betweeen the rarefied data and the projected model.
+
+  * `kappa` "Redundancy" value of the entire dataset. 
+ 
 ### Filtered out Human Sequences
 
 `SAMPLE_filtered.fq.gz`

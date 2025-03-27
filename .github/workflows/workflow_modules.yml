@@ -290,7 +290,7 @@ jobs:
 
   quickstart:
     timeout-minutes: 800
-    runs-on: [ self-hosted, slurm]
+    runs-on: [self-hosted, slurm]
     needs: [codePolicy]
     steps:
       - uses: actions/checkout@v4
@@ -305,6 +305,43 @@ jobs:
       - name: Test Quickstart
         run: |
           bash ./scripts/test_quickstart.sh || exit 1
+
+  tutorial1:
+    timeout-minutes: 800
+    runs-on: [self-hosted, slurm]
+    needs: [codePolicy]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy scm to circumvent API rate limit 
+        run: |
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          BRANCH_SED=$(echo $BRANCH | sed 's/\//\\\//g')
+          # Replace all references of the master branch to the current branch
+          sed -i "s/master/${BRANCH_SED}/g"  scripts/tutorials/tutorial1/*.sh
+          # Set correct branch when testing the Toolkit
+          sed -i "s/ nextflow run / nextflow run -r ${BRANCH_SED} /g" scripts/tutorials/tutorial1/*.sh
+          # Delete line with cd 
+          sed -i '/mgcourse/d' scripts/tutorials/tutorial1/*.sh
+          mkdir -p .nextflow
+          cp ~/.nextflow/scm .nextflow
+      - name: Test Quality Control
+        run: |
+          bash ./scripts/tutorials/tutorial1/test_qc.sh || exit 1
+      - name: Test Assembly
+        run: |
+          bash ./scripts/tutorials/tutorial1/test_assembly.sh || exit 1
+      - name: Test Binning
+        run: |
+          bash ./scripts/tutorials/tutorial1/test_binning.sh || exit 1
+      - name: Test Binning Evaluation
+        run: |
+          bash ./scripts/tutorials/tutorial1/test_bin_quality.sh || exit 1
+      - name: Test Classification 
+        run: |
+          bash ./scripts/tutorials/tutorial1/test_classification.sh || exit 1
+      - name: Test Annotation 
+        run: |
+          bash ./scripts/tutorials/tutorial1/test_annotation.sh || exit 1
 
   gettingStarted:
     timeout-minutes: 800

@@ -2,9 +2,14 @@ use_directory_urls: true
 site_name: Metagenomics-Toolkit
 docs_dir: ../docs
 
+repo_url: https://github.com/metagenomics/metagenomics-tk
+repo_name: Metagenomics-Tk
+
 markdown_extensions:
+  - pymdownx.details
   - toc:
       permalink: "&para;"
+  - attr_list
   - admonition
   - pymdownx.inlinehilite
   - def_list
@@ -65,6 +70,16 @@ nav:
     - modules/metabolomics.md
     - modules/readMapping.md
     - modules/export.md
+  - "Tutorials":
+    - "Tutorial 1": 
+      - "Introduction": tutorials/tutorial1/introduction.md 
+      - "Quality Control": tutorials/tutorial1/quality_control.md 
+      - "Assembly": tutorials/tutorial1/assembly.md
+      - "Assembly Evaluation": tutorials/tutorial1/assembly_evaluation.md
+      - "Binning": tutorials/tutorial1/binning.md
+      - "Assessing Bin Quality": tutorials/tutorial1/bin_quality.md
+      - "Classification": tutorials/tutorial1/classification.md
+      - "Annotation": tutorials/tutorial1/annotation.md
   - "Developer":
     - developer_guidelines.md
     - pipeline_specification.md
