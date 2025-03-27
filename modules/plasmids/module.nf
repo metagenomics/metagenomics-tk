@@ -128,6 +128,8 @@ process pCount {
 
     container "${params.ubuntu_image}"
 
+    when params.steps.containsKey("plasmid")
+
     input:
     tuple val(sample), val(binID), path(plasmids)
 
