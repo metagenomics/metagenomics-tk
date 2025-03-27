@@ -4,7 +4,7 @@ To get an impression of the quality of our bins, we compute the completeness and
 
 CheckM 1 and 2 provide a set of tools to assess the quality of genomes recovered from isolates, single cells, or metagenomes.
 While the first version relies on collocated sets of genes that are ubiquitous and single-copy within a phylogenetic lineage,
-the second version uses a machine learning based approach that was trained on all available genomic information such as multi-copy genes,
+the second version uses a machine-learning-based approach that was trained on all available genomic information such as multi-copy genes,
 biological pathways and modules. Both versions are supported by the Metagenomics-Toolkit and we will use the second version for this part of the tutorial.
 
 
@@ -57,7 +57,7 @@ For reference, your complete parameter file looks like this:
     ??? Solution
         No, completeness is much lower than expected in comparison to the genome fraction we observed in the QUAST results (see Assembly evaluation part).
 
-We will now run QUAST again but this time we specify the bins and the unbinned contigs instead of the assemblies as input.
+We will now run QUAST again, but this time we specify the bins and the unbinned contigs instead of the assemblies as input.
 By doing this, QUAST can tell us which reference genome the bin belongs to.
 
 !!! Question "Task 5"
@@ -106,8 +106,12 @@ By doing this, QUAST can tell us which reference genome the bin belongs to.
     ```
     Can you identify, where large part of the genome fractions are assigned to? What might be the reason? Have a close look on the contig statistics of each genome bin and the unbinned fraction
     ??? Solution
-        Large parts of the the contigs have been assigned to the unbinned fraction. The reason for that is the small contig size, metabat2 uses 2500 bp as default cutoff for contigs that can be assigned to genome bins, other contigs are automatically assigned to the unbinned fraction. This cutoff can be lowered to 1500 bp but would not improve the results very much here, since so many contigs are smaller than that.
+        Large parts of the contigs have been assigned to the unbinned fraction. The reason for that is the small contig size. Metabat2 uses 2500 bp as default cutoff for contigs that can be assigned to genome bins, other contigs are automatically assigned to the unbinned fraction. This cutoff can be lowered to 1500 bp but would not improve the results very much here, since so many contigs are smaller than that.
 
 In summary, three of your bins meet at least the completeness and contamination criteria to be considered as medium quality (Completeness > 50% and Contamination < 10%) 
-according to the [**Minimum Information about a Metagenome-Assembled Genome (MIMAG)**](https://www.gensc.org//pages/standards/checklists.html) standard. 
-In the next section we will examine their taxonomy. 
+according to the [**Minimum Information about a Metagenome-Assembled Genome (MIMAG)**](https://www.gensc.org/pages/standards/checklists.html) standard. 
+In the next section we will examine their taxonomy.
+
+---
+
+➡️ [**Continue to: Classification**](./classification.md) 
