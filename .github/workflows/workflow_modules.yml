@@ -322,6 +322,8 @@ jobs:
           sed -i "s/ nextflow run / nextflow run -r ${BRANCH_SED} /g" scripts/tutorials/tutorial1/*.sh
           # Delete line with cd 
           sed -i '/mgcourse/d' scripts/tutorials/tutorial1/*.sh
+          # Remove the database directory set to mgcourse
+          sed -i '/databases/d' scripts/tutorials/tutorial1/*.sh
           mkdir -p .nextflow
           cp ~/.nextflow/scm .nextflow
       - name: Test Quality Control

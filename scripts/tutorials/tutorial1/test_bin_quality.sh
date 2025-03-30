@@ -8,7 +8,8 @@ NXF_VER=24.10.4 nextflow run metagenomics/metagenomics-tk \
 	  -ansi-log false \
 	  -entry wFullPipeline \
 	  -resume \
-    --input.paired.path https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv \
+    --databases $(readlink -f databases) \
+          --input.paired.path https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv \
 	  --logDir logs_bin_quality 
 
 make check LOG_DIR=$(pwd)/logs_bin_quality

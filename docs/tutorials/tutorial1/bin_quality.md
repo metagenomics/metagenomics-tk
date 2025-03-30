@@ -25,7 +25,7 @@ For reference, your complete parameter file looks like this:
 !!! Question "Task 2"
     Run CheckM2 with the Metagenomics-Toolkit using the following command:
     ```BASH
-    ---8<--- "scripts/tutorials/tutorial1/test_bin_quality.sh:3:13"
+    ---8<--- "scripts/tutorials/tutorial1/test_bin_quality.sh:3:14"
     ```
 
 

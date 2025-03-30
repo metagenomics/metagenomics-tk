@@ -22,7 +22,7 @@ The following snippet represents the Toolkit configuration for the classificatio
 !!! Question "Task 1"
     Run the following command for the classification:
     ```BASH
-    ---8<--- "scripts/tutorials/tutorial1/test_classification.sh:3:12"
+    ---8<--- "scripts/tutorials/tutorial1/test_classification.sh:3:13"
     ```
 
 For reference, your complete parameter file should look like this:

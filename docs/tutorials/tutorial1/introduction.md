@@ -39,7 +39,7 @@ you can also simply leave out the following command and create the directory wit
 
 !!! warning "Course Participants"
 
-    In case you are a course participant, a volume has been prepared for you, so please run the following command. 
+    In case you are a course participant, a volume has been prepared for you, so please run the following commands. 
 
 
 !!! question "Task 1"
@@ -48,18 +48,12 @@ you can also simply leave out the following command and create the directory wit
     ln -s /vol/mgcourse/ ~/mgcourse
     ```
 
-#### Database directory link
+    Create a database directory
 
-In addition, we need a symlink for the directory where the databases should be stored.
-
-!!! question "Task 2"
-    Create a `databases` and `/vol/scratch` directory and create a link to the database directory:
     ```BASH
-    mkdir ~/mgcourse/databases
-    mkdir -p /vol/scratch
-    ln -s ~/mgcourse/databases/ /vol/scratch/databases
+    mkdir -p ~/mgcourse/databases
     ```
- 
+
 
 ## Metagenomics-Toolkit Introduction
 
@@ -94,7 +88,7 @@ NXF_VER=NEXTFLOW_VERSION nextflow run metagenomics/metagenomics-tk NEXTFLOW_OPTI
 * `TOOLKIT_OPTIONS` are options that are provided by the Toolkit. All Toolkit options are either in a configuration file or can be provided on the command line which will be explained in the following section. 
 
 
-!!! question "Task 3"
+!!! question "Task 2"
 
     Open the Metagenomics-Toolkit wiki on a second browser tab by a click on this
     [link](https://metagenomics.github.io/metagenomics-tk/latest/){:target="_blank"}.
@@ -162,7 +156,7 @@ You can read more  about resource parameters [here](../../configuration.md/#conf
 ---8<--- "default/tutorials/tutorial1/fullpipeline_assembly.yml:47"
 ```
 
-!!! question "Task 4"
+!!! question "Task 3"
 
     One of the first checks before running the Toolkit is to adjust the resource labels to the resources of your machine.
     You can run `nproc` to get the number of CPUs and `free -h --mega` to get the amount of RAM (row name: Mem, column name: total) available on your machine. 
@@ -180,7 +174,7 @@ If a parameter is nested within the hierarchy of the YAML file, represent it as 
 For example, consider the CPU count of the *highmemLarge* resource label in the previous snippet.
 The corresponding command-line argument would be `--resources.highmemLarge.cpus`.
 
-!!! question "Task 5"
+!!! question "Task 4"
 
     Let`s say you want to specify a path to a different input TSV file (see **Example Configuration File Snippet 1**) that contains a different set of input datasets. 
     How would you specify the parameter on the command line?
