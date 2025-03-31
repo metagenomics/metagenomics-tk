@@ -43,7 +43,7 @@ steps:
       resources:
         RAM:
           mode: 'PREDICT'
-          predictMinLabel: 'medium'
+          predictMinLabel: 'highmemLarge'
   binning:
     bwa2:
       additionalParams: 

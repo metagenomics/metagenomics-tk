@@ -43,7 +43,7 @@ steps:
       resources:
         RAM:
           mode: 'PREDICT'
-          predictMinLabel: 'medium'
+          predictMinLabel: 'highmemLarge'
 resources:
   highmemLarge:
     cpus: 28
