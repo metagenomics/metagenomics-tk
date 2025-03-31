@@ -38,7 +38,7 @@ steps:
       # --mem-flag 0 to use minimum memory, --mem-flag 1 (default) moderate memory and --mem-flag 2 all memory.
       # meta-sensitive: '--min-count 1 --k-list 21,29,39,49,...,129,141' 
       # meta-large:  '--k-min  27  --k-max 127 --k-step 10' (large & complex metagenomes, like soil)
-      additionalParams: " --min-contig-len 1000 --presets meta-sensitive "
+      additionalParams: " --min-contig-len 500 --presets meta-sensitive "
       fastg: true
       resources:
         RAM:
