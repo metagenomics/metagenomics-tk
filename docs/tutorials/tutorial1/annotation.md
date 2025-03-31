@@ -39,16 +39,16 @@ For reference, your complete parameter file should look like this:
         ```
 
         ```BASH
-        cat output/data/1/annotation/1.0.0/prokka/data_bin.10.txt
+        cat output/data/1/annotation/1.0.0/prokka/data_bin.3.txt
         ```
         The above command leads to the following output: 
         ```BASH
-        organism: Genus species strain
-        contigs: 443
-        bases: 1952753
-        CDS: 2692
-        CRISPR: 2
-        tRNA: 27
+        organism: Genus species strain 
+        contigs: 150
+        bases: 520975
+        CDS: 853
+        CRISPR: 3
+        tRNA: 12
         ```
 
 If you want to look into the descriptions of the annotated genes then you have to look into the GFF (General Feature Format) files. 
@@ -80,7 +80,7 @@ Optional header lines starting with '##' provide metadata about the file, adding
 
     ??? Solution
         ```
-        zgrep tRNA output/data/1/annotation/1.0.0/prokka/data_bin.10.gff.gz
+        zgrep tRNA output/data/1/annotation/1.0.0/prokka/data_bin.3.gff.gz
         ```
         For example, there the tRNA products `tRNA-Thr(cgt)` and `tRNA-His(gtg)`.  
         

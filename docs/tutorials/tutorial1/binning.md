@@ -165,18 +165,19 @@ Before that, let's have a look at what other information the Metagenomics-Toolki
         ```
         ```BASH
         SAMPLE  BIN_ID  format  type    num_seqs        sum_len min_len avg_len max_len Q1      Q2      Q3      sum_gap N50     Q20(%)  Q30(%)  GC(%)   COVERAGE
-        data    data_bin.1.fa   FASTA   DNA     66      682946  2837    10347.7 31045   6083.0  8277.5  13778.0 0       13397   0.00    0.00    25.03   15.5969
-        data    data_bin.10.fa  FASTA   DNA     280     944933  2505    3374.8  6899    2786.5  3165.0  3690.5  0       3346    0.00    0.00    57.96   6.37826
-        data    data_bin.2.fa   FASTA   DNA     150     520975  2500    3473.2  9084    2739.0  3127.0  3909.0  0       3328    0.00    0.00    43.93   7.13884
-        data    data_bin.3.fa   FASTA   DNA     182     654974  2504    3598.8  8372    2821.0  3173.5  4021.0  0       3502    0.00    0.00    49.41   7.81954
-        data    data_bin.4.fa   FASTA   DNA     139     1149027 2523    8266.4  35033   4367.0  6419.0  10607.0 0       10241   0.00    0.00    40.52   14.9085
-        data    data_bin.5.fa   FASTA   DNA     454     1994574 2501    4393.3  13793   2998.0  3736.5  5327.0  0       4624    0.00    0.00    27.97   9.95115
-        data    data_bin.6.fa   FASTA   DNA     88      280467  2509    3187.1  5229    2746.5  2998.5  3429.5  0       3093    0.00    0.00    39.02   5.18867
-        data    data_bin.7.fa   FASTA   DNA     153     517295  2504    3381.0  7616    2769.0  3134.0  3688.0  0       3294    0.00    0.00    33.15   6.26526
-        data    data_bin.8.fa   FASTA   DNA     180     958807  2514    5326.7  17160   3436.0  4467.0  6472.5  0       5965    0.00    0.00    33.35   10.8953
-        data    data_bin.9.fa   FASTA   DNA     224     717735  2500    3204.2  6592    2692.0  2958.5  3442.0  0       3109    0.00    0.00    50.72   5.11192
+        data    data_bin.1.fa   FASTA   DNA     150     507900  2504    3386.0  7616    2757.0  3127.5  3704.0  0       3321    0.00    0.00    33.29   6.15009
+        data    data_bin.10.fa  FASTA   DNA     177     641723  2504    3625.6  8372    2855.0  3213.0  4036.0  0       3542    0.00    0.00    49.49   7.7348
+        data    data_bin.2.fa   FASTA   DNA     224     717735  2500    3204.2  6592    2692.0  2958.5  3442.0  0       3109    0.00    0.00    50.72   5.05946
+        data    data_bin.3.fa   FASTA   DNA     150     520975  2500    3473.2  9084    2739.0  3127.0  3909.0  0       3328    0.00    0.00    43.93   7.0744
+        data    data_bin.4.fa   FASTA   DNA     264     1340562 2505    5077.9  17160   3213.0  4328.5  6132.5  0       5540    0.00    0.00    32.36   10.8599
+        data    data_bin.5.fa   FASTA   DNA     88      280467  2509    3187.1  5229    2746.5  2998.5  3429.5  0       3093    0.00    0.00    39.02   5.12779
+        data    data_bin.6.fa   FASTA   DNA     139     1149027 2523    8266.4  35033   4367.0  6419.0  10607.0 0       10241   0.00    0.00    40.52   14.8691
+        data    data_bin.7.fa   FASTA   DNA     280     944933  2505    3374.8  6899    2786.5  3165.0  3690.5  0       3346    0.00    0.00    57.96   6.31446
+        data    data_bin.8.fa   FASTA   DNA     66      682946  2837    10347.7 31045   6083.0  8277.5  13778.0 0       13397   0.00    0.00    25.03   15.588
+        data    data_bin.9.fa   FASTA   DNA     374     1625795 2501    4347.0  11747   3019.0  3725.5  5239.0  0       4532    0.00    0.00    27.53   9.6491
+
         ```
-        In this result, bin 8 has the highest coverage (15.5364) and highest N50 (13397). Also note, that some of the bins highly differ in their GC content.
+        In this result, bin 8 has the highest coverage (15.588) and highest N50 (13397). Also note, that some of the bins highly differ in their GC content.
 
 ---
 

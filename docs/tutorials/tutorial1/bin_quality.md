@@ -39,17 +39,17 @@ For reference, your complete parameter file looks like this:
         cut -f2,3,4 output/data/1/magAttributes/*/checkm2/data_checkm2_generated.tsv
         ```
         ```BASH        
-        BIN_ID  COMPLETENESS    CONTAMINATION
-        data_bin.1.fa   12.81   0.12
-        data_bin.10.fa  52.12   5.63
-        data_bin.2.fa   11.09   0.0
-        data_bin.3.fa   81.91   0.46
-        data_bin.4.fa   20.82   0.01
-        data_bin.5.fa   16.83   0.01
-        data_bin.6.fa   20.7    0.74
-        data_bin.7.fa   35.3    0.04
-        data_bin.8.fa   85.63   0.28
-        data_bin.9.fa   22.62   0.05
+        BIN_ID	COMPLETENESS	CONTAMINATION
+        data_bin.1.fa	16.88	0.0
+        data_bin.10.fa	24.04	0.04
+        data_bin.2.fa	12.81	0.12
+        data_bin.3.fa	20.57	0.01
+        data_bin.4.fa	52.73	0.3
+        data_bin.5.fa	11.09	0.0
+        data_bin.6.fa	81.91	0.46
+        data_bin.7.fa	20.68	0.75
+        data_bin.8.fa	85.4	0.28
+        data_bin.9.fa	39.66	0.62
         ```        
 
 !!! Question "Task 4"
