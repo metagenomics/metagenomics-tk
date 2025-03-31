@@ -32,7 +32,7 @@ For reference, your complete parameter file should look like this:
     ---8<--- "default/tutorials/tutorial1/fullpipeline_classification.yml"
     ```
 
-You may have noticed that the classification was quite fast. The fast execution can be explained by the fast identification of a genome, and thus a taxonomic label, in the GTDB via Mash and ANI.
+The classification took some time, most of it is due to a mash database, that needs to be built before the actual classification. After that, the classification itself was quite fast. The fast execution can be explained by the fast identification of a genome, and thus a taxonomic label, in the GTDB via Mash and ANI.
 Classification based on marker genes was almost not necessary. In a real metagenome sample, the classification would usually take longer.
 You can read [here](https://ecogenomics.github.io/GTDBTk/commands/classify_wf.html) about the different steps of the GTDB-Tk classification.
 
@@ -52,16 +52,16 @@ You can read [here](https://ecogenomics.github.io/GTDBTk/commands/classify_wf.ht
         For example, the column `fastani_ani` reports that 9 out of 10 genomes were processed using ANI. 
         ```TSV
         fastani_ani
+        98.52
+        97.43
         98.4
-        98.82
+        98.7
+        99.23
         N/A
         99.51
-        98.7
-        98.52
         98.58
-        99.21
         99.67
-        97.44
+        98.82
         ```
 
 Now, of course, you are interested in the classification of your genomes. The results can be affected by missing marker genes or contamination, as indicated on the GTDB-Tk [website](https://ecogenomics.github.io/GTDBTk/commands/classify_wf.html).
@@ -75,7 +75,7 @@ You already have an estimate of the completeness and contamination of your genom
         cd ~/mgcourse/
         ```
 
-        By executing the following two commands you get the quality values and the classification:
+        By executing the following two commands you get the classification and the quality values:
         ```BASH
         cut -f 1,5 output/data/1/magAttributes/*/gtdb/data_gtdbtk_generated_combined.tsv | column -s$'\t' -t
         ```
@@ -87,41 +87,46 @@ You already have an estimate of the completeness and contamination of your genom
         The output is the following:
         ```TSV
         BIN_ID          classification
-        data_bin.1.fa   d__Bacteria;p__Bdellovibrionota;c__Bdellovibrionia;o__Bdellovibrionales;f__Bdellovibrionaceae;g__Bdellovibrio;s__Bdellovibrio bacteriovorus
-        data_bin.10.fa  d__Bacteria;p__Fusobacteriota;c__Fusobacteriia;o__Fusobacteriales;f__Fusobacteriaceae;g__Fusobacterium;s__Fusobacterium nucleatum
-        data_bin.2.fa   d__Bacteria;p__Campylobacterota;c__Campylobacteria;o__Campylobacterales;f__Helicobacteraceae;g__Helicobacter;s__
-        data_bin.3.fa   d__Bacteria;p__Chlamydiota;c__Chlamydiia;o__Chlamydiales;f__Chlamydiaceae;g__Chlamydophila;s__Chlamydophila pneumoniae
-        data_bin.4.fa   d__Bacteria;p__Aquificota;c__Aquificae;o__Aquificales;f__Aquificaceae;g__Aquifex;s__Aquifex aeolicus
-        data_bin.5.fa   d__Bacteria;p__Desulfobacterota;c__Desulfovibrionia;o__Desulfovibrionales;f__Desulfovibrionaceae;g__Lawsonia;s__Lawsonia intracellularis
-        data_bin.6.fa   d__Bacteria;p__Actinomycetota;c__Actinomycetia;o__Mycobacteriales;f__Mycobacteriaceae;g__Mycobacterium;s__Mycobacterium leprae
-        data_bin.7.fa   d__Bacteria;p__Bacillota_A;c__Clostridia;o__Tissierellales;f__Peptoniphilaceae;g__Finegoldia;s__Finegoldia magna_H
+        data_bin.1.fa   d__Bacteria;p__Desulfobacterota;c__Desulfovibrionia;o__Desulfovibrionales;f__Desulfovibrionaceae;g__Lawsonia;s__Lawsonia intracellularis
+        data_bin.10.fa  d__Bacteria;p__Bacteroidota;c__Bacteroidia;o__Bacteroidales;f__Porphyromonadaceae;g__Porphyromonas;s__Porphyromonas gingivalis
+        data_bin.2.fa   d__Bacteria;p__Bdellovibrionota;c__Bdellovibrionia;o__Bdellovibrionales;f__Bdellovibrionaceae;g__Bdellovibrio;s__Bdellovibrio bacteriovorus
+        data_bin.3.fa   d__Bacteria;p__Aquificota;c__Aquificae;o__Aquificales;f__Aquificaceae;g__Aquifex;s__Aquifex aeolicus
+        data_bin.4.fa   d__Bacteria;p__Bacillota_A;c__Clostridia;o__Tissierellales;f__Peptoniphilaceae;g__Finegoldia;s__Finegoldia magna_H
+        data_bin.5.fa   d__Bacteria;p__Campylobacterota;c__Campylobacteria;o__Campylobacterales;f__Helicobacteraceae;g__Helicobacter;s__
+        data_bin.6.fa   d__Bacteria;p__Chlamydiota;c__Chlamydiia;o__Chlamydiales;f__Chlamydiaceae;g__Chlamydophila;s__Chlamydophila pneumoniae
+        data_bin.7.fa   d__Bacteria;p__Actinomycetota;c__Actinomycetia;o__Mycobacteriales;f__Mycobacteriaceae;g__Mycobacterium;s__Mycobacterium leprae
         data_bin.8.fa   d__Bacteria;p__Pseudomonadota;c__Gammaproteobacteria;o__Enterobacterales;f__Enterobacteriaceae;g__Wigglesworthia;s__Wigglesworthia glossinidia_B
-        data_bin.9.fa   d__Bacteria;p__Bacteroidota;c__Bacteroidia;o__Bacteroidales;f__Porphyromonadaceae;g__Porphyromonas;s__Porphyromonas gingivalis
+        data_bin.9.fa   d__Bacteria;p__Fusobacteriota;c__Fusobacteriia;o__Fusobacteriales;f__Fusobacteriaceae;g__Fusobacterium;s__Fusobacterium nucleatum
         ```
 
         ```TSV
         BIN_ID          COMPLETENESS  CONTAMINATION
-        data_bin.1.fa   12.81         0.12
-        data_bin.10.fa  52.12         5.63
-        data_bin.2.fa   11.09         0.0
-        data_bin.3.fa   81.91         0.46
-        data_bin.4.fa   20.82         0.01
-        data_bin.5.fa   16.83         0.01
-        data_bin.6.fa   20.7          0.74
-        data_bin.7.fa   35.3          0.04
-        data_bin.8.fa   85.63         0.28
-        data_bin.9.fa   22.62         0.05
+        data_bin.1.fa   16.88         0.0
+        data_bin.10.fa  24.04         0.04
+        data_bin.2.fa   12.81         0.12
+        data_bin.3.fa   20.57         0.01
+        data_bin.4.fa   52.73         0.3
+        data_bin.5.fa   11.09         0.0
+        data_bin.6.fa   81.91         0.46
+        data_bin.7.fa   20.68         0.75
+        data_bin.8.fa   85.4          0.28
+        data_bin.9.fa   39.66         0.62
         ```
 
         Based on the output and the comparison of the BIN_ID columns, we can say that the following species could be detected that belong to bins that are at least 50% complete and at most 10% contaminated:
         ```BASH
-        d__Bacteria;p__Fusobacteriota;c__Fusobacteriia;o__Fusobacteriales;f__Fusobacteriaceae;g__Fusobacterium;s__Fusobacterium nucleatum 
+        d__Bacteria;p__Bacillota_A;c__Clostridia;o__Tissierellales;f__Peptoniphilaceae;g__Finegoldia;s__Finegoldia magna_H
         d__Bacteria;p__Chlamydiota;c__Chlamydiia;o__Chlamydiales;f__Chlamydiaceae;g__Chlamydophila;s__Chlamydophila pneumoniae
         d__Bacteria;p__Pseudomonadota;c__Gammaproteobacteria;o__Enterobacterales;f__Enterobacteriaceae;g__Wigglesworthia;s__Wigglesworthia glossinidia_B
         ```
 
 !!! Question "Task 4"
-    Inspect the results in EMGB!
+    Inspect the results in EMGB - (1) filter for a specific species in the tree on the left side then inspect the MAG tab. (2) Do the same by filtering for a specific MAG (using the filter symbol near the bin id). 
+    What do you observe? 
+    
+    ??? Solution
+        Not all genes are classified the same way as the corresponding MAG. Genes are classified using an LCA with mmseqs taxonomy, MAGs are classified using GTDBtk. If in doubt, the GTDBtk classification is probably more accurate.
+    
 
 ---
 
