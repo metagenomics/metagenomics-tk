@@ -7,7 +7,7 @@ NXF_VER=24.10.4 nextflow run metagenomics/metagenomics-tk \
 	  -params-file https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/default/tutorials/tutorial1/fullpipeline_qc.yml \
 	  -ansi-log false \
 	  -entry wFullPipeline \
-    --input.paired.path https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv \
+	  --input.paired.path https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv \
 	  --logDir logs_qc 
 
 make check LOG_DIR=$(pwd)/logs_qc
