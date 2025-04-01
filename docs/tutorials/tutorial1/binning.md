@@ -107,8 +107,8 @@ In our case, we are only interested in the alignment.
     
     Now let's look at the mapped reads:
     
-    1. Load the contig sequences into IGV. Use the menu `Genomes->Load Genome from File...`
-    2. Load the BAM file into IGV. Use menu `File->Load from File...`
+    1. Load the contig sequences into IGV. Use the menu `Genomes->Load Genome from File...` and search for `home|ubuntu/mgcourse/igv_data/data_contigs.fa`
+    2. Load the BAM file into IGV. Use menu `File->Load from File...` and search for `home|ubuntu/mgcourse/igv_data/data.bam`
     
 !!! question "Task 6"
     Look for errors in the mappings - are all those error sequencing errors?
@@ -153,7 +153,7 @@ The next question you might want to ask is whether you can trust these bins and 
 Before that, let's have a look at what other information the Metagenomics-Toolkit provides as part of the binning output.
 
 !!! question "Task 8"
-    There is a file containing some statistics on the generated Bins `data_bins_stats.tsv`. 
+    There is a file containing some statistics on the generated bins `data_bins_stats.tsv`. 
     Find out, which bin has the highest coverage and which one has the highest N50.
     ??? Solution    
         You can have a look on some bin statistics with:
@@ -178,6 +178,42 @@ Before that, let's have a look at what other information the Metagenomics-Toolki
 
         ```
         In this result, bin 8 has the highest coverage (15.588) and highest N50 (13397). Also note, that some of the bins highly differ in their GC content.
+
+!!! question "Task 9"
+    Let's say we want to take a closer look at these bins. Switch back to EMGB and try to find the bin with the largest contig, this one:
+    ```
+    SAMPLE  BIN_ID  format  type    num_seqs        sum_len min_len avg_len max_len Q1      Q2      Q3      sum_gap N50     Q20(%)  Q30(%)  GC(%)   COVERAGE
+    data    data_bin.4.fa   FASTA   DNA     139     1149027 2523    8266.4  35033   4367.0  6419.0  10607.0 0       10241   0.00    0.00    40.52   14.9085
+    ```
+    How many genes are found on this contig and how long is the longest one on it?
+    ??? Solution 
+        One way to get to the desired contig is to click on the "Contigs" tab in the upper middle part of EMGB. It is located between "Genes" and "GO Stats".
+        Here we activate the filter "Show only contigs longer than x" and set the filter to 30000. Two contigs remain, the longer one at the top is the one we are looking for. 
+        The table shows us the first solution, right next to the contig name and length it says that there are 41 genes on this contig.        
+
+        If you look to the right of our contig, you will see the "Actions" tab with two buttons. A colorful one representing small contigs and a Download ".fna" button.
+        Click on the first one. A popup will open, showing this contig with all predicted genes and their positions on this contig. If you look at the top of the popup, 
+        you will find the solution to your second problem. There are some basic statistics for this contig:
+        ```
+        Overall length (bp) 	Number of genes 	Longest gene (bp) 	Dataset 	Current gene
+        35033 	41 	2756 	data 	-   
+        ```
+        The longest gene is 2756 bp in size.
+
+!!! question "Task 10"
+    We now know what the longest contig looks like, but what about its bin? Go back to EMGB again and try to find the name of the bin our contig belongs to.
+    How many contigs are in that bin?
+    ??? Solution
+        An easy way to find our contig is to use filters again. Simply search for the longest contig again, as we did in the task above. This time, we don't click on the "full contigs" 
+        button, but on the little filter icon right next to the contig name, you might see a hovering text "create a filter for this contig".
+        After clicking it, we see a new filter at the top left "Contig ID is exactly X", which means that only information that this contig is part of will be shown.
+        We now click on the "MAGs" (Metagenome-assembled genomes) tab, three tabs to the right of the "Contigs" tab we are currently in. Since only information about this contig is shown, 
+        thanks to the filter set, and the contig can only be part of one bin/MAG, there is only one left. The one we are looking for, our contig, is part of "bin 7".
+        Lets do the same trick again. Click on the filter icon next to the bin name. There should now be another active filter at the top left, "Bins is exactly X".
+        Go back to the Contigs tab. Only or first contig in the list? Sure, because there is still our first filter that lets us see only information about this contig.
+        Go to the top filter section and remove the first filter "Contig ID is exactly X" by clicking the little X in the top right corner of its box. With the filter removed, 
+        there is only "Bins is exactly X" left, which means we see all information about this bin. If not, is the "Show only contigs longer than X" box still checked? If so, uncheck it. 
+        With this done, the information should update, we see "Showing 139 contigs that contain predicted genes matching the filters", which is the answer to our question. 
 
 ---
 
