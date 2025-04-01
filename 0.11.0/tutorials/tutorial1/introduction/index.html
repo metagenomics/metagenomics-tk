@@ -1030,7 +1030,7 @@
             
   
   <span class="md-ellipsis">
-    Tutorial 1
+    Tutorial (Basics)
   </span>
   
 
@@ -1040,7 +1040,7 @@
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6_1">
             <span class="md-nav__icon md-icon"></span>
-            Tutorial 1
+            Tutorial (Basics)
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1125,15 +1125,6 @@
   <a href="#link-to-your-volume" class="md-nav__link">
     <span class="md-ellipsis">
       Link to your volume
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#database-directory-link" class="md-nav__link">
-    <span class="md-ellipsis">
-      Database directory link
     </span>
   </a>
   
@@ -1589,15 +1580,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#database-directory-link" class="md-nav__link">
-    <span class="md-ellipsis">
-      Database directory link
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1767,23 +1749,16 @@ If your preferred volume is at another location, change <code>/vol/mgcourse</cod
 you can also simply leave out the following command and create the directory with <code>mkdir ~/mgcourse</code>.</p>
 <div class="admonition warning">
 <p class="admonition-title">Course Participants</p>
-<p>In case you are a course participant, a volume has been prepared for you, so please run the following command. </p>
+<p>In case you are a course participant, a volume has been prepared for you, so please run the following commands. </p>
 </div>
 <div class="admonition question">
 <p class="admonition-title">Task 1</p>
 <p>We will link the volume to <code>~/mgcourse</code>, so we can use that link for the rest of this tutorial:
 <div class="highlight"><pre><span></span><code>ln<span class="w"> </span>-s<span class="w"> </span>/vol/mgcourse/<span class="w"> </span>~/mgcourse
 </code></pre></div></p>
-</div>
-<h4 id="database-directory-link">Database directory link<a class="headerlink" href="#database-directory-link" title="Permanent link">&para;</a></h4>
-<p>In addition, we need a symlink for the directory where the databases should be stored.</p>
-<div class="admonition question">
-<p class="admonition-title">Task 2</p>
-<p>Create a <code>databases</code> and <code>/vol/scratch</code> directory and create a link to the database directory:
-<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>~/mgcourse/databases
-mkdir<span class="w"> </span>-p<span class="w"> </span>/vol/scratch
-ln<span class="w"> </span>-s<span class="w"> </span>~/mgcourse/databases/<span class="w"> </span>/vol/scratch/databases
-</code></pre></div></p>
+<p>Create a database directory</p>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>~/mgcourse/databases
+</code></pre></div>
 </div>
 <h2 id="metagenomics-toolkit-introduction">Metagenomics-Toolkit Introduction<a class="headerlink" href="#metagenomics-toolkit-introduction" title="Permanent link">&para;</a></h2>
 <h3 id="execution">Execution<a class="headerlink" href="#execution" title="Permanent link">&para;</a></h3>
@@ -1825,7 +1800,7 @@ ln<span class="w"> </span>-s<span class="w"> </span>~/mgcourse/databases/<span c
 </li>
 </ul>
 <div class="admonition question">
-<p class="admonition-title">Task 3</p>
+<p class="admonition-title">Task 2</p>
 <p>Open the Metagenomics-Toolkit wiki on a second browser tab by a click on this
 <a href="https://metagenomics.github.io/metagenomics-tk/latest/" target="_blank">link</a>.
 Imagine you need to run the quality-control part separately. Can you tell the name of the <strong>entrypoint</strong>? 
@@ -1947,12 +1922,12 @@ The level below the tool names is for configuring the tools and methods. Each an
 <span class="w">      </span><span class="c1"># --mem-flag 0 to use minimum memory, --mem-flag 1 (default) moderate memory and --mem-flag 2 all memory.</span>
 <span class="w">      </span><span class="c1"># meta-sensitive: &#39;--min-count 1 --k-list 21,29,39,49,...,129,141&#39; </span>
 <span class="w">      </span><span class="c1"># meta-large:  &#39;--k-min  27  --k-max 127 --k-step 10&#39; (large &amp; complex metagenomes, like soil)</span>
-<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--min-contig-len</span><span class="nv"> </span><span class="s">1000</span><span class="nv"> </span><span class="s">--presets</span><span class="nv"> </span><span class="s">meta-sensitive</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--min-contig-len</span><span class="nv"> </span><span class="s">500</span><span class="nv"> </span><span class="s">--presets</span><span class="nv"> </span><span class="s">meta-sensitive</span><span class="nv"> </span><span class="s">&quot;</span>
 <span class="w">      </span><span class="nt">fastg</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">      </span><span class="nt">resources</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">RAM</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;PREDICT&#39;</span>
-<span class="w">          </span><span class="nt">predictMinLabel</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;medium&#39;</span>
+<span class="w">          </span><span class="nt">predictMinLabel</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;highmemLarge&#39;</span>
 </code></pre></div></td></tr></table></div>
 <h4 id="part-3-computational-resources">Part 3: Computational Resources<a class="headerlink" href="#part-3-computational-resources" title="Permanent link">&para;</a></h4>
 <p>The third part of a Toolkit configuration file is the <strong>resources</strong> attribute.
@@ -1998,7 +1973,7 @@ You can read more  about resource parameters <a href="../../../configuration/#co
 <span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 </code></pre></div></td></tr></table></div>
 <div class="admonition question">
-<p class="admonition-title">Task 4</p>
+<p class="admonition-title">Task 3</p>
 <p>One of the first checks before running the Toolkit is to adjust the resource labels to the resources of your machine.
 You can run <code>nproc</code> to get the number of CPUs and <code>free -h --mega</code> to get the amount of RAM (row name: Mem, column name: total) available on your machine. 
 Is there enough RAM on your machine to run the Toolkit? </p>
@@ -2013,7 +1988,7 @@ If a parameter is nested within the hierarchy of the YAML file, represent it as 
 <p>For example, consider the CPU count of the <em>highmemLarge</em> resource label in the previous snippet.
 The corresponding command-line argument would be <code>--resources.highmemLarge.cpus</code>.</p>
 <div class="admonition question">
-<p class="admonition-title">Task 5</p>
+<p class="admonition-title">Task 4</p>
 <p>Let`s say you want to specify a path to a different input TSV file (see <strong>Example Configuration File Snippet 1</strong>) that contains a different set of input datasets. 
 How would you specify the parameter on the command line?</p>
 <details class="solution">

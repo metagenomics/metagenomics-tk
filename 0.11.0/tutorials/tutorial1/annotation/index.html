@@ -1030,7 +1030,7 @@
             
   
   <span class="md-ellipsis">
-    Tutorial 1
+    Tutorial (Basics)
   </span>
   
 
@@ -1040,7 +1040,7 @@
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6_1">
             <span class="md-nav__icon md-icon"></span>
-            Tutorial 1
+            Tutorial (Basics)
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1246,6 +1246,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Prokka">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#emgb" class="md-nav__link">
+    <span class="md-ellipsis">
+      EMGB
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -1411,6 +1426,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Prokka">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#emgb" class="md-nav__link">
+    <span class="md-ellipsis">
+      EMGB
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -1462,7 +1492,7 @@ Prokka supports standard output formats such as GenBank and GFF, facilitating fu
 <span class="w">      </span>-ansi-log<span class="w"> </span><span class="nb">false</span><span class="w"> </span><span class="se">\</span>
 <span class="w">      </span>-entry<span class="w"> </span>wFullPipeline<span class="w"> </span><span class="se">\</span>
 <span class="w">      </span>-resume<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--input.paired.path<span class="w"> </span>https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--input.paired.path<span class="w"> </span>https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv<span class="w"> </span><span class="se">\</span>
 <span class="w">      </span>--logDir<span class="w"> </span>logs_annotation<span class="w"> </span>
 </code></pre></div></p>
 </div>
@@ -1509,12 +1539,12 @@ steps:
 <span class="w">      </span><span class="c1"># --mem-flag 0 to use minimum memory, --mem-flag 1 (default) moderate memory and --mem-flag 2 all memory.</span>
 <span class="w">      </span><span class="c1"># meta-sensitive: &#39;--min-count 1 --k-list 21,29,39,49,...,129,141&#39; </span>
 <span class="w">      </span><span class="c1"># meta-large:  &#39;--k-min  27  --k-max 127 --k-step 10&#39; (large &amp; complex metagenomes, like soil)</span>
-<span class="w">      </span>additionalParams:<span class="w"> </span><span class="s2">&quot; --min-contig-len 1000 --presets meta-sensitive &quot;</span>
+<span class="w">      </span>additionalParams:<span class="w"> </span><span class="s2">&quot; --min-contig-len 500 --presets meta-sensitive &quot;</span>
 <span class="w">      </span>fastg:<span class="w"> </span><span class="nb">true</span>
 <span class="w">      </span>resources:
 <span class="w">        </span>RAM:
 <span class="w">          </span>mode:<span class="w"> </span><span class="s1">&#39;PREDICT&#39;</span>
-<span class="w">          </span>predictMinLabel:<span class="w"> </span><span class="s1">&#39;medium&#39;</span>
+<span class="w">          </span>predictMinLabel:<span class="w"> </span><span class="s1">&#39;highmemLarge&#39;</span>
 <span class="w">  </span>binning:
 <span class="w">    </span>bwa2:
 <span class="w">      </span>additionalParams:<span class="w"> </span>
@@ -1576,15 +1606,15 @@ Can you report a bin that contains CRISPR sequences?</p>
 <summary>Solution</summary>
 <div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>~/mgcourse
 </code></pre></div>
-<p><div class="highlight"><pre><span></span><code>cat<span class="w"> </span>output/data/1/annotation/1.0.0/prokka/data_bin.10.txt
+<p><div class="highlight"><pre><span></span><code>cat<span class="w"> </span>output/data/1/annotation/1.0.0/prokka/data_bin.3.txt
 </code></pre></div>
 The above command leads to the following output: 
-<div class="highlight"><pre><span></span><code>organism:<span class="w"> </span>Genus<span class="w"> </span>species<span class="w"> </span>strain
-contigs:<span class="w"> </span><span class="m">443</span>
-bases:<span class="w"> </span><span class="m">1952753</span>
-CDS:<span class="w"> </span><span class="m">2692</span>
-CRISPR:<span class="w"> </span><span class="m">2</span>
-tRNA:<span class="w"> </span><span class="m">27</span>
+<div class="highlight"><pre><span></span><code>organism:<span class="w"> </span>Genus<span class="w"> </span>species<span class="w"> </span>strain<span class="w"> </span>
+contigs:<span class="w"> </span><span class="m">150</span>
+bases:<span class="w"> </span><span class="m">520975</span>
+CDS:<span class="w"> </span><span class="m">853</span>
+CRISPR:<span class="w"> </span><span class="m">3</span>
+tRNA:<span class="w"> </span><span class="m">12</span>
 </code></pre></div></p>
 </details>
 </div>
@@ -1624,14 +1654,28 @@ It consists of multiple columns that provide specific details about each feature
 Can you tell the products of two tRNAs. </p>
 <details class="solution">
 <summary>Solution</summary>
-<p><div class="highlight"><pre><span></span><code>zgrep tRNA output/data/1/annotation/1.0.0/prokka/data_bin.10.gff.gz
+<p><div class="highlight"><pre><span></span><code>zgrep tRNA output/data/1/annotation/1.0.0/prokka/data_bin.3.gff.gz
 </code></pre></div>
 For example, there the tRNA products <code>tRNA-Thr(cgt)</code> and <code>tRNA-His(gtg)</code>.  </p>
 </details>
 </div>
+<h3 id="emgb">EMGB<a class="headerlink" href="#emgb" title="Permanent link">&para;</a></h3>
+<p>Using the Toolkit, you have now predicted and annotated hundreds of genes.
+If you were to use all the tools in the annotation module, you could annotate even more genes using databases such as KEGG.
+While you can of course use the command line to search for genes,
+MAGs, and pathways in this mass of data, you could also explore your dataset with EMGB.</p>
 <div class="admonition question">
 <p class="admonition-title">Task 4</p>
-<p>Next, inspect the annotation results in EMGB.</p>
+<p>Lets imagine you search for MAGs that contain genes that encode for the enzyme <code>5.3.1.9</code>.
+Hint: The enzyme is involved the glycolysis pathway. </p>
+<p>Click on the enzyme and a filter will be automatically created. Now if you click on the "MAGs" tab, you should see MAGs that contain that gene.
+How many MAGs contain that gene?
+Which MAG has the highest completeness?</p>
+<p>In the next step, you might also interested in neighboring genes of the MAG with the highest completeness. What is the name of the gene to the left of it?</p>
+<details class="solution">
+<summary>Solution</summary>
+<p>Five MAGs contain the gene that encodes the enzyme <code>5.3.1.9</code>. The MAG with the highest completeness is <code>Bin 6</code>. To the left of the gene encoding the enzyme is the gene for <code>Proline--tRNA ligase</code>.</p>
+</details>
 </div>
 
 

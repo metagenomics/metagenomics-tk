@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#megahit" class="md-skip">
+        <a href="#metagenomics-toolkit" class="md-skip">
           Skip to content
         </a>
       
@@ -1030,7 +1030,7 @@
             
   
   <span class="md-ellipsis">
-    Tutorial 1
+    Tutorial (Basics)
   </span>
   
 
@@ -1040,7 +1040,7 @@
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6_1">
             <span class="md-nav__icon md-icon"></span>
-            Tutorial 1
+            Tutorial (Basics)
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1133,15 +1133,6 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#megahit" class="md-nav__link">
-    <span class="md-ellipsis">
-      MEGAHIT
-    </span>
-  </a>
-  
-</li>
       
         <li class="md-nav__item">
   <a href="#metagenomics-toolkit" class="md-nav__link">
@@ -1423,15 +1414,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#megahit" class="md-nav__link">
-    <span class="md-ellipsis">
-      MEGAHIT
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#metagenomics-toolkit" class="md-nav__link">
     <span class="md-ellipsis">
       Metagenomics-Toolkit
@@ -1471,12 +1453,6 @@
 
 <p>Once your raw reads have been quality-controlled, we will now perform an assembly using the Metagenomics-Toolkit.
 The Toolkit supports several assemblers, one of which is the MEGAHIT assembler, which we will run in this section.</p>
-<h2 id="megahit">MEGAHIT<a class="headerlink" href="#megahit" title="Permanent link">&para;</a></h2>
-<p>MEGAHIT is a single-node assembler for large and complex metagenomics
-NGS reads, such as soil. It makes use of a succinct de Bruijn graph
-(SdBG) to achieve a low memory assembly. See the
-<a href="https://github.com/voutcn/megahit/">MEGAHIT home page</a> for more
-info.</p>
 <h2 id="metagenomics-toolkit">Metagenomics-Toolkit<a class="headerlink" href="#metagenomics-toolkit" title="Permanent link">&para;</a></h2>
 <p>The following lines represent the part of the configuration that tells the Toolkit to run the assembly:</p>
 <div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Assembly Configuration File Snippet 1</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -1494,21 +1470,26 @@ info.</p>
 <span class="w">      </span><span class="c1"># --mem-flag 0 to use minimum memory, --mem-flag 1 (default) moderate memory and --mem-flag 2 all memory.</span>
 <span class="w">      </span><span class="c1"># meta-sensitive: &#39;--min-count 1 --k-list 21,29,39,49,...,129,141&#39; </span>
 <span class="w">      </span><span class="c1"># meta-large:  &#39;--k-min  27  --k-max 127 --k-step 10&#39; (large &amp; complex metagenomes, like soil)</span>
-<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--min-contig-len</span><span class="nv"> </span><span class="s">1000</span><span class="nv"> </span><span class="s">--presets</span><span class="nv"> </span><span class="s">meta-sensitive</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--min-contig-len</span><span class="nv"> </span><span class="s">500</span><span class="nv"> </span><span class="s">--presets</span><span class="nv"> </span><span class="s">meta-sensitive</span><span class="nv"> </span><span class="s">&quot;</span>
 <span class="w">      </span><span class="nt">fastg</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">      </span><span class="nt">resources</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">RAM</span><span class="p">:</span>
 <span class="w">          </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;PREDICT&#39;</span>
-<span class="w">          </span><span class="nt">predictMinLabel</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;medium&#39;</span>
+<span class="w">          </span><span class="nt">predictMinLabel</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;highmemLarge&#39;</span>
 </code></pre></div></td></tr></table></div>
 <div class="admonition question">
 <p class="admonition-title">Task 1</p>
 <p>Which tool is used for the assembly? What additional parameters are used?</p>
 <details class="solution">
 <summary>Solution</summary>
-<p>MEGAHIT with the additional parameters: minimum contig length of <code>1000 bp</code> and the preset <code>meta-sensitive</code>.
+<p>MEGAHIT with the additional parameters: minimum contig length of <code>500 bp</code> and the preset <code>meta-sensitive</code>.
 <code>meta-sensitive</code> sets the following parameters: <code>--min-count 1 --k-list 21,29,39,49,...,129,141</code>, which causes 
-MEGAHIT to use a longer list of k-mers.</p>
+MEGAHIT to use a longer list of k-mers.
+MEGAHIT is a single-node assembler for large and complex metagenomics
+NGS reads, such as soil. It makes use of a succinct de Bruijn graph
+(SdBG) to achieve a low memory assembly. See the
+<a href="https://github.com/voutcn/megahit/">MEGAHIT home page</a> for more
+info.</p>
 </details>
 </div>
 <div class="admonition question">
@@ -1522,7 +1503,7 @@ MEGAHIT to use a longer list of k-mers.</p>
 <span class="w">      </span>-ansi-log<span class="w"> </span><span class="nb">false</span><span class="w"> </span><span class="se">\</span>
 <span class="w">      </span>-entry<span class="w"> </span>wFullPipeline<span class="w"> </span><span class="se">\</span>
 <span class="w">      </span>-resume<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--input.paired.path<span class="w"> </span>https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--input.paired.path<span class="w"> </span>https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv<span class="w"> </span><span class="se">\</span>
 <span class="w">      </span>--logDir<span class="w"> </span>logs_assembly
 </code></pre></div>
 </div>
@@ -1571,12 +1552,12 @@ steps:
 <span class="w">      </span><span class="c1"># --mem-flag 0 to use minimum memory, --mem-flag 1 (default) moderate memory and --mem-flag 2 all memory.</span>
 <span class="w">      </span><span class="c1"># meta-sensitive: &#39;--min-count 1 --k-list 21,29,39,49,...,129,141&#39; </span>
 <span class="w">      </span><span class="c1"># meta-large:  &#39;--k-min  27  --k-max 127 --k-step 10&#39; (large &amp; complex metagenomes, like soil)</span>
-<span class="w">      </span>additionalParams:<span class="w"> </span><span class="s2">&quot; --min-contig-len 1000 --presets meta-sensitive &quot;</span>
+<span class="w">      </span>additionalParams:<span class="w"> </span><span class="s2">&quot; --min-contig-len 500 --presets meta-sensitive &quot;</span>
 <span class="w">      </span>fastg:<span class="w"> </span><span class="nb">true</span>
 <span class="w">      </span>resources:
 <span class="w">        </span>RAM:
 <span class="w">          </span>mode:<span class="w"> </span><span class="s1">&#39;PREDICT&#39;</span>
-<span class="w">          </span>predictMinLabel:<span class="w"> </span><span class="s1">&#39;medium&#39;</span>
+<span class="w">          </span>predictMinLabel:<span class="w"> </span><span class="s1">&#39;highmemLarge&#39;</span>
 resources:
 <span class="w">  </span>highmemLarge:
 <span class="w">    </span>cpus:<span class="w"> </span><span class="m">28</span>
@@ -1625,10 +1606,18 @@ resources:
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>cat<span class="w"> </span>output/data/1/assembly/1.2.1/megahit/data_contigs_stats.tsv<span class="w"> </span><span class="p">|</span><span class="w"> </span>column<span class="w"> </span>-s<span class="s1">$&#39;\t&#39;</span><span class="w"> </span>-t
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>SAMPLE<span class="w">  </span>file<span class="w">                </span>format<span class="w">  </span><span class="nb">type</span><span class="w">  </span>num_seqs<span class="w">  </span>sum_len<span class="w">   </span>min_len<span class="w">  </span>avg_len<span class="w">  </span>max_len<span class="w">  </span>Q1<span class="w">      </span>Q2<span class="w">      </span>Q3<span class="w">      </span>sum_gap<span class="w">  </span>N50<span class="w">   </span>Q20<span class="o">(</span>%<span class="o">)</span><span class="w">  </span>Q30<span class="o">(</span>%<span class="o">)</span><span class="w">  </span>GC<span class="o">(</span>%<span class="o">)</span>
-data<span class="w">    </span>data_contigs.fa.gz<span class="w">  </span>FASTA<span class="w">   </span>DNA<span class="w">   </span><span class="m">9172</span><span class="w">      </span><span class="m">20146206</span><span class="w">  </span><span class="m">1000</span><span class="w">     </span><span class="m">2196</span>.5<span class="w">   </span><span class="m">35033</span><span class="w">    </span><span class="m">1274</span>.0<span class="w">  </span><span class="m">1670</span>.0<span class="w">  </span><span class="m">2450</span>.0<span class="w">  </span><span class="m">0</span><span class="w">        </span><span class="m">2346</span><span class="w">  </span><span class="m">0</span>.00<span class="w">    </span><span class="m">0</span>.00<span class="w">    </span><span class="m">42</span>.26
+<div class="highlight"><pre><span></span><code>SAMPLE<span class="w">  </span>file<span class="w">                </span>format<span class="w">  </span><span class="nb">type</span><span class="w">  </span>num_seqs<span class="w">  </span>sum_len<span class="w">   </span>min_len<span class="w">  </span>avg_len<span class="w">  </span>max_len<span class="w">  </span>Q1<span class="w">     </span>Q2<span class="w">      </span>Q3<span class="w">      </span>sum_gap<span class="w">  </span>N50<span class="w">   </span>Q20<span class="o">(</span>%<span class="o">)</span><span class="w">  </span>Q30<span class="o">(</span>%<span class="o">)</span><span class="w">  </span>GC<span class="o">(</span>%<span class="o">)</span>
+data<span class="w">    </span>data_contigs.fa.gz<span class="w">  </span>FASTA<span class="w">   </span>DNA<span class="w">   </span><span class="m">16675</span><span class="w">     </span><span class="m">25442506</span><span class="w">  </span><span class="m">500</span><span class="w">      </span><span class="m">1525</span>.8<span class="w">   </span><span class="m">35033</span><span class="w">    </span><span class="m">711</span>.0<span class="w">  </span><span class="m">1087</span>.0<span class="w">  </span><span class="m">1769</span>.0<span class="w">  </span><span class="m">0</span><span class="w">        </span><span class="m">1897</span><span class="w">  </span><span class="m">0</span>.00<span class="w">    </span><span class="m">0</span>.00<span class="w">    </span><span class="m">42</span>.84
 </code></pre></div>
-In this assembly run, the assembly length is 20,146,206 bp and the N50 is 2,346 bp. </p>
+In this assembly run, the assembly length is 25,442,506 bp and the N50 is 1,897 bp. </p>
+</details>
+</div>
+<div class="admonition question">
+<p class="admonition-title">Task 5</p>
+<p>Open the results in the EMGB-Browser, find out, how many genes are annotated on the largest contig!</p>
+<details class="solution">
+<summary>Solution</summary>
+<p>There are 41 genes annotated on the largest contig. Open the dataset <code>data</code> go to "Contigs", filter for contigs longer than 30kb and inspect the larger one.</p>
 </details>
 </div>
 <hr />

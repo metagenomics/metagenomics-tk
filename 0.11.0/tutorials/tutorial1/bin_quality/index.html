@@ -1030,7 +1030,7 @@
             
   
   <span class="md-ellipsis">
-    Tutorial 1
+    Tutorial (Basics)
   </span>
   
 
@@ -1040,7 +1040,7 @@
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6_1">
             <span class="md-nav__icon md-icon"></span>
-            Tutorial 1
+            Tutorial (Basics)
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1498,12 +1498,12 @@ steps:
 <span class="w">      </span><span class="c1"># --mem-flag 0 to use minimum memory, --mem-flag 1 (default) moderate memory and --mem-flag 2 all memory.</span>
 <span class="w">      </span><span class="c1"># meta-sensitive: &#39;--min-count 1 --k-list 21,29,39,49,...,129,141&#39; </span>
 <span class="w">      </span><span class="c1"># meta-large:  &#39;--k-min  27  --k-max 127 --k-step 10&#39; (large &amp; complex metagenomes, like soil)</span>
-<span class="w">      </span>additionalParams:<span class="w"> </span><span class="s2">&quot; --min-contig-len 1000 --presets meta-sensitive &quot;</span>
+<span class="w">      </span>additionalParams:<span class="w"> </span><span class="s2">&quot; --min-contig-len 500 --presets meta-sensitive &quot;</span>
 <span class="w">      </span>fastg:<span class="w"> </span><span class="nb">true</span>
 <span class="w">      </span>resources:
 <span class="w">        </span>RAM:
 <span class="w">          </span>mode:<span class="w"> </span><span class="s1">&#39;PREDICT&#39;</span>
-<span class="w">          </span>predictMinLabel:<span class="w"> </span><span class="s1">&#39;medium&#39;</span>
+<span class="w">          </span>predictMinLabel:<span class="w"> </span><span class="s1">&#39;highmemLarge&#39;</span>
 <span class="w">  </span>binning:
 <span class="w">    </span>bwa2:
 <span class="w">      </span>additionalParams:<span class="w"> </span>
@@ -1557,7 +1557,8 @@ resources:
 <span class="w">      </span>-ansi-log<span class="w"> </span><span class="nb">false</span><span class="w"> </span><span class="se">\</span>
 <span class="w">      </span>-entry<span class="w"> </span>wFullPipeline<span class="w"> </span><span class="se">\</span>
 <span class="w">      </span>-resume<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--input.paired.path<span class="w"> </span>https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--databases<span class="w"> </span><span class="k">$(</span>readlink<span class="w"> </span>-f<span class="w"> </span>databases<span class="k">)</span><span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--input.paired.path<span class="w"> </span>https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv<span class="w"> </span><span class="se">\</span>
 <span class="w">      </span>--logDir<span class="w"> </span>logs_bin_quality<span class="w"> </span>
 </code></pre></div></p>
 </div>
@@ -1571,16 +1572,16 @@ resources:
 <div class="highlight"><pre><span></span><code>cut<span class="w"> </span>-f2,3,4<span class="w"> </span>output/data/1/magAttributes/*/checkm2/data_checkm2_generated.tsv
 </code></pre></div>
 <div class="highlight"><pre><span></span><code>BIN_ID<span class="w">  </span>COMPLETENESS<span class="w">    </span>CONTAMINATION
-data_bin.1.fa<span class="w">   </span><span class="m">12</span>.81<span class="w">   </span><span class="m">0</span>.12
-data_bin.10.fa<span class="w">  </span><span class="m">52</span>.12<span class="w">   </span><span class="m">5</span>.63
-data_bin.2.fa<span class="w">   </span><span class="m">11</span>.09<span class="w">   </span><span class="m">0</span>.0
-data_bin.3.fa<span class="w">   </span><span class="m">81</span>.91<span class="w">   </span><span class="m">0</span>.46
-data_bin.4.fa<span class="w">   </span><span class="m">20</span>.82<span class="w">   </span><span class="m">0</span>.01
-data_bin.5.fa<span class="w">   </span><span class="m">16</span>.83<span class="w">   </span><span class="m">0</span>.01
-data_bin.6.fa<span class="w">   </span><span class="m">20</span>.7<span class="w">    </span><span class="m">0</span>.74
-data_bin.7.fa<span class="w">   </span><span class="m">35</span>.3<span class="w">    </span><span class="m">0</span>.04
-data_bin.8.fa<span class="w">   </span><span class="m">85</span>.63<span class="w">   </span><span class="m">0</span>.28
-data_bin.9.fa<span class="w">   </span><span class="m">22</span>.62<span class="w">   </span><span class="m">0</span>.05
+data_bin.1.fa<span class="w">   </span><span class="m">16</span>.88<span class="w">   </span><span class="m">0</span>.0
+data_bin.10.fa<span class="w">  </span><span class="m">24</span>.04<span class="w">   </span><span class="m">0</span>.04
+data_bin.2.fa<span class="w">   </span><span class="m">12</span>.81<span class="w">   </span><span class="m">0</span>.12
+data_bin.3.fa<span class="w">   </span><span class="m">20</span>.57<span class="w">   </span><span class="m">0</span>.01
+data_bin.4.fa<span class="w">   </span><span class="m">52</span>.73<span class="w">   </span><span class="m">0</span>.3
+data_bin.5.fa<span class="w">   </span><span class="m">11</span>.09<span class="w">   </span><span class="m">0</span>.0
+data_bin.6.fa<span class="w">   </span><span class="m">81</span>.91<span class="w">   </span><span class="m">0</span>.46
+data_bin.7.fa<span class="w">   </span><span class="m">20</span>.68<span class="w">   </span><span class="m">0</span>.75
+data_bin.8.fa<span class="w">   </span><span class="m">85</span>.4<span class="w">    </span><span class="m">0</span>.28
+data_bin.9.fa<span class="w">   </span><span class="m">39</span>.66<span class="w">   </span><span class="m">0</span>.62
 </code></pre></div></p>
 </details>
 </div>
