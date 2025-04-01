@@ -85,6 +85,22 @@ Optional header lines starting with '##' provide metadata about the file, adding
         For example, there the tRNA products `tRNA-Thr(cgt)` and `tRNA-His(gtg)`.  
         
 
-!!! Question "Task 4"
-    Next, inspect the annotation results in EMGB.
+### EMGB
 
+Using the Toolkit, you have now predicted and annotated hundreds of genes.
+If you were to use all the tools in the annotation module, you could annotate even more genes using databases such as KEGG.
+While you can of course use the command line to search for genes,
+MAGs, and pathways in this mass of data, you could also explore your dataset with EMGB.
+
+!!! Question "Task 4"
+    Lets imagine you search for MAGs that contain genes that encode for the enzyme `5.3.1.9`.
+    Hint: The enzyme is involved the glycolysis pathway. 
+
+    Click on the enzyme and a filter will be automatically created. Now if you click on the "MAGs" tab, you should see MAGs that contain that gene.
+    How many MAGs contain that gene?
+    Which MAG has the highest completeness?
+
+    In the next step, you might also interested in neighboring genes of the MAG with the highest completeness. What is the name of the gene to the left of it?
+    
+    ??? Solution
+        Five MAGs contain the gene that encodes the enzyme `5.3.1.9`. The MAG with the highest completeness is `Bin 6`. To the left of the gene encoding the enzyme is the gene for `Proline--tRNA ligase`.
