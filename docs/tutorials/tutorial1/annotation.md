@@ -104,4 +104,5 @@ MAGs, and pathways in this mass of data, you could also explore your dataset wit
     In the next step, you might also interested in neighboring genes of the MAG with the highest completeness. What is the name of the gene to the left of it?
     
     ??? Solution
+        In the precomputed output the results look the following way. In your case it might another bin id might have the highest completeness.
         Five MAGs contain the gene that encodes the enzyme `5.3.1.9`. The MAG with the highest completeness is `Bin 6`. To the left of the gene encoding the enzyme is the gene for `Proline--tRNA ligase`.
