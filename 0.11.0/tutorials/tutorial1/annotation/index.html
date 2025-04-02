@@ -1605,11 +1605,12 @@ resources:
 Can you report a bin that contains CRISPR sequences?</p>
 <details class="solution">
 <summary>Solution</summary>
-<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>~/mgcourse
+<p><div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>~/mgcourse
 </code></pre></div>
-<p><div class="highlight"><pre><span></span><code>cat<span class="w"> </span>output/data/1/annotation/1.0.0/prokka/data_bin.3.txt
+In the following case a bin with the number 3 contains CRISPR sequences. In your case maybe another bin contains CRISPR sequences.
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span>output/data/1/annotation/1.0.0/prokka/data_bin.3.txt
 </code></pre></div>
-The above command leads to the following output: 
+The above command leads to the following output for the pre computed results: 
 <div class="highlight"><pre><span></span><code>organism:<span class="w"> </span>Genus<span class="w"> </span>species<span class="w"> </span>strain<span class="w"> </span>
 contigs:<span class="w"> </span><span class="m">150</span>
 bases:<span class="w"> </span><span class="m">520975</span>
@@ -1651,11 +1652,12 @@ It consists of multiple columns that provide specific details about each feature
 <p>Optional header lines starting with '##' provide metadata about the file, adding context to the annotations. </p>
 <div class="admonition question">
 <p class="admonition-title">Task 3</p>
-<p>Inspect the gff file of the bin that is mentioned in task number 2. Search with <code>zgrep -P "\ttRNA\t"</code> for tRNAs and their annotations.
+<p>Find a gff file of a bin that contains tRNAs the same way as you did in the previous taks. Search with <code>zgrep -P "\ttRNA\t"</code> for tRNAs and the corresponding annotations file (gff).
 Can you tell the products of two tRNAs. </p>
 <details class="solution">
 <summary>Solution</summary>
-<p><div class="highlight"><pre><span></span><code>zgrep tRNA output/data/1/annotation/1.0.0/prokka/data_bin.3.gff.gz
+<p>In the our precomputed case bin3 contains two rRNAs.
+<div class="highlight"><pre><span></span><code>zgrep tRNA output/data/1/annotation/1.0.0/prokka/data_bin.3.gff.gz
 </code></pre></div>
 For example, there the tRNA products <code>tRNA-Thr(cgt)</code> and <code>tRNA-His(gtg)</code>.  </p>
 </details>
