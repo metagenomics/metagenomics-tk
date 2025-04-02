@@ -20,7 +20,7 @@ The following snippet represents the Toolkit contiguration for the annotion modu
 !!! Question "Task 1"
     Run the following command to for the annotation:
     ```BASH
-    ---8<--- "scripts/tutorials/tutorial1/test_annotation.sh:3:12"
+    ---8<--- "scripts/tutorials/tutorial1/test_annotation.sh:3:13"
     ```
 
 For reference, your complete parameter file should look like this:
