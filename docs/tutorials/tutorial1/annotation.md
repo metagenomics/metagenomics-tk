@@ -37,11 +37,11 @@ For reference, your complete parameter file should look like this:
         ```BASH
         cd ~/mgcourse
         ```
-
+        In the following case a bin with the number 3 contains CRISPR sequences. In your case maybe another bin contains CRISPR sequences.
         ```BASH
         cat output/data/1/annotation/1.0.0/prokka/data_bin.3.txt
         ```
-        The above command leads to the following output: 
+        The above command leads to the following output for the pre computed results: 
         ```BASH
         organism: Genus species strain 
         contigs: 150
@@ -75,10 +75,11 @@ It consists of multiple columns that provide specific details about each feature
 Optional header lines starting with '##' provide metadata about the file, adding context to the annotations. 
 
 !!! Question "Task 3"
-    Inspect the gff file of the bin that is mentioned in task number 2. Search with `zgrep -P "\ttRNA\t"` for tRNAs and their annotations.
+    Find a gff file of a bin that contains tRNAs the same way as you did in the previous taks. Search with `zgrep -P "\ttRNA\t"` for tRNAs and the corresponding annotations file (gff).
     Can you tell the products of two tRNAs. 
 
     ??? Solution
+        In the our precomputed case bin3 contains two rRNAs.
         ```
         zgrep tRNA output/data/1/annotation/1.0.0/prokka/data_bin.3.gff.gz
         ```
