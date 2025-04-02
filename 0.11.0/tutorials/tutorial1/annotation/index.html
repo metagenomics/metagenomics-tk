@@ -1493,7 +1493,7 @@ Prokka supports standard output formats such as GenBank and GFF, facilitating fu
 <span class="w">      </span>-entry<span class="w"> </span>wFullPipeline<span class="w"> </span><span class="se">\</span>
 <span class="w">      </span>-resume<span class="w"> </span><span class="se">\</span>
 <span class="w">      </span>--input.paired.path<span class="w"> </span>https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv<span class="w"> </span><span class="se">\</span>
-<span class="w">      </span>--logDir<span class="w"> </span>logs_annotation<span class="w"> </span>
+<span class="w">          </span>--databases<span class="w"> </span><span class="k">$(</span>readlink<span class="w"> </span>-f<span class="w"> </span>databases<span class="k">)</span><span class="w"> </span><span class="se">\</span>
 </code></pre></div></p>
 </div>
 <p>For reference, your complete parameter file should look like this:</p>
