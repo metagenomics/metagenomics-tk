@@ -9,6 +9,7 @@ NXF_VER=24.10.4 nextflow run metagenomics/metagenomics-tk \
 	  -entry wFullPipeline \
 	  -resume \
 	  --input.paired.path https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv \
+          --databases $(readlink -f databases) \
 	  --logDir logs_annotation 
 
 make check LOG_DIR=$(pwd)/logs_annotation
