@@ -662,15 +662,14 @@ process pCollectFile {
     shell:
     '''
     mkdir tmp
-    csvtk -t -T concat *.tsv > tmp/concat.tsv
 
-    # Column number of of BIN_ID column
-    COLUMN_NUMBER=$(sed 1q tmp/concat.tsv | tr -s '\t' '\n' | nl | grep -E 'BIN_ID' | cut -f 1 | tr -d ' ')
-    for bin in $(csvtk cut -t -T  -f BIN_ID tmp/concat.tsv | tail -n +2 | sort | uniq); do
-	FILE_NAME="${bin}_!{sample}_!{type}.!{dbType}.blast.tsv"
-	head -n 1 tmp/concat.tsv > ${FILE_NAME}
-	awk -F$'\t' -v filter=${bin} -v column=${COLUMN_NUMBER} ' $column == filter ' tmp/concat.tsv >> ${FILE_NAME}
-    done
+    # Concatenate all chunks
+    mlr --itsv --otsv cat  *.tsv  > tmp/concat.tsv
+
+    # Create for every bin a seperate file in parallel  
+    csvtk cut -t -T  -f BIN_ID tmp/concat.tsv \
+	| tail -n +2 | sort | uniq \
+	| xargs -P !{task.cpus} -I {} bash filterBin.sh {} "!{sample}_!{type}.!{dbType}.blast.tsv" 
     '''
 }
 
