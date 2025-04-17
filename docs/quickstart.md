@@ -17,7 +17,7 @@ The following command will start a subset of all available modules offered by th
 All databases will be downloaded to the database directory in your current working directory.
 
 ```BASH
----8<--- "scripts/test_quickstart.sh:2:13"
+---8<--- "scripts/test_quickstart.sh:2:14"
 ```
 
 You can read more about the outputs, which are placed in a directory named `output`, in the corresponding [Modules](modules/introduction.md) sections.
