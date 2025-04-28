@@ -22,7 +22,7 @@ process pEMGBAnnotatedContigs {
 
     when params.steps.containsKey("export") && params.steps.export.containsKey("emgb")
 
-    containerOptions  " --entrypoint='' "
+    containerOptions (params.apptainer ? "" : " --entrypoint='' ")
 
     input:
     tuple val(sample), path(contigs), path(mapping), path("bins/*")
@@ -48,7 +48,7 @@ process pEMGBAnnotatedBins {
 
     when params.steps.containsKey("export") && params.steps.export.containsKey("emgb")
 
-    containerOptions  " --entrypoint='' "
+    containerOptions (params.apptainer ? "" : " --entrypoint='' ")
 
     label 'tiny'
 
@@ -76,8 +76,8 @@ process pEMGBAnnotatedGenes {
 
     secret { Utils.getSecrets(["${S3_EMGB_TITLES_ACCESS}", "${S3_EMGB_KEGG_ACCESS}"], ["S3_EMGB_TITLES_ACCESS", "S3_EMGB_KEGG_ACCESS"], ["S3_EMGB_TITLES_SECRET", "S3_EMGB_KEGG_SECRET"] ) }
 
-    containerOptions Utils.getDockerMount(params.steps?.export?.emgb?.titles?.database, params) \
-	+ Utils.getDockerMount(params.steps?.export?.emgb?.kegg?.database, params) + Utils.getDockerNetwork() + " --entrypoint='' "
+    containerOptions Utils.getDockerMount(params.steps?.export?.emgb?.titles?.database, params, apptainer=params.apptainer) \
+	+ Utils.getDockerMount(params.steps?.export?.emgb?.kegg?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork() + " --entrypoint='' ")
 
     when params.steps.containsKey("export") && params.steps.export.containsKey("emgb")
 

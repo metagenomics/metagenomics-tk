@@ -53,7 +53,7 @@ process pMetabinner {
 
     when params.steps.containsKey("binning") && params.steps.binning.containsKey("metabinner")
 
-    containerOptions ' --user 0:0 '
+    containerOptions (params.apptainer ? "" : ' --user 0:0 ' )
 
     input:
     tuple val(sample), path(contigs), path(bam)
@@ -120,7 +120,7 @@ process pMAGScoT {
 
     // Override default MAGScoT container entrypoint, so that the "RScript magscot" call that is normally run
     // does not clash with the Nextflow process call "/bin/bash"
-    containerOptions '--entrypoint ""'
+    containerOptions (params.apptainer ? "" :  ' --entrypoint "" ' )
 
     when params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")
 
