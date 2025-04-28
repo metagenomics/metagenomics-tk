@@ -298,13 +298,16 @@ jobs:
         run: |
           BRANCH=$(git rev-parse --abbrev-ref HEAD)
           BRANCH_SED=$(echo $BRANCH | sed 's/\//\\\//g')
-          sed -i "s/master/${BRANCH_SED}/g" scripts/test_quickstart.sh
-          sed -i "s/ nextflow run / nextflow run -r ${BRANCH_SED} /g"  scripts/test_quickstart.sh
+          sed -i "s/master/${BRANCH_SED}/g" scripts/test_quickstart*.sh
+          sed -i "s/ nextflow run / nextflow run -r ${BRANCH_SED} /g"  scripts/test_quickstart*.sh
           mkdir -p .nextflow
           cp ~/.nextflow/scm .nextflow
       - name: Test Quickstart
         run: |
           bash ./scripts/test_quickstart.sh || exit 1
+      - name: Test Quickstart with Apptainer enabled
+        run: |
+          bash ./scripts/test_quickstart_apptainer.sh || exit 1
 
   tutorial1:
     timeout-minutes: 800
