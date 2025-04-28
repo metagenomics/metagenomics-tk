@@ -3,8 +3,8 @@
 NXF_VER=24.10.4 nextflow run metagenomics/metagenomics-tk \
 	  -profile standard \
 	  -entry wFullPipeline \
-          -params-file  https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/default/quickstart_apptainer.yml \
-          --apptainer \
+      -params-file  https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/default/quickstart_apptainer.yml \
+      --apptainer \
 	  --logDir logs \
 	  --s3SignIn false \
 	  --scratch false \
