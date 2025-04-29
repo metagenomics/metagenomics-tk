@@ -109,8 +109,9 @@ In this case you could replace the MEGAHIT part with the MetaSpades config.
 
 This is the MetaSpades part that was used by the previous command instead of the MEGAHIT configuration:
 
+
 ```YAML
----8<--- "default/fullPipeline_illumina_nanpore_getting_started_part3.yml:48:51"
+---8<--- "default/fullPipeline_illumina_nanpore_getting_started_part3.yml:49:52"
 ```
 
 If you now compare the contigs of the two assemblers with the following command, 
@@ -130,7 +131,7 @@ What you need to do here is to add the following part to the annotation section 
 The bacmet database snippet is the following:
 
 ```YAML
----8<--- "default/fullPipeline_illumina_nanpore_getting_started_part4.yml:103:112"
+---8<--- "default/fullPipeline_illumina_nanpore_getting_started_part4.yml:104:113"
 ```
 
 By re-running the Toolkit with this configuration, you will see that the previous results were cached (see next snippet) and only the annotation part is re-executed.
