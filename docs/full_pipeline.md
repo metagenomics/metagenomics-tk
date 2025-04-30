@@ -10,6 +10,7 @@ You will then learn how to add additional analyses steps to your pipeline config
 3. Java: In order to run Nextflow, you need to install Java on your machine, which can be achieved via `sudo apt install default-jre`.
 4. Nextflow should be installed. Please check the official Nextflow [instructions](https://www.nextflow.io/docs/latest/install.html#install-nextflow)
 5. You will need at least 150 GB of scratch space on every worker node. 
+6. This tutorial requires at least one worker node with 28 cores and 230 GB of RAM.
 
 ## Part 1: Run the Toolkit with a basic config
 

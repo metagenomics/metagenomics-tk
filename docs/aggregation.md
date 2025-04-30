@@ -9,6 +9,7 @@ results afterwards.
 3. Java: In order to run Nextflow, you need to install Java on your machine. This can be achieved via `sudo apt install default-jre`.
 4. Nextflow should be installed. Please check the official Nextflow [instructions](https://www.nextflow.io/docs/latest/install.html#install-nextflow)
 5. This tutorial assumes that you have already executed the Toolkit as described in the [full pipeline section](full_pipeline.md).
+6. This tutorial requires at least one worker node with 28 cores and 230 GB of RAM.
 
 ## Run the Toolkit
 
