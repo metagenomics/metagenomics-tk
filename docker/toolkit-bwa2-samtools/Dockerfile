@@ -1,4 +1,4 @@
-FROM quay.io/biocontainers/bwa-mem2:2.2.1--hd03093a_2 AS bwa-mem2
+FROM quay.io/biocontainers/bwa-mem2:2.2.1--he513fc3_0 AS bwa-mem2
 
 FROM ubuntu:20.04
 ENV SAMTOOLS=samtools-1.12
