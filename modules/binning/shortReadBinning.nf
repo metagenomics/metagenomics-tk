@@ -151,15 +151,21 @@ process pMAGScoT {
     # Export the variable to use it in the xargs commands subshell further down
     export EXT=$(head -n 1 !{contigMaps} | awk '{print $1}' | sed 's/.*\\.//')
 
-    # Remove the header and pipe the remaining lines to xargs to run the script line by line
-    sed 1d !{sample}_MagScoT.refined.contig_to_bin.out | xargs -n 2 sh -c '
-        # Get the first column and separate the number, remove the leading zeros
-        binID=$(echo $0 | cut -d"_" -f4 | sed 's/^0*//')
-        CONTIG=$1
-        # Create a file with the contigs for each bin for reconstruction with seqkit
-        echo $CONTIG >> !{sample}_bin.$binID.lst
-        echo "!{sample}_bin.$binID.$EXT\t$CONTIG\tMAGScot" >> !{sample}_bin_contig_mapping.tsv
-    '
+    # If only one binner manages to produce bins then MAGScoT assumes that only scoring should be done and no *refined.contig_to_bin.out
+    # file is created. In these cases we directly take the output of the binner.
+    if [ $(cut -f 3 !{contigMaps} | sort | uniq | wc -l) -eq 1 ]; then
+	cut -f 1,2 !{contigMaps} | sed 's/$/\tMAGScot/g' >> !{sample}_bin_contig_mapping.tsv
+    else
+        # Remove the header and pipe the remaining lines to xargs to run the script line by line
+    	sed 1d !{sample}_MagScoT.refined.contig_to_bin.out | xargs -n 2 sh -c '
+        	# Get the first column and separate the number, remove the leading zeros
+        	binID=$(echo $0 | cut -d"_" -f4 | sed 's/^0*//')
+        	CONTIG=$1
+        	# Create a file with the contigs for each bin for reconstruction with seqkit
+        	echo $CONTIG >> !{sample}_bin.$binID.lst
+        	echo "!{sample}_bin.$binID.$EXT\t$CONTIG\tMAGScot" >> !{sample}_bin_contig_mapping.tsv
+    	'
+    fi
     echo "Done converting"
     # Reconstructing the bins from the converted MAGScoT output list
     echo "Reconstructing bins"
