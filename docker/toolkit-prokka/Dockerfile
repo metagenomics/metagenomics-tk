@@ -33,12 +33,10 @@ RUN wget https://github.com/tseemann/barrnap/archive/0.9.tar.gz &&\
     make test
 
 #get prokka
-RUN git clone https://github.com/nkleinbo/prokka
+RUN git clone https://github.com/metagenomics/prokka
 
 # install tbl2asn manually since the one included with prokka is expired.
-RUN wget ftp://ftp.ncbi.nih.gov/toolbox/ncbi_tools/converters/by_program/tbl2asn/linux64.tbl2asn.gz -O linux64.tbl2asn.gz && \
-    gunzip linux64.tbl2asn.gz && \
-    mv linux64.tbl2asn /usr/bin/tbl2asn && \
+RUN mv /prokka/tbl2asn /usr/bin/tbl2asn && \
     chmod 755 /usr/bin/tbl2asn
 
 # put prokka in PATH & 
