@@ -122,8 +122,8 @@ Currently, the Toolkit only supports a limited set of processes that can be run 
 Apptainer was installed for testing on an Ubuntu machine by following the instructions on the official [website](https://apptainer.org/docs/admin/latest/installation.html#install-ubuntu-packages).
 Here, the `apptainer-suid` package was installed.
 
-The following command executes the Toolkit on a local machine using Apptainer. The configuration corresponds to the one on the Quickstart page,
-except that Smetana, which is part of the metabolomics module, is disabled.
+The following command executes the Toolkit on a local machine using Apptainer. The configuration and (resource) requirements correspond to the one on the Quickstart page,
+except that Smetana, which is part of the metabolomics module, is disabled. Please check the Quickstart page for the requirements for running the Toolkit. 
 
 ```BASH linenums="1" title="Quickstart command for using Apptainer"
     ---8<--- "scripts/test_quickstart_apptainer.sh:3:13"
