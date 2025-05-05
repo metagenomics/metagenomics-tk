@@ -114,3 +114,17 @@ resources:
 The full pipeline mode is able to predict the memory consumption of some assemblers (see [assembly module](modules/assembly.md)). The prediction
 will also consider additional flavors which have been added to the resources section in the configuration file.
 
+## Apptainer (Experimental)
+
+Apptainer allows containers to be executed without relying on a daemon process, making it a suitable software solution for HPC setups.
+Currently, the Toolkit only supports a limited set of processes that can be run using Apptainer, and even those are only tested using the local execution on one machine (`standard` profile).
+
+Apptainer was installed for testing on an Ubuntu machine by following the instructions on the official [website](https://apptainer.org/docs/admin/latest/installation.html#install-ubuntu-packages).
+Here, the `apptainer-suid` package was installed.
+
+The following command executes the Toolkit on a local machine using Apptainer. The configuration corresponds to the one on the Quickstart page,
+except that Smetana, which is part of the metabolomics module, is disabled.
+
+```BASH linenums="1" title="Quickstart command for using Apptainer"
+    ---8<--- "scripts/test_quickstart_apptainer.sh:3:13"
+
