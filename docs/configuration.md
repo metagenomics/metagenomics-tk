@@ -127,4 +127,4 @@ except that Smetana, which is part of the metabolomics module, is disabled.
 
 ```BASH linenums="1" title="Quickstart command for using Apptainer"
     ---8<--- "scripts/test_quickstart_apptainer.sh:3:13"
-
+```
