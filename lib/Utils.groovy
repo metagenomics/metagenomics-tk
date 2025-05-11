@@ -6,22 +6,29 @@ class Utils {
   * otherwise mount the file directly if it is already available on the filesystem.
   *
   **/
-  static String getDockerMount(config, params, useParentDirectory=false) {
+  static String getDockerMount(config, params, apptainer=false, useParentDirectory=false) {
       def getPathWithoutFile = { filePath ->
           int dotIndex = filePath.lastIndexOf('/');
           return (dotIndex == -1) ? filePath : filePath.substring(0, dotIndex);
       }
 
+      def command = ""
+      if(apptainer) {
+          command = " --bind " 
+      } else {
+          command = " --volume "
+      }
+
       def selectInput = { f -> useParentDirectory ? getPathWithoutFile(f): f }
       if(config!=null){
           if(config.containsKey("extractedDBPath")){
-              return " --volume " + selectInput(config.extractedDBPath) + ":" + selectInput(config.extractedDBPath) ;
+              return command + selectInput(config.extractedDBPath) + ":" + selectInput(config.extractedDBPath) ;
           } else if (config.containsKey("download")) {
               def volumeMountStr = ""
               if(config.download.source.startsWith("/")){
-                  volumeMountStr += " --volume " +  selectInput(config.download.source) + ":" + selectInput(config.download.source)
+                  volumeMountStr += command +  selectInput(config.download.source) + ":" + selectInput(config.download.source)
               }
-              volumeMountStr += " --volume " + params.polished.databases + ":" + params.polished.databases ;
+              volumeMountStr += command + params.polished.databases + ":" + params.polished.databases ;
 
               return volumeMountStr;
           }
@@ -85,9 +92,9 @@ class Utils {
   * Should these entries contain references to external databases, s3/aws key-files, etc. a docker volume mount string is returned,
   * so that docker processes run with this tool can include this string to have access to all external files. 
   **/
-  static String constructParametersObject(tool, params){ 
+  static String constructParametersObject(tool, params, apptainer){ 
     if(params?.steps.containsKey("annotation")){
-       return params.steps.annotation[tool].findAll({ it.key != "runOnMAGs" && it.key != "chunkSize" }).collect{ Utils.getDockerMount(it.value?.database, params, 'true')}.join(" ");
+       return params.steps.annotation[tool].findAll({ it.key != "runOnMAGs" && it.key != "chunkSize" }).collect{ Utils.getDockerMount(it.value?.database, params, apptainer, 'true')}.join(" ");
     } else {
        return "";
     }

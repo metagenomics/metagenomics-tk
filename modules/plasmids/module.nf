@@ -69,7 +69,7 @@ process pPLSDB {
 	saveAs: { filename -> getOutput("${sample}", params.runid, "PLSDB", filename) }, \
         pattern: "{**.tsv}"
 
-    containerOptions Utils.getDockerMount(params.steps?.plasmid?.PLSDB?.database, params) + Utils.getDockerNetwork()
+    containerOptions Utils.getDockerMount(params.steps?.plasmid?.PLSDB?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork())
 
     when params.steps.containsKey("plasmid") && params.steps.plasmid.containsKey("PLSDB")
 

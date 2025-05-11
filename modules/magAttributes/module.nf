@@ -56,7 +56,7 @@ process pCheckM {
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm") \
 	&& !params.steps.magAttributes.containsKey("checkm2")
 
-    containerOptions Utils.getDockerMount(params.steps?.magAttributes?.checkm?.database, params) + Utils.getDockerNetwork()
+    containerOptions Utils.getDockerMount(params.steps?.magAttributes?.checkm?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork())
 
     beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
@@ -96,7 +96,7 @@ process pCheckM2 {
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("checkm2")
 
-    containerOptions Utils.getDockerMount(params.steps?.magAttributes?.checkm2?.database, params) + Utils.getDockerNetwork()
+    containerOptions  Utils.getDockerMount(params.steps?.magAttributes?.checkm2?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork())
 
     beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
@@ -137,7 +137,7 @@ process pGtdbtk {
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("gtdb")
 
-    containerOptions Utils.getDockerMount(params?.steps?.magAttributes?.gtdb?.database, params) + Utils.getDockerNetwork()
+    containerOptions Utils.getDockerMount(params?.steps?.magAttributes?.gtdb?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork())
 
     beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
