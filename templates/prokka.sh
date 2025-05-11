@@ -6,17 +6,21 @@ BIN_ID="!{binID}"
 # Run Prokka
 if [[ !{fasta} == *.gz ]]; then
    zcat -f !{fasta} > input.fasta
-   prokka !{params.steps.annotation.prokka.additionalParams} !{prodigalModeStr} --partialgenes --cpus !{task.cpus} --outdir out !{prokkaDomain} input.fasta
+   prokka !{params.steps.annotation.prokka.additionalParams} !{prodigalModeStr} --prodigalraw --partialgenes --cpus !{task.cpus} --outdir out !{prokkaDomain} input.fasta
    rm input.fasta
 else 
-   prokka !{params.steps.annotation.prokka.additionalParams} !{prodigalModeStr} --partialgenes --cpus !{task.cpus} --outdir out !{prokkaDomain} !{fasta}
+   prokka !{params.steps.annotation.prokka.additionalParams} !{prodigalModeStr} --prodigalraw --partialgenes --cpus !{task.cpus} --outdir out !{prokkaDomain} !{fasta}
 fi
 
-# Rename files
+# Rename the Prodigal raw output und Prokka output file
+mv out/*.prodigal.gff  ${BIN_PREFIX}.prodigal.gff
+mv out/*.gff  ${BIN_PREFIX}.prokka.gff
+
+# Rename remaining files
 for f in out/* ; do suffix=$(echo "${f##*.}"); mv $f ${BIN_PREFIX}.${suffix}; done
 
 # create tsv out of gff
-gffread ${BIN_PREFIX}.gff --table @id,@geneid,@chr,@start,@end,@strand,@numexons,@exons,@cds,@covlen,@cdslen \
+gffread ${BIN_PREFIX}.prokka.gff --table @id,@geneid,@chr,@start,@end,@strand,@numexons,@exons,@cds,@covlen,@cdslen \
      | sed '1 i\ID\tGENE_ID\tCHR\tSTART\tEND\tSTRAND\tNUMEXONS\tEXONS\tCDS\tCOVLEN\tCDSLEN' > gff.tsv
 
 # join prokka tsv output with the tsv version of the gff file for additional contig information.

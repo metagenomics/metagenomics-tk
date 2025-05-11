@@ -519,7 +519,8 @@ process pProkka {
       tuple val(sample), val(binID), file(fasta), val(domain), file(defaultCoverage), file(metabatCoverage)
 
     output:
-      tuple val("${sample}"), val("${binID}"), file("*.gff.gz"), emit: gff 
+      tuple val("${sample}"), val("${binID}"), file("*.prokka.gff.gz"), emit: gff 
+      tuple val("${sample}"), val("${binID}"), file("*.prodigal.gff.gz"), emit: prodigalGff 
       tuple val("${sample}"), val("${binID}"), file("*.faa.gz"), emit: faa 
       tuple val("${sample}"), val("${binID}"), file("*.fna.gz"), emit: fna 
       tuple val("${sample}"), val("${binID}"), file("*.ffn.gz"), emit: ffn 
@@ -539,6 +540,37 @@ process pProkka {
       template "prokka.sh"
 }
 
+
+/**
+* Whokaryote processes contigs and Prodigals gene annotation to predict if the organism is eukaryotic or prokaryotic.
+* The output lists which contig belongs to which kingdom.
+**/
+process pWhokaryote {
+
+    container "${params.whokaryote_image}"
+
+    label 'small'
+
+    tag "Sample: $sample, BinID: $binID"
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid , "whokaryote", filename) }
+
+    when params.steps.containsKey("annotation") && params.steps.annotation.containsKey("whokaryote")
+
+    input:
+      tuple val(sample), val(binID), file(fasta), file(gff)
+
+    output:
+      tuple val("${sample}"), val("${binID}"), file("${binID}_featuretable.csv"), emit: features 
+      tuple val("${sample}"), val("${binID}"), file("${binID}_featuretable_predictions_T.tsv"), emit: predictions 
+      tuple val("${sample}"), val("${binID}"), file("${binID}_eukaryote_contig_headers.txt"), emit: eukaryotes 
+      tuple val("${sample}"), val("${binID}"), file("${binID}_prokaryote_contig_headers.txt"), emit: prokaryotes 
+      tuple val("${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+
+    shell:
+      template "whokaryote.sh"
+}
 
 /**
 *
@@ -700,6 +732,25 @@ workflow _wSplit {
     chunks
 }
 
+/*
+* This workflow prepares the input for Whokaryote and executes it.
+*/
+workflow _runWhokaryote {
+  take:
+    contigs
+    annotation
+  main:
+    SAMPLE_IDX=0
+    BIN_ID=1
+    PATH_IDX=2
+
+    // Whokaryote processes fasta and Prodigals GFF files, thats why they have to be merged here
+    contigs | map { contig -> [contig[SAMPLE_IDX], contig[BIN_ID], contig[PATH_IDX]]} \
+      | combine(annotation, by:[SAMPLE_IDX, BIN_ID]) | pWhokaryote
+    emit:
+      logs = pWhokaryote.out.logs
+}
+
 /**
 *
 * The main annotation workflow. 
@@ -718,9 +769,12 @@ workflow _wAnnotation {
       fastaCounter
    main:
       SAMPLE_IDX=0
+      PATH_IDX=2
 
       pProkka(prodigalMode, fasta | combine(contigCoverage, by: SAMPLE_IDX))
-      
+
+      _runWhokaryote(fasta, pProkka.out.prodigalGff)
+
       // Collect all databases
       selectedDBs = params?.steps?.annotation?.mmseqs2.findAll({ it.key != "chunkSize" }).collect({
             [it.key, it.value?.additionalParams?.search ?: "", \
@@ -740,7 +794,6 @@ workflow _wAnnotation {
              it.value.database?.download?.md5sum ?: "", \
              it.value.database?.download?.s5cmd?.params ?: "" ]
       })
-      PATH_IDX=2
 
       // The following groupTuple operators need a counter for the expected number of bins or fasta files of a sample.
       // This allows groupTuple to not block until all samples are processed.
@@ -755,6 +808,7 @@ workflow _wAnnotation {
 	| map { sample, path, size -> tuple( groupKey(sample, size), path ) } | groupTuple() | set { groupedProkkaFaa }
 
       MMSEQS2_CHUNK_SIZE_DEFAULT=7000
+
 
       // Split fasta files and run blast on each part in parallel
       _wSplit(groupedProkkaFaa | combine(contig2GeneMapping, by: SAMPLE_IDX), \
@@ -795,7 +849,9 @@ workflow _wAnnotation {
       // Run Resistance Gene Identifier with amino acid outputs
       pProkka.out.faa | pResistanceGeneIdentifier
 
-      pProkka.out.logs | mix(pMMseqs2.out.logs) \
+      pProkka.out.logs \
+	| mix(_runWhokaryote.out.logs) \
+	| mix(pMMseqs2.out.logs) \
         | mix(pMMseqs2_taxonomy.out.logs) \
 	| mix(pResistanceGeneIdentifier.out.logs) \
 	| mix(pKEGGFromMMseqs2.out.logs) | pDumpLogs
