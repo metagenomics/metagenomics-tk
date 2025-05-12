@@ -1,4 +1,5 @@
 *.log*
+assets
 log
 work
 .nextflow
