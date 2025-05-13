@@ -551,6 +551,10 @@ process pWhokaryote {
 
     label 'small'
 
+    memory { Utils.getMemoryResources(params.resources.small, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.small, "${sample}", task.attempt, params.resources) }
+
     tag "Sample: $sample, BinID: $binID"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid , "whokaryote", filename) }
