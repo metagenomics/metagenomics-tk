@@ -50,7 +50,7 @@ process pMetaCoAG {
 
     container "${params.metacoag_image}"
 
-    containerOptions "  --user 0:0 "
+    containerOptions (params.apptainer ? "" : ' --user 0:0 ' )
 
     tag "Sample: $sample"
 

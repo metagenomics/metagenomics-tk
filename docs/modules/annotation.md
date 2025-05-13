@@ -1,8 +1,9 @@
 # Annotation
 
-The annotation module is able to predict genes and annotate those based on Prokka and a set of user provided databases.
+The annotation module is able to predict and annotate genes based on Prokka and a set of user provided databases.
+Contigs with annotated genes are checked with Whokaryote to determine whether they are from a eukaryote or from a prokaryote.
 A user can add additional formatted databases as part of the configuration by adding a key (Example: `kegg` ) with 
-a possible download strategy. See [database section](../database.md/#database-input-configuration) for possible download strategies.
+a possible download strategy. See the [database section](../database.md/#database-input-configuration) for possible download strategies.
 In addition, the resistance gene identifier is executed by default.
 
 ## Input  
@@ -150,6 +151,26 @@ Prokka computes `*.err`, `*.faa`, `*.ffn`, `*.fna`, `*.fsa`, `*.gbk`, `*.gff`, `
 `--tbl2asn` in the prokka parameters to enable it.
 Details of all files can be read on the Prokka page.
 In addition, it also computes a summary tsv file which adheres to the magAttributes specification.
+
+### Whokaryote
+
+Whokaryote outputs three files:
+
+`*_[eukaryote|prokaryote]_contig_headers.tsv`
+
+: These are contig headers of contigs predicted to be of eukaryotic (prokaryotic) origin.
+
+`*_featuretable.csv`
+
+: Features that were used to predict the eukaryotic or prokaryotic origin. 
+
+`*_featuretable_predictions_T.tsv`
+
+: A .tsv file with the calculated features and the predictions. 
+
+`*_tiara_pred.tsv`
+
+: A file that contains the Tiara predictions.
 
 ### KEGGFromBlast
 

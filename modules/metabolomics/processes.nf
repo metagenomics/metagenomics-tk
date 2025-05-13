@@ -14,7 +14,7 @@ process pCarveMe {
 
     container "${params.carveme_image}"
 
-    containerOptions " --user 0:0 "
+    containerOptions (params.apptainer ? "" : " --user 0:0 ")
 
     when params.steps.containsKey("metabolomics") && params.steps.metabolomics.containsKey("carveme")
 

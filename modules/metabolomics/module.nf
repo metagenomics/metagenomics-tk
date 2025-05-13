@@ -196,7 +196,7 @@ process pBuildJson {
 
     container "${params.cobra_image}"
 
-    containerOptions " --user 0:0"
+    containerOptions (params.apptainer ? "" : " --user 0:0 ")
 
     publishDir params.output, mode: "${params.publishDirMode}", \
       saveAs: { filename -> getOutput("${sample}", params.runid, "gsmmJson", filename) }, \

@@ -93,7 +93,7 @@ process pANIb {
 
     container "${params.ani_image}"
 
-    containerOptions " --entrypoint='' "
+    containerOptions (params.apptainer ? "" : " --entrypoint='' ")
 
     when:
     params.steps.dereplication.bottomUpClustering.method.contains("ANI")

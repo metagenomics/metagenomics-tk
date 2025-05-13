@@ -24,7 +24,7 @@ process pViralVerifyPlasmid {
 
     shell = ['/bin/bash']
 
-    containerOptions Utils.getDockerMount(params?.steps?.plasmid?.ViralVerifyPlasmid?.database, params) + Utils.getDockerNetwork()
+    containerOptions Utils.getDockerMount(params?.steps?.plasmid?.ViralVerifyPlasmid?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork())
 
     container "${params.viralVerify_image}"
 
@@ -124,7 +124,7 @@ process pMobTyper {
 
     beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
 
-    containerOptions Utils.getDockerMount(params.steps?.plasmid?.MobTyper?.database, params) + Utils.getDockerNetwork()
+    containerOptions Utils.getDockerMount(params.steps?.plasmid?.MobTyper?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork())
 
     secret { "${S3_MobTyper_ACCESS}"!="" ? ["S3_MobTyper_ACCESS", "S3_MobTyper_SECRET"] : [] } 
 
@@ -186,8 +186,7 @@ process pPlaton {
 
     tag "Sample: $sample, BinId: $binID"
 
-    containerOptions " --user root:root " + Utils.getDockerMount(params.steps?.plasmid?.Platon?.database, params) + Utils.getDockerNetwork()
-
+    containerOptions Utils.getDockerMount(params.steps?.plasmid?.Platon?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : " --user root:root " + Utils.getDockerNetwork())
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "Platon", filename) }, \
         pattern: "{**.tsv}"
 
