@@ -101,6 +101,8 @@ steps:
     prokka:
       defaultKingdom: false
       additionalParams: " --mincontiglen 500 "
+    whokaryote:
+      additionalParams: " --minsize 3000 "
     mmseqs2:
       chunkSize: 20000
       bacmet20_experimental:

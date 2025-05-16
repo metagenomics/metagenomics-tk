@@ -168,6 +168,8 @@ steps:
       prodigalMode: "meta"
       defaultKingdom: false
       additionalParams: " --mincontiglen 200 "
+    whokaryote:
+      additionalParams: " --minsize 3000 "
     mmseqs2:
       chunkSize: 20000
       kegg:

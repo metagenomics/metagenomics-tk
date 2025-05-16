@@ -56,10 +56,12 @@ steps:
         tree: " --reduced_tree "
         lineage_set: " " 
         qa: "  "
+  annotation:
     prokka:
       defaultKingdom: false
       additionalParams: " --mincontiglen 200 "
-  annotation:
+    whokaryote:
+      additionalParams: " --minsize 3000 "
     kegg:
       params: ' -s 2 --exact-kmer-matching 1 '
       database:

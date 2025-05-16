@@ -45,7 +45,7 @@ function getGenes {
 	nr=$(find $OUTPUT_PATH/$RUN_ID/annotation/ -name "*.${BLAST_DB}.blast.tsv" -exec readlink -f {} \;  | sed 's/^/ --blast-tab /g')
 	tax=$(find $OUTPUT_PATH/$RUN_ID/annotation/ -name "*.taxonomy.tsv" -exec readlink -f {} \; | sed 's/^/ -mmseqs-lineage /g')
 	ffn=$(find $OUTPUT_PATH/$RUN_ID/annotation -name "*.ffn.gz" -exec readlink -f {} \; | sed 's/^/ -ffn /g')
-	gff=$(find $OUTPUT_PATH/$RUN_ID/annotation -name "*.gff.gz" -exec readlink -f {} \; | sed 's/^/ -gff /g')
+	gff=$(find $OUTPUT_PATH/$RUN_ID/annotation -name "*.prokka.gff.gz" -exec readlink -f {} \; | sed 's/^/ -gff /g')
 	faa=$(find $OUTPUT_PATH/$RUN_ID/annotation -name "*.faa.gz" -exec readlink -f {} \; | sed 's/^/ -faa /g')
 	kegg=$(find $OUTPUT_PATH/$RUN_ID/annotation/ -name "*.kegg.blast.tsv" -exec readlink -f {} \; | sed 's/^/ -kegg-blast-tab /g')
 	db=$DB

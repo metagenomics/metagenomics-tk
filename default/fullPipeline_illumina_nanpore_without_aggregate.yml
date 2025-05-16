@@ -142,6 +142,8 @@ steps:
     prokka:
       defaultKingdom: false
       additionalParams: " --mincontiglen 500 "
+    whokaryote:
+      additionalParams: " --minsize 3000 "
     mmseqs2:
       kegg:
         additionalParams:
