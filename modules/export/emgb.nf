@@ -172,12 +172,12 @@ workflow _wExportPipeline {
 
     MAX_BIN_COUNTER = 1000000
     // get not Binned gff files
-    Pattern annotationNotBinnedGffPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/prokka/.*_notBinned.gff.gz$' )
+    Pattern annotationNotBinnedGffPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/prokka/.*_notBinned.prokka.gff.gz$' )
     selectedAnnotation | filter({ sra, path -> annotationNotBinnedGffPattern.matcher(path.toString()).matches()}) \
      | set { notBinnedGff }
 
     // get Bin gff files
-    Pattern annotationGffPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/prokka/.*_bin..*.gff.gz$' )
+    Pattern annotationGffPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/prokka/.*_bin..*.prokka.gff.gz$' )
     selectedAnnotation | filter({ sra, path -> annotationGffPattern.matcher(path.toString()).matches()}) \
      | mix(notBinnedGff) | map { sra, path -> [sra, file(path).baseName, path, MAX_BIN_COUNTER] }  | set { gff }
 
@@ -292,7 +292,7 @@ workflow _wExportPipeline {
 * bins: [test1, [/path/to/test1_bin.1.fa, /path/to/test1_bin.2.fa]]
 * gtdbtk: [test2, *_gtdbtk_generated_summary_raw_combined.tsv]
 * checkm: [test2, *_checkm_generated.tsv]
-* gff,ffn,faa: [test2, test2_bin.2.fa, /path/to/test2_bin.2.gff.gz, counter] where counter describes the number of input files to expect
+* gff,ffn,faa: [test2, test2_bin.2.fa, /path/to/test2_bin.2.prokka.gff.gz, counter] where counter describes the number of input files to expect
 * mmseqsTaxonomy: [test1, ncbi_nr, /path/to/test1_binned.ncbi_nr.taxonomy.tsv, 10000]
 * mmseqsBlast:
 *  [test2, bacmet20_predicted, /path/to/*.bacmet20_predicted.blast.tsv]
