@@ -259,11 +259,11 @@ jobs:
       
       - name: Test GTDB runs against different database parameters
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/gtdbtk_r214_data/release214" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/gtdbtk_r226_data/release226" \
                                MODULE_DB_TEST_MD5SUM="390e16b3f7b0c4463eb7a3b2149261d9" \
-                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/gtdbtk_r214_data.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/gtdbtk_r214_data.tar.gz" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/gtdbtk_r214_data/*" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r226_data.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/gtdbtk_r226_data.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/gtdbtk_r226_data.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/gtdbtk_r226_data/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/gtdb \
@@ -616,11 +616,11 @@ jobs:
 
       - name: Test GTDB runs against different database parameters
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/gtdbtk_r214_data/release214" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/gtdbtk_r226_data/release226" \
                                MODULE_DB_TEST_MD5SUM="390e16b3f7b0c4463eb7a3b2149261d9" \
-                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/gtdbtk_r214_data.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/gtdbtk_r214_data.tar.gz" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/gtdbtk_r214_data/*" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r226_data.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/gtdbtk_r226_data.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/gtdbtk_r226_data.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/gtdbtk_r226_data/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/gtdb \
