@@ -9,7 +9,7 @@ echo -e "SAMPLE\tREADS1\tREADS2" > $INPUT_FILES
 echo -e "MYDATA\t$(readlink -f inputFiles/read1*)\t$(readlink -f inputFiles/read2*)" >> $INPUT_FILES
 
 # Run the following command with files stored on local disk
-NXF_HOME=$PWD/.nextflow NXF_VER=24.10.4 nextflow run metagenomics/metagenomics-tk -work-dir $(pwd)/work \
+NXF_HOME=$PWD/.nextflow NXF_VER=25.04.2 nextflow run metagenomics/metagenomics-tk -work-dir $(pwd)/work \
     -profile slurm \
     -entry wFullPipeline \
     -ansi-log false \
