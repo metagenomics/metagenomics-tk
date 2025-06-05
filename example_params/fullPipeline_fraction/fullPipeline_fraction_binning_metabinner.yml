@@ -47,7 +47,7 @@ steps:
           search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
           additionalColumns: ""
         database:
-          extractedDBPath: '/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB'
+          extractedDBPath: '/vol/spool/toolkit/kegg-mirror-202506_mmseqs/keggDB'
 resources:
   highmemLarge:
     cpus: 28

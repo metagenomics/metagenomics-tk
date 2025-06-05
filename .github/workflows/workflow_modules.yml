@@ -490,7 +490,7 @@ jobs:
       - name: Test Annotation
         run: |
           bash ./scripts/test_annotation.sh \
-            "     --steps.annotation.mmseqs.kegg.database.extractedDBPath=/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB \
+            "     --steps.annotation.mmseqs.kegg.database.extractedDBPath=/vol/spool/toolkit/kegg-mirror-202506_mmseqs/keggDB \
              --steps.annotation.keggFromMMseqs2.database.extractedDBPath=/vol/spool/toolkit/kegg_2021-01/ --databases=/vol/scratch/databases/ " "" \
             "${WORK_DIR}" ${PROFILE}  || exit 1
 
@@ -555,11 +555,11 @@ jobs:
           make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Test mmseqs2 against different database configurations
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-mirror-202506_mmseqs/keggDB" \
                                MODULE_DB_TEST_MD5SUM="0d20db97b3e7ee6571ca1fd5ad3a87f1" \
-                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs.tar.zst" MODULE_DB_TEST_S3PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs/*" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/kegg-mirror-202506_mmseqs.tar.zst" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg-mirror-202506_mmseqs.tar.zst" MODULE_DB_TEST_S3PATH="s3://databases_internal/kegg-mirror-202506_mmseqs.tar.zst" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-mirror-202506_mmseqs/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/mmseqs2 \
@@ -585,11 +585,11 @@ jobs:
           make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Test mmseqs2 against different database configurations
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-mirror-202506_mmseqs/keggDB" \
                                MODULE_DB_TEST_MD5SUM="0d20db97b3e7ee6571ca1fd5ad3a87f1" \
-                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs.tar.zst" MODULE_DB_TEST_S3PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs/*" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/kegg-mirror-202506_mmseqs.tar.zst" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg-mirror-202506_mmseqs.tar.zst" MODULE_DB_TEST_S3PATH="s3://databases_internal/kegg-mirror-202506_mmseqs.tar.zst" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-mirror-202506_mmseqs/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/mmseqs2 \
