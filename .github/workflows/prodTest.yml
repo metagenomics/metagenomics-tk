@@ -26,5 +26,5 @@ jobs:
            --smetana_image=pbelmann/metabolomics:0.1.0 --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh \
            --steps.fragmentRecruitment.mashScreen.genomes=/vol/spool/toolkit/gtdb/paths.tsv \
            --steps.cooccurrence.inference.additionalParams.rscript=' --mincovthreshold 0.9 --maxzero 100 ' \
-           --steps.annotation.mmseqs2.kegg.database.extractedDBPath='/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB' " \
+           --steps.annotation.mmseqs2.kegg.database.extractedDBPath='/vol/spool/toolkit/kegg-mirror-202506_mmseqs/keggDB' " \
           ./default/fullPipeline_illumina_nanpore.yml "" slurm || exit 1

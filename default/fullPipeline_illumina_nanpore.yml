@@ -242,7 +242,7 @@ steps:
           additionalColumns: ""
         database:
           download:
-            source: s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst
+            source: s3://databases_internal/kegg-mirror-202506_mmseqs.tar.zst
             md5sum: 0d20db97b3e7ee6571ca1fd5ad3a87f1
             s5cmd:
               params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
