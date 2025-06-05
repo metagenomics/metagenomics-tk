@@ -199,7 +199,7 @@ steps:
 
         database:
           download:
-            source: s3://databases/uniref90_20231108_mmseqs/*
+            source: s3://databases/uniref90_20250604_mmseqs/*
             md5sum: 313f2c031361091af2d5f3c6f6f46013
             s5cmd:
               params: '--retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'

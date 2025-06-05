@@ -276,7 +276,7 @@ steps:
           additionalColumns: ""
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90_20231108_mmseqs.tar.zst
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90_20250604_mmseqs.tar.zst
             md5sum: 313f2c031361091af2d5f3c6f6f46013
     rgi:
       # --include_loose includes matches of more distant homologs of AMR genes which may also report spurious partial matches
