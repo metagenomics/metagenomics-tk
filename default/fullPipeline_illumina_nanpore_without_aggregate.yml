@@ -213,7 +213,7 @@ steps:
       database:
         download:
           source: s3://databases_internal/kegg-links-mirror-202506.tar.gz
-          md5sum: 69538151ecf4128f4cb1e0ac21ff55b3
+          md5sum: 6560d775534694db64effc0aba3c702a
           s5cmd:
              params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
   plasmid:
