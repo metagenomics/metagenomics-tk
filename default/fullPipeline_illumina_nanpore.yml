@@ -277,7 +277,7 @@ steps:
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90_20250604_mmseqs.tar.zst
-            md5sum: 313f2c031361091af2d5f3c6f6f46013
+            md5sum: 72ff03ad6e9e059fd52e07dd714ef9dc
     rgi:
       # --include_loose includes matches of more distant homologs of AMR genes which may also report spurious partial matches
       # --include_nudge Partial ORFs may do not pass curated bitscore cut-offs or novel samples may contain divergent alleles, so nudging 
