@@ -189,7 +189,7 @@ steps:
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r226_mmseqs_taxonomy.tar.gz
-            md5sum: 3c8f12c5c2dc55841a14dd30a0a4c718
+            md5sum: a1d77c776a16666ad97ce4945e5e7a35
       ncbi_nr:
         params: ' --orf-filter-s 1 -e 1e-15'
         ramMode: false
