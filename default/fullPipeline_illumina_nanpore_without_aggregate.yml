@@ -198,7 +198,7 @@ steps:
         initialMaxSensitivity: 6
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r226_mmseqs_taxonomy.tar.gz
             md5sum: 3c8f12c5c2dc55841a14dd30a0a4c718
     rgi:
       # --include_loose includes matches of more distant homologs of AMR genes which may also report spurious partial matches
