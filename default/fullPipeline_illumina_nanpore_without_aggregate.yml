@@ -186,7 +186,7 @@ steps:
         database:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90_20250604_mmseqs.tar.zst
-            md5sum: 72ff03ad6e9e059fd52e07dd714ef9dc
+            md5sum: 6889d75f437857a07b23c6150cd938bf
     mmseqs2_taxonomy:
       # Run taxonomy classification on MAGs and unbinable contigs or just the later
       runOnMAGs: true
