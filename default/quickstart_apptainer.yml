@@ -94,8 +94,8 @@ steps:
       buffer: 1000
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
-          md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r226_data.tar.gz
+          md5sum: 8cedd20df09e96e3ea7ffe7058160979
       additionalParams: " --min_af 0.65 --scratch_dir . "
     checkm2:
       database:
