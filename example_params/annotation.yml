@@ -40,7 +40,7 @@ steps:
 #              md5sum: 7e32aaed112d6e056fb8764b637bf49e
       keggFromMMseqs2:
          database:
-           extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/"
+           extractedDBPath: "/vol/spool/toolkit/kegg-links-mirror-202506/"
       rgi: 
         database:
           download:

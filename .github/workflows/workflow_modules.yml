@@ -118,7 +118,7 @@ jobs:
                            MODULE_DB_TEST_YML_SCRIPT="./scripts/test_fullPipelineExport.sh" \
                            MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/_yaml_database_tests" \
                            MODULE_DB_TEST_REMOVE_DB="yes" \ MODULE_DB_TEST_SKIP_TESTS="noSkip" \
-                           MODULE_DB_TEST_ADDITIONA_YAML_PARAMS=" --steps.export.emgb.kegg.database.extractedDBPath=/vol/spool/metagenomics-tk/emgb/kegg/annotatedgenes2json_db_kegg-mirror-2025-05"
+                           MODULE_DB_TEST_ADDITIONA_YAML_PARAMS=" --steps.export.emgb.kegg.database.extractedDBPath=/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2025-05"
       - name: Test download kegg EMGB database
         run: |
             make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2025-05" \
@@ -491,7 +491,7 @@ jobs:
         run: |
           bash ./scripts/test_annotation.sh \
             "     --steps.annotation.mmseqs.kegg.database.extractedDBPath=/vol/spool/toolkit/kegg-mirror-202506_mmseqs/keggDB \
-             --steps.annotation.keggFromMMseqs2.database.extractedDBPath=/vol/spool/toolkit/kegg_2021-01/ --databases=/vol/scratch/databases/ " "" \
+             --steps.annotation.keggFromMMseqs2.database.extractedDBPath=/vol/spool/toolkit/kegg-links-mirror-202506/ --databases=/vol/scratch/databases/ " "" \
             "${WORK_DIR}" ${PROFILE}  || exit 1
 
   annotation_database_tests_part_1:
@@ -527,7 +527,7 @@ jobs:
 
       - name: Test keggFromMMseqs2 against different database configurations
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg_2021-01" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-links-mirror-202506" \
                                MODULE_DB_TEST_MD5SUM="6560d775534694db64effc0aba3c702a" \
                                MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/kegg-links-mirror-202506.tar.gz" \
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases_internal/kegg-links-mirror-202506.tar.gz" \
