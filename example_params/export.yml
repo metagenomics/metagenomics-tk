@@ -22,8 +22,8 @@ steps:
       kegg:
         database:
           download:
-            source: s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2022-12.tar.zst
-            md5sum: 262dab8ca564fbc1f27500c22b5bc47b
+            source: s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2025-05.tar.zst
+            md5sum: 94169a92d453f55553aa7edf4546d00d
             s5cmd:
               params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
 resources:

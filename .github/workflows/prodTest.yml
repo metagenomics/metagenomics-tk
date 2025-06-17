@@ -1,7 +1,7 @@
 name: "Run Tests against real samples"
 on: [workflow_dispatch]
 env:
-  EMGB_KEGG_DB: "/vol/spool/toolkit/emgb/annotatedgenes2json_db_kegg-mirror-2022-12" 
+  EMGB_KEGG_DB: "/vol/spool/toolkit/emgb/annotatedgenes2json_db_kegg-mirror-2025-05" 
   WORK_DIR: "/vol/spool/work"
   EMGB_DB_TITLES: "/vol/spool/toolkit/emgb/uniref90.titles.202506.tsv.gz"
 jobs:
