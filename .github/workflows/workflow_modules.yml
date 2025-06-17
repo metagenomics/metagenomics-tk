@@ -7,7 +7,7 @@ env:
   WORK_DIR: "/vol/spool/${{ github.ref_name }}"
   PROFILE: "slurm"
   PR_NUMBER: ${{ github.run_id }}.${{ github.run_attempt }}
-  EMGB_KEGG_DB: "/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2022-12" 
+  EMGB_KEGG_DB: "/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2025-05" 
   EMGB_DB_TITLES: "/vol/spool/emgb/uniref90.titles.202506.tsv.gz"
 jobs:
   full_pipeline:
@@ -118,14 +118,14 @@ jobs:
                            MODULE_DB_TEST_YML_SCRIPT="./scripts/test_fullPipelineExport.sh" \
                            MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/_yaml_database_tests" \
                            MODULE_DB_TEST_REMOVE_DB="yes" \ MODULE_DB_TEST_SKIP_TESTS="noSkip" \
-                           MODULE_DB_TEST_ADDITIONA_YAML_PARAMS=" --steps.export.emgb.kegg.database.extractedDBPath=/vol/spool/metagenomics-tk/emgb/kegg/annotatedgenes2json_db_kegg-mirror-2022-12"
+                           MODULE_DB_TEST_ADDITIONA_YAML_PARAMS=" --steps.export.emgb.kegg.database.extractedDBPath=/vol/spool/metagenomics-tk/emgb/kegg/annotatedgenes2json_db_kegg-mirror-2025-05"
       - name: Test download kegg EMGB database
         run: |
-            make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2022-12" \
-                  MODULE_DB_TEST_MD5SUM="262dab8ca564fbc1f27500c22b5bc47b" \
-                  MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/annotatedgenes2json_db_kegg-mirror-2022-12.tar.zst" \
-                  MODULE_DB_TEST_PATH="/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2022-12.tar.zst" MODULE_DB_TEST_S3PATH="s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2022-12.tar.zst" \
-                  MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2022-12/*" \
+            make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2025-05" \
+                  MODULE_DB_TEST_MD5SUM="94169a92d453f55553aa7edf4546d00d" \
+                  MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/annotatedgenes2json_db_kegg-mirror-2025-05.tar.zst" \
+                  MODULE_DB_TEST_PATH="/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2025-05.tar.zst" MODULE_DB_TEST_S3PATH="s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2025-05.tar.zst" \
+                  MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2025-05/*" \
                   MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                   MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/emgbKEGG \
                   MODULE_DB_TEST_YML=example_params/export.yml \
