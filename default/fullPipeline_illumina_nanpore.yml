@@ -330,8 +330,8 @@ steps:
       titles:
         database:
           download:
-            source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90.titles.tsv.gz"
-            md5sum: aaf1dd9021243def8e6c4e438b4b3669
+            source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90.titles.202506.tsv.gz"
+            md5sum: 65437094361e84756e156c54d3a6e56b
       additionalParams:
               blastDB: ""
               taxonomyDB: ""
