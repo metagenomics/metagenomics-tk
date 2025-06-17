@@ -3,7 +3,7 @@ on: [workflow_dispatch]
 env:
   EMGB_KEGG_DB: "/vol/spool/toolkit/emgb/annotatedgenes2json_db_kegg-mirror-2022-12" 
   WORK_DIR: "/vol/spool/work"
-  EMGB_DB_TITLES: "/vol/spool/toolkit/emgb/uniref90.titles.tsv.gz"
+  EMGB_DB_TITLES: "/vol/spool/toolkit/emgb/uniref90.titles.202506.tsv.gz"
 jobs:
   run_full_pipeline:
     timeout-minutes: 14400
