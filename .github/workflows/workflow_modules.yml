@@ -667,12 +667,12 @@ jobs:
           bash ./scripts/test_plasmids.sh " --databases=/vol/scratch/databases/     " "" "${WORK_DIR}/${{ github.ref_name }}" ${PROFILE}  || exit 1
       - name: Plasmids Database Test
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/plasmids_plsdb_20220929" \
-                               MODULE_DB_TEST_MD5SUM="13c1078e6cd6a46e3f508c24ca07cc18" \
-                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20220929.tar.bz2" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/plasmids_plsdb_20220929.tar.bz2" \
-                               MODULE_DB_TEST_S3PATH="s3://databases/plasmids_plsdb_20220929.tar.bz2" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/plasmids_plsdb_20220929/*" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/plasmids_plsdb_20250618" \
+                               MODULE_DB_TEST_MD5SUM="c860e17ce5c0e87d7f21e57fbecdca91" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20250618.tar.bz2" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/plasmids_plsdb_20250618.tar.bz2" \
+                               MODULE_DB_TEST_S3PATH="s3://databases/plasmids_plsdb_20250618.tar.bz2" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/plasmids_plsdb_20250618/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/plasmids \
