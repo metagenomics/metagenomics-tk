@@ -44,8 +44,8 @@ steps:
       sharedKmerThreshold: 30
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20220929.tar.bz2
-          md5sum: 13c1078e6cd6a46e3f508c24ca07cc18
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20250618.tar.bz2
+          md5sum: c860e17ce5c0e87d7f21e57fbecdca91
       additionalParams:
         mashSketch: " -S 42 -k 21 -s 1000 "
         mashDist: " -v 0.2 -d 0.2 "
