@@ -44,8 +44,8 @@ steps:
       rgi: 
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
-            md5sum: d7e627221a1d4584d1c1795cda774cdb
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_broadstreet-v4.0.1.tar.bz2
+            md5sum: 2396eaf95f2d35c58c135f7db2211dbb
         additionalParams: ""
       mmseqs2_taxonomy:
         runOnMAGs: false
