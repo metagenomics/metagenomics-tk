@@ -682,9 +682,9 @@ jobs:
 
       - name: ViralVerify Plasmid Test
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/pfam-A_35.0.hmm" \
-                               MODULE_DB_TEST_MD5SUM="c80b75bd48ec41760bbca19c70616e36" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/pfam-A_35.0.hmm.gz" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/pfam-A_35.0.hmm.gz" MODULE_DB_TEST_S3PATH="s3://databases/pfam-A_35.0.hmm.gz" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/Pfam-A_37.4.hmm" \
+                               MODULE_DB_TEST_MD5SUM="9ca99e4396bb7c123e884057e91eff8d" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/Pfam-A_37.4.hmm.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/Pfam-A_37.4.hmm.gz" MODULE_DB_TEST_S3PATH="s3://databases/Pfam-A_37.4.hmm.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/pfam-A_35.*.hmm" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \

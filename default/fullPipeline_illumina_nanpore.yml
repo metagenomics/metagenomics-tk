@@ -195,8 +195,8 @@ steps:
       filterString: "Uncertain - plasmid or chromosomal|Plasmid"
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/pfam-A_35.0.hmm.gz
-          md5sum: c80b75bd48ec41760bbca19c70616e36
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/Pfam-A_37.4.hmm.gz
+          md5sum: 9ca99e4396bb7c123e884057e91eff8d
       additionalParams: " --thr 7 "
     PlasClass:
       filter: true
