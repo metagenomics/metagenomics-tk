@@ -36,9 +36,6 @@ seqkit replace -p "\s.+" mobInput.fa \
 
 MOB_TYPER_OUT=!{binID}_chunk_!{start}_!{stop}_mobtyper.tsv
 
-# Bug fix: Mob Typer does not search for the taxa.sqlite file in the user provided database directory
-sed -i " 178 i ETE3DBTAXAFILE = \"${MOB_TYPER_DB}/taxa.sqlite\"" /usr/local/lib/python3.8/dist-packages/mob_suite-3.1.0-py3.8.egg/mob_suite/constants.py
-
 mob_typer !{ADDITIONAL_PARAMS} -d ${MOB_TYPER_DB} -n !{task.cpus} \
 	--multi --infile unzipped_plasmids.fasta --out_file out.tsv > >(tee -a mob_typer_stdout.log) 2> >(tee -a mob_typer_stderr.log >&2)
  
@@ -51,8 +48,6 @@ else
 	echo "No exception found in MobTyper log.";
 fi
 
-
 # Add Sample and BinID
 sed  '1 s/^[^\t]*\t/CONTIG\t/' out.tsv \
   | sed -e '1 s/^/SAMPLE\tBIN_ID\t/g' -e "2,$ s/^/!{sample}\t!{binID}\t/g" > ${MOB_TYPER_OUT}
- 

@@ -226,8 +226,8 @@ steps:
       additionalParams: " --min_length 1000  "
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20220929.gz
-          md5sum: 21fcaf9c3754a985d1d6875939d71e28
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20250620.tar.gz
+          md5sum: d73fce2d4fc03ca8466b8b1baf1e5634
   annotation:
     prokka:
       defaultKingdom: false

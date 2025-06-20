@@ -708,11 +708,11 @@ jobs:
 
       - name: MobTyper Test
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/mob_20220929" \
-                               MODULE_DB_TEST_MD5SUM="21fcaf9c3754a985d1d6875939d71e28" \
-                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20220929.gz" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/mob_20220929.gz" MODULE_DB_TEST_S3PATH="s3://databases/mob_20220929.gz" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/mob_20220929/*" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/mob_20250620" \
+                               MODULE_DB_TEST_MD5SUM="d73fce2d4fc03ca8466b8b1baf1e5634" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20250620.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/mob_20250620.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/mob_20250620.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/mob_20250620/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.plasmid.MobTyper.database=env(database),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.Platon,.steps.plasmid.PLSDB)'" \
