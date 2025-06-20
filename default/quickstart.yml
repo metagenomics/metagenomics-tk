@@ -117,8 +117,8 @@ steps:
           additionalColumns: ""
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_2022_07_29.tar.zst
-            md5sum: 7e32aaed112d6e056fb8764b637bf49e
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_20250620.tar.zst
+            md5sum: f2ab1259b36fa906ff91f2575e8ee442
       bacmet20_experimental:
         additionalParams:
           search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '

@@ -36,8 +36,8 @@ steps:
 #          params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
 #          database:
 #            download:
-#              source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_2022_07_29.tar.zst
-#              md5sum: 7e32aaed112d6e056fb8764b637bf49e
+#              source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_20250620.tar.zst
+#              md5sum: f2ab1259b36fa906ff91f2575e8ee442
       keggFromMMseqs2:
          database:
            extractedDBPath: "/vol/spool/toolkit/kegg-links-mirror-202506/"
