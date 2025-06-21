@@ -10,18 +10,36 @@ publishDirMode: "symlink"
 steps:
   plasmid:
     input: "test_data/plasmid/input_contigs.tsv"
+    ViralVerifyPlasmid:
+      filter: true
+      filterString: "Uncertain - plasmid or chromosomal|Plasmid"
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/pfam-A_35.0.hmm.gz
+          md5sum: c80b75bd48ec41760bbca19c70616e36
+      additionalParams: " --thr 7 "
     MobTyper:
-      filter: false 
-      minLength: 100
-      additionalParams: " --min_length 0  "
+      filter: true
+      minLength: 5000
+      additionalParams: " --min_length 9000  "
       database:
         download:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20250620.tar.gz
           md5sum: d73fce2d4fc03ca8466b8b1baf1e5634
-    PlasClass:
-      filter: false 
-      threshold: 0 
+    Platon:
+      filter: false
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/platon_20220929.tar.gz
+          md5sum: f6d1701704396182c6c9daca053eb9d6
       additionalParams: "   "
+    PlasClass:
+      filter: true
+      threshold: 0.5 
+      additionalParams: "   "
+    Filter:
+      method: "AND"
+      minLength: 0 
     PLSDB:
       sharedKmerThreshold: 30
       database:
