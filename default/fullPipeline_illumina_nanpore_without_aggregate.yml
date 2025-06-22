@@ -192,7 +192,7 @@ steps:
       runOnMAGs: true
       gtdb:
         # High sensitivity mode parameters only work for quality MAGs, for unbinable contigs use default parameters
-        params: ' --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies  --max-seqs 300 --max-accept 50 --cov-mode 2 -e 0.001 --e-profile 0.01 '
+        params: ' --blacklist "" --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies  --max-seqs 300 --max-accept 50 --cov-mode 2 -e 0.001 --e-profile 0.01 '
         # Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params
         ramMode: false
         initialMaxSensitivity: 6
