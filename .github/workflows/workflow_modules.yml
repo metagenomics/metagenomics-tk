@@ -511,11 +511,11 @@ jobs:
 
       - name: Test rgi against different database configurations
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/card_20221209/card.json" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/card_broadstreet-v4.0.1/card.json" \
                                MODULE_DB_TEST_MD5SUM="2396eaf95f2d35c58c135f7db2211dbb" \
                                MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_broadstreet-v4.0.1.tar.bz2" \
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/card_broadstreet-v4.0.1.tar.bz2" MODULE_DB_TEST_S3PATH="s3://databases/card_broadstreet-v4.0.1.tar.bz2" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/card_20221209/*" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/card_broadstreet-v4.0.1/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/rgi \
