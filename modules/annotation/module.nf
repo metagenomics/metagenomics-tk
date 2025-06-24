@@ -565,10 +565,10 @@ process pWhokaryote {
       tuple val(sample), val(binID), file(fasta), file(gff)
 
     output:
-      tuple val("${sample}"), val("${binID}"), file("${binID}_featuretable.tsv"), emit: features 
-      tuple val("${sample}"), val("${binID}"), file("${binID}_featuretable_predictions_T.tsv"), emit: predictions 
-      tuple val("${sample}"), val("${binID}"), file("${binID}_eukaryote_contig_headers.tsv"), emit: eukaryotes 
-      tuple val("${sample}"), val("${binID}"), file("${binID}_prokaryote_contig_headers.tsv"), emit: prokaryotes 
+      tuple val("${sample}"), val("${binID}"), file("${binID}_featuretable.tsv"), optional: true, emit: features 
+      tuple val("${sample}"), val("${binID}"), file("${binID}_featuretable_predictions_T.tsv"), optional: true, emit: predictions 
+      tuple val("${sample}"), val("${binID}"), file("${binID}_eukaryote_contig_headers.tsv"), optional: true, emit: eukaryotes 
+      tuple val("${sample}"), val("${binID}"), file("${binID}_prokaryote_contig_headers.tsv"), optional: true, emit: prokaryotes 
       tuple val("${sample}"), val("${binID}"), file("${binID}_tiara_pred.tsv"), optional: true, emit: tiaraPred 
       tuple val("${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
