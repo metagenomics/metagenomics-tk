@@ -1,0 +1,1933 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../overview/">
+      
+      
+        <link rel="next" href="../aggregation/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.14">
+    
+    
+      
+        <title>Full Pipeline - Metagenomics-Toolkit</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.10ba22f1.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#requirements" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+          <aside class="md-banner md-banner--warning">
+            <div class="md-banner__inner md-grid md-typeset">
+              
+  You're not viewing the latest version.
+    <a href="../..">
+	        <strong>Click here to go to latest.</strong>
+    </a>
+
+            </div>
+            <script>var el=document.querySelector("[data-md-component=outdated]"),outdated=__md_get("__outdated",sessionStorage);!0===outdated&&el&&(el.hidden=!1)</script>
+          </aside>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Metagenomics-Toolkit" class="md-header__button md-logo" aria-label="Metagenomics-Toolkit" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Metagenomics-Toolkit
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Full Pipeline
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/metagenomics/metagenomics-tk" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Metagenomics-Tk
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+    
+  
+  Introduction
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../quickstart/" class="md-tabs__link">
+        
+  
+    
+  
+  Quickstart
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../overview/" class="md-tabs__link">
+          
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../configuration/" class="md-tabs__link">
+          
+  
+  Configuration
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../modules/introduction/" class="md-tabs__link">
+          
+  
+  Modules
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorials/tutorial1/introduction/" class="md-tabs__link">
+          
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../developer_guidelines/" class="md-tabs__link">
+          
+  
+  Developer
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Metagenomics-Toolkit" class="md-nav__button md-logo" aria-label="Metagenomics-Toolkit" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Metagenomics-Toolkit
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/metagenomics/metagenomics-tk" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Metagenomics-Tk
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../overview/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Full Pipeline
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Full Pipeline
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Requirements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-1-run-the-toolkit-with-a-basic-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Part 1: Run the Toolkit with a basic config
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 1: Run the Toolkit with a basic config">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-2-run-the-toolkit-with-your-own-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Part 2: Run the Toolkit with your own data
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-3-exchange-tools-of-a-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      Part 3: Exchange tools of a module
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-4-add-further-analyses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Part 4: Add further analyses
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      Further Reading
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../aggregation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Aggregation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Configuration
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Global Pipeline Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pipeline_input/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pipeline Input Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../database/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Database Configuration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Modules
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/introduction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/qualityControl/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quality Control
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/annotation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Annotation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/assembly/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Assembly
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/cooccurrence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cooccurrence
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/dereplication/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dereplication
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/fragment_recruitment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Fragment Recruitment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/magAttributes/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    MagAttributes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/plasmids/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Plasmids
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/metabolomics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Metabolomics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/readMapping/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Read Mapping
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modules/export/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Exploratory Metagenome Browser (EMGB)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tutorial (Basics)
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorial (Basics)
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/tutorial1/introduction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/tutorial1/quality_control/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Quality Control
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/tutorial1/assembly/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Assembly
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/tutorial1/assembly_evaluation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Assembly Evaluation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/tutorial1/binning/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Binning
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/tutorial1/bin_quality/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Assessing Bin Quality
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/tutorial1/classification/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Classification
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/tutorial1/annotation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Annotation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Developer
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Developer
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer_guidelines/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Guidelines
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pipeline_specification/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pipeline Specification
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../module_specification/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Module Specification
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Requirements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-1-run-the-toolkit-with-a-basic-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Part 1: Run the Toolkit with a basic config
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 1: Run the Toolkit with a basic config">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#input" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-2-run-the-toolkit-with-your-own-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Part 2: Run the Toolkit with your own data
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-3-exchange-tools-of-a-module" class="md-nav__link">
+    <span class="md-ellipsis">
+      Part 3: Exchange tools of a module
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-4-add-further-analyses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Part 4: Add further analyses
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      Further Reading
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+  <h1>Full Pipeline</h1>
+
+<p>The full pipeline mode allows you to run the per-sample part and the aggregation part in one execution (see <a href="../">schematic overview</a>).
+In contrast to the Quickstart section, this chapter refers to the execution of the Toolkit on a cluster system.
+In this section, you will run the Toolkit with a dataset stored on a remote server and then learn how to replace it with your own local data. 
+You will then learn how to add additional analyses steps to your pipeline configuration and how to replace the tools in a module with alternative ones.</p>
+<h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
+<ol>
+<li>SLURM: The Toolkit was mainly developed for cloud-based clusters using SLURM as a resource orchestrator.</li>
+<li>Docker: Install Docker by following the official Docker installation <a href="https://docs.docker.com/engine/install/ubuntu/">instructions</a>.</li>
+<li>Java: In order to run Nextflow, you need to install Java on your machine, which can be achieved via <code>sudo apt install default-jre</code>.</li>
+<li>Nextflow should be installed. Please check the official Nextflow <a href="https://www.nextflow.io/docs/latest/install.html#install-nextflow">instructions</a></li>
+<li>You will need at least 150 GB of scratch space on every worker node. </li>
+<li>This tutorial requires at least one worker node with 28 cores and 230 GB of RAM.</li>
+</ol>
+<h2 id="part-1-run-the-toolkit-with-a-basic-config">Part 1: Run the Toolkit with a basic config<a class="headerlink" href="#part-1-run-the-toolkit-with-a-basic-config" title="Permanent link">&para;</a></h2>
+<p>In this section you will learn how to run the Toolkit. The input data will be downloaded automatically.
+The following Toolkit analyses will be performed: quality control, assembly, binning, taxonomic classification,
+contamination and completeness of MAGs, and gene prediction and annotation via Prokka.</p>
+<div class="admonition note">
+<p class="admonition-title">Default Configuration</p>
+<p>Please note that in the following you will modify our default (best practice) configuration.<br />
+For most cases you don't need to modify our default configuration, you might only need to remove or add analyses.</p>
+</div>
+<div class="highlight"><pre><span></span><code><span class="nv">NXF_HOME</span><span class="o">=</span><span class="nv">$PWD</span>/.nextflow<span class="w"> </span><span class="nv">NXF_VER</span><span class="o">=</span><span class="m">25</span>.04.2<span class="w"> </span>nextflow<span class="w"> </span>run<span class="w"> </span>metagenomics/metagenomics-tk<span class="w"> </span>-work-dir<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/work<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-profile<span class="w"> </span>slurm<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-entry<span class="w"> </span>wFullPipeline<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-ansi-log<span class="w"> </span><span class="nb">false</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-params-file<span class="w">  </span>https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/default/fullPipeline_illumina_nanpore_getting_started_part1.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--logDir<span class="w"> </span>log1<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--s3SignIn<span class="w"> </span><span class="nb">false</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scratch<span class="w"> </span>/vol/scratch<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--databases<span class="w"> </span>/vol/scratch/databases<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output<span class="w"> </span>output<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--input.paired.path<span class="w"> </span>https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/fullPipeline/reads_split.tsv
+</code></pre></div>
+<p>where</p>
+<ul>
+<li><code>NXF_HOME</code> points to the directory where Nextflow internal files and additional configs are stored. The default location is your home directory.
+ However, it might be that your home directory is not shared among all worker nodes and is only available on the master node.  In this example
+ the variable points to your current working directory (<code>$PWD/.nextflow</code>).</li>
+<li><code>-work-dir</code> points in this example to your current working directory and should point to a directory that is shared between all worker nodes.</li>
+<li><code>-profile</code> defines the execution profile that should be used (local or cluster computing).</li>
+<li><code>-entry</code> is the entrypoint of the Toolkit.</li>
+<li><code>-params-file</code> sets the parameters file which defines the parameters for all tools. (see input section below)</li>
+<li><code>--logDir</code> points to a directory where your trace TSV, a timeline HTML of the executed processes and a report regarding the resource consumption of the workflow is saved.</li>
+<li><code>--s3SignIn</code> defines if any S3 login for retrieving inputs is necessary. See the <a href="../configuration/#s3-configuration">S3 configuration</a> section for more information on how to configure the Toolkit for possible S3 input data.</li>
+<li><code>--scratch</code> is the directory on the worker node where all intermediate results are saved.</li>
+<li><code>--databases</code> is the directory on the worker node where all databases are saved. Already downloaded and extracted databases on a shared file system can be configured in the database setting of the corresponding <a href="../database/">database section</a> in the configuration file.</li>
+<li><code>--output</code> is the output directory where all results are saved. If you want to know more about which outputs are created, then please refer to the <a href="../modules/introduction/">modules section</a>.</li>
+<li><code>--input.paired.path</code> is the path to a TSV file that lists the datasets that should be processed. Besides paired-end data there are also other input types. Please check the <a href="../pipeline_input/">input section</a>.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Parameter override</p>
+<p>Any parameters defined with a double dash are parameters that override parameters that are already specified in the YAML file.</p>
+</div>
+<h3 id="input">Input<a class="headerlink" href="#input" title="Permanent link">&para;</a></h3>
+<p>Here you can see the actual input TSV and YAML which was used by the previous command and automatically downloaded by Nextflow. 
+The TSV file only describes the input data, while the YAML file represents the Toolkit configuration.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">TSV Table</label><label for="__tabbed_1_2">Configuration File</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>SAMPLE  READS1  READS2
+test1   https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz  https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1.fq.gz
+test2   https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz  https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1.fq.gz
+</code></pre></div>
+<p>Must include the columns <code>SAMPLE</code>, <code>READS1</code> and <code>READS2</code>. <code>SAMPLE</code> must contain unique dataset identifiers
+without whitespaces or special characters. <code>READS1</code> and <code>READS2</code> are paired reads and can be HTTPS URLs, S3 links or files.</p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="nt">tempdir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;tmp&quot;</span>
+<span class="nt">s3SignIn</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="nt">input</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">paired</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;test_data/fullPipeline/reads_split.tsv&quot;</span>
+<span class="w">    </span><span class="nt">watch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="nt">output</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">output</span>
+<span class="nt">logDir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">log</span>
+<span class="nt">runid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">databases</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/vol/scratch/databases&quot;</span>
+<span class="nt">publishDirMode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;symlink&quot;</span>
+<span class="nt">logLevel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">scratch</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/vol/scratch&quot;</span>
+<span class="nt">steps</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">qc</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">fastp</span><span class="p">:</span>
+<span class="w">       </span><span class="c1"># For PE data, the adapter sequence auto-detection is disabled by default since the adapters can be trimmed by overlap analysis. However, you can specify --detect_adapter_for_pe to enable it.</span>
+<span class="w">       </span><span class="c1"># For PE data, fastp will run a little slower if you specify the sequence adapters or enable adapter auto-detection, but usually result in a slightly cleaner output, since the overlap analysis may fail due to sequencing errors or adapter dimers.</span>
+<span class="w">       </span><span class="c1"># -q, --qualified_quality_phred       the quality value that a base is qualified. Default 15 means phred quality &gt;=Q15 is qualified.</span>
+<span class="w">       </span><span class="c1"># --cut_front move a sliding window from front (5&#39;) to tail, drop the bases in the window if its mean quality is below cut_mean_quality, stop otherwise.</span>
+<span class="w">       </span><span class="c1"># --length_required  reads shorter than length_required will be discarded, default is 15. (int [=15])</span>
+<span class="w">       </span><span class="c1"># PE data, the front/tail trimming settings are given with -f, --trim_front1 and -t, --trim_tail1</span>
+<span class="w">       </span><span class="nt">additionalParams</span><span class="p">:</span>
+<span class="w">         </span><span class="nt">fastp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--detect_adapter_for_pe</span><span class="nv"> </span><span class="s">-q</span><span class="nv"> </span><span class="s">20</span><span class="nv"> </span><span class="s">--cut_front</span><span class="nv"> </span><span class="s">--trim_front1</span><span class="nv"> </span><span class="s">3</span><span class="nv"> </span><span class="s">--cut_tail</span><span class="nv"> </span><span class="s">--trim_tail1</span><span class="nv"> </span><span class="s">3</span><span class="nv"> </span><span class="s">--cut_mean_quality</span><span class="nv"> </span><span class="s">10</span><span class="nv"> </span><span class="s">--length_required</span><span class="nv"> </span><span class="s">50</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">         </span><span class="nt">reportOnly</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span>
+<span class="w">       </span><span class="nt">timeLimit</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;AUTO&quot;</span>
+<span class="w">    </span><span class="nt">nonpareil</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">-v</span><span class="nv"> </span><span class="s">10</span><span class="nv"> </span><span class="s">-r</span><span class="nv"> </span><span class="s">1234</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">    </span><span class="nt">kmc</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">timeLimit</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;AUTO&quot;</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span>
+<span class="w">        </span><span class="c1"># Computes k-mer distribution based on k-mer length 13 and 21</span>
+<span class="w">        </span><span class="c1">#  -sm - use strict memory mode (memory limit from -m&lt;n&gt; switch will not be exceeded)</span>
+<span class="w">        </span><span class="c1">#  -cs&lt;value&gt; - maximal value of a counter</span>
+<span class="w">        </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">-sm</span><span class="nv"> </span><span class="s">-cs10000</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">        </span><span class="nt">histo</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">-cx50000</span><span class="nv"> </span><span class="s">&quot;</span>
+
+<span class="w">  </span><span class="nt">qcONT</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">porechop</span><span class="p">:</span>
+<span class="w">       </span><span class="nt">additionalParams</span><span class="p">:</span>
+<span class="w">         </span><span class="c1"># Input files are split into chunks because of RAM issues</span>
+<span class="w">         </span><span class="nt">chunkSize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">450000</span>
+<span class="w">         </span><span class="nt">porechop</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="w">        </span><span class="c1"># --keep_percent Throw out the worst 10% of reads. This is measured by bp, not by read count. So this option throws out the worst 10% of read bases. </span>
+<span class="w">        </span><span class="c1"># </span>
+<span class="w">         </span><span class="nt">filtlong</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--min_length</span><span class="nv"> </span><span class="s">1000</span><span class="nv">  </span><span class="s">--keep_percent</span><span class="nv"> </span><span class="s">90</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">    </span><span class="nt">nanoplot</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="w">  </span><span class="nt">assembly</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">megahit</span><span class="p">:</span>
+<span class="w">      </span><span class="c1"># --mem-flag 0 to use minimum memory, --mem-flag 1 (default) moderate memory and --mem-flag 2 all memory.</span>
+<span class="w">      </span><span class="c1"># meta-sensitive: &#39;--min-count 1 --k-list 21,29,39,49,...,129,141&#39; </span>
+<span class="w">      </span><span class="c1"># meta-large:  &#39;--k-min  27  --k-max 127 --k-step 10&#39; (large &amp; complex metagenomes, like soil)</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--min-contig-len</span><span class="nv"> </span><span class="s">1000</span><span class="nv"> </span><span class="s">--presets</span><span class="nv"> </span><span class="s">meta-sensitive</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">      </span><span class="nt">fastg</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">resources</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">RAM</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;PREDICT&#39;</span>
+<span class="w">          </span><span class="nt">predictMinLabel</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;medium&#39;</span>
+<span class="w">  </span><span class="nt">assemblyONT</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">metaflye</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">-i</span><span class="nv"> </span><span class="s">1</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">      </span><span class="nt">quality</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;AUTO&quot;</span>
+<span class="w">  </span><span class="nt">binning</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">bwa2</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span>
+<span class="w">        </span><span class="nt">bwa2</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">        </span><span class="c1"># samtools flags are used to filter resulting bam file</span>
+<span class="w">        </span><span class="nt">samtoolsView</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">-F</span><span class="nv"> </span><span class="s">3584</span><span class="nv"> </span><span class="s">&quot;</span><span class="w"> </span>
+<span class="w">    </span><span class="nt">contigsCoverage</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--min-covered-fraction</span><span class="nv"> </span><span class="s">0</span><span class="nv"> </span><span class="s">--min-read-percent-identity</span><span class="nv"> </span><span class="s">100</span><span class="nv"> </span><span class="s">--min-read-aligned-percent</span><span class="nv"> </span><span class="s">100</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">    </span><span class="nt">genomeCoverage</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--min-covered-fraction</span><span class="nv"> </span><span class="s">0</span><span class="nv"> </span><span class="s">--min-read-percent-identity</span><span class="nv"> </span><span class="s">100</span><span class="nv"> </span><span class="s">--min-read-aligned-percent</span><span class="nv"> </span><span class="s">100</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">    </span><span class="c1"># Primary binning tool</span>
+<span class="w">    </span><span class="nt">metabat</span><span class="p">:</span>
+<span class="w">      </span><span class="c1"># Set --seed positive numbers to reproduce the result exactly. Otherwise, random seed will be set each time.</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--seed</span><span class="nv"> </span><span class="s">234234</span><span class="nv">  </span><span class="s">&quot;</span>
+<span class="w">    </span><span class="c1"># Secondary binning tool for use with MAGscot</span>
+<span class="w">  </span><span class="nt">binningONT</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">minimap</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span>
+<span class="w">        </span><span class="nt">minimap</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">        </span><span class="c1"># samtools flags are used to filter resulting bam file</span>
+<span class="w">        </span><span class="nt">samtoolsView</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">-F</span><span class="nv"> </span><span class="s">3584</span><span class="nv"> </span><span class="s">&quot;</span><span class="w"> </span>
+<span class="w">    </span><span class="nt">contigsCoverage</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--min-covered-fraction</span><span class="nv"> </span><span class="s">0</span><span class="nv">  </span><span class="s">--min-read-aligned-percent</span><span class="nv"> </span><span class="s">100</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">    </span><span class="nt">genomeCoverage</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--min-covered-fraction</span><span class="nv"> </span><span class="s">0</span><span class="nv">  </span><span class="s">--min-read-aligned-percent</span><span class="nv"> </span><span class="s">100</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">    </span><span class="nt">metabat</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--seed</span><span class="nv"> </span><span class="s">234234</span><span class="nv">  </span><span class="s">&quot;</span>
+<span class="w">  </span><span class="nt">magAttributes</span><span class="p">:</span>
+<span class="w">    </span><span class="c1"># gtdbtk classify_wf</span>
+<span class="w">    </span><span class="c1"># --min_af minimum alignment fraction to assign genome to a species cluster (0.5)</span>
+<span class="w">    </span><span class="nt">gtdb</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">buffer</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
+<span class="w">      </span><span class="nt">database</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">download</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r226_data.tar.gz</span>
+<span class="w">          </span><span class="nt">md5sum</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8cedd20df09e96e3ea7ffe7058160979</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--min_af</span><span class="nv"> </span><span class="s">0.65</span><span class="nv"> </span><span class="s">--scratch_dir</span><span class="nv"> </span><span class="s">.</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">    </span><span class="nt">checkm2</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">database</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">download</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://openstack.cebitec.uni-bielefeld.de:8080/databases/checkm2_v2.tar.gz&quot;</span>
+<span class="w">          </span><span class="nt">md5sum</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">a634cb3d31a1f56f2912b74005f25f09</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv">  </span><span class="s">&quot;</span>
+<span class="w">  </span><span class="nt">annotation</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">prokka</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">defaultKingdom</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--mincontiglen</span><span class="nv"> </span><span class="s">500</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">    </span><span class="nt">whokaryote</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--minsize</span><span class="nv"> </span><span class="s">3000</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="nt">resources</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">highmemLarge</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">28</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">230</span>
+<span class="w">  </span><span class="nt">highmemMedium</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">14</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">113</span>
+<span class="w">  </span><span class="nt">large</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">28</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">58</span>
+<span class="w">  </span><span class="nt">medium</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">14</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">29</span>
+<span class="w">  </span><span class="nt">small</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">14</span>
+<span class="w">  </span><span class="nt">tiny</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">cpus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<h3 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h3>
+<p>You can read more about the produced output on the respective <a href="../modules/introduction/">modules page</a>.</p>
+<h2 id="part-2-run-the-toolkit-with-your-own-data">Part 2: Run the Toolkit with your own data<a class="headerlink" href="#part-2-run-the-toolkit-with-your-own-data" title="Permanent link">&para;</a></h2>
+<p>Now that you have been able to run the Toolkit on your system, let's use the same configuration, but with your own data that may already be 
+locally available . We will simulate the provisioning of local files by first downloading sample paired-end FASTQ files (size: 1.2 GB). 
+Please note that these are the same fastq files as in the previous part. The only difference to previous part is that you will download the
+data beforehand. </p>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>inputFiles
+wget<span class="w"> </span>-P<span class="w"> </span>inputFiles<span class="w"> </span>https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz<span class="w"> </span>
+wget<span class="w"> </span>-P<span class="w"> </span>inputFiles<span class="w"> </span>https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1.fq.gz<span class="w"> </span>
+</code></pre></div>
+<p>In addition, you have to tell the Toolkit the name of the sample and the path to the files that are the subject of the analysis.
+For this reason, we will create a file that contains three columns: sample, path to left reads, and path to right reads.</p>
+<div class="highlight"><pre><span></span><code><span class="nv">INPUT_FILES</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/inputFiles/input.tsv
+<span class="nb">echo</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;SAMPLE\tREADS1\tREADS2&quot;</span><span class="w"> </span>&gt;<span class="w"> </span><span class="nv">$INPUT_FILES</span>
+<span class="nb">echo</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;MYDATA\t</span><span class="k">$(</span>readlink<span class="w"> </span>-f<span class="w"> </span>inputFiles/read1*<span class="k">)</span><span class="s2">\t</span><span class="k">$(</span>readlink<span class="w"> </span>-f<span class="w"> </span>inputFiles/read2*<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="nv">$INPUT_FILES</span>
+</code></pre></div>
+<p>Now that the files are created, you are ready to execute the Toolkit on your data but with a modified command of the first part.
+The only difference is that you modify the <code>--input.paired.path</code> variable.</p>
+<div class="highlight"><pre><span></span><code><span class="nv">NXF_HOME</span><span class="o">=</span><span class="nv">$PWD</span>/.nextflow<span class="w"> </span><span class="nv">NXF_VER</span><span class="o">=</span><span class="m">25</span>.04.2<span class="w"> </span>nextflow<span class="w"> </span>run<span class="w"> </span>metagenomics/metagenomics-tk<span class="w"> </span>-work-dir<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/work<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-profile<span class="w"> </span>slurm<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-entry<span class="w"> </span>wFullPipeline<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-ansi-log<span class="w"> </span><span class="nb">false</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-params-file<span class="w">  </span>https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/default/fullPipeline_illumina_nanpore_getting_started_part1.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--logDir<span class="w"> </span>log2<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--s3SignIn<span class="w"> </span><span class="nb">false</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scratch<span class="w"> </span>/vol/scratch<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--databases<span class="w"> </span>/vol/scratch/databases<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output<span class="w"> </span>my_data_output<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--input.paired.path<span class="w"> </span>inputFiles/input.tsv
+</code></pre></div>
+<p>Now you can go through the <code>my_data_output</code> folder and check the results.
+The next section describes how to modify the analysis that was performed.</p>
+<h2 id="part-3-exchange-tools-of-a-module">Part 3: Exchange tools of a module<a class="headerlink" href="#part-3-exchange-tools-of-a-module" title="Permanent link">&para;</a></h2>
+<p>In some cases, you may also be interested in replacing a tool from one module with another. For example, you might be interested in comparing the assembler that is set as default with another one like MetaSpades.</p>
+<p>In this case you could replace the MEGAHIT part with the MetaSpades config.</p>
+<div class="highlight"><pre><span></span><code><span class="nv">NXF_HOME</span><span class="o">=</span><span class="nv">$PWD</span>/.nextflow<span class="w"> </span><span class="nv">NXF_VER</span><span class="o">=</span><span class="m">25</span>.04.2<span class="w"> </span>nextflow<span class="w"> </span>run<span class="w"> </span>metagenomics/metagenomics-tk<span class="w"> </span>-work-dir<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/work<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-profile<span class="w"> </span>slurm<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-ansi-log<span class="w"> </span><span class="nb">false</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-entry<span class="w"> </span>wFullPipeline<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-params-file<span class="w">  </span>https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/default/fullPipeline_illumina_nanpore_getting_started_part3.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--logDir<span class="w"> </span>log3<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--s3SignIn<span class="w"> </span><span class="nb">false</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scratch<span class="w"> </span>/vol/scratch<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--databases<span class="w"> </span>/vol/scratch/databases<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output<span class="w"> </span>my_data_spades_output<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--input.paired.path<span class="w"> </span>inputFiles/input.tsv
+</code></pre></div>
+<p>This is the MetaSpades part that was used by the previous command instead of the MEGAHIT configuration:</p>
+<div class="highlight"><pre><span></span><code><span class="w">  </span><span class="nt">assembly</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">metaspades</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv">  </span><span class="s">&quot;</span>
+<span class="w">      </span><span class="nt">fastg</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<p>If you now compare the contigs of the two assemblers with the following command, 
+you will notice that the MetaSpades assembly has a higher N50 than the MEGAHIT one. </p>
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span>my_data_spades_output/MYDATA/1/assembly/*/metaspades/MYDATA_contigs_stats.tsv
+<span class="c1">#SAMPLE  file                    format  type    num_seqs  sum_len    min_len avg_len max_len Q1      Q2      Q3      sum_gap N50     Q20(%)  Q30(%)  GC(%)</span>
+<span class="c1">#MYDATA  MYDATA_contigs.fa.gz    FASTA   DNA     1761      4521427    1000    2567.5  26470   1149.0  1408.0  2119.0  0       3799    0.00    0.00    55.07</span>
+
+cat<span class="w"> </span>my_data_output/MYDATA/1/assembly/*/megahit/MYDATA_contigs_stats.tsv
+<span class="c1">#SAMPLE  file                    format  type    num_seqs  sum_len    min_len avg_len max_len Q1      Q2      Q3      sum_gap N50     Q20(%)  Q30(%)  GC(%)</span>
+<span class="c1">#MYDATA  MYDATA_contigs.fa.gz    FASTA   DNA     95227     60110517   56      631.2   346664  234.0   286.0   439.0   0       1229    0.00    0.00    57.34</span>
+</code></pre></div>
+<h2 id="part-4-add-further-analyses">Part 4: Add further analyses<a class="headerlink" href="#part-4-add-further-analyses" title="Permanent link">&para;</a></h2>
+<p>Now, suppose you also want to check the presence of your genes in other databases. With the help of the Toolkit, you could create your own database with the syntax as described 
+in the <a href="../database/#database-input-configuration">wiki</a>. In this example, we will use the <a href="http://bacmet.biomedicine.gu.se/">bacmet database</a>.
+What you need to do here is to add the following part to the annotation section of the Toolkit configuration.</p>
+<p>The bacmet database snippet is the following:</p>
+<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="nt">whokaryote</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">additionalParams</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;</span><span class="nv"> </span><span class="s">--minsize</span><span class="nv"> </span><span class="s">3000</span><span class="nv"> </span><span class="s">&quot;</span>
+<span class="w">    </span><span class="nt">mmseqs2</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">chunkSize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20000</span>
+<span class="w">      </span><span class="nt">bacmet20_experimental</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">additionalParams</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">search </span><span class="p">:</span><span class="w"> </span><span class="s">&#39;</span><span class="nv"> </span><span class="s">--max-seqs</span><span class="nv"> </span><span class="s">300</span><span class="nv"> </span><span class="s">--max-accept</span><span class="nv"> </span><span class="s">50</span><span class="nv"> </span><span class="s">-c</span><span class="nv"> </span><span class="s">0.8</span><span class="nv"> </span><span class="s">--cov-mode</span><span class="nv"> </span><span class="s">0</span><span class="nv"> </span><span class="s">--start-sens</span><span class="nv"> </span><span class="s">4</span><span class="nv"> </span><span class="s">--sens-steps</span><span class="nv"> </span><span class="s">1</span><span class="nv"> </span><span class="s">-s</span><span class="nv"> </span><span class="s">6</span><span class="nv"> </span><span class="s">--num-iterations</span><span class="nv"> </span><span class="s">2</span><span class="nv"> </span><span class="s">-e</span><span class="nv"> </span><span class="s">0.001</span><span class="nv"> </span><span class="s">--e-profile</span><span class="nv"> </span><span class="s">0.01</span><span class="nv"> </span><span class="s">--db-load-mode</span><span class="nv"> </span><span class="s">3</span><span class="nv"> </span><span class="s">&#39;</span>
+<span class="w">          </span><span class="nt">additionalColumns</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+<span class="w">        </span><span class="nt">database</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">download</span><span class="p">:</span>
+</code></pre></div>
+<p>By re-running the Toolkit with this configuration, you will see that the previous results were cached (see next snippet) and only the annotation part is re-executed.</p>
+<div class="highlight"><pre><span></span><code>...
+<span class="o">[</span>a7/d8e782<span class="o">]</span><span class="w"> </span>Cached<span class="w"> </span>process<span class="w"> </span>&gt;<span class="w"> </span>wFullPipeline:_wProcessIllumina:wShortReadBinningList:_wBinning:pMetabat<span class="w"> </span><span class="o">(</span>MYDATA<span class="o">)</span>
+<span class="o">[</span>c3/537cbc<span class="o">]</span><span class="w"> </span>Cached<span class="w"> </span>process<span class="w"> </span>&gt;<span class="w"> </span>wFullPipeline:_wProcessIllumina:wShortReadBinningList:_wBinning:pCovermContigsCoverage<span class="w"> </span><span class="o">(</span>Sample:<span class="w"> </span>MYDATA<span class="o">)</span>
+<span class="o">[</span>bb/fcd1aa<span class="o">]</span><span class="w"> </span>Cached<span class="w"> </span>process<span class="w"> </span>&gt;<span class="w"> </span>wFullPipeline:_wProcessIllumina:wShortReadBinningList:_wBinning:pCovermGenomeCoverage<span class="w"> </span><span class="o">(</span>Sample:<span class="w"> </span>MYDATA<span class="o">)</span>
+<span class="o">[</span>8c/08e157<span class="o">]</span><span class="w"> </span>Cached<span class="w"> </span>process<span class="w"> </span>&gt;<span class="w"> </span>wFullPipeline:wMagAttributesList:_wMagAttributes:pGtdbtk<span class="w"> </span><span class="o">(</span>Sample:<span class="w"> </span>MYDATA<span class="o">)</span>
+<span class="o">[</span>4b/286c49<span class="o">]</span><span class="w"> </span>Cached<span class="w"> </span>process<span class="w"> </span>&gt;<span class="w"> </span>wFullPipeline:wMagAttributesList:_wMagAttributes:pCheckM2<span class="w"> </span><span class="o">(</span>Sample:<span class="w"> </span>MYDATA<span class="o">)</span>
+...
+</code></pre></div>
+<h2 id="further-reading">Further Reading<a class="headerlink" href="#further-reading" title="Permanent link">&para;</a></h2>
+<ul>
+<li>
+<p>Continue to the aggregation part of the Getting Started <a href="../aggregation/">tutorial</a> to learn how to aggregate data of multiple samples.</p>
+</li>
+<li>
+<p>You can check in our <a href="../configuration/">configuration</a> section for how to further adapt the Toolkit to your infrastructure.</p>
+</li>
+<li>
+<p>In case you want to import the output to EMGB, please visit the <a href="../modules/export/">EMGB</a> section.</p>
+</li>
+<li>
+<p>If you want to add your own sequence databases, you can read <a href="../database/">here</a> how to do this.</p>
+</li>
+<li>
+<p>You might want to adjust the <a href="../configuration/#configuration-of-computational-resources-used-for-pipeline-runs">resource requirements</a> of the Toolkit to your infrastructure.</p>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "content.code.copy"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.bd41221c.min.js"></script>
+      
+    
+  </body>
+</html>
