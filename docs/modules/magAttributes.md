@@ -31,8 +31,7 @@
 ## Databases
 
 Checkm and GTDB need their databases as input. See [database section](../database.md/#database-input-configuration) for possibly download strategies.
-The GTDB and Checkm compressed databases must be tar.gz files. If you provide the extracted version of GTDB using the `extractedDBPath` parameter,
-please specify the path to the `releasesXXX` directory (e.g. "/vol/spool/gtdb/release202").
+The GTDB and Checkm compressed databases must be tar.gz files. 
 
 If you need credentials to access your files via S3 then please use the following command:
 
@@ -48,12 +47,27 @@ nextflow secrets set S3_checkm_ACCESS XXXXXXX
 nextflow secrets set S3_checkm_SECRET XXXXXXX
 ```
 
+### GTDB-Tk 
+
+If you provide the extracted version of GTDB using the `extractedDBPath` parameter,
+please specify the path to the `releasesXXX` directory (e.g. "/vol/spool/gtdb/release202").
+
+To create a new GTDB database, optionally add the `metadata_genomes` directory to the GTDB release directory.
+This directory must contain the `ar53_metadata.tsv.gz` and `bac120_metadata.tsv.gz` metadata files.
+These can be downloaded from the [GTDB release page](https://data.ace.uq.edu.au/public/gtdb/data/releases/latest).
+In addition, if a mash directory containing a mash index of the GTDB reference genomes is found, it is provided
+as input to GTDB-tk. Otherwise, GTDB-tk will build an index on the fly.
+
 ## Output
 
-### GTDBTk
+### GTDB-Tk
 
 All GTDB files include the GTDB specific columns in addition to a `SAMPLE` column (`SAMPLE_gtdbtk.bac120.summary.tsv`, `SAMPLE_gtdbtk.ar122.summary.tsv`).
-In addition, this module produces a file `SAMPLE_gtdbtk_CHUNK.tsv` that combines both files and adds a `BIN_ID` column that adheres to the magAttributes specification
+In addition, this module produces a file `SAMPLE_gtdbtk_CHUNK.tsv` that combines both files and adds a `BIN_ID` column that adheres to the magAttributes specification.
+The raw output from each GTDB-tk run can also be found in the raw_output_CHUNK directories.
+
+The `gtdb_to_ncbi_majority_vote.py` script is executed on every GTDB-tk output directory.
+The output is saved in the `chunk_CHUNK_SAMPLE_gtdb_to_ncbi_majority_vote.tsv` file. 
 
 ### Checkm and Checkm2
 
