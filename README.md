@@ -8,3 +8,7 @@ such as plasmid identification based on various tools, the recovery of unassembl
 Furthermore, the Metagenomics-Toolkit includes a machine learning-optimized assembly step that tailors the peak RAM value requested by a metagenome assembler to match actual requirements, thereby minimizing the dependency on dedicated high-memory hardware.
 
 Quickstart and documentation can be found [here](https://metagenomics.github.io/metagenomics-tk/).
+
+## Publication
+
+[Belmann P. and Osterholz B. - Metagenomics-Toolkit: the flexible and efficient cloud-based metagenomics workflow featuring machine learning-enabled resource allocation. NAR Genomics and Bioinformatics, doi: 10.1093/nargab/lqaf093 (2025)](https://doi.org/10.1093/nargab/lqaf093).
