@@ -30,8 +30,8 @@
 
 ## Databases
 
-Checkm and GTDB need their databases as input. See [database section](../database.md/#database-input-configuration) for possibly download strategies.
-The GTDB and Checkm compressed databases must be tar.gz files. 
+CheckM and GTDB need their databases as input. See [database section](../database.md/#database-input-configuration) for possibly download strategies.
+The GTDB and CheckM compressed databases must consist of tar.gz files. 
 
 If you need credentials to access your files via S3 then please use the following command:
 
@@ -55,7 +55,7 @@ please specify the path to the `releasesXXX` directory (e.g. "/vol/spool/gtdb/re
 To create a new GTDB database, optionally add the `metadata_genomes` directory to the GTDB release directory.
 This directory must contain the `ar53_metadata.tsv.gz` and `bac120_metadata.tsv.gz` metadata files.
 These can be downloaded from the [GTDB release page](https://data.ace.uq.edu.au/public/gtdb/data/releases/latest).
-In addition, if a mash directory containing a mash index of the GTDB reference genomes is found, it is provided
+In addition, if a MASH directory containing a MASH index of the GTDB reference genomes is found, it is provided
 as input to GTDB-tk. Otherwise, GTDB-tk will build an index on the fly.
 
 ## Output
@@ -69,7 +69,7 @@ The raw output from each GTDB-tk run can also be found in the raw_output_CHUNK d
 The `gtdb_to_ncbi_majority_vote.py` script is executed on every GTDB-tk output directory.
 The output is saved in the `chunk_CHUNK_SAMPLE_gtdb_to_ncbi_majority_vote.tsv` file. 
 
-### Checkm and Checkm2
+### CheckM and CheckM2
 
 The Checkm and Checkm2 output adheres to the magAttributes specification and adds a `BIN_ID` and `SAMPLE` column to the output file.
 If Checkm2 and Checkm are both specified in the config file then only the Checkm2 results are used for downstream pipeline steps.
