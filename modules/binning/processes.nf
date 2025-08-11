@@ -325,6 +325,10 @@ process pMetabat {
 
     label 'small'
 
+    memory { Utils.getMemoryResources(params.resources.small, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.small, "${sample}", task.attempt, params.resources) }
+
     publishDir params.output, mode: "${params.publishDirMode}", \
 	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
 

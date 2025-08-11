@@ -16,7 +16,7 @@ steps:
 resources:
   highmemLarge:
     cpus: 28
-    memory: 230
+    memory: 200
   highmemMedium:
     cpus: 14
     memory: 113
