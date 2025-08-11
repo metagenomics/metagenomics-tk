@@ -129,6 +129,10 @@ process pMetaspades {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaspades", filename) }
 
+    memory { Utils.getMemoryResources(params.resources.highmemLarge, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.highmemLarge, "${sample}", task.attempt, params.resources) }
+
     when params?.steps.containsKey("assembly") && params?.steps?.assembly.containsKey("metaspades")
 
     container "${params.metaspades_image}"
@@ -144,6 +148,7 @@ process pMetaspades {
 
     shell:
     outputFastg = params?.steps?.assembly?.metaspades?.fastg ? "TRUE" : "FALSE"
+    memory = task.memory.toGiga()
     template 'metaspades.sh'
 }
 
