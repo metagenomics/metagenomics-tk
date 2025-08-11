@@ -133,7 +133,7 @@ process pGtdbtk {
     secret { "${S3_gtdb_ACCESS}"!="" ? ["S3_gtdb_ACCESS", "S3_gtdb_SECRET"] : [] } 
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}",params.runid ,"gtdb", filename) }, \
-      pattern: "{**.tree}"
+      pattern: "{**.tree,raw_output_*,*_gtdb_to_ncbi_majority_vote.tsv}"
 
     when params.steps.containsKey("magAttributes") && params.steps.magAttributes.containsKey("gtdb")
 
@@ -152,6 +152,8 @@ process pGtdbtk {
     tuple val("${sample}"), path("*.tree"), val("${sample}"), val(size), optional: true, emit: tree
     tuple val("${sample}"), path("chunk_*_${sample}_gtdbtk_combined.tsv"), val(size), optional: true, emit: combined
     tuple val("${sample}"), path("chunk_*_${sample}_missing_bins.tsv"), val(size), optional: true, emit: missing
+    tuple val("${sample}"), path("raw_output_*"), optional: true, emit: rawOutput
+    tuple val("${sample}"), path("chunk_*_${sample}_gtdb_to_ncbi_majority_vote.tsv"), optional: true, emit: rawGtdbToNcbi
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
