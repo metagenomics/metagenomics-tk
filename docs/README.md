@@ -35,6 +35,11 @@ The platform provides access to different aspects of one or more datasets via an
 
 ![EMGB](figures/emgb.png)
 
+## Citation
+
+Peter Belmann, Benedikt Osterholz, Nils Kleinbölting, Alfred Pühler, Andreas Schlüter, Alexander Sczyrba, Metagenomics-Toolkit: the flexible and efficient cloud-based metagenomics workflow featuring machine learning-enabled resource allocation,
+NAR Genomics and Bioinformatics, Volume 7, Issue 3, September 2025, lqaf093, [https://doi.org/10.1093/nargab/lqaf093](https://doi.org/10.1093/nargab/lqaf093)
+
 ## Further Reading
 
 * If you are interested in testing the basic workflow, we recommend that you read the [Quickstart](quickstart.md) page.

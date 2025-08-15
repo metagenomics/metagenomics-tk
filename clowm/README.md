@@ -1,6 +1,6 @@
 # Metagenomics-Toolkit
 
-[![DOI:10.1101/2024.10.22.619569](http://img.shields.io/badge/DOI-10.1101/2024.10.22.619569-B31B1B.svg)](https://doi.org/10.1101/2024.10.22.619569)
+[![DOI:10.1093/nargab/lqaf093](http://img.shields.io/badge/DOI-10.1093/nargab/lqaf093-B31B1B.svg)](https://doi.org/10.1093/nargab/lqaf093)
 
 The Metagenomics-Toolkit is a scalable, data agnostic workflow that automates the analysis of short and long metagenomic reads obtained from Illumina or Oxford Nanopore Technology devices, respectively.
 The Toolkit offers not only standard features expected in a metagenome workflow, such as quality control, assembly, binning, and annotation, but also distinctive features,
