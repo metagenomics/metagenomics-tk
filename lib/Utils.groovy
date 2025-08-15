@@ -39,7 +39,7 @@ class Utils {
   }
 
   static String getDockerNetwork(){
-    return " --net=host ";
+    return " --network=host ";
   }
 
 
