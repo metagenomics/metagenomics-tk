@@ -302,7 +302,7 @@ workflow wAggregatePipeline {
     _wGetCheckm.out.checkm | set { checkm }
 
     // get gtdbtk summary files
-    Pattern gtdbPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_combined.tsv$' )
+    Pattern gtdbPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_.*_combined.tsv$' )
     selectedSRAMagAttributes | filter({ sra, path -> gtdbPattern.matcher(path.toString()).matches()}) \
      | map { sraID, bins -> bins } \
      | splitCsv(sep: '\t', header: true) \
