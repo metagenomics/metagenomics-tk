@@ -82,6 +82,7 @@ else
     cd ${DATABASE_OUT}
     COMMAND=$(getCommand)
     eval "$COMMAND"        
+    cd -
 
     # compute MD5SUM and save it in the checkpoint file
     MD5SUM=$(getMD5SUM)
