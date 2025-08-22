@@ -305,6 +305,11 @@ process pFilter {
        for file in !{contigHeaderFiles}; do
 	  if [ $(wc -l < ${file}) -gt 1 ]; then
             mv ${file} input/${file}
+          else
+             # In case the detection tool could not find any plasmid it is labeled as missing
+             BASENAME=$(basename ${file})
+             METHOD="$(echo ${file} | rev | cut -d '_' -f 1 | rev | cut -d '.' -f 1)"
+             echo -e "CONTIG\t${METHOD}" > missing/${BASENAME}
           fi
        done
 
@@ -324,6 +329,7 @@ process pFilter {
        done
 
        PLASMID_OUT_FASTA=!{binID}_filtered.fasta.gz 
+       PLASMID_OUT_TMP_FASTA=!{binID}_filtered.tmp.fasta.gz 
        PLASMID_OUT_TSV=!{binID}_filtered.tsv
 
        if [ -s filtered_header.tsv ]; then
@@ -331,15 +337,21 @@ process pFilter {
 
          csvtk -t join -f 1 <(echo "CONTIG"; seqkit fx2tab --name --only-id !{contigs}) header/*  -k --na FALSE > !{binID}_detection_tools.tsv
 
-         for file in $(ls -1 missing/) ; do  
+         # In case the detection tool could not find any plasmid it is labeled as missing
+         for file in $(ls -1 missing/*) ; do  
             MISS_METHOD=$(csvtk cut -f -CONTIG --tabs $file);  
             sed -i -e "2,$ s/$/\tFALSE/g" -e "1 s/$/\t${MISS_METHOD}/g" !{binID}_detection_tools.tsv
          done
 
          seqkit grep -f filtered_sorted_header.tsv !{contigs} | seqkit seq --min-len !{MIN_LENGTH} \
-         | pigz -c > ${PLASMID_OUT_FASTA}
+         | pigz -c > ${PLASMID_OUT_TMP_FASTA}
 
-         seqkit fx2tab -H --length --only-id --gc --name ${PLASMID_OUT_FASTA} > ${PLASMID_OUT_TSV}
+         # Output only fasta if it is not empty
+	 if ! [[ -z "$(zcat ${PLASMID_OUT_TMP_FASTA} | head -c 1)" ]]; then
+	     mv	${PLASMID_OUT_TMP_FASTA} ${PLASMID_OUT_FASTA}
+             seqkit fx2tab -H --length --only-id --gc --name ${PLASMID_OUT_FASTA} > ${PLASMID_OUT_TSV}
+         fi
+
        fi
        '''
        break;

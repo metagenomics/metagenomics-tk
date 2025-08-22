@@ -32,6 +32,11 @@ then
    	--localCommand="tar -xzvf ${DOWNLOAD_LINK} " \
    	--expectedMD5SUM=${MD5SUM}
 
+     if grep -q "NOT_MATCHED" md5_match.txt; then
+        echo "MD5 does not match"
+	exit 1
+     fi
+
      GTDB=$(readlink -f ${DATABASE}/out/*)
 else
      GTDB=${EXTRACTED_DB}
