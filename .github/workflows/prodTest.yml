@@ -20,6 +20,7 @@ jobs:
           make set_secrets SECRET_NAME=S3_EMGB_KEGG_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: "Run full pipeline mode with all samples"
         run: |
+          REF=${{ github.ref_name }}
           bash ./scripts/test_fullPipeline.sh \
           " -c /vol/spool/aws.config --databases=/vol/scratch/databases/ \
            --steps.metabolomics.smetana.beforeProcessScript=/vol/spool/dockerPull.sh \
@@ -27,4 +28,4 @@ jobs:
            --steps.fragmentRecruitment.mashScreen.genomes=/vol/spool/toolkit/gtdb/paths.tsv \
            --steps.cooccurrence.inference.additionalParams.rscript=' --mincovthreshold 0.9 --maxzero 100 ' \
            --steps.annotation.mmseqs2.kegg.database.extractedDBPath='/vol/spool/toolkit/kegg-mirror-202506_mmseqs/keggDB' " \
-          ./default/fullPipeline_illumina_nanpore.yml "" slurm "s3://toolkit-dev-benchmark" || exit 1
+          ./default/fullPipeline_illumina_nanpore.yml "" slurm "s3://toolkit-dev-benchmark/${REF}" || exit 1
