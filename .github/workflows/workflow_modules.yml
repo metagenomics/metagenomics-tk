@@ -309,6 +309,10 @@ jobs:
       - name: Test Quickstart
         run: |
           bash ./scripts/test_quickstart.sh || exit 1
+      - name: Cleanup of folders produced by docker 
+        run: |
+          sudo rm -rf databases work
+
 
   quickstart_apptainer:
     timeout-minutes: 800
@@ -371,6 +375,9 @@ jobs:
       - name: Test Annotation 
         run: |
           bash ./scripts/tutorials/tutorial1/test_annotation.sh || exit 1
+      - name: Cleanup of folders produced by docker 
+        run: |
+          sudo rm -rf databases work
 
   gettingStarted:
     timeout-minutes: 800
