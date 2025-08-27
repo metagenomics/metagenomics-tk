@@ -15,5 +15,13 @@ make run_small_full_test WORK_DIR=${WORK} \
         ENTRY="${ENTRY}" \
         VERSION="$VERSION" 
 
-
+# In case the log dir is stored in S3, then download first the directory.
+if [[ "$LOG_DIR" == s3://* ]]; then
+  NEW_LOG_DIR=${WORK}/logs
+  mkdir -p ${NEW_LOG_DIR}
+  ./bin/s5cmd --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 cp ${LOG_DIR}/* ${NEW_LOG_DIR}
+  LOG_DIR=${NEW_LOG_DIR}
+fi  
+  
 make check LOG_DIR=${LOG_DIR}
+
