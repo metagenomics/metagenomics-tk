@@ -109,9 +109,9 @@ process pMegahit {
     tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz'), path(unpairedReads), val(memory)
 
     output:
-    tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs
-    tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigsStats
-    tuple val("${sample}"), path("${sample}_contigs.fastg"), env(maxKmer), emit: fastg, optional: true
+    tuple val("${sample}"), path("${sample}_contigs.fa.gz"), optional: true, emit: contigs
+    tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), optional: true, emit: contigsStats
+    tuple val("${sample}"), path("${sample}_contigs.fastg"), env(maxKmer), optional: true, emit: fastg
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
