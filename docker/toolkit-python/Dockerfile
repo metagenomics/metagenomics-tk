@@ -1,1 +1,1 @@
-FROM FROM python:3.7-bullseye
+FROM python:3.13-trixie
