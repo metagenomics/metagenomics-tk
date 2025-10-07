@@ -33,6 +33,7 @@ process pPredictFlavor {
     input:
     val(modelType)
     tuple val(sample), path(interleavedReads), path(unpairedReads), val(nonpareilDiversity), path(kmerFrequencies71), path(kmerFrequencies21), path(kmerFrequencies13), path(model)
+    val(minMemory)
 
     output:
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
@@ -44,7 +45,12 @@ process pPredictFlavor {
     '''
     zcat !{interleavedReads} !{unpairedReads} | seqkit stats --all -T > seqkit.stats.tsv
     GC_CONTENT=$(cut -d$'\t' -f 16 seqkit.stats.tsv | tail -n 1)
-    MEMORY=$(cli.py predict -m !{model} -k21 !{kmerFrequencies21} -k71 !{kmerFrequencies71} -k13 !{kmerFrequencies13} -e !{error} -g ${GC_CONTENT} -d !{nonpareilDiversity} -o .)
+    MAX_READ_LEN=$(cut -d$'\t' -f 7 seqkit.stats.tsv | tail -n 1)
+    if [ "${MAX_READ_LEN}" -gt 71 ]; then
+    	MEMORY=$(cli.py predict -m !{model} -k21 !{kmerFrequencies21} -k71 !{kmerFrequencies71} -k13 !{kmerFrequencies13} -e !{error} -g ${GC_CONTENT} -d !{nonpareilDiversity} -o .)
+    else
+        MEMORY="!{minMemory}"
+    fi
     echo -e "SAMPLE\tMEMORY" > !{sample}_ram_prediction.tsv
     echo -e "!{sample}\t${MEMORY}" >> !{sample}_ram_prediction.tsv
     '''
@@ -359,6 +365,16 @@ def getResources(predictedMemory, assembler, defaults, sample, attempt){
 }
 
 
+/*
+* Get memory and cpus of the minimum specified resource flavor
+*/
+def getMinResources(){ 
+        minLabel = params.steps.assembly.megahit.resources.RAM.predictMinLabel
+        minCPUs = params.resources[minLabel].cpus
+        minMem = params.resources[minLabel].memory
+        return ["memory": minMem, "cpus": minCPUs]
+}
+
 workflow _wCalculateMegahitResources {
        take:
          readsList
@@ -389,7 +405,9 @@ workflow _wCalculateMegahitResources {
 	  | map{ it -> [it[SAMPLE_IDX], it[NONPAREIL_METRICS_IDX].diversity]  }) \
           | join(kmerFrequencies) | combine(model) | map { dataset -> dataset.flatten() } | set { predictFlavorInput }
          
-         pPredictFlavor(modelType, predictFlavorInput)
+         // Get memory of the minimum specified resource label
+         minResources = getMinResources()
+         pPredictFlavor(modelType, predictFlavorInput, Channel.value(minResources.memory))
 
          PREDICTED_RAM_IDX = 1
 
