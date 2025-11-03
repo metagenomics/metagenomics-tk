@@ -80,6 +80,8 @@ nav:
       - "Assessing Bin Quality": tutorials/tutorial1/bin_quality.md
       - "Classification": tutorials/tutorial1/classification.md
       - "Annotation": tutorials/tutorial1/annotation.md
+    - "Tutorial (Short)": 
+      - "Introduction": tutorials/tutorial2/introduction.md 
   - "Developer":
     - developer_guidelines.md
     - pipeline_specification.md
