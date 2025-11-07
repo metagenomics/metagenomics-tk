@@ -38,7 +38,7 @@ process pCollectFile {
     # Create for every bin a seperate file in parallel  
     csvtk cut -t -T  -f BIN_ID tmp/concat.tsv \
 	| tail -n +2 | sort | uniq \
-	| xargs -P !{task.cpus} -I {} bash filterBin.sh {} "!{sample}_!{type}.!{dbType}.blast.tsv" 
+	| xargs -P !{task.cpus} -I {} bash filterBin.sh {} "!{sample}_!{type}.!{dbType}.blast.tsv" tmp/concat.tsv
     '''
     }
     else if (fileType == "gff") {
@@ -51,7 +51,7 @@ process pCollectFile {
     # Create for every bin a seperate file in parallel  
     csvtk cut -t -T  -f BIN_ID tmp/concat.gff \
 	| tail -n +2 | sort | uniq \
-	| xargs -P !{task.cpus} -I {} bash filterBin.sh {} "!{sample}_!{type}.!{dbType}.gff"
+	| xargs -P !{task.cpus} -I {} bash filterBin.sh {} "!{sample}_!{type}.!{dbType}.gff" tmp/concat.gff
     '''
     }
     else if (fileType == "taxPred") {
@@ -64,7 +64,7 @@ process pCollectFile {
     # Create for every bin a seperate file in parallel  
     csvtk cut -t -T  -f BIN_ID tmp/all.tax_per_pred.tsv \
 	| tail -n +2 | sort | uniq \
-	| xargs -P !{task.cpus} -I {} bash filterBin.sh {} "!{sample}_!{type}.!{dbType}.tax_per_pred.tsv"
+	| xargs -P !{task.cpus} -I {} bash filterBin.sh {} "!{sample}_!{type}.!{dbType}.tax_per_pred.tsv" tmp/all.tax_per_pred.tsv
     '''
     }
     else if (fileType == "taxPerContig") {
@@ -77,7 +77,7 @@ process pCollectFile {
     # Create for every bin a seperate file in parallel  
     csvtk cut -t -T  -f BIN_ID tmp/all.tax_per_contig.tsv \
 	| tail -n +2 | sort | uniq \
-	| xargs -P !{task.cpus} -I {} bash filterBin.sh {} "!{sample}_!{type}.!{dbType}.tax_per_contig.tsv"
+	| xargs -P !{task.cpus} -I {} bash filterBin.sh {} "!{sample}_!{type}.!{dbType}.tax_per_contig.tsv" tmp/all.tax_per_contig.tsv
     '''
     }
     else if (fileType == "codon") {
