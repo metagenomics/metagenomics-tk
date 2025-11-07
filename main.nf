@@ -448,6 +448,7 @@ workflow _wProcessIllumina {
       mapping = wShortReadBinningList.out.mapping
       unmappedReads = wShortReadBinningList.out.unmappedReads
       contigCoverage = wShortReadBinningList.out.contigCoverage
+      binContigMapping = wShortReadBinningList.out.binContigMapping
       readsPair = wShortReadQualityControlList.out.readsPair
       readsSingle = wShortReadQualityControlList.out.readsSingle
       readsPairSingle = qcReads
@@ -471,6 +472,7 @@ workflow _wProcessOnt {
       mapping = wLongReadBinningList.out.mapping
       unmappedReads = wLongReadBinningList.out.unmappedReads
       contigCoverage = wLongReadBinningList.out.contigCoverage
+      binContigMapping = wLongReadBinningList.out.binContigMapping
       reads = ontQCReads
       gfa = wOntAssemblyList.out.graph
       medianQuality = medianQuality
@@ -537,6 +539,8 @@ workflow wFullPipeline {
 
     ont.contigCoverage | mix(illumina.contigCoverage) | set { contigCoverage } 
 
+    ont.binContigMapping | mix(illumina.binContigMapping) | set { binContigMapping } 
+
     wSaveSettingsList(inputSamples | map { it -> it.SAMPLE })
 
     MAX_KMER = 0
@@ -553,22 +557,24 @@ workflow wFullPipeline {
     _wMagAttributes.out.generatedCheckmFiles | set { generatedCheckmFiles }
 
     mapJoin(checkm, binsStats | mix(wFragmentRecruitmentList.out.binsStats), "BIN_ID", "BIN_ID") \
-	 |  set { binsStats  }
+	 |  set { binsStats }
      
     wAnnotatePlasmidList(Channel.value("plasmid"), Channel.value("meta"), \
-    wPlasmidsList.out.newPlasmids | _wCreateProkkaInput, wPlasmidsList.out.newPlasmidsCoverage, wPlasmidsList.out.newPlasmids | map { [it[SAMPLE_IDX], 1] })
+    wPlasmidsList.out.newPlasmids | _wCreateProkkaInput, wPlasmidsList.out.newPlasmidsCoverage, \
+    wPlasmidsList.out.newPlasmidsStats, wPlasmidsList.out.newPlasmids | map { [it[SAMPLE_IDX], 1] })
 
     generatedBinsFiles | map { sample, bins -> [sample, bins.size()] } | set { binsCounter }
 
     _wCreateProkkaGtdbInput(bins, gtdb, gtdbMissing)
-    wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), _wCreateProkkaGtdbInput.out.prokkaInput, contigCoverage, binsCounter)
+    wAnnotateBinsList(Channel.value("binned"), Channel.value("single"), _wCreateProkkaGtdbInput.out.prokkaInput, \
+        contigCoverage, binContigMapping, binsCounter)
 
     wFragmentRecruitmentList.out.foundGenomesPerSample | map { sample, genomes -> [sample, genomes.size()] } | set { recruitedGenomesCounter }
     wAnnotateRecruitedGenomesList(Channel.value("binned"), Channel.value("single"), wFragmentRecruitmentList.out.foundGenomesSeperated | _wCreateProkkaInput, \
-    wFragmentRecruitmentList.out.contigCoverage, recruitedGenomesCounter)
+    wFragmentRecruitmentList.out.contigCoverage, wFragmentRecruitmentList.out.genomeContigMapping, recruitedGenomesCounter)
 
     wAnnotateUnbinnedList(Channel.value("unbinned"), Channel.value("meta"), notBinnedContigs | _wCreateProkkaInput, \
-    contigCoverage, notBinnedContigs | map { it -> [it[SAMPLE_IDX], 1] })
+    contigCoverage, binContigMapping, notBinnedContigs | map { it -> [it[SAMPLE_IDX], 1] })
 
     BIN_ID_IDX = 1
     PATH_IDX = 2

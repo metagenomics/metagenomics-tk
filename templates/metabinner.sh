@@ -61,6 +61,10 @@ else
         seqkit replace  -p '(.*)' -r "\${1} MAG=NotBinned" !{contigs} > ${NOT_BINNED}
 fi
 
+# Add not binned contigs to mapping and add the used binning tool to each line
+if [ -s ${NOT_BINNED} ]; then
+		  	seqkit seq ${NOT_BINNED} -n -i | sed "s/^/NotBinned\t/g;s/$/\tmetabinner/" >> ${BIN_CONTIG_MAPPING}
+fi
 
 # Quickfix
 # Explanation: the metabinner biocontainer does contain perl scripts that use a hardcoded path to

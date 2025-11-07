@@ -212,6 +212,16 @@ steps:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
             md5sum: 55902401a765fc460c09994d839d9b64
+    metaeuk:
+      chunkSize: 20000
+      uniref90:
+        additionalParams:
+          search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+          additionalColumns: ""
+        database:
+          download:
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90_20250604_mmseqs.tar.zst
+            md5sum: 6889d75f437857a07b23c6150cd938bf
     rgi:
       additionalParams: ""
       database:

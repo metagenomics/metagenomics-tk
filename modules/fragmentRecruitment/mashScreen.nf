@@ -161,6 +161,7 @@ workflow wMashScreenList {
      foundGenomesSeperated = _wMashScreen.out.foundGenomesSeperated
      binsStats = _wMashScreen.out.binsStats
      contigCoverage = _wMashScreen.out.contigCoverage
+     genomeContigMapping = _wMashScreen.out.genomeContigMapping
 }
 
 
@@ -186,7 +187,6 @@ workflow _wRunMash {
      genomes
    main:
      BUFFER_SKETCH = 1000
-     PATH_IDX = 0
 
      pMashSketchGenomeGroup(params?.steps.containsKey("fragmentRecruitment") &&  params?.steps.fragmentRecruitment.containsKey("mashScreen"), \
 	Channel.value(params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.mashSketch), genomes | buffer(size: BUFFER_SKETCH, remainder: true))
@@ -219,7 +219,6 @@ workflow _wRunMapping {
      ontReads
      genomesMap
   main:
-     PATH_IDX = 0
      SAMPLE_IDX = 0
 
      fragmentRecruitmentGenomes = params.tempdir + "/fragmentRecruitmentGenomes"
@@ -298,7 +297,6 @@ workflow _wGetStatistics {
     ontMedianQuality
     genomesMap
   main:
-     PATH_IDX = 0
      SAMPLE_IDX = 0
 
      GENOMES_IDX = 1
@@ -397,6 +395,7 @@ workflow _wGetStatistics {
      foundGenomesPerSample = foundGenomesInGroup 
      foundGenomesSeperated = foundGenomesIDSeperated
      genomesSeperated = genomesSeperated
+     genomeContigMapping = pGenomeContigMapping.out.mapping 
      binsStats = pGetBinStatistics.out.binsStats     
      contigCoverage = pCovermContigsCoverage.out.coverage
 }
@@ -472,7 +471,6 @@ workflow _wMashScreen {
      ontReads
      ontMedianQuality
    main:
-     PATH_IDX = 0
      SAMPLE_IDX = 0
      BIN_ID_IDX = 1
      PATH_2_IDX = 2
@@ -522,6 +520,7 @@ workflow _wMashScreen {
     emit:
      foundGenomesPerSample = _wGetStatistics.out.foundGenomesPerSample
      binsStats = binMap
+     genomeContigMapping = _wGetStatistics.out.genomeContigMapping
      contigCoverage = _wGetStatistics.out.contigCoverage
      foundGenomesSeperated = _wGetStatistics.out.foundGenomesSeperated
 }

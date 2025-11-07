@@ -1,27 +1,31 @@
-nextflow.enable.dsl=2
+nextflow.enable.dsl = 2
 
-include { pGetBinStatistics as pGetBinStatistics; \
-	pCovermContigsCoverage; pCovermGenomeCoverage; pBowtie2; pMetabat; pBwa; pBwa2 } from './processes'
-include { pProdigal; pHmmSearch } from '../annotation/module'
+include {
+    pGetBinStatistics as pGetBinStatistics ;
+    pCovermContigsCoverage ;
+    pCovermGenomeCoverage ;
+    pBowtie2 ;
+    pMetabat ;
+    pBwa ;
+    pBwa2
+} from './processes'
+include { pProdigal ; pHmmSearch } from '../annotation/module'
 
 include { pDumpLogs } from '../utils/processes'
 
-def getModulePath(module){
-    return module.name + '/' + module.version.major + "." +
-          module.version.minor + "." +
-          module.version.patch
+def getModulePath(module) {
+    return module.name + '/' + module.version.major + "." + module.version.minor + "." + module.version.patch
 }
 
-def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + getModulePath(params.modules.binning)  +
-          '/' + TOOL + '/' + filename
+def getOutput(SAMPLE, RUNID, TOOL, filename) {
+    return SAMPLE + '/' + RUNID + '/' + getModulePath(params.modules.binning) + '/' + TOOL + '/' + filename
 }
 
 process pGetMappingQuality {
 
     container "${params.samtools_image}"
 
-    tag "$sample"
+    tag "${sample}"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "readMappingQuality", filename) }
 
@@ -37,7 +41,7 @@ process pGetMappingQuality {
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
-    template 'mapping_quality.sh'
+    template('mapping_quality.sh')
 }
 
 
@@ -45,7 +49,7 @@ process pMetabinner {
 
     container "${params.metabinner_image}"
 
-    tag "Sample: $sample"
+    tag "Sample: ${sample}"
 
     label 'highmemLarge'
 
@@ -53,7 +57,7 @@ process pMetabinner {
 
     when params.steps.containsKey("binning") && params.steps.binning.containsKey("metabinner")
 
-    containerOptions (params.apptainer ? "" : ' --user 0:0 ' )
+    containerOptions params.apptainer ? "" : ' --user 0:0 '
 
     input:
     tuple val(sample), path(contigs), path(bam)
@@ -65,7 +69,7 @@ process pMetabinner {
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
-    template 'metabinner.sh'
+    template('metabinner.sh')
 }
 
 
@@ -76,7 +80,7 @@ process pMaxBin {
 
     label 'highmemLarge'
 
-    tag "$sample"
+    tag "${sample}"
 
     when params.maxbin
 
@@ -112,7 +116,7 @@ process pMAGScoT {
 
     container "${params.magscot_image}"
 
-    tag "Sample: $sample"
+    tag "Sample: ${sample}"
 
     label 'small'
 
@@ -120,10 +124,9 @@ process pMAGScoT {
 
     // Override default MAGScoT container entrypoint, so that the "RScript magscot" call that is normally run
     // does not clash with the Nextflow process call "/bin/bash"
-    containerOptions (params.apptainer ? "" :  ' --entrypoint "" ' )
+    containerOptions params.apptainer ? "" : ' --entrypoint "" '
 
     when params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")
-
 
     input:
     tuple val(sample), file(contigMaps), file(allHits), path(contigs)
@@ -194,12 +197,13 @@ process pMAGScoT {
 * Input element is returns as an entry in a list.
 *
 */
-def aslist(element){
-  if(element instanceof Collection){
-    return element;
-  } else {
-    return [element];
-  }
+def aslist(element) {
+    if (element instanceof Collection) {
+        return element
+    }
+    else {
+        return [element]
+    }
 }
 
 /*
@@ -209,10 +213,10 @@ def aslist(element){
 * Resulting channel is returned as output.
 *
 */
-def mapJoin(channel_a, channel_b, key_a, key_b){
-    channel_a \
-        | map{ it -> [it[key_a], it] } \
-        | cross(channel_b | map{it -> [it[key_b], it]}) \
+def mapJoin(channel_a, channel_b, key_a, key_b) {
+    channel_a
+        | map { it -> [it[key_a], it] }
+        | cross(channel_b | map { it -> [it[key_b], it] })
         | map { it[0][1] + it[1][1] }
 }
 
@@ -223,31 +227,34 @@ def mapJoin(channel_a, channel_b, key_a, key_b){
 * and produces a map of the form [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
 *
 */
-def createMap(binning){
-  def chunkList = [];
-  binning.each {
-     def sample = it[0]
-     def bin = file(it[1]) 
-     def binMap = [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
-     chunkList.add(binMap)
-  };
-  return chunkList;
+def createMap(binning) {
+    def chunkList = []
+    binning.each {
+        def sample = it[0]
+        def bin = file(it[1])
+        def binMap = [BIN_ID: bin.name, SAMPLE: sample, PATH: bin]
+        chunkList.add(binMap)
+    }
+    return chunkList
 }
 
 
 workflow wShortReadBinningList {
-  take:
+    take:
     contigs
-    inputReads     
-  main:
-    _wBinning(contigs, inputReads)   
-  emit:
-     binsStats = _wBinning.out.binsStats
-     bins = _wBinning.out.bins
-     mapping = _wBinning.out.mapping
-     notBinnedContigs = _wBinning.out.notBinnedContigs
-     unmappedReads = _wBinning.out.unmappedReads
-     contigCoverage = _wBinning.out.contigCoverage
+    inputReads
+
+    main:
+    _wBinning(contigs, inputReads)
+
+    emit:
+    binsStats = _wBinning.out.binsStats
+    bins = _wBinning.out.bins
+    mapping = _wBinning.out.mapping
+    notBinnedContigs = _wBinning.out.notBinnedContigs
+    unmappedReads = _wBinning.out.unmappedReads
+    contigCoverage = _wBinning.out.contigCoverage
+    binContigMapping = _wBinning.out.binContigMapping
 }
 
 
@@ -257,134 +264,204 @@ workflow wShortReadBinningList {
 *
 */
 workflow _wBinning {
-   take: 
-     contigs
-     inputReads
-   main:
-     // Map reads against assembly and retrieve mapping quality
-     SAMPLE_IDX=0
-     DO_NOT_ESTIMATE_IDENTITY = "-1" 
+    take:
+    contigs
+    inputReads
 
-     pBowtie2(Channel.value(params?.steps?.containsKey("binning") && params?.steps?.binning.containsKey("bowtie")), \
-      Channel.value([getModulePath(params.modules.binning), \
-      "contigMapping", params.steps?.binning?.bowtie?.additionalParams?.bowtie, \
-      params.steps?.binning?.bowtie?.additionalParams?.samtoolsView, params.steps.containsKey("fragmentRecruitment")]), \
-      contigs | join(inputReads, by: SAMPLE_IDX))
+    main:
+    // Map reads against assembly and retrieve mapping quality
+    SAMPLE_IDX = 0
+    DO_NOT_ESTIMATE_IDENTITY = "-1"
 
-     pBwa(Channel.value(params?.steps?.containsKey("binning") && params?.steps?.binning.containsKey("bwa")), \
-      Channel.value([getModulePath(params.modules.binning), \
-      "contigMapping", params.steps?.binning?.bwa?.additionalParams?.bwa, \
-      params.steps?.binning?.bwa?.additionalParams?.samtoolsView,
-      params.steps.containsKey("fragmentRecruitment")]), \
-      contigs | join(inputReads, by: SAMPLE_IDX))
+    pBowtie2(
+        Channel.value(params?.steps?.containsKey("binning") && params?.steps?.binning.containsKey("bowtie")),
+        Channel.value(
+            [
+                getModulePath(params.modules.binning),
+                "contigMapping",
+                params.steps?.binning?.bowtie?.additionalParams?.bowtie,
+                params.steps?.binning?.bowtie?.additionalParams?.samtoolsView,
+                params.steps.containsKey("fragmentRecruitment"),
+            ]
+        ),
+        contigs | join(inputReads, by: SAMPLE_IDX),
+    )
 
-     pBwa2(Channel.value(params?.steps?.containsKey("binning") && params?.steps?.binning.containsKey("bwa2")), \
-      Channel.value([getModulePath(params.modules.binning), \
-      "contigMapping", params.steps?.binning?.bwa2?.additionalParams?.bwa2, \
-      params.steps?.binning?.bwa2?.additionalParams?.samtoolsView,
-      params.steps.containsKey("fragmentRecruitment")]), \
-      contigs | join(inputReads, by: SAMPLE_IDX))
+    pBwa(
+        Channel.value(params?.steps?.containsKey("binning") && params?.steps?.binning.containsKey("bwa")),
+        Channel.value(
+            [
+                getModulePath(params.modules.binning),
+                "contigMapping",
+                params.steps?.binning?.bwa?.additionalParams?.bwa,
+                params.steps?.binning?.bwa?.additionalParams?.samtoolsView,
+                params.steps.containsKey("fragmentRecruitment"),
+            ]
+        ),
+        contigs | join(inputReads, by: SAMPLE_IDX),
+    )
 
-     pBowtie2.out.mappedReads | mix(pBwa.out.mappedReads, pBwa2.out.mappedReads) | set { mappedReads }
-     pBowtie2.out.unmappedReads | mix(pBwa.out.unmappedReads, pBwa2.out.unmappedReads) | set { unmappedReads }
+    pBwa2(
+        Channel.value(params?.steps?.containsKey("binning") && params?.steps?.binning.containsKey("bwa2")),
+        Channel.value(
+            [
+                getModulePath(params.modules.binning),
+                "contigMapping",
+                params.steps?.binning?.bwa2?.additionalParams?.bwa2,
+                params.steps?.binning?.bwa2?.additionalParams?.samtoolsView,
+                params.steps.containsKey("fragmentRecruitment"),
+            ]
+        ),
+        contigs | join(inputReads, by: SAMPLE_IDX),
+    )
 
-     mappedReads | pGetMappingQuality
+    pBowtie2.out.mappedReads | mix(pBwa.out.mappedReads, pBwa2.out.mappedReads) | set { mappedReads }
+    pBowtie2.out.unmappedReads | mix(pBwa.out.unmappedReads, pBwa2.out.unmappedReads) | set { unmappedReads }
 
-     pCovermContigsCoverage(Channel.value(params?.steps?.binning.find{ it.key == "contigsCoverage"}?.value), \
-	Channel.value([getModulePath(params.modules.binning), \
-	"contigCoverage", params?.steps?.binning?.contigsCoverage?.additionalParams]), \
-	mappedReads | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)))
+    mappedReads | pGetMappingQuality
 
-     
-      contigs | join(mappedReads, by: SAMPLE_IDX) | set { binningInput }
+    pCovermContigsCoverage(
+        Channel.value(params?.steps?.binning.find { it.key == "contigsCoverage" }?.value),
+        Channel.value(
+            [
+                getModulePath(params.modules.binning),
+                "contigCoverage",
+                params?.steps?.binning?.contigsCoverage?.additionalParams,
+            ]
+        ),
+        mappedReads | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)),
+    )
 
-     pMetabinner(binningInput)
 
-     pMetabat(Channel.value(params?.steps?.containsKey("binning") && params?.steps?.binning.containsKey("metabat")), \
-      Channel.value([getModulePath(params.modules.binning), \
-      "metabat", params.steps?.binning?.metabat?.additionalParams]), \
-      binningInput | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)))
+    contigs | join(mappedReads, by: SAMPLE_IDX) | set { binningInput }
 
-     // Re-evaluate binning with MAGScoT
-     // ORF detection with Prodigal for MAGScoT
-     CONTIG_MAPPING_IDX = 1
+    pMetabinner(binningInput)
+
+    pMetabat(
+        Channel.value(params?.steps?.containsKey("binning") && params?.steps?.binning.containsKey("metabat")),
+        Channel.value(
+            [
+                getModulePath(params.modules.binning),
+                "metabat",
+                params.steps?.binning?.metabat?.additionalParams,
+            ]
+        ),
+        binningInput | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)),
+    )
+
+
+
+    // Re-evaluate binning with MAGScoT
+    // ORF detection with Prodigal for MAGScoT
+    CONTIG_MAPPING_IDX = 1
 
     magscot_input = Channel.empty()
     if (params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")) {
-     pProdigal(contigs)
-     pHmmSearch(pProdigal.out.prodigal_faa)
-     pMetabinner.out.binContigMapping | mix(pMetabat.out.binContigMapping) \
-     // Collect the joined items into a file, again, based on the same sample
-     | collectFile(keepHeader: false){ item -> ["${item[SAMPLE_IDX]}", item[CONTIG_MAPPING_IDX].text]} \
-     // Use the map function to restore the original tuple structure of [sample, file],
-     // as the collectFile function only returns the file
-     | map { f -> [file(f).name, f] } \
-     // Join the binContigMapping files with the hmmsearch allHits output and contigs
-     | join(pHmmSearch.out.allhits, by: SAMPLE_IDX) | join(contigs, by: SAMPLE_IDX) \
-     | set { magscot_input }
+        pProdigal(contigs)
+        pHmmSearch(pProdigal.out.prodigal_faa)
+
+        pMetabinner.out.binContigMapping
+            | mix(pMetabat.out.binContigMapping)
+            | collectFile(keepHeader: false) { item -> ["${item[SAMPLE_IDX]}", item[CONTIG_MAPPING_IDX].text] }
+            | map { f -> [file(f).name, f] }
+            | join(pHmmSearch.out.allhits, by: SAMPLE_IDX)
+            | join(contigs, by: SAMPLE_IDX)
+            | set { magscot_input }
     }
     pMAGScoT(magscot_input)
 
     // Only use MAGScoT bins if the user has selected the refinement step
     if (params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")) {
-      pMAGScoT.out.bins | set { bins }
-      pMAGScoT.out.notBinned | set { notBinned }
-    } else {
-     pMetabinner.out.bins | mix(pMetabat.out.bins) | set { bins }
-     pMetabinner.out.notBinned | mix(pMetabat.out.notBinned) | set { notBinned }
+        pMAGScoT.out.bins | set { bins }
+        pMAGScoT.out.notBinned | set { notBinned }
+    }
+    else {
+        pMetabinner.out.bins | mix(pMetabat.out.bins) | set { bins }
+        pMetabinner.out.notBinned | mix(pMetabat.out.notBinned) | set { notBinned }
     }
 
 
-     emptyFile = file(params.tempdir + "/empty")
+    emptyFile = file(params.tempdir + "/empty")
 
-     ALIGNMENT_INDEX = 2
-     pCovermGenomeCoverage(Channel.value(params?.steps?.binning.find{ it.key == "genomeCoverage"}?.value), \
-        Channel.value(""), \
-	Channel.value([getModulePath(params.modules.binning), \
-	"genomeCoverage", params?.steps?.binning?.genomeCoverage?.additionalParams]), \
-	mappedReads | join(bins, by: SAMPLE_IDX) \
-	| map { sample -> sample.addAll(ALIGNMENT_INDEX, emptyFile); sample } | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)))
+    ALIGNMENT_INDEX = 2
+    pCovermGenomeCoverage(
+        Channel.value(params?.steps?.binning.find { it.key == "genomeCoverage" }?.value),
+        Channel.value(""),
+        Channel.value(
+            [
+                getModulePath(params.modules.binning),
+                "genomeCoverage",
+                params?.steps?.binning?.genomeCoverage?.additionalParams,
+            ]
+        ),
+        mappedReads | join(bins, by: SAMPLE_IDX) | map { sample ->
+            sample.addAll(ALIGNMENT_INDEX, emptyFile)
+            sample
+        } | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)),
+    )
 
-     pCovermGenomeCoverage.out.logs | pDumpLogs
+    pCovermGenomeCoverage.out.logs | pDumpLogs
 
-     // Ensure that in case just one bin is produced that it still is a list
-     bins | map({ it -> it[1] = aslist(it[1]); it  }) | set{ binsList }
+    // Ensure that in case just one bin is produced that it still is a list
+    bins
+        | map { it ->
+            it[1] = aslist(it[1])
+            it
+        }
+        | set { binsList }
 
-     // Flatten metabat outputs per sample and create a map with the 
-     // following entries [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
-     binsList | map { it -> Utils.flattenTuple(it) } | flatMap {it -> createMap(it)} | set {binMap}
+    // Flatten metabat outputs per sample and create a map with the 
+    // following entries [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
+    binsList | map { it -> Utils.flattenTuple(it) } | flatMap { it -> createMap(it) } | set { binMap }
 
-     // Compute bin statistcs (e.g. N50, average coverage depth, etc. ...)
-     pMetabinner.out.binContigMapping | join(mappedReads, by: SAMPLE_IDX) \
-	| combine(Channel.from("metabinner")) | join(pMetabinner.out.bins, by: SAMPLE_IDX) \
-	| set { metabinnerBinStatisticsInput }  
-     pMetabat.out.binContigMapping | join(mappedReads, by: SAMPLE_IDX) \
-	| combine(Channel.from("metabat")) | join(pMetabat.out.bins, by: SAMPLE_IDX) \
-	| set { metabatBinStatisticsInput }
-	pMAGScoT.out.binContigMapping | join(mappedReads, by: SAMPLE_IDX) \
-    | combine(Channel.from("magscot")) | join(pMAGScoT.out.bins, by: SAMPLE_IDX) \
-    | set { magscotBinStatisticsInput }
+    // Compute bin statistcs (e.g. N50, average coverage depth, etc. ...)
+    pMetabinner.out.binContigMapping
+        | join(mappedReads, by: SAMPLE_IDX)
+        | combine(Channel.from("metabinner"))
+        | join(pMetabinner.out.bins, by: SAMPLE_IDX)
+        | set { metabinnerBinStatisticsInput }
 
-     // Only use the MAGScoT bin statistics if the user has selected the refinement step
-     if (params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")) {
-        magscotBinStatisticsInput | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) | set {binStatsInput}
-     } else {
-        metabatBinStatisticsInput | mix(metabinnerBinStatisticsInput) \
-        | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) | set {binStatsInput}
-     }
+    pMetabat.out.binContigMapping
+        | join(mappedReads, by: SAMPLE_IDX)
+        | combine(Channel.from("metabat"))
+        | join(pMetabat.out.bins, by: SAMPLE_IDX)
+        | set { metabatBinStatisticsInput }
 
-     pGetBinStatistics(Channel.value(getModulePath(params.modules.binning)), binStatsInput)
+    pMAGScoT.out.binContigMapping
+        | join(mappedReads, by: SAMPLE_IDX)
+        | combine(Channel.from("magscot"))
+        | join(pMAGScoT.out.bins, by: SAMPLE_IDX)
+        | set { magscotBinStatisticsInput }
 
-     // Add bin statistics 
-     pGetBinStatistics.out.binsStats | map { it -> file(it[1]) } \
-	| splitCsv(sep: '\t', header: true) | set { binsStats }
-     mapJoin(binsStats, binMap, "BIN_ID", "BIN_ID") | set {binMap}
+    // Only use the MAGScoT bin statistics if the user has selected the refinement step
+    if (params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")) {
+        magscotBinStatisticsInput | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) | set { binStatsInput }
+        pMAGScoT.out.binContigMapping | set { binContigMapping }
+    }
+    else {
+        metabatBinStatisticsInput
+            | mix(metabinnerBinStatisticsInput)
+            | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY))
+            | set { binStatsInput }
 
-   emit:
-     binsStats = binMap
-     bins = binsList
-     mapping = mappedReads
-     notBinnedContigs = notBinned
-     unmappedReads =  unmappedReads
-     contigCoverage = pCovermContigsCoverage.out.coverage     
+        pMetabinner.out.binContigMapping | mix(pMetabat.out.binContigMapping) | set { binContigMapping }
+    }
+
+    pGetBinStatistics(Channel.value(getModulePath(params.modules.binning)), binStatsInput)
+
+    // Add bin statistics 
+    pGetBinStatistics.out.binsStats
+        | map { it -> file(it[1]) }
+        | splitCsv(sep: '\t', header: true)
+        | set { binsStats }
+    mapJoin(binsStats, binMap, "BIN_ID", "BIN_ID") | set { binMap }
+
+    emit:
+    binsStats = binMap
+    bins = binsList
+    mapping = mappedReads
+    notBinnedContigs = notBinned
+    binContigMapping = binContigMapping
+    unmappedReads = unmappedReads
+    contigCoverage = pCovermContigsCoverage.out.coverage
 }
