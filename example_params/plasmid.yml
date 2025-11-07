@@ -24,8 +24,8 @@ steps:
       additionalParams: " --min_length 9000  "
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20220929.gz
-          md5sum: 21fcaf9c3754a985d1d6875939d71e28
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20250620.tar.gz
+          md5sum: d73fce2d4fc03ca8466b8b1baf1e5634
     Platon:
       filter: false
       database:
@@ -44,8 +44,8 @@ steps:
       sharedKmerThreshold: 30
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20220929.tar.bz2
-          md5sum: 13c1078e6cd6a46e3f508c24ca07cc18
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20250618.tar.bz2
+          md5sum: c860e17ce5c0e87d7f21e57fbecdca91
       additionalParams:
         mashSketch: " -S 42 -k 21 -s 1000 "
         mashDist: " -v 0.2 -d 0.2 "

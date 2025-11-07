@@ -302,7 +302,7 @@ workflow wAggregatePipeline {
     _wGetCheckm.out.checkm | set { checkm }
 
     // get gtdbtk summary files
-    Pattern gtdbPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_combined.tsv$' )
+    Pattern gtdbPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_.*_combined.tsv$' )
     selectedSRAMagAttributes | filter({ sra, path -> gtdbPattern.matcher(path.toString()).matches()}) \
      | map { sraID, bins -> bins } \
      | splitCsv(sep: '\t', header: true) \
@@ -588,6 +588,7 @@ workflow wFullPipeline {
     ADDITIONAL_NOT_BINNED = 1
     MMSEQS_TAX_RUN_ON_MAGS = false 
     MMSEQS_TAX_RUN_ONLY_ON_NOT_BINNED = 1
+    MMSEQS_TAX_RUN_MAGS_AND_NOT_BINNED = 2 
     if(params.steps.containsKey("annotation") \
 	&& params.steps.annotation.containsKey("mmseqs2_taxonomy") \
 	&& params.steps.annotation.mmseqs2_taxonomy.containsKey("runOnMAGs")){
@@ -609,7 +610,7 @@ workflow wFullPipeline {
 		| combine(binsCounter | map { sample, counter -> [sample, counter+ADDITIONAL_NOT_BINNED] }, by: SAMPLE_IDX), \
         wAnnotateBinsList.out.mmseqs2_taxonomy | mix(wAnnotateUnbinnedList.out.mmseqs2_taxonomy) \
 		| combine(binsCounter \
-		| map { sample, counter -> [sample, MMSEQS_TAX_RUN_ON_MAGS ? counter+ADDITIONAL_NOT_BINNED:MMSEQS_TAX_RUN_ONLY_ON_NOT_BINNED ] }, by: SAMPLE_IDX), \
+		| map { sample, counter -> [sample, MMSEQS_TAX_RUN_ON_MAGS ? MMSEQS_TAX_RUN_MAGS_AND_NOT_BINNED:MMSEQS_TAX_RUN_ONLY_ON_NOT_BINNED ] }, by: SAMPLE_IDX), \
         wAnnotateBinsList.out.mmseqs2_blast | mix(wAnnotateUnbinnedList.out.mmseqs2_blast)\
                 | map { sample, type, db, blastResult -> [sample, db, blastResult] } \
 		| combine(binsCounter | map { sample, counter -> [sample, counter+ADDITIONAL_NOT_BINNED] }, by: SAMPLE_IDX),  \

@@ -7,6 +7,11 @@ mkdir input
 for file in !{contigHeaderFiles}; do
   if [ $(wc -l < ${file}) -gt 1 ]; then
      mv ${file} input/${file}
+  else
+     # In case the detection tool could not find any plasmid it is labeled as missing
+     BASENAME=$(basename ${file})
+     METHOD="$(echo ${file} | rev | cut -d '_' -f 1 | rev | cut -d '.' -f 1)"
+     echo -e "CONTIG\t${METHOD}" > missing/${BASENAME}
   fi
 done
 
@@ -38,7 +43,7 @@ if [ -s filtered_tools_header.tsv ]; then
 
 	        csvtk -t join -f 1 <(echo "CONTIG"; seqkit fx2tab --name --only-id !{contigs}) header/*  -k --na FALSE > !{binID}_detection_tools.tsv
 
-		for file in $(ls -1 missing/) ; do  
+		for file in $(ls -1 missing/*) ; do  
                    MISS_METHOD=$(csvtk cut -f -CONTIG --tabs $file);  
                    sed -i -e "2,$ s/$/\tFALSE/g" -e "1 s/$/\t${MISS_METHOD}/g" !{binID}_detection_tools.tsv
                 done
@@ -47,6 +52,10 @@ if [ -s filtered_tools_header.tsv ]; then
 		 | seqkit seq --min-len !{MIN_LENGTH} \
 		 | pigz -c > ${PLASMID_OUT_FASTA}
 
-                seqkit fx2tab -H --length --only-id --gc --name ${PLASMID_OUT_FASTA} > ${PLASMID_OUT_TSV}
+		if ! [[ -z "$(zcat ${PLASMID_OUT_TMP_FASTA} | head -c 1)" ]]; then
+	          mv ${PLASMID_OUT_TMP_FASTA} ${PLASMID_OUT_FASTA}
+                  seqkit fx2tab -H --length --only-id --gc --name ${PLASMID_OUT_FASTA} > ${PLASMID_OUT_TSV}
+                fi
+
 	fi
 fi

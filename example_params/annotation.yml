@@ -16,7 +16,7 @@ steps:
             search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
             additionalColumns: ""
           database:
-            extractedDBPath: '/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB'
+            extractedDBPath: '/vol/spool/toolkit/kegg-mirror-202506_mmseqs/keggDB'
 #        bacmet20_experimental:
 #          params: ' -s 1 --exact-kmer-matching 1 --db-load-mode 3'
 #          database:
@@ -36,16 +36,16 @@ steps:
 #          params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
 #          database:
 #            download:
-#              source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_2022_07_29.tar.zst
-#              md5sum: 7e32aaed112d6e056fb8764b637bf49e
+#              source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_20250620.tar.zst
+#              md5sum: f2ab1259b36fa906ff91f2575e8ee442
       keggFromMMseqs2:
          database:
-           extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/"
+           extractedDBPath: "/vol/spool/toolkit/kegg-links-mirror-202506/"
       rgi: 
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
-            md5sum: d7e627221a1d4584d1c1795cda774cdb
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_broadstreet-v4.0.1.tar.bz2
+            md5sum: 2396eaf95f2d35c58c135f7db2211dbb
         additionalParams: ""
       mmseqs2_taxonomy:
         runOnMAGs: false
@@ -55,8 +55,8 @@ steps:
           initialMaxSensitivity: 1
           database:
             download:
-              source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
-              md5sum: 3c8f12c5c2dc55841a14dd30a0a4c718
+              source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r226_mmseqs_taxonomy.tar.gz
+              md5sum: a1d77c776a16666ad97ce4945e5e7a35
       prokka:
         prodigalMode: "meta"
         defaultKingdom: false

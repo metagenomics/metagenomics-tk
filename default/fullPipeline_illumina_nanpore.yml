@@ -101,8 +101,8 @@ steps:
       buffer: 1000
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
-          md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r226_v2_data.tar.gz
+          md5sum: 0777ea44f9d7d96f9ca6ea43ed016799
       additionalParams: " --min_af 0.65 --scratch_dir . "
     checkm2:
       database:
@@ -195,8 +195,8 @@ steps:
       filterString: "Uncertain - plasmid or chromosomal|Plasmid"
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/pfam-A_35.0.hmm.gz
-          md5sum: c80b75bd48ec41760bbca19c70616e36
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/Pfam-A_37.4.hmm.gz
+          md5sum: 9ca99e4396bb7c123e884057e91eff8d
       additionalParams: " --thr 7 "
     PlasClass:
       filter: true
@@ -210,8 +210,8 @@ steps:
       sharedKmerThreshold: 0
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20220929.tar.bz2
-          md5sum: 13c1078e6cd6a46e3f508c24ca07cc18
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20250618.tar.bz2
+          md5sum: c860e17ce5c0e87d7f21e57fbecdca91
       additionalParams:
      # Parameters according to plsdb paper
      # -s: Sketch size
@@ -226,8 +226,8 @@ steps:
       additionalParams: " --min_length 1000  "
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20220929.gz
-          md5sum: 21fcaf9c3754a985d1d6875939d71e28
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20250620.tar.gz
+          md5sum: d73fce2d4fc03ca8466b8b1baf1e5634
   annotation:
     prokka:
       defaultKingdom: false
@@ -242,8 +242,8 @@ steps:
           additionalColumns: ""
         database:
           download:
-            source: s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst
-            md5sum: 0d20db97b3e7ee6571ca1fd5ad3a87f1
+            source: s3://databases_internal/kegg-mirror-202506_mmseqs.tar.zst
+            md5sum: 85f7eee2bf93909657cc875f07ec969b
             s5cmd:
               params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
       vfdb:
@@ -252,8 +252,8 @@ steps:
           additionalColumns: ""
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_2022_07_29.tar.zst
-            md5sum: 7e32aaed112d6e056fb8764b637bf49e
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_20250620.tar.zst
+            md5sum: f2ab1259b36fa906ff91f2575e8ee442
       bacmet20_experimental:
         additionalParams:
           search : ' --max-seqs 300 --max-accept 50 -c 0 --cov-mode 2 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
@@ -276,8 +276,8 @@ steps:
           additionalColumns: ""
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90_20231108_mmseqs.tar.zst
-            md5sum: 313f2c031361091af2d5f3c6f6f46013
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90_20250604_mmseqs.tar.zst
+            md5sum: 6889d75f437857a07b23c6150cd938bf
     rgi:
       # --include_loose includes matches of more distant homologs of AMR genes which may also report spurious partial matches
       # --include_nudge Partial ORFs may do not pass curated bitscore cut-offs or novel samples may contain divergent alleles, so nudging 
@@ -285,26 +285,26 @@ steps:
       additionalParams: " --include_loose --include_nudge "
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
-          md5sum: d7e627221a1d4584d1c1795cda774cdb
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_broadstreet-v4.0.1.tar.bz2
+          md5sum: 2396eaf95f2d35c58c135f7db2211dbb
     mmseqs2_taxonomy:
       # Run taxonomy classification on MAGs and unbinable contigs or just the later
       runOnMAGs: true
       gtdb:
-        # High sensitivity mode parameters only work for quality MAGs, for unbinable contigs use default parameters
-        params: ' --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies --max-seqs 300 --max-accept 50 --cov-mode 2 -e 0.001 --e-profile 0.01 '
+        # High sensitivity mode parameters only work for quality MAGs, for unbinable contigs use default parameters, disabled default set of blacklisted clades
+        params: ' --blacklist "" --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies --max-seqs 300 --max-accept 50 --cov-mode 2 -e 0.001 --e-profile 0.01 '
         # Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params
         ramMode: false
         initialMaxSensitivity: 6
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
-            md5sum: 3c8f12c5c2dc55841a14dd30a0a4c718
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r226_mmseqs_taxonomy.tar.gz
+            md5sum: a1d77c776a16666ad97ce4945e5e7a35
     keggFromMMseqs2:
       database:
         download:
-          source: s3://databases_internal/kegg-links-mirror-2021-01.tar.gz
-          md5sum: 69538151ecf4128f4cb1e0ac21ff55b3
+          source: s3://databases_internal/kegg-links-mirror-202506.tar.gz
+          md5sum: 6560d775534694db64effc0aba3c702a
           s5cmd:
               params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
   metabolomics:
@@ -330,16 +330,16 @@ steps:
       titles:
         database:
           download:
-            source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90.titles.tsv.gz"
-            md5sum: aaf1dd9021243def8e6c4e438b4b3669
+            source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90.titles.202506.tsv.gz"
+            md5sum: 65437094361e84756e156c54d3a6e56b
       additionalParams:
               blastDB: ""
               taxonomyDB: ""
       kegg:
         database:
           download:
-            source: s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2022-12.tar.zst
-            md5sum: 262dab8ca564fbc1f27500c22b5bc47b
+            source: s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2025-05.tar.zst
+            md5sum: 94169a92d453f55553aa7edf4546d00d
             s5cmd:
               params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
 resources:

@@ -5,8 +5,18 @@ zcat !{interleavedReads} | paste - - - - - - - -  \
 		      | cut -f 5-8 | tr "\t" "\n" | pigz --best --processes !{task.cpus} \
 		      | seqkit seq -j !{task.cpus} -m ${FASTQ_MIN_LENGTH} >> unpaired.fq
 
+# Adjust the minimum number of required sequences if necessary
+NUM_SEQS=$(seqkit stats -T unpaired.fq | csvtk -t -T cut -f "num_seqs" | tail -n 1)
+# Default is 10000
+PERCENT_10="$(( ${NUM_SEQS}*10/100 ))"
+REQUIRED_SEQS="10000"
+if [ ${PERCENT_10} -lt ${REQUIRED_SEQS} ]; then
+  REQUIRED_SEQS="${PERCENT_10}"
+fi
+
 # Run Nonpareil
-nonpareil -t !{task.cpus} -R !{task.memory} -s unpaired.fq -T kmer -f fastq -b !{sample} !{params.steps.qc.nonpareil.additionalParams}
+nonpareil -t !{task.cpus} -R !{task.memory} -X ${REQUIRED_SEQS} -s unpaired.fq \
+	-T kmer -f fastq -b !{sample} !{params.steps.qc.nonpareil.additionalParams}
 
 # Calculate nonpareil diversity index and other metrics
 NPO=$(readlink -f *.npo)

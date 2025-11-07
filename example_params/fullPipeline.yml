@@ -51,8 +51,8 @@ steps:
       buffer: 1000
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
-          md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r226_v2_data.tar.gz
+          md5sum: 0777ea44f9d7d96f9ca6ea43ed016799
       additionalParams: " --min_af 0.65 --scratch_dir . "
     checkm2:
       database:
@@ -129,8 +129,8 @@ steps:
       filterString: "Uncertain - plasmid or chromosomal|Plasmid"
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/pfam-A_35.0.hmm.gz
-          md5sum: c80b75bd48ec41760bbca19c70616e36
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/Pfam-A_37.4.hmm.gz
+          md5sum: 9ca99e4396bb7c123e884057e91eff8d
       additionalParams: " --thr 7 "
     MobTyper:
       filter: true
@@ -138,8 +138,8 @@ steps:
       additionalParams: " --min_length 9000  "
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20220929.gz
-          md5sum: 21fcaf9c3754a985d1d6875939d71e28
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20250620.tar.gz
+          md5sum: d73fce2d4fc03ca8466b8b1baf1e5634
     Platon:
       filter: false
       database:
@@ -158,8 +158,8 @@ steps:
       sharedKmerThreshold: 30
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20220929.tar.bz2
-          md5sum: 13c1078e6cd6a46e3f508c24ca07cc18
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20250618.tar.bz2
+          md5sum: c860e17ce5c0e87d7f21e57fbecdca91
       additionalParams:
         mashSketch: " -S 42 -k 21 -s 1000 "
         mashDist: " -v 0.2 -d 0.2 "
@@ -177,14 +177,14 @@ steps:
           search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
           additionalColumns: ""
         database:
-          extractedDBPath: '/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB'
+          extractedDBPath: '/vol/spool/toolkit/kegg-mirror-202506_mmseqs/keggDB'
 
 #      vfdb:
 #        params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
 #        database:
 #          download:
-#            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_2022_07_29.tar.zst
-#            md5sum: 7e32aaed112d6e056fb8764b637bf49e
+#            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_20250620.tar.zst
+#            md5sum: f2ab1259b36fa906ff91f2575e8ee442
 #      bacmet20_experimental:
 #        params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
 #        database:
@@ -199,8 +199,8 @@ steps:
 
         database:
           download:
-            source: s3://databases/uniref90_20231108_mmseqs/*
-            md5sum: 313f2c031361091af2d5f3c6f6f46013
+            source: s3://databases/uniref90_20250604_mmseqs/*
+            md5sum: 6889d75f437857a07b23c6150cd938bf
             s5cmd:
               params: '--retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
 
@@ -226,8 +226,8 @@ steps:
       additionalParams: ""
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
-          md5sum: d7e627221a1d4584d1c1795cda774cdb
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_broadstreet-v4.0.1.tar.bz2
+          md5sum: 2396eaf95f2d35c58c135f7db2211dbb
     mmseqs2_taxonomy:
       runOnMAGs: true
       ncbi_nr:
@@ -240,7 +240,7 @@ steps:
             md5sum: 79b9fb6b3dada41e602d70e12e7351c2
     keggFromMMseqs2:
       database:
-        extractedDBPath: "/vol/spool/toolkit/kegg_2021-01/" 
+        extractedDBPath: "/vol/spool/toolkit/kegg-links-mirror-202506/" 
   metabolomics:
      filter:
        minCompleteness: 49
@@ -264,13 +264,13 @@ steps:
       titles:
         database:
           download:
-            source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90.titles.tsv.gz"
-            md5sum: aaf1dd9021243def8e6c4e438b4b3669
+            source: "https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90.titles.202506.tsv.gz"
+            md5sum: 65437094361e84756e156c54d3a6e56b
       kegg:
         database:
           download:
-            source: s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2022-12.tar.zst
-            md5sum: 262dab8ca564fbc1f27500c22b5bc47b
+            source: s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2025-05.tar.zst
+            md5sum: 94169a92d453f55553aa7edf4546d00d
             s5cmd:
               params: '--retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
 resources:

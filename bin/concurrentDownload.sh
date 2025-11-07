@@ -66,8 +66,11 @@ function getMD5SUM() {
    MD5SUM=$(find . -type f -exec md5sum {} \; | sort | cut -d ' ' -f 1 | md5sum | cut -d ' ' -f 1)
    echo ${MD5SUM}
 }
+
+MD5_MATCH=md5_match.txt
 if [ -f "$MD5SUM_FILE" ] && compareExpectedToCheckpoint ; then
     echo "Database already exists!"
+    echo "NOT_CHECKED" > ${MD5_MATCH}
 else 
     echo "Database will be downloaded!"
     # remove wrong version of the database
@@ -79,6 +82,7 @@ else
     cd ${DATABASE_OUT}
     COMMAND=$(getCommand)
     eval "$COMMAND"        
+    cd -
 
     # compute MD5SUM and save it in the checkpoint file
     MD5SUM=$(getMD5SUM)
@@ -86,8 +90,10 @@ else
     echo "EXPECTED MD5SUM: ${EXPECTED_MD5SUM}"
     if [[ "${MD5SUM}" == "${EXPECTED_MD5SUM}" ]]; then
             echo ${MD5SUM} > ${MD5SUM_FILE}
+            echo "MATCHED" > ${MD5_MATCH}
     else
 	    echo " Computed MD5SUM does not match to the expected one. "
+            echo "NOT_MATCHED" > ${MD5_MATCH}
 	    exit 1
     fi
 fi

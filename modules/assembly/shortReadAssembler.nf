@@ -44,7 +44,12 @@ process pPredictFlavor {
     '''
     zcat !{interleavedReads} !{unpairedReads} | seqkit stats --all -T > seqkit.stats.tsv
     GC_CONTENT=$(cut -d$'\t' -f 16 seqkit.stats.tsv | tail -n 1)
-    MEMORY=$(cli.py predict -m !{model} -k21 !{kmerFrequencies21} -k71 !{kmerFrequencies71} -k13 !{kmerFrequencies13} -e !{error} -g ${GC_CONTENT} -d !{nonpareilDiversity} -o .)
+    MAX_READ_LEN=$(cut -d$'\t' -f 7 seqkit.stats.tsv | tail -n 1)
+    if [ "${MAX_READ_LEN}" -gt 71 ]; then
+    	MEMORY=$(cli.py predict -m !{model} -k21 !{kmerFrequencies21} -k71 !{kmerFrequencies71} -k13 !{kmerFrequencies13} -e !{error} -g ${GC_CONTENT} -d !{nonpareilDiversity} -o .)
+    else
+        MEMORY="0"
+    fi
     echo -e "SAMPLE\tMEMORY" > !{sample}_ram_prediction.tsv
     echo -e "!{sample}\t${MEMORY}" >> !{sample}_ram_prediction.tsv
     '''
@@ -70,6 +75,7 @@ def getMaxAvailableResource(type){
 */
 def getNextHigherResource = { exitCodes, exitStatus, resourceType, attempt, memory, tool, defaults, sample ->  
 
+
                       // Check if Megahit failed based on a known exit code
                       if(exitStatus in exitCodes ){
      		         def currentResource = getResources(memory, tool, defaults, sample, attempt);
@@ -77,6 +83,9 @@ def getNextHigherResource = { exitCodes, exitStatus, resourceType, attempt, memo
 
                          return currentResourceType;
                       } else {
+                         if(memory == 0){
+                            memory = defaults.memory
+                         }
                          // if the exit code is not known then the memory value should not be increased
                          FLAVOR_INDEX_CONSTANT_TO_ADD = 1
                          def currentResource = getResources(memory, tool, defaults, sample, FLAVOR_INDEX_CONSTANT_TO_ADD);
@@ -109,9 +118,9 @@ process pMegahit {
     tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz'), path(unpairedReads), val(memory)
 
     output:
-    tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs
-    tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigsStats
-    tuple val("${sample}"), path("${sample}_contigs.fastg"), env(maxKmer), emit: fastg, optional: true
+    tuple val("${sample}"), path("${sample}_contigs.fa.gz"), optional: true, emit: contigs
+    tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), optional: true, emit: contigsStats
+    tuple val("${sample}"), path("${sample}_contigs.fastg"), env(maxKmer), optional: true, emit: fastg
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
@@ -129,6 +138,10 @@ process pMetaspades {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaspades", filename) }
 
+    memory { Utils.getMemoryResources(params.resources.highmemLarge, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.highmemLarge, "${sample}", task.attempt, params.resources) }
+
     when params?.steps.containsKey("assembly") && params?.steps?.assembly.containsKey("metaspades")
 
     container "${params.metaspades_image}"
@@ -144,6 +157,7 @@ process pMetaspades {
 
     shell:
     outputFastg = params?.steps?.assembly?.metaspades?.fastg ? "TRUE" : "FALSE"
+    memory = task.memory.toGiga()
     template 'metaspades.sh'
 }
 

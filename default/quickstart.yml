@@ -95,8 +95,8 @@ steps:
       buffer: 1000
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz
-          md5sum: 390e16b3f7b0c4463eb7a3b2149261d9
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r226_v2_data.tar.gz
+          md5sum: 0777ea44f9d7d96f9ca6ea43ed016799
       additionalParams: " --min_af 0.65 --scratch_dir . "
     checkm2:
       database:
@@ -117,8 +117,8 @@ steps:
           additionalColumns: ""
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_2022_07_29.tar.zst
-            md5sum: 7e32aaed112d6e056fb8764b637bf49e
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_20250620.tar.zst
+            md5sum: f2ab1259b36fa906ff91f2575e8ee442
       bacmet20_experimental:
         additionalParams:
           search : ' --max-seqs 300 --max-accept 50 -c 0.8 --cov-mode 0 --start-sens 4 --sens-steps 1 -s 6 --num-iterations 2 -e 0.001 --e-profile 0.01 --db-load-mode 3 '
@@ -135,19 +135,6 @@ steps:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_predicted.tar.zst
             md5sum: 55902401a765fc460c09994d839d9b64
-    mmseqs2_taxonomy:
-      # Run taxonomy classification on MAGs and unbinable contigs or just the later
-      runOnMAGs: true
-      gtdb:
-        # High sensitivity mode parameters only work for quality MAGs, for unbinable contigs use default parameters
-        params: ' --lca-ranks superkingdom,phylum,class,order,family,genus,species,subspecies  --max-seqs 300 --max-accept 50 --cov-mode 0 -e 0.001 --e-profile 0.01 '
-        # Load database into memory to speed up classification, only works if --db-load-mode 3 is set in params
-        ramMode: true
-        initialMaxSensitivity: 6
-        database:
-          download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r214_1_mmseqs.tar.gz
-            md5sum: 3c8f12c5c2dc55841a14dd30a0a4c718
     rgi:
       # --include_loose includes matches of more distant homologs of AMR genes which may also report spurious partial matches
       # --include_nudge Partial ORFs may do not pass curated bitscore cut-offs or novel samples may contain divergent alleles, so nudging 
@@ -155,8 +142,8 @@ steps:
       additionalParams: " --include_loose --include_nudge "
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2
-          md5sum: d7e627221a1d4584d1c1795cda774cdb
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_broadstreet-v4.0.1.tar.bz2
+          md5sum: 2396eaf95f2d35c58c135f7db2211dbb
   plasmid:
     ViralVerifyPlasmid:
       filter: true
@@ -164,8 +151,8 @@ steps:
       filterString: "Uncertain - plasmid or chromosomal|Plasmid"
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/pfam-A_35.0.hmm.gz
-          md5sum: c80b75bd48ec41760bbca19c70616e36
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/Pfam-A_37.4.hmm.gz
+          md5sum: 9ca99e4396bb7c123e884057e91eff8d
       additionalParams: " --thr 7 "
     PlasClass:
       filter: true
@@ -179,8 +166,8 @@ steps:
       sharedKmerThreshold: 0
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20220929.tar.bz2
-          md5sum: 13c1078e6cd6a46e3f508c24ca07cc18
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20250618.tar.bz2
+          md5sum: c860e17ce5c0e87d7f21e57fbecdca91
       additionalParams:
      # Parameters according to plsdb paper
      # -s: Sketch size
@@ -196,8 +183,8 @@ steps:
       additionalParams: " --min_length 1000  "
       database:
         download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20220929.gz
-          md5sum: 21fcaf9c3754a985d1d6875939d71e28
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20250620.tar.gz
+          md5sum: d73fce2d4fc03ca8466b8b1baf1e5634
   metabolomics:
      filter:
        minCompleteness: 50

@@ -1,9 +1,9 @@
 name: "Run Tests against real samples"
 on: [workflow_dispatch]
 env:
-  EMGB_KEGG_DB: "/vol/spool/toolkit/emgb/annotatedgenes2json_db_kegg-mirror-2022-12" 
+  EMGB_KEGG_DB: "/vol/spool/toolkit/emgb/annotatedgenes2json_db_kegg-mirror-2025-05" 
   WORK_DIR: "/vol/spool/work"
-  EMGB_DB_TITLES: "/vol/spool/toolkit/emgb/uniref90.titles.tsv.gz"
+  EMGB_DB_TITLES: "/vol/spool/toolkit/emgb/uniref90.titles.202506.tsv.gz"
 jobs:
   run_full_pipeline:
     timeout-minutes: 14400
@@ -20,11 +20,14 @@ jobs:
           make set_secrets SECRET_NAME=S3_EMGB_KEGG_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: "Run full pipeline mode with all samples"
         run: |
+          REF=${{ github.ref_name }}
+          VERSION=$(sort VERSIONS.txt | tail -n 1)
           bash ./scripts/test_fullPipeline.sh \
-          " -c /vol/spool/aws.config --databases=/vol/scratch/databases/  --logDir s3://toolkit-dev-benchmark \
+          " -c /vol/spool/aws.config --databases=/vol/scratch/databases/ \
+           --output=s3://toolkit-dev-benchmark/${REF}/output \
            --steps.metabolomics.smetana.beforeProcessScript=/vol/spool/dockerPull.sh \
            --smetana_image=pbelmann/metabolomics:0.1.0 --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh \
            --steps.fragmentRecruitment.mashScreen.genomes=/vol/spool/toolkit/gtdb/paths.tsv \
            --steps.cooccurrence.inference.additionalParams.rscript=' --mincovthreshold 0.9 --maxzero 100 ' \
-           --steps.annotation.mmseqs2.kegg.database.extractedDBPath='/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB' " \
-          ./default/fullPipeline_illumina_nanpore.yml "" slurm || exit 1
+           --steps.annotation.mmseqs2.kegg.database.extractedDBPath='/vol/spool/toolkit/kegg-mirror-202506_mmseqs/keggDB' " \
+          ./default/fullPipeline_illumina_nanpore.yml "" slurm ${VERSION} "s3://toolkit-dev-benchmark/${REF}/logs" || exit 1

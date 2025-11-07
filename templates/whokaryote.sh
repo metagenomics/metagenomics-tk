@@ -1,5 +1,8 @@
 gunzip -c !{gff} > unzipped.gff
 
+# Whokaryote returns exit code 1 if no contig satisfies the required minimum contig length.
+trap 'if [[ $? == 1 && ! -s output/contigs*.fasta ]]; then echo "Could not find contigs longer then required min length"; exit 0; fi' EXIT 
+
 whokaryote.py --contigs !{fasta} --threads !{task.cpus} --gff unzipped.gff --outdir output !{params.steps.annotation.whokaryote.additionalParams} 
 
 # Add sample and bin id column

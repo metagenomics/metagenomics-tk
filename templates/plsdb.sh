@@ -50,7 +50,7 @@ OUTPUT=!{binID}_kmerThreshold_!{params.steps.plasmid.PLSDB.sharedKmerThreshold}.
 MATCHES_CONTENT=matches_detailed.tsv
 while IFS=$"\t" read line ; do 
 	hit=$(echo "$line" | cut -f 1); 
-	grep -w $hit ${PLSDB}/plsdb.tsv \
+	grep -F -w $hit ${PLSDB}/plsdb.tsv \
 		| sed "s/^/${line}\t/g" \
 		| sed "s/^/!{sample}\t!{binID}\t/g" ; 
 done <${MATCHES_RAW} > ${MATCHES_CONTENT}

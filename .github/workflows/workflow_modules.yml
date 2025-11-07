@@ -7,8 +7,8 @@ env:
   WORK_DIR: "/vol/spool/${{ github.ref_name }}"
   PROFILE: "slurm"
   PR_NUMBER: ${{ github.run_id }}.${{ github.run_attempt }}
-  EMGB_KEGG_DB: "/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2022-12" 
-  EMGB_DB_TITLES: "/vol/spool/emgb/uniref90.titles.tsv.gz"
+  EMGB_KEGG_DB: "/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2025-05" 
+  EMGB_DB_TITLES: "/vol/spool/emgb/uniref90.titles.202506.tsv.gz"
 jobs:
   full_pipeline:
     timeout-minutes: 2500
@@ -108,24 +108,24 @@ jobs:
 
       - name: Test download titles EMGB database
         run: |
-           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/emgb/uniref90.titles.tsv" \
-                           MODULE_DB_TEST_MD5SUM="aaf1dd9021243def8e6c4e438b4b3669" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90.titles.tsv.gz" \
-                           MODULE_DB_TEST_PATH="/vol/spool/emgb/uniref90.titles.tsv.gz" MODULE_DB_TEST_S3PATH="s3://databases/uniref90.titles.tsv.gz" \
-                           MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/uniref90.titles.tsv" \
+           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/emgb/uniref90.titles.202506.tsv" \
+                           MODULE_DB_TEST_MD5SUM="65437094361e84756e156c54d3a6e56b" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90.titles.202506.tsv.gz" \
+                           MODULE_DB_TEST_PATH="/vol/spool/emgb/uniref90.titles.202506.tsv.gz" MODULE_DB_TEST_S3PATH="s3://databases/uniref90.titles.202506.tsv.gz" \
+                           MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/uniref90.titles.202506.tsv" \
                            MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                            MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/emgbTitles MODULE_DB_TEST_YML=example_params/export.yml \
                            MODULE_DB_TEST_YML_PATH="'.steps.export.emgb.titles.database=env(database)'" \
                            MODULE_DB_TEST_YML_SCRIPT="./scripts/test_fullPipelineExport.sh" \
                            MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/_yaml_database_tests" \
                            MODULE_DB_TEST_REMOVE_DB="yes" \ MODULE_DB_TEST_SKIP_TESTS="noSkip" \
-                           MODULE_DB_TEST_ADDITIONA_YAML_PARAMS=" --steps.export.emgb.kegg.database.extractedDBPath=/vol/spool/metagenomics-tk/emgb/kegg/annotatedgenes2json_db_kegg-mirror-2022-12"
+                           MODULE_DB_TEST_ADDITIONA_YAML_PARAMS=" --steps.export.emgb.kegg.database.extractedDBPath=/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2025-05"
       - name: Test download kegg EMGB database
         run: |
-            make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2022-12" \
-                  MODULE_DB_TEST_MD5SUM="262dab8ca564fbc1f27500c22b5bc47b" \
-                  MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/annotatedgenes2json_db_kegg-mirror-2022-12.tar.zst" \
-                  MODULE_DB_TEST_PATH="/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2022-12.tar.zst" MODULE_DB_TEST_S3PATH="s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2022-12.tar.zst" \
-                  MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2022-12/*" \
+            make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2025-05" \
+                  MODULE_DB_TEST_MD5SUM="94169a92d453f55553aa7edf4546d00d" \
+                  MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/annotatedgenes2json_db_kegg-mirror-2025-05.tar.zst" \
+                  MODULE_DB_TEST_PATH="/vol/spool/emgb/annotatedgenes2json_db_kegg-mirror-2025-05.tar.zst" MODULE_DB_TEST_S3PATH="s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2025-05.tar.zst" \
+                  MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/annotatedgenes2json_db_kegg-mirror-2025-05/*" \
                   MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                   MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/emgbKEGG \
                   MODULE_DB_TEST_YML=example_params/export.yml \
@@ -259,11 +259,11 @@ jobs:
       
       - name: Test GTDB runs against different database parameters
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/gtdbtk_r214_data/release214" \
-                               MODULE_DB_TEST_MD5SUM="390e16b3f7b0c4463eb7a3b2149261d9" \
-                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/gtdbtk_r214_data.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/gtdbtk_r214_data.tar.gz" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/gtdbtk_r214_data/*" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/gtdbtk_r226_v2_data/release226" \
+                               MODULE_DB_TEST_MD5SUM="0777ea44f9d7d96f9ca6ea43ed016799" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r226_v2_data.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/gtdbtk_r226_v2_data.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/gtdbtk_r226_v2_data.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/gtdbtk_r226_v2_data/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/gtdb \
@@ -309,6 +309,10 @@ jobs:
       - name: Test Quickstart
         run: |
           bash ./scripts/test_quickstart.sh || exit 1
+      - name: Cleanup of folders produced by docker 
+        run: |
+          sudo rm -rf databases work
+
 
   quickstart_apptainer:
     timeout-minutes: 800
@@ -371,6 +375,9 @@ jobs:
       - name: Test Annotation 
         run: |
           bash ./scripts/tutorials/tutorial1/test_annotation.sh || exit 1
+      - name: Cleanup of folders produced by docker 
+        run: |
+          sudo rm -rf databases work
 
   gettingStarted:
     timeout-minutes: 800
@@ -490,8 +497,8 @@ jobs:
       - name: Test Annotation
         run: |
           bash ./scripts/test_annotation.sh \
-            "     --steps.annotation.mmseqs.kegg.database.extractedDBPath=/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB \
-             --steps.annotation.keggFromMMseqs2.database.extractedDBPath=/vol/spool/toolkit/kegg_2021-01/ --databases=/vol/scratch/databases/ " "" \
+            "     --steps.annotation.mmseqs.kegg.database.extractedDBPath=/vol/spool/toolkit/kegg-mirror-202506_mmseqs/keggDB \
+             --steps.annotation.keggFromMMseqs2.database.extractedDBPath=/vol/spool/toolkit/kegg-links-mirror-202506/ --databases=/vol/scratch/databases/ " "" \
             "${WORK_DIR}" ${PROFILE}  || exit 1
 
   annotation_database_tests_part_1:
@@ -511,11 +518,11 @@ jobs:
 
       - name: Test rgi against different database configurations
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/card_20221209/card.json" \
-                               MODULE_DB_TEST_MD5SUM="d7e627221a1d4584d1c1795cda774cdb" \
-                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_20221209.tar.bz2" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/card_20221209.tar.bz2" MODULE_DB_TEST_S3PATH="s3://databases/card_20221209.tar.bz2" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/card_20221209/*" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/card_broadstreet-v4.0.1/card.json" \
+                               MODULE_DB_TEST_MD5SUM="2396eaf95f2d35c58c135f7db2211dbb" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_broadstreet-v4.0.1.tar.bz2" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/card_broadstreet-v4.0.1.tar.bz2" MODULE_DB_TEST_S3PATH="s3://databases/card_broadstreet-v4.0.1.tar.bz2" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/card_broadstreet-v4.0.1/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/rgi \
@@ -527,11 +534,11 @@ jobs:
 
       - name: Test keggFromMMseqs2 against different database configurations
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg_2021-01" \
-                               MODULE_DB_TEST_MD5SUM="69538151ecf4128f4cb1e0ac21ff55b3" \
-                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/kegg-links-mirror-2021-01.tar.gz" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases_internal/kegg-links-mirror-2021-01.tar.gz" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-links-mirror-2021-01/*"  \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-links-mirror-202506" \
+                               MODULE_DB_TEST_MD5SUM="6560d775534694db64effc0aba3c702a" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/kegg-links-mirror-202506.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg-links-mirror-202506.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases_internal/kegg-links-mirror-202506.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-links-mirror-202506/*"  \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/kegg \
@@ -555,11 +562,11 @@ jobs:
           make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Test mmseqs2 against different database configurations
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB" \
-                               MODULE_DB_TEST_MD5SUM="0d20db97b3e7ee6571ca1fd5ad3a87f1" \
-                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs.tar.zst" MODULE_DB_TEST_S3PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs/*" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-mirror-202506_mmseqs/keggDB" \
+                               MODULE_DB_TEST_MD5SUM="85f7eee2bf93909657cc875f07ec969b" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/kegg-mirror-202506_mmseqs.tar.zst" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg-mirror-202506_mmseqs.tar.zst" MODULE_DB_TEST_S3PATH="s3://databases_internal/kegg-mirror-202506_mmseqs.tar.zst" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-mirror-202506_mmseqs/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/mmseqs2 \
@@ -585,11 +592,11 @@ jobs:
           make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Test mmseqs2 against different database configurations
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs/sequenceDB" \
-                               MODULE_DB_TEST_MD5SUM="0d20db97b3e7ee6571ca1fd5ad3a87f1" \
-                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg-mirror-2021-01_mmseqs.tar.zst" MODULE_DB_TEST_S3PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs.tar.zst" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-mirror-2021-01_mmseqs/*" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/kegg-mirror-202506_mmseqs/keggDB" \
+                               MODULE_DB_TEST_MD5SUM="85f7eee2bf93909657cc875f07ec969b" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases_internal/kegg-mirror-202506_mmseqs.tar.zst" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/kegg-mirror-202506_mmseqs.tar.zst" MODULE_DB_TEST_S3PATH="s3://databases_internal/kegg-mirror-202506_mmseqs.tar.zst" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases_internal/kegg-mirror-202506_mmseqs/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/mmseqs2 \
@@ -616,11 +623,11 @@ jobs:
 
       - name: Test GTDB runs against different database parameters
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/gtdbtk_r214_data/release214" \
-                               MODULE_DB_TEST_MD5SUM="390e16b3f7b0c4463eb7a3b2149261d9" \
-                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r214_data.tar.gz" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/gtdbtk_r214_data.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/gtdbtk_r214_data.tar.gz" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/gtdbtk_r214_data/*" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/gtdbtk_r226_v2_data/release226" \
+                               MODULE_DB_TEST_MD5SUM="0777ea44f9d7d96f9ca6ea43ed016799" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdbtk_r226_v2_data.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/gtdbtk_r226_v2_data.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/gtdbtk_r226_v2_data.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/gtdbtk_r226_v2_data/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/gtdb \
@@ -667,12 +674,12 @@ jobs:
           bash ./scripts/test_plasmids.sh " --databases=/vol/scratch/databases/     " "" "${WORK_DIR}/${{ github.ref_name }}" ${PROFILE}  || exit 1
       - name: Plasmids Database Test
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/plasmids_plsdb_20220929" \
-                               MODULE_DB_TEST_MD5SUM="13c1078e6cd6a46e3f508c24ca07cc18" \
-                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20220929.tar.bz2" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/plasmids_plsdb_20220929.tar.bz2" \
-                               MODULE_DB_TEST_S3PATH="s3://databases/plasmids_plsdb_20220929.tar.bz2" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/plasmids_plsdb_20220929/*" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/plasmids_plsdb_20250618" \
+                               MODULE_DB_TEST_MD5SUM="c860e17ce5c0e87d7f21e57fbecdca91" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/plasmids_plsdb_20250618.tar.bz2" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/plasmids_plsdb_20250618.tar.bz2" \
+                               MODULE_DB_TEST_S3PATH="s3://databases/plasmids_plsdb_20250618.tar.bz2" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/plasmids_plsdb_20250618/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/plasmids \
@@ -682,9 +689,9 @@ jobs:
 
       - name: ViralVerify Plasmid Test
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/pfam-A_35.0.hmm" \
-                               MODULE_DB_TEST_MD5SUM="c80b75bd48ec41760bbca19c70616e36" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/pfam-A_35.0.hmm.gz" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/pfam-A_35.0.hmm.gz" MODULE_DB_TEST_S3PATH="s3://databases/pfam-A_35.0.hmm.gz" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/Pfam-A_37.4.hmm" \
+                               MODULE_DB_TEST_MD5SUM="9ca99e4396bb7c123e884057e91eff8d" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/Pfam-A_37.4.hmm.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/Pfam-A_37.4.hmm.gz" MODULE_DB_TEST_S3PATH="s3://databases/Pfam-A_37.4.hmm.gz" \
                                MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/pfam-A_35.*.hmm" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
@@ -708,11 +715,11 @@ jobs:
 
       - name: MobTyper Test
         run: |
-          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/mob_20220929" \
-                               MODULE_DB_TEST_MD5SUM="21fcaf9c3754a985d1d6875939d71e28" \
-                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20220929.gz" \
-                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/mob_20220929.gz" MODULE_DB_TEST_S3PATH="s3://databases/mob_20220929.gz" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/mob_20220929/*" \
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/mob_20250620" \
+                               MODULE_DB_TEST_MD5SUM="d73fce2d4fc03ca8466b8b1baf1e5634" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20250620.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/mob_20250620.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/mob_20250620.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/mob_20250620/*" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.plasmid.MobTyper.database=env(database),del(.steps.plasmid.ViralVerifyPlasmid,.steps.plasmid.PlasClass,.steps.plasmid.Platon,.steps.plasmid.PLSDB)'" \

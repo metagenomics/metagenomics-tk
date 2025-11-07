@@ -1,20 +1,5 @@
 
-# create input, output files and run default gtdbtk command
-mkdir output
-ls -1 !{bins} > binNames.tsv
-ls -1 !{bins} | xargs -I {} readlink -f {} > bin.path
-paste -d$'\t' bin.path <(for p in $(cat bin.path); do basename $p; done) > input.tsv
-
-gtdb_download.sh "!{EXTRACTED_DB}" "!{DOWNLOAD_LINK}" "!{S5CMD_PARAMS}" "!{task.cpus}" "!{params.polished.databases}" "!{MD5SUM}" "!{S3_gtdb_ACCESS}" "!{S3_gtdb_SECRET}" || exit 1
-GTDB=$(cat gtdbPath.txt)
-
-export GTDBTK_DATA_PATH=${GTDB}
-gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus} \
-	--mash_db genomes.msh --extension !{ending} !{GTDB_PARAMS}
-
-# reformat gtdbtk output files
-touch output/gtdbtk.bac120.summary.tsv
-touch output/gtdbtk.ar53.summary.tsv
+# Define variables
 FILE_ID=!{FILE_TYPE}!{chunkId}
 FILE_BAC=chunk_${FILE_ID}_!{sample}_gtdbtk.bac120.summary.tsv
 FILE_BAC_TMP=chunk_${FILE_ID}_!{sample}_gtdbtk.bac120.summary.tmp.tsv
@@ -29,6 +14,45 @@ FILE_UNCLASSIFIED=chunk_${FILE_ID}_!{sample}_gtdbtk_unclassified.tsv
 FILE_UNCLASSIFIED_TMP=chunk_${FILE_ID}_!{sample}_gtdbtk_unclassified.tmp.tsv
 MISSING_OUTPUT=chunk_${FILE_ID}_!{sample}_missing_bins.tsv
 MISSING_OUTPUT_TMP=chunk_${FILE_ID}_!{sample}_missing_bins.tmp.tsv
+
+
+# create input, output files and run default gtdbtk command
+mkdir output
+ls -1 !{bins} > binNames.tsv
+ls -1 !{bins} | xargs -I {} readlink -f {} > bin.path
+paste -d$'\t' bin.path <(for p in $(cat bin.path); do basename $p; done) > input.tsv
+
+gtdb_download.sh "!{EXTRACTED_DB}" "!{DOWNLOAD_LINK}" "!{S5CMD_PARAMS}" "!{task.cpus}" "!{params.polished.databases}" "!{MD5SUM}" "!{S3_gtdb_ACCESS}" "!{S3_gtdb_SECRET}" || exit 1
+GTDB=$(cat gtdbPath.txt)
+export GTDBTK_DATA_PATH=${GTDB}
+
+#If MASH db of reference genomes could be found then provide it as input to GTDB-tk
+MASH_DB_PATH="${GTDB}/mash/genomes.msh"
+MASH_DB_COMMAND=""
+if [ -f "${MASH_DB_PATH}" ]; then
+	MASH_DB_COMMAND="--mash_db ${GTDB}/mash/genomes.msh"
+else
+	MASH_DB_COMMAND="--mash_db genomes.msh"
+fi
+
+gtdbtk classify_wf --batchfile input.tsv --out_dir output --cpus !{task.cpus} \
+	${MASH_DB_COMMAND} --extension !{ending} !{GTDB_PARAMS}
+
+BAC_METADATA=$(find ${GTDB}/metadata_genomes/ -name "bac*_metadata.tsv.gz")
+AR_METADATA=$(find ${GTDB}/metadata_genomes/ -name "ar*_metadata.tsv.gz")
+
+# Save raw GTDB-tk output and compute ncbi majority vote
+if [ -f "${AR_METADATA}" ] && [ -f "${BAC_METADATA}" ]; then
+  RAW_OUTPUT=raw_output_!{chunkId}
+	cp -r output ${RAW_OUTPUT} 
+  gtdb_to_ncbi_majority_vote.py  --gtdbtk_output_dir ${RAW_OUTPUT} \
+  	--ar53_metadata_file ${AR_METADATA} --bac120_metadata_file ${BAC_METADATA} \
+  	--output_file chunk_${FILE_ID}_!{sample}_gtdb_to_ncbi_majority_vote.tsv
+fi
+
+# reformat gtdbtk output files
+touch output/gtdbtk.bac120.summary.tsv
+touch output/gtdbtk.ar53.summary.tsv
 
 # Filter out unclassified
 head -n 1 output/gtdbtk.bac120.summary.tsv > output/unclassified.tsv
