@@ -56,10 +56,23 @@ chmod a+rw -R tmp
 # Create new input file
 cat !{fasta} | seqkit range -r !{start}:!{stop} > input.fa
 
-metaeuk easy-predict input.fa ${MMSEQS2_DATABASE_DIR} predsResults tempFolder !{parameters} \
+# Check which mmseqs version is the right one
+MMSEQS_VERSION=""
+if grep -q "avx2" /proc/cpuinfo; then
+	echo "AVX2 supported, using metaeuk_avx2"
+	MMSEQS_VERSION="metaeuk_avx2"
+elif grep -q "sse4_1" /proc/cpuinfo; then
+	echo "SSE4.1 supported, using metaeuk_sse41"
+	MMSEQS_VERSION="metaeuk_sse41"
+else
+	echo "Using metaeuk_sse2"
+	MMSEQS_VERSION="metaeuk_sse2"
+fi
+
+${MMSEQS_VERSION} easy-predict input.fa ${MMSEQS2_DATABASE_DIR} predsResults tempFolder !{parameters} \
     --threads !{task.cpus} --split-memory-limit ${RAM_LIMIT}
 
-metaeuk taxtocontig tempFolder/latest/contigs  predsResults.fas predsResults.headersMap.tsv \
+${MMSEQS_VERSION} taxtocontig tempFolder/latest/contigs  predsResults.fas predsResults.headersMap.tsv \
     ${MMSEQS2_DATABASE_DIR} taxResults tmpTaxFolder --majority 0.5 --tax-lineage 1 --lca-mode 2
 
 mv predsResults.gff ${OUTPUT_TMP_GFF}
