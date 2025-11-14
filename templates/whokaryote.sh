@@ -7,12 +7,14 @@ whokaryote.py --contigs !{fasta} --threads !{task.cpus} --gff unzipped.gff --out
 
 # Add sample and bin id column
 addColumns() {
-	local input_file="$1"
-	local output_file="$2"
+  local input_file="$1"
+  local output_file="$2"
 
-        sed -e "1s/^/SAMPLE\tBIN_ID\t/" \
-  	  -e "2,$ s/^/!{sample}\t/" \
-	  -e "2,$ s/^/!{binID}\t/" $input_file > $output_file 
+  if [ -s "$input_file" ]; then
+    sed -e "1s/^/SAMPLE\tBIN_ID\t/" \
+ 	    -e "2,$ s/^/!{sample}\t/" \
+	    -e "2,$ s/^/!{binID}\t/" $input_file > $output_file 
+  fi 
 }
 
 # Add missing column header
