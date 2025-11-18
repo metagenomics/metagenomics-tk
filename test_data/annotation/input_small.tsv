@@ -1,4 +1,4 @@
-DATASET	BIN_ID	PATH
+SAMPLE	BIN_ID	PATH
 test3	bin.1	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.1.fa
 test1	bin.2	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.2.fa
 test1	bin.8	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/bins/bin.8.fasta
