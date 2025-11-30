@@ -9,7 +9,7 @@ NXF_HOME=$PWD/.nextflow NXF_VER=25.04.2 nextflow run metagenomics/metagenomics-t
     --s3SignIn false \
     --scratch /vol/scratch \
     --databases /vol/scratch/databases \
-    --input my_data_spades_output \
+    --input.perSampleOutput my_data_spades_output \
     --output output
 
 # Check the formed species cluster

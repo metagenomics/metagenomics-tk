@@ -28,7 +28,7 @@ where
  * `--scratch` is the directory on the worker node where all intermediate results are saved.
  * `--databases` is the directory on the worker node where all databases are saved. Already downloaded databases on a shared file system can be configured in the database setting of the corresponding [database section](database.md) in the configuration file.
  * `--output` is the output directory where all results are saved. If you want to know more about which outputs are created, then please refer to the [modules section](modules/introduction.md).
- * `--input` points to the output directory of the per-sample workflow.
+ * `--input.perSampleOutput` points to the output directory of the per-sample workflow.
 
 !!! note "Parameter override"
     Any parameters defined with a double dash are parameters that override parameters that are already specified in the YAML file.

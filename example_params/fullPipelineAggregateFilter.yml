@@ -3,6 +3,7 @@ s3SignIn: true
 output: "output"
 input:
   perSampleOutput: "output"
+  selectedSamples: "test_data/fullPipeline/filter.tsv" 
 logDir: log
 runid: 1
 logLevel: 1

@@ -99,6 +99,14 @@ jobs:
            --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh " ./example_params/fullPipelineAggregate.yml \
           "${WORK_DIR}" ${PROFILE} || exit 1
 
+      - name: Test aggregate workflow with filtering based on previous test
+        run: |
+          bash ./scripts/test_fullPipelineAggregate.sh \
+          " --output=output   --smetana_image=pbelmann/metabolomics:0.1.0 \
+           --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh " ./example_params/fullPipelineAggregateFilter.yml \
+          "${WORK_DIR}" ${PROFILE} || exit 1
+
+
       - name: Test export workflow based on previous test
         run: |
           bash ./scripts/test_fullPipelineExport.sh \

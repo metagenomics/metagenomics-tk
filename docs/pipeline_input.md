@@ -68,3 +68,16 @@ input:
       path: test_data/SRA/samples.tsv
 ```
 
+### Configurtion of input paameters of the aggregation mode
+
+```
+input:
+  perSampleOutput: "output"
+  selectedSamples: "test_data/fullPipeline/filter.tsv" 
+```
+
+where:
+  * `perSampleOutput` is the output folder of the per sample run
+
+  * `selectedSamples` is an optional parameter that allows you to select specific samples of interest.
+  The output of these samples is located in the `perSampleOutput` directory.
