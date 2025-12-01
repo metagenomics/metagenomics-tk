@@ -41,7 +41,12 @@ steps:
         #  -cs<value> - maximal value of a counter
         count: " -sm -cs10000 "
         histo: " -cx50000 "
-
+    filterHuman:
+      additionalParams: "  "
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/human_filter.db.20231218v2.gz
+          md5sum: cc92c0f926656565b1156d66a0db5a3c
   assembly:
     megahit:
       # --mem-flag 0 to use minimum memory, --mem-flag 1 (default) moderate memory and --mem-flag 2 all memory.
