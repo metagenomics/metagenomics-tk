@@ -82,6 +82,7 @@ nav:
       - "Annotation": tutorials/tutorial1/annotation.md
     - "Tutorial (Short)": 
       - "Introduction": tutorials/tutorial2/introduction.md 
+      - "From Reads To Genomes": tutorials/tutorial2/reads_to_genomes.md
   - "Developer":
     - developer_guidelines.md
     - pipeline_specification.md

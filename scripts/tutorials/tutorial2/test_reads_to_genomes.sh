@@ -8,6 +8,7 @@ NXF_VER=25.04.2 nextflow run metagenomics/metagenomics-tk \
 	  -ansi-log false \
 	  -entry wFullPipeline \
 	  -resume \
+	  -c aws.config \
 	  --input.SRA.S3.path https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/doc/exhibition-day/tutorial/test_data/tutorials/tutorial2/samples.tsv \
 	  --logDir logs_reads_to_genomes 
 
