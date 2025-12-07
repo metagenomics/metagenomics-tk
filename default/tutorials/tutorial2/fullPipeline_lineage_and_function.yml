@@ -78,7 +78,7 @@ steps:
     gtdb:
       buffer: 1000
       database:
-        extractedDBPath: /vol/volume/reference_databases/gtdbtk_r226_v2_data/
+        extractedDBPath: /vol/volume/reference_databases/gtdbtk_r226_v2_data/release226/
       additionalParams: " --min_af 0.65 --scratch_dir . "
     checkm2:
       database:
