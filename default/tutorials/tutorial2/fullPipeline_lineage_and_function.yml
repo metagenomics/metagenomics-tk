@@ -78,13 +78,11 @@ steps:
     gtdb:
       buffer: 1000
       database:
-        download:
-          extractedDBPath: /vol/volume/reference_databases/gtdbtk_r226_v2_data/
+        extractedDBPath: /vol/volume/reference_databases/gtdbtk_r226_v2_data/
       additionalParams: " --min_af 0.65 --scratch_dir . "
     checkm2:
       database:
-        download:
-          extractedDBPath: /vol/volume/reference_databases/checkm2/
+        extractedDBPath: /vol/volume/reference_databases/checkm2/
       additionalParams: "  "
   annotation:
     prokka:
