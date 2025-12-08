@@ -35,7 +35,7 @@ The following configuration runs the tools
     cd /vol/volume/sessions/metagenomics_metagenomics-tk 
     ```
 
-    Copy the following command to execute the Toolkit. The Toolkit will need about 3 to 5 (Todo: update) minutes to complete.
+    Copy the following command to execute the Toolkit. The Toolkit will need about 10 to 12 minutes to complete.
 
     ```BASH
     ---8<--- "scripts/tutorials/tutorial2/test_reads_to_genomes.sh:4:13"
@@ -136,7 +136,8 @@ The Toolkit provides the SRA human-scrubber tool that uses a k-mer based approac
     ??? Solution 
         3768 sequences were detected for SRR492065 and 644 for SRR492183.  
 
-TODO: mention that there are many reads that could be identified ... 
+
+Please note that it is important to remove human reads before publishing read datasets, since, according to Bush et al. [^1], even a small number of reads can be used to impute phenotypes.  
 
 ---
 
@@ -251,18 +252,21 @@ Before that, let's have a look at what other information the Metagenomics-Toolki
         ```
         You can have a look on some bin statistics with:
         ```BASH
-        less output/SRR492065/1/binning/*/metabat/SRR492065_bins_stats.tsv
+        cat output/SRR492065/1/binning/*/metabat/SRR492065_bins_stats.tsv  | column -s$'\t' -t
         ```
+        Output:
         ```BASH
         SAMPLE     BIN_ID              format  type  num_seqs  sum_len  min_len  avg_len  max_len  Q1       Q2       Q3        sum_gap  N50     Q20(%)  Q30(%)  GC(%)  COVERAGE
-        SRR492065  SRR492065_bin.1.fa  FASTA   DNA   20        1280335  3167     64016.8  238570   23905.5  45943.5  65927.0   0        185023  0.00    0.00    38.14  169.393
-        SRR492065  SRR492065_bin.2.fa  FASTA   DNA   174       2345130  2626     13477.8  68479    6239.0   9839.5   16573.0   0        16802   0.00    0.00    63.56  23.2949
-        SRR492065  SRR492065_bin.3.fa  FASTA   DNA   96        1522358  2582     15857.9  63297    6157.0   10569.0  23635.5   0        25145   0.00    0.00    29.95  70.5656
-        SRR492065  SRR492065_bin.4.fa  FASTA   DNA   16        1536873  4900     96054.6  245235   22104.0  83532.5  158838.0  0        161674  0.00    0.00    36.70  151.714
-        SRR492065  SRR492065_bin.5.fa  FASTA   DNA   436       2720223  2505     6239.0   36553    3386.0   4642.5   7408.5    0        7308    0.00    0.00    32.98  14.7728
+        SRR492065  SRR492065_bin.1.fa  FASTA   DNA   16        1536873  4900     96054.6  245235   22104.0  83532.5  158838.0  0        161674  0.00    0.00    36.70  151.714
+        SRR492065  SRR492065_bin.2.fa  FASTA   DNA   20        1280335  3167     64016.8  238570   23905.5  45943.5  65927.0   0        185023  0.00    0.00    38.14  169.393
+        SRR492065  SRR492065_bin.3.fa  FASTA   DNA   174       2345130  2626     13477.8  68479    6239.0   9839.5   16573.0   0        16802   0.00    0.00    63.56  23.2949
+        SRR492065  SRR492065_bin.4.fa  FASTA   DNA   436       2720223  2505     6239.0   36553    3386.0   4642.5   7408.5    0        7308    0.00    0.00    32.98  14.7728
+        SRR492065  SRR492065_bin.5.fa  FASTA   DNA   96        1522358  2582     15857.9  63297    6157.0   10569.0  23635.5   0        25145   0.00    0.00    29.95  70.5654
         ```
-        In this result, bin 1 has the highest coverage (169.393) and highest N50 (185023).
+        In this result, Bin 2 has the highest coverage (169.393) and highest N50 (185023).
 ---
 
 ➡️ [**Continue to: Assessing Bin Quality, Lineage, and Gene Function**](./assigning_lineage_and_function.md)
+
+[^1:] https://pmc.ncbi.nlm.nih.gov/articles/PMC7478626/
 

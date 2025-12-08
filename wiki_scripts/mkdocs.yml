@@ -6,6 +6,7 @@ repo_url: https://github.com/metagenomics/metagenomics-tk
 repo_name: Metagenomics-Tk
 
 markdown_extensions:
+  - footnotes
   - pymdownx.details
   - toc:
       permalink: "&para;"
