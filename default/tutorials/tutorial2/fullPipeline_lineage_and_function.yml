@@ -88,8 +88,15 @@ steps:
     prokka:
       defaultKingdom: false
       additionalParams: " --mincontiglen 500 "
-    whokaryote:
-      additionalParams: " --minsize 3000 "
+    rgi:
+      # --include_loose includes matches of more distant homologs of AMR genes which may also report spurious partial matches
+      # --include_nudge Partial ORFs may do not pass curated bitscore cut-offs or novel samples may contain divergent alleles, so nudging 
+      #                 95% identity Loose matches to Strict matches may aid resistome annotation 
+      additionalParams: " --include_loose --include_nudge "
+      database:
+        download:
+          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_broadstreet-v4.0.1.tar.bz2
+          md5sum: 2396eaf95f2d35c58c135f7db2211dbb
 resources:
   highmemLarge:
     cpus: 28
