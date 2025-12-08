@@ -254,4 +254,4 @@ output/
 
 ---
 
-➡️ [**Continue to: Quality Control**](./quality_control.md)
+➡️ [**Continue to: Quality Control**](./reads_to_genomes.md)
