@@ -14,7 +14,7 @@ input:
 output: output
 logDir: log
 runid: 1
-databases: "/vol/scratch/databases"
+databases: "/vol/volume/sessions/metagenomics_metagenomics-tk/databases/"
 publishDirMode: "symlink"
 logLevel: 1
 scratch: false
