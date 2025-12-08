@@ -1,12 +1,11 @@
-The tutorial is a concise walkthrough of the analysis workflow that the Metagenomics‑Toolkit provides for metagenomic short‑read projects.
 The first step is to run a thorough quality‑control pipeline that trims adapters and low‑quality ends, discards reads that become too short, and removes any host DNA contamination. 
 A Nonpareil analysis is then executed to estimate the sequencing depth needed to capture the full microbial diversity.
 
-With the cleaned reads in hand, the Toolkit proceeds to assembly. The MEGAHIT assembler, integrated into the Toolkit, is invoked to build contigs that reflect the underlying genomes present in the sample.
-The final part of the analysis is binning. By examining each contig’s k‑mer composition and its coverage, the binning tools cluster contigs that share similar signatures.
+With the cleaned reads in hand, the Toolkit proceeds to assembly. The MEGAHIT assembler, integrated into the Toolkit, is invoked to build contigs representing longer contiguous sequences in the sample.
+By examining each contig’s k‑mer composition and its coverage, the binning tools cluster contigs that share similar signatures.
 These clusters, or “bins,” correspond to draft genomes reconstructed from the community, enabling researchers to recover and study individual organisms without prior knowledge of the sample’s composition.
 
-In short, the guide describes how the Toolkit orchestrates QC, assembly and binning to turn raw metagenomic reads into biologically meaningful genome bins
+In short, the guide describes how the Toolkit orchestrates QC, assembly and binning to turn raw metagenomic reads into biologically meaningful genome bins.
 
 We will inspect two SRA samples ([SRR492065](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR492065&display=metadata){:target="_blank"} and [SRR492183](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR492183&display=metadata){:target="_blank"}) that belong to the same study "Preborn infant gut metagenome".
 
@@ -31,10 +30,15 @@ The following configuration runs the tools
 
 !!! question "Task 2"
 
+    Change to the directory of the Toolkit session.
+    ```BASH
+    cd /vol/volume/sessions/metagenomics_metagenomics-tk 
+    ```
+
     Copy the following command to execute the Toolkit. The Toolkit will need about 3 to 5 (Todo: update) minutes to complete.
 
     ```BASH
-    ---8<--- "scripts/tutorials/tutorial2/test_reads_to_genomes.sh:3:13"
+    ---8<--- "scripts/tutorials/tutorial2/test_reads_to_genomes.sh:4:13"
     ```
 
 
@@ -47,7 +51,6 @@ In the following we will inspect the outputs of each analysis step.
 #### Fastp 
 
 Fastp is an efficient, versatile, open-source tool for preprocessing FASTQ files and quality control in next-generation sequencing (NGS) workflows.
-Written in C++, fastp provides high-speed performance without compromising accuracy, making it suitable for handling large sequencing data sets.
 For quality and adapter trimming fastp trims reads from 5’ end to 3’ end using a sliding window. 
 
 If the mean quality of bases inside a window drops below a specific q-score, the remainder of the read will be trimmed.
@@ -59,6 +62,11 @@ If a read gets too short during this trimming, it will be discarded.
 
 
 !!! question "Task 3"
+
+    Change to the directory of the Toolkit session.
+    ```BASH
+    cd /vol/volume/sessions/metagenomics_metagenomics-tk 
+    ```
 
     You can view the fastp output in the qc output directory:
     ```BASH
@@ -106,6 +114,11 @@ The Toolkit provides the SRA human-scrubber tool that uses a k-mer based approac
     You can find the result of the tool in the **filterHuman** directory:
     The output of the tool are the filtered sequences, and it also includes statistics about the sequences **before** and **after** filtering.   
 
+    Change to the directory of the Toolkit session.
+    ```BASH
+    cd /vol/volume/sessions/metagenomics_metagenomics-tk 
+    ```
+
     ```BASH
     ls output/*/1/qc/*/filterHuman/
     ```
@@ -130,36 +143,35 @@ TODO: mention that there are many reads that could be identified ...
 ### Assembly Results
 
 Once your raw reads have been quality-controlled, we will now perform an assembly using the Metagenomics-Toolkit.
-The Toolkit supports several assemblers, one of which is the MEGAHIT assembler, which we will run in this section.
+The Toolkit supports several assemblers, including MEGAHIT, which we will run in this section.
 
 !!! question "Task 6"
 
-    Which tool is used for the assembly? What additional parameters are used?
+    Which additional parameters are used by MEGAHIT?
 
     ??? Solution 
         MEGAHIT with the additional parameters: minimum contig length of `500 bp` and the preset `meta-sensitive`.
         `meta-sensitive` sets the following parameters: `--min-count 1 --k-list 21,29,39,49,...,129,141`, which causes 
-        MEGAHIT to use a longer list of k-mers.
-        MEGAHIT is a single-node assembler for large and complex metagenomics
-        NGS reads, such as soil. It makes use of a succinct de Bruijn graph
-        (SdBG) to achieve a low memory assembly. See the
-        [MEGAHIT home page](https://github.com/voutcn/megahit/) for more
+        MEGAHIT to use a longer list of k-mers. See the [MEGAHIT home page](https://github.com/voutcn/megahit/) for more
         info.
 
 
-We will now have a first look at some assembly statistics. First of all, locate your assembly results somewhere in your `output` directory.
+We will now have a first look at some assembly statistics. First of all, locate your assembly results in your `output` directory for the SRR492065 sample.
 
 !!! question "Task 7"
     Where are the assembly results of MEGAHIT stored? And what files are generated per sample?
     
     ??? Solution 
-        The assembly results are stored in `output/data/1/assembly/1.2.1/megahit/`
+
+        Change to the directory of the Toolkit session.
         ```
         cd /vol/volume/sessions/metagenomics_metagenomics-tk
         ```
+        The assembly results are stored in `output/data/1/assembly/1.2.1/megahit/`
         ```BASH
         ls -1 output/SRR492065/1/assembly/1.2.3/megahit/
         ```
+        Output:
         ```BASH
             SRR492065_contigs.fa.gz  # the assembled sequences as gzipped fasta
             SRR492065_contigs.fastg  # the assembly graph for inspection for example with Bandage
@@ -170,12 +182,15 @@ We will now have a first look at some assembly statistics. First of all, locate 
     Have a look at the `SRR492065_contigs_stats.tsv` file - how large is the assembly and what is the N50?
     
     ??? Solution
+        Change to the directory of the Toolkit session.
         ```BASH
         cd /vol/volume/sessions/metagenomics_metagenomics-tk
         ```
+        View the contig stats:
         ```BASH
         cat output/SRR492065/1/assembly/1.2.3/megahit/SRR492065_contigs_stats.tsv | column -s$'\t' -t
         ```
+        Output: 
         ```BASH
         SAMPLE     file                     format  type  num_seqs  sum_len   min_len  avg_len  max_len  Q1      Q2      Q3      sum_gap  N50    Q20(%)  Q30(%)  GC(%)
         SRR492065  SRR492065_contigs.fa.gz  FASTA   DNA   1577      11206329  1000     7106.1   245235   1554.0  2659.0  6398.0  0        16801  0.00    0.00    40.46
@@ -185,7 +200,7 @@ We will now have a first look at some assembly statistics. First of all, locate 
 
 ### Binning Results
 
-Binning is a critical process in metagenomics that involves grouping DNA fragments, known as contigs,
+Binning is a process in metagenomics that involves grouping DNA fragments, known as contigs,
 into bins that likely originate from the same organism or genome.
 This technique is essential for reconstructing genomes from mixed microbial communities,
 where DNA from various organisms is intermingled, and there is often no prior knowledge of the species present.
@@ -199,14 +214,18 @@ and tetranucleotide frequency. See the [MetaBAT home page](https://bitbucket.org
 Let's now inspect the bins created by MetaBAT:
 
 !!! question "Task 9"
-    How many bins did metabat generate? Locate the metabat results and the fasta files for each bin in the output folder.
+    How many bins did metabat generate for the dataset SRR492065? Locate the metabat results and the fasta files for each bin in the output folder.
     ??? Solution
+        Change to the directory of the Toolkit session.
         ```BASH
         cd /vol/volume/sessions/metagenomics_metagenomics-tk
         ```
+        List the output of the MetaBAT tool: 
         ```BASH
-        ls -1 output/SRR492065/1/binning/0.5.0/metabat/
+        ls -1 output/SRR492065/1/binning/*/metabat/
         ```
+
+        Below you can see that MetaBAT generated 5 bins. The file `SRR492065_notBinned.fa` contains contigs that could not be binned.
         ```BASH
         SRR492065_bin.1.fa
         SRR492065_bin.2.fa
@@ -218,7 +237,6 @@ Let's now inspect the bins created by MetaBAT:
         SRR492065_contigs_depth.tsv
         SRR492065_notBinned.fa
         ```
-        MetaBAT generated 5 bins. The file `SRR492065_notBinned.fa` contains contigs that could not be binned.
 
 The next question you might want to ask is whether you can trust these bins and which organism they represent according to a taxonomy.
 Before that, let's have a look at what other information the Metagenomics-Toolkit provides as part of the binning output.
@@ -227,12 +245,13 @@ Before that, let's have a look at what other information the Metagenomics-Toolki
     There is a file containing some statistics on the generated bins `SRR492065_bins_stats.tsv`. 
     Find out, which bin has the highest coverage and which one has the highest N50.
     ??? Solution    
-        You can have a look on some bin statistics with:
+        Change to the directory of the Toolkit session.
         ```
         cd /vol/volume/sessions/metagenomics_metagenomics-tk
         ```
+        You can have a look on some bin statistics with:
         ```BASH
-        less output/SRR492065/1/binning/0.5.0/metabat/SRR492065_bins_stats.tsv
+        less output/SRR492065/1/binning/*/metabat/SRR492065_bins_stats.tsv
         ```
         ```BASH
         SAMPLE     BIN_ID              format  type  num_seqs  sum_len  min_len  avg_len  max_len  Q1       Q2       Q3        sum_gap  N50     Q20(%)  Q30(%)  GC(%)  COVERAGE
@@ -245,5 +264,5 @@ Before that, let's have a look at what other information the Metagenomics-Toolki
         In this result, bin 1 has the highest coverage (169.393) and highest N50 (185023).
 ---
 
-➡️ [**Continue to: Assessing Bin Quality**](./bin_quality.md)
+➡️ [**Continue to: Assessing Bin Quality, Lineage, and Gene Function**](./assigning_lineage_and_function.md)
 

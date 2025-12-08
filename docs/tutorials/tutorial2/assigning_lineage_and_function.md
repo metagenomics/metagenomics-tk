@@ -1,17 +1,17 @@
-In this part of the tutorial we evaluate the recovered MAGs for quality, classify them taxonomically and annotate their functional content.
+In this part of the tutorial we evaluate the recovered Bins for quality, classify them taxonomically and annotate their functional content.
 First, we run CheckM 2, the machine‑learning based version of CheckM that assesses completeness and contamination by leveraging the full repertoire of genomic markers—including multi‑copy genes
-and metabolic modules—rather than relying solely on single‑copy core genes. Next, we use GTDB‑Tk to assign each MAG to the Genome Taxonomy Database (GTDB),
+and metabolic modules—rather than relying solely on single‑copy core genes. Next, we use GTDB‑Tk to assign each Bin to the Genome Taxonomy Database (GTDB),
 a regularly updated, genome‑scale phylogenetic classification of bacteria and archaea that employs ANI and other phylogenetic markers to place query genomes within a standardized taxonomy.
 Finally, we annotate the genomes with Prodigal (via Prokka) to predict genes and rapidly assign functions, providing a comprehensive view of each bin’s biological potential.
 
-Together, these steps deliver a complete assessment of MAG quality, lineage, and gene function within the Metagenomics‑Toolkit workflow.
+Together, these steps deliver a complete assessment of Bin quality, lineage, and gene function within the Metagenomics‑Toolkit workflow.
 
 ## Metagenomics-Toolkit Execution
 
 The following lines represent the part of the configuration that tells the Toolkit to run the MagAttributes module that includes
-the CheckM2, GTDB-Tk, prokka and rgi tool:
+the CheckM2, GTDB-Tk, prokka and Resistance Gene Identifier (RGI) tool:
 
-```YAML linenums="1" title="MagAttributes Configuration File Snippet 1"
+```YAML linenums="1" title="MagAttributes Annotation Configuration File Snippet 1"
 ---8<--- "default/tutorials/tutorial2/fullPipeline_lineage_and_function.yml:75:99"
 ```
     
@@ -22,10 +22,6 @@ For reference, your complete parameter file looks like this:
     ---8<--- "default/tutorials/tutorial1/fullPipeline_lineage_and_function.yml"
     ```    
 
-## Output
-
-### Computing Completeness and Contamination using CheckM2
-
 If you run the Toolkit again with the `-resume` flag, it will run all additional modules and tools you have specified.
 
 !!! Question "Task 1"
@@ -34,17 +30,23 @@ If you run the Toolkit again with the `-resume` flag, it will run all additional
     ---8<--- "scripts/tutorials/tutorial2/test_lineage_and_function.sh:5:14"
     ```
 
+## Output
+
+### Computing Completeness and Contamination using CheckM2
+
 
 !!! Question "Task 2"
     Locate the CheckM results inside the `output/SRR492065/` directory and find out the completeness and contamination values for all of our bins.
     ??? Solution
-
+        Change to the directory of the Toolkit session.
         ```BASH
         cd /vol/volume/sessions/metagenomics_metagenomics-tk 
         ```
+        View the bin ID, bin completeness and contamination:
         ```BASH
         cut -f2,3,4 output/data/1/magAttributes/*/checkm2/data_checkm2_generated.tsv
         ```
+        Output:
         ```BASH        
         BIN_ID  COMPLETENESS    CONTAMINATION
         SRR492065_bin.1.fa      49.86   0.15
@@ -54,6 +56,8 @@ If you run the Toolkit again with the `-resume` flag, it will run all additional
         SRR492065_bin.5.fa      85.99   18.95
         ``` 
 
+
+Explain MIMAG high, medium ...
 Taxonomic classification tools assign taxonomic labels to reads or assembled contigs of metagenomic datasets.
 
 ### Genome Taxonomy Database (GTDB)
@@ -121,7 +125,7 @@ Prokka supports standard output formats such as GenBank and GFF, facilitating fu
 
 See [Prokka homepage](https://github.com/tseemann/prokka) for more information.
 
-We used the genes predicted by Prodigal to identify possible antibiotic resistance genes with the [Resistance Gene Identifier RGI](https://github.com/arpcard/rgi) tool.
+We used the genes predicted by Prodigal to identify possible antibiotic resistance genes with the [Resistance Gene Identifier (RGI)](https://github.com/arpcard/rgi) tool.
 You can inspect the output of RGI by running the following command: 
 
 !!! Question "Task 4"

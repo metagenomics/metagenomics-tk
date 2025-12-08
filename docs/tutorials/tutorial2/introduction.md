@@ -1,5 +1,5 @@
 This tutorial is a short introduction to the Metagenomics-Toolkit which shows the main steps in analysing Metagenomics data using the Metagenomics-Toolkit.
-A more detailed introduction can be found here: [introduction](../tutorial1/introduction.md). 
+A more detailed introduction can be found [here](../tutorial1/introduction.md). 
 In this part you will learn how to configure and run the Toolkit and what the output of a Toolkit run looks like.
 
 ## Tutorial Scope and Requirements
@@ -7,7 +7,7 @@ In this part you will learn how to configure and run the Toolkit and what the ou
 The Metagenomics-Toolkit allows you to run either the full pipeline of assembly, binning and many other downstream analysis tasks or the individual analyses separately. 
 In this tutorial you will only use the *full pipeline* mode. The *full pipeline* mode itself is structured into two parts. The first part runs the Toolkit on each
 sample separately (*per-sample*), and the second part runs a combined downstream analysis on the output of the *per-sample* parts, called *aggregation*. 
-Today, you will only run the *per-sample* part. While there are several optimizations for running the Toolkit on a cloud-based setup, 
+While there are several optimizations for running the Toolkit on a cloud-based setup, 
 during this workshop you will run the Toolkit on a single machine.
 
 ### Requirements
@@ -33,13 +33,17 @@ In this tutorial, we will work with data stored in the Sequence Read Archive (SR
 For this, we will use an SRA mirror located at the de.NBI Cloud Bielefeld site.
 This mirror can be accessed via the S3 protocol, and we can instruct the Toolkit on how to access it using a configuration file.
 
-```
-cd /vol/volume/sessions/metagenomics_metagenomics-tk 
-```
 
-```
-wget https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/assets/aws.config 
-```
+!!! Question "Task 1"
+    Change to the directory of the Toolkit session.
+    ```
+    cd /vol/volume/sessions/metagenomics_metagenomics-tk 
+    ```
+
+    Download the AWS config file
+    ```
+    wget https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/assets/aws.config 
+    ```
 
 ## Metagenomics-Toolkit Introduction
 
@@ -168,7 +172,7 @@ The corresponding command-line argument would be `--resources.highmemLarge.cpus`
     ??? Solution
         `--input.paired.path`
 
-Command line arguments supersede the configuration file. This is a quick, temporary way to change variables without touching files. 
+Command line arguments supersede the configuration file. This is a quick way to change variables without touching files. 
 
 
 ### Output
