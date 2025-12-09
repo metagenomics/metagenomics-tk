@@ -181,4 +181,7 @@ The tool produces among other things `*.csv` files that contain a summary of all
         ```
 
 ---
+
+➡️ [**Continue to:Dereplication**](./dereplication.md)
+
 [^1]: https://www.nature.com/articles/nbt.3893
