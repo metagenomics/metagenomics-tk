@@ -4,7 +4,7 @@ In this part you will learn how to configure and run the Toolkit and what the ou
 
 ## Tutorial Scope and Requirements
 
-The Metagenomics-Toolkit allows you to run either the full pipeline including assembly, binning, and many other downstream analyses separately. 
+The Metagenomics-Toolkit allows you to run either the full pipeline of assembly, binning, and many other downstream analysis tasks or the individual analyses separately. 
 In this tutorial you will only use the *full pipeline* mode. The *full pipeline* mode itself is structured into two parts. The first part runs the Toolkit on each
 sample separately (*per-sample*), and the second part runs a combined downstream analysis on the output of the *per-sample* runs; this step is called *aggregation*. 
 While there are several optimizations for running the Toolkit on a cloud-based setup, 
