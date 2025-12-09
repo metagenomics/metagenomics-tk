@@ -1,12 +1,12 @@
-This tutorial is a short introduction to the Metagenomics-Toolkit which shows the main steps in analysing Metagenomics data using the Metagenomics-Toolkit.
+This tutorial is a short introduction to the Metagenomics-Toolkit which shows the main steps in analysing metagenomics data using the Metagenomics-Toolkit.
 A more detailed introduction can be found [here](../tutorial1/introduction.md). 
 In this part you will learn how to configure and run the Toolkit and what the output of a Toolkit run looks like.
 
 ## Tutorial Scope and Requirements
 
-The Metagenomics-Toolkit allows you to run either the full pipeline of assembly, binning and many other downstream analysis tasks or the individual analyses separately. 
+The Metagenomics-Toolkit allows you to run either the full pipeline including assembly, binning, and many other downstream analyses separately. 
 In this tutorial you will only use the *full pipeline* mode. The *full pipeline* mode itself is structured into two parts. The first part runs the Toolkit on each
-sample separately (*per-sample*), and the second part runs a combined downstream analysis on the output of the *per-sample* parts, called *aggregation*. 
+sample separately (*per-sample*), and the second part runs a combined downstream analysis on the output of the *per-sample* runs; this step is called *aggregation*. 
 While there are several optimizations for running the Toolkit on a cloud-based setup, 
 during this workshop you will run the Toolkit on a single machine.
 
@@ -17,9 +17,9 @@ during this workshop you will run the Toolkit on a single machine.
     In case you are a course participant, it is very likely that a machine has been prepared for you and you can ignore this section.
     If in doubt, ask the course organizers. 
 
-* Basic Linux command line usage
+* Basic Linux command-line usage
 
-* This tutorial has been tested on a machine with 28 CPUs and 64 GBs of RAM with Ubuntu installed on it.
+* This tutorial has been tested on a machine with 28 CPUs and 64 GB of RAM with Ubuntu installed on it.
 
 * Docker: Install Docker by following the official Docker installation [instructions](https://docs.docker.com/engine/install/ubuntu/).
 
@@ -31,13 +31,13 @@ during this workshop you will run the Toolkit on a single machine.
 
 ### Execution
 
-The Toolkit is based on Nextflow and you can execute the Toolkit based on the following command line schema:
+The Toolkit is based on Nextflow and can be executed with the following command-line pattern:
 
 ```BASH
 NXF_VER=NEXTFLOW_VERSION nextflow run metagenomics/metagenomics-tk NEXTFLOW_OPTIONS TOOLKIT_OPTIONS 
 ```
 
-* `NEXTFLOW_VERSION` is the Nextflow version that is supported by Nextflow. Every code snippet in this tutorial has a hard coded version number. 
+* `NEXTFLOW_VERSION` is the Nextflow version supported (or required) by the Toolkit. Every code snippet in this tutorial has a hard-coded version number. 
   If you ever choose the wrong version, then the Toolkit will print out the versions that are supported.
 
 * `NEXTFLOW_OPTIONS` are options that are implemented by Nextflow:
@@ -50,19 +50,19 @@ NXF_VER=NEXTFLOW_VERSION nextflow run metagenomics/metagenomics-tk NEXTFLOW_OPTI
       * `-resume` In some cases, you may want to resume the workflow execution, such as when you add an analysis.
                   Resuming the workflow forces Nextflow to reuse the results of the previous analyses that the new analysis depends on, rather than starting from scratch. 
 
-	  * `-ansi-log` accepts a boolean (default: **true**) that tells Nextflow on **true** to print every update as a new line on the terminal. If **false** then Nextflow
-                  prints a line for every process and updates the specific line on an update. We recommend to setting **-ansi-log** to **false** because it is not possible to
+	  * `-ansi-log` accepts a boolean (default: **true**) that, when set to **true**, tells Nextflow to print every update as a new line on the terminal. If **false** then Nextflow
+                  prints a line for every process and updates the specific line on an update. We recommend setting **-ansi-log** to **false** because it is not possible to
                   print all possible processes on a terminal at once when running the Toolkit.
 
-	  * `-entry` specifies which entrypoint Nextflow should use to run the workflow. For running the *full pipeline*, that you will use in this workshop, you use the **wFullPipeline** entrypoint. 
-               If you ever want to run separate modules, you can check on the modules specific page (e.g. [assembly](../../modules/assembly.md/#assembly)).
+	  * `-entry` specifies which entrypoint Nextflow should use to run the workflow. To run the *full pipeline* that you will use in this workshop, use the **wFullPipeline** entrypoint. 
+               If you ever want to run separate modules, you can check on the modules-specific page (e.g. [assembly](../../modules/assembly.md/#assembly)).
 
 * `TOOLKIT_OPTIONS` are options that are provided by the Toolkit. All Toolkit options are either in a configuration file or can be provided on the command line which will be explained in the following section. 
 
 
 !!! question "Task 2"
 
-    Open the Metagenomics-Toolkit wiki on a second browser tab by a click on this
+    Open the Metagenomics-Toolkit wiki in a second browser tab by clicking this
     [link](https://metagenomics.github.io/metagenomics-tk/latest/){:target="_blank"}.
     Imagine you need to run the quality-control part separately. Can you tell the name of the **entrypoint**? 
     Use the wiki page you have opened on another tab to answer the question.
@@ -103,14 +103,14 @@ Since you will work with short read data in this tutorial, your input file looks
 ---8<--- "test_data/tutorials/tutorial2/samples.tsv"
 ```
 
-The first column (SAMPLE) specifies the name of the dataset. The second (READS1) and third (READS2) column specify the files
+The first column (SAMPLE) specifies the name of the dataset. The second (READS1) and third (READS2) columns specify the files
 containing the forward and reverse reads.
 
 #### Part 2: Toolkit Analyses Steps 
 
-Analyses, or sometimes called modules, that the Toolkit executes are placed directly under the **steps** attribute in the configuration file.
+Analyses (also called modules) that the Toolkit executes are placed directly under the **steps** attribute in the configuration file.
 In the example below, the modules **qc** and **assembly** are placed directly under the **steps** attribute. Any tools or methods
-that are used as part of the module can be considered as a property of the module. For example **MEGAHIT** is executed as part of the assembly module.
+that are used as part of the module can be considered a property of the module. For example, **MEGAHIT** is executed as part of the assembly module.
 The level below the tool names is for configuring the tools and methods. Each analysis is listed on the [modules page](../../modules/introduction.md). 
 
 ```YAML linenums="14" title="Example Configuration File Snippet 2"
@@ -121,8 +121,8 @@ The level below the tool names is for configuring the tools and methods. Each an
 
 The third part of a Toolkit configuration file is the **resources** attribute.
 The **resources** attribute lists computational resource configurations, where each configuration has a label and consists of the number of CPUs and amount of RAM assigned to it.
-Predefined labels are listed in the following example snippet. These labels are assigned to the processes that run the workflow specific tools.
-You can read more  about resource parameters [here](../../configuration.md/#configuration-of-computational-resources-used-for-pipeline-runs).
+Predefined labels are listed in the following example snippet. These labels are assigned to the processes that run the workflow-specific tools.
+You can read more about resource parameters [here](../../configuration.md/#configuration-of-computational-resources-used-for-pipeline-runs).
 
 ```YAML linenums="40" title="Example Configuration File Snippet 3"
 ---8<--- "default/tutorials/tutorial1/fullpipeline_assembly.yml:47"
@@ -135,10 +135,10 @@ You can read more  about resource parameters [here](../../configuration.md/#conf
     Is there enough RAM on your machine to run the Toolkit? 
 
     ??? Solution
-        If you are using a machine as described in the "Requirements" section, then yes, there is enough RAM available for the workflow (more than 60 GBs). 
+        If you are using a machine as described in the "Requirements" section, then yes, there is enough RAM available for the workflow (more than 60 GB). 
 
 
-#### Configuration File vs. Commandline Parameters
+#### Configuration File vs. Command-line Parameters
 
 All parameters defined in the YAML configuration file can also be supplied as command-line arguments. To do this, prefix each parameter with a double dash (--). 
 If a parameter is nested within the hierarchy of the YAML file, represent it as a command-line argument by connecting each level of the hierarchy using a dot (.).
@@ -154,7 +154,7 @@ The corresponding command-line argument would be `--resources.highmemLarge.cpus`
     ??? Solution
         `--input.paired.path`
 
-Command line arguments supersede the configuration file. This is a quick way to change variables without touching files. 
+Command-line arguments supersede the configuration file. This is a quick way to change variables without touching files. 
 
 
 ### Output
