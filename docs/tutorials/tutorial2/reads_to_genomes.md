@@ -10,6 +10,25 @@ In short, the guide describes how the Toolkit orchestrates QC, assembly and binn
 We will inspect two SRA samples ([SRR492065](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR492065&display=metadata){:target="_blank"} and [SRR492183](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR492183&display=metadata){:target="_blank"})
 that belong to the same study "Preborn infant gut metagenome".
 
+## Preparation
+
+Due to the configuration of your VMs, you need to create a small config file with the following command, to make sure we can resume workflow runs.
+
+!!! question "Task 1"
+
+    Change into the directory of the Toolkit session.
+    ```BASH
+    cd /vol/volume/sessions/metagenomics_metagenomics-tk 
+    ```
+
+    Copy the following command to create the config file.
+
+    ```BASH
+    echo 'cleanup = false' > nextflow.config
+    ```
+
+
+
 ## Metagenomics-Toolkit Execution 
 
 The Metagenomics-Toolkit offers multiple tools for each of the aforementioned processing steps.
