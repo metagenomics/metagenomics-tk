@@ -20,7 +20,7 @@ For reference, your complete parameter file looks like this:
 ??? Parameter-file
 
     ```BASH
-    ---8<--- "default/tutorials/tutorial1/fullPipeline_lineage_and_function.yml"
+    ---8<--- "default/tutorials/tutorial2/fullPipeline_lineage_and_function.yml"
     ```    
 
 If you run the Toolkit again with the `-resume` flag, it will run all additional modules and tools you have specified.
