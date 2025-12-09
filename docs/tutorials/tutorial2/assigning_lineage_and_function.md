@@ -2,7 +2,8 @@ In this part of the tutorial we evaluate the recovered Bins for quality, classif
 First, we run CheckM2, the machine‑learning based version of CheckM that assesses completeness and contamination by leveraging the full repertoire of genomic markers—including multi‑copy genes
 and metabolic modules—rather than relying solely on single‑copy core genes. Next, we use GTDB‑Tk to assign each Bin to the Genome Taxonomy Database (GTDB),
 a regularly updated, phylogenetic classification of bacteria and archaea that employs ANI and phylogenetic markers to place query genomes within a standardized taxonomy.
-Finally, we annotate the genomes with Prodigal (via Prokka) to predict genes and rapidly assign functions, providing a comprehensive view of each Bin’s biological potential.
+We will then annotate the genomes with Prodigal (via Prokka) to predict genes and rapidly assign functions, providing a comprehensive view of each Bin’s biological potential.
+Finally, we apply RGI to examine the Bins with regard to antibiotic resistance genes.
 
 Together, these steps deliver a complete assessment of Bin quality, lineage, and gene function within the Metagenomics‑Toolkit workflow.
 

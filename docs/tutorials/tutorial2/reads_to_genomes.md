@@ -3,11 +3,12 @@ A Nonpareil analysis is then executed to estimate the sequencing depth needed to
 
 With the cleaned reads in hand, the Toolkit proceeds to assembly. The MEGAHIT assembler, integrated into the Toolkit, is invoked to build contigs representing longer contiguous sequences in the sample.
 By examining each contig’s k‑mer composition and its coverage, the binning tools cluster contigs that share similar signatures.
-These clusters, or “bins,” correspond to draft genomes reconstructed from the community, enabling researchers to recover and study individual organisms without prior knowledge of the sample’s composition.
+These clusters, or “Bins,” correspond to draft genomes reconstructed from the community, enabling researchers to recover and study individual organisms without prior knowledge of the sample’s composition.
 
 In short, the guide describes how the Toolkit orchestrates QC, assembly and binning to turn raw metagenomic reads into biologically meaningful genome bins.
 
-We will inspect two SRA samples ([SRR492065](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR492065&display=metadata){:target="_blank"} and [SRR492183](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR492183&display=metadata){:target="_blank"}) that belong to the same study "Preborn infant gut metagenome".
+We will inspect two SRA samples ([SRR492065](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR492065&display=metadata){:target="_blank"} and [SRR492183](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR492183&display=metadata){:target="_blank"})
+that belong to the same study "Preborn infant gut metagenome".
 
 ## Metagenomics-Toolkit Execution 
 
@@ -30,7 +31,7 @@ The following configuration runs the tools
 
 !!! question "Task 2"
 
-    Change to the directory of the Toolkit session.
+    Change into the directory of the Toolkit session.
     ```BASH
     cd /vol/volume/sessions/metagenomics_metagenomics-tk 
     ```
@@ -63,7 +64,7 @@ If a read gets too short during this trimming, it will be discarded.
 
 !!! question "Task 3"
 
-    Change to the directory of the Toolkit session.
+    Change into the directory of the Toolkit session.
     ```BASH
     cd /vol/volume/sessions/metagenomics_metagenomics-tk 
     ```
@@ -114,7 +115,7 @@ The Toolkit provides the SRA human-scrubber tool that uses a k-mer based approac
     You can find the result of the tool in the **filterHuman** directory:
     The output of the tool are the filtered sequences, and it also includes statistics about the sequences **before** and **after** filtering.   
 
-    Change to the directory of the Toolkit session.
+    Change into the directory of the Toolkit session.
     ```BASH
     cd /vol/volume/sessions/metagenomics_metagenomics-tk 
     ```
@@ -164,7 +165,7 @@ We will now have a first look at some assembly statistics. First of all, locate 
     
     ??? Solution 
 
-        Change to the directory of the Toolkit session.
+        Change into the directory of the Toolkit session.
         ```
         cd /vol/volume/sessions/metagenomics_metagenomics-tk
         ```
@@ -183,7 +184,7 @@ We will now have a first look at some assembly statistics. First of all, locate 
     Have a look at the `SRR492065_contigs_stats.tsv` file - how large is the assembly and what is the N50?
     
     ??? Solution
-        Change to the directory of the Toolkit session.
+        Change into the directory of the Toolkit session.
         ```BASH
         cd /vol/volume/sessions/metagenomics_metagenomics-tk
         ```
@@ -217,7 +218,7 @@ Let's now inspect the bins created by MetaBAT:
 !!! question "Task 9"
     How many bins did metabat generate for the dataset SRR492065? Locate the metabat results and the fasta files for each bin in the output folder.
     ??? Solution
-        Change to the directory of the Toolkit session.
+        Change into the directory of the Toolkit session.
         ```BASH
         cd /vol/volume/sessions/metagenomics_metagenomics-tk
         ```
@@ -246,7 +247,7 @@ Before that, let's have a look at what other information the Metagenomics-Toolki
     There is a file containing some statistics on the generated bins `SRR492065_bins_stats.tsv`. 
     Find out, which bin has the highest coverage and which one has the highest N50.
     ??? Solution    
-        Change to the directory of the Toolkit session.
+        Change into the directory of the Toolkit session.
         ```
         cd /vol/volume/sessions/metagenomics_metagenomics-tk
         ```

@@ -27,24 +27,6 @@ during this workshop you will run the Toolkit on a single machine.
 
 * Nextflow should be installed. Please check the official Nextflow [instructions](https://www.nextflow.io/docs/latest/install.html#install-nextflow).
 
-### Preparations
-
-In this tutorial, we will work with data stored in the Sequence Read Archive (SRA).
-For this, we will use an SRA mirror located at the de.NBI Cloud Bielefeld site.
-This mirror can be accessed via the S3 protocol, and we can instruct the Toolkit on how to access it using a configuration file.
-
-
-!!! Question "Task 1"
-    Change to the directory of the Toolkit session.
-    ```
-    cd /vol/volume/sessions/metagenomics_metagenomics-tk 
-    ```
-
-    Download the AWS config file
-    ```
-    wget https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/assets/aws.config 
-    ```
-
 ## Metagenomics-Toolkit Introduction
 
 ### Execution
@@ -117,8 +99,8 @@ The list can be a list of remote or local files and in the case of SRA, a list o
 
 Since you will work with short read data in this tutorial, your input file looks like this:
 
-```BASH linenums="1" title="Input File"
----8<--- "test_data/tutorials/tutorial1/reads.tsv"
+```BASH linenums="1" title="Sample Sheet"
+---8<--- "test_data/tutorials/tutorial2/samples.tsv"
 ```
 
 The first column (SAMPLE) specifies the name of the dataset. The second (READS1) and third (READS2) column specify the files
