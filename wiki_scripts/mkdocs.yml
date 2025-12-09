@@ -6,6 +6,7 @@ repo_url: https://github.com/metagenomics/metagenomics-tk
 repo_name: Metagenomics-Tk
 
 markdown_extensions:
+  - footnotes
   - pymdownx.details
   - toc:
       permalink: "&para;"
@@ -80,6 +81,11 @@ nav:
       - "Assessing Bin Quality": tutorials/tutorial1/bin_quality.md
       - "Classification": tutorials/tutorial1/classification.md
       - "Annotation": tutorials/tutorial1/annotation.md
+    - "Tutorial (Short)": 
+      - "Introduction": tutorials/tutorial2/introduction.md 
+      - "From Reads To Genomes": tutorials/tutorial2/reads_to_genomes.md
+      - "Assessing Bin Quality, Lineage, and Gene Function": tutorials/tutorial2/assigning_lineage_and_function.md
+      - "Dereplication, and Coverage Inspection of MAGs": tutorials/tutorial2/dereplication.md
   - "Developer":
     - developer_guidelines.md
     - pipeline_specification.md
