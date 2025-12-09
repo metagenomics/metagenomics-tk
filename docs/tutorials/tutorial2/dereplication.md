@@ -1,13 +1,13 @@
 In this final part of the tutorial we **aggregate** the MAGs recovered from multiple samples, **dereplicate** them, and briefly inspect both the resulting clusters and the **read-mapping depth** (coverage) of some MAGs in the small example dataset.
 
-Dereplication reduces a large set of MAGs to a **non-redundant genome catalogue** by grouping nearly identical genomes (typically using Average Nucleotide Identity, ANI) and picking a single, 
-high-quality representative per cluster. This avoids double-counting strains, simplifies downstream analyses and prevents ambiguous read mapping to many almost-identical genomes.
+Dereplication reduces a large set of MAGs to a **non-redundant genome catalogue** by grouping nearly identical genomes (typically using Average Nucleotide Identity, ANI) and
+selecting the highest-quality MAG as the representative for each cluster. This avoids double-counting strains, simplifies downstream analyses and prevents ambiguous read mapping to many almost-identical genomes.
 
 Within the Metagenomics-Toolkit, dereplication is implemented as a separate module that:
 
-* takes the previous run or a table describing all MAGs (including completeness, contamination and coverage),
-* clusters similar genomes in a bottom-up fashion (using Mash and ANI distances), and
-* selects the best representative per cluster based on quality and assembly statistics.
+1. takes the previous run or a table describing all MAGs (including completeness, contamination and coverage),
+2. clusters similar genomes in a bottom-up fashion (using Mash and ANI distances), and
+3. selects the best representative per cluster based on quality and assembly statistics.
 
 ---
 
@@ -29,7 +29,7 @@ For reference, your complete parameter file for this final step looks like this:
 
 We assume that all required steps by the previous tutorials are done.
 
-If you run the Toolkit again with the `-resume` flag and this dereplication configuration, it will **reuse** all previous results (QC, assembly, binning, MagAttributes) and only execute the new dereplication step.
+If you run the Toolkit again with the `-resume` flag and the above dereplication configuration, it will **reuse** all previous results (QC, assembly, binning, MagAttributes) and only execute the new dereplication step.
 
 !!! Question "Task 1"
 

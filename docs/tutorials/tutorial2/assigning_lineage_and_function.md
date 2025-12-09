@@ -9,11 +9,10 @@ Together, these steps deliver a complete assessment of Bin quality, lineage, and
 
 ## Metagenomics-Toolkit Execution
 
-The following lines represent the part of the configuration that tells the Toolkit to run the MagAttributes module that includes
-the CheckM2, GTDB-Tk, Prokka and Resistance Gene Identifier (RGI) tool:
+The following lines represent the part of the configuration that tells the Toolkit to run the MagAttributes and Annotation module that include the CheckM2, GTDB-Tk, Prokka and Resistance Gene Identifier (RGI) tool:
 
 ```YAML linenums="1" title="MagAttributes Annotation Configuration File Snippet 1"
----8<--- "default/tutorials/tutorial2/fullPipeline_lineage_and_function.yml:75:99"
+---8<--- "default/tutorials/tutorial2/fullPipeline_lineage_and_function.yml:69:93"
 ```
     
 For reference, your complete parameter file looks like this:

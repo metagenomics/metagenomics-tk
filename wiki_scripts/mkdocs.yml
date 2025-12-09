@@ -85,7 +85,7 @@ nav:
       - "Introduction": tutorials/tutorial2/introduction.md 
       - "From Reads To Genomes": tutorials/tutorial2/reads_to_genomes.md
       - "Assessing Bin Quality, Lineage, and Gene Function": tutorials/tutorial2/assigning_lineage_and_function.md
-      - "Dereplication": tutorials/tutorial2/dereplication.md
+      - "Dereplication, and Coverage Inspection of MAGs": tutorials/tutorial2/dereplication.md
   - "Developer":
     - developer_guidelines.md
     - pipeline_specification.md
