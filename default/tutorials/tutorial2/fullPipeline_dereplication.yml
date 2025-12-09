@@ -39,17 +39,6 @@ steps:
       additionalParams:
         minimap_index: ""
         minimap: ""
-  cooccurrence:
-    inference:
-      additionalParams:
-        method: 'correlation'
-        rscript: " --mincovthreshold 0.9 --maxzero 60 --minweight 0.4 "
-        timeLimit: "AUTO"
-    metabolicAnnotation:
-      additionalParams:
-        metabolicEdgeBatches: 5
-        metabolicEdgeReplicates: 10
-        smetana: " --flavor bigg --molweight "
 resources:
   highmemLarge:
     cpus: 28
