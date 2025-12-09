@@ -1,3 +1,3 @@
-SAMPLE  READS1  READS2
-SRR492183  https://openstack.cebitec.uni-bielefeld.de:8080/ftp.era.ebi.ac.uk/vol1/fastq/SRR492/SRR492183/SRR492183_1.fastq.gz  https://openstack.cebitec.uni-bielefeld.de:8080/ftp.era.ebi.ac.uk/vol1/fastq/SRR492/SRR492183/SRR492183_2.fastq.gz
-SRR492065  https://openstack.cebitec.uni-bielefeld.de:8080/ftp.era.ebi.ac.uk/vol1/fastq/SRR492/SRR492065/SRR492065_1.fastq.gz  https://openstack.cebitec.uni-bielefeld.de:8080/ftp.era.ebi.ac.uk/vol1/fastq/SRR492/SRR492065/SRR492065_2.fastq.gz
+SAMPLE	READS1	READS2
+SRR492183	https://openstack.cebitec.uni-bielefeld.de:8080/ftp.era.ebi.ac.uk/vol1/fastq/SRR492/SRR492183/SRR492183_1.fastq.gz	https://openstack.cebitec.uni-bielefeld.de:8080/ftp.era.ebi.ac.uk/vol1/fastq/SRR492/SRR492183/SRR492183_2.fastq.gz
+SRR492065	https://openstack.cebitec.uni-bielefeld.de:8080/ftp.era.ebi.ac.uk/vol1/fastq/SRR492/SRR492065/SRR492065_1.fastq.gz	https://openstack.cebitec.uni-bielefeld.de:8080/ftp.era.ebi.ac.uk/vol1/fastq/SRR492/SRR492065/SRR492065_2.fastq.gz
