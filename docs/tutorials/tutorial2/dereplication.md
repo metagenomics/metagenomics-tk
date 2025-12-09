@@ -121,12 +121,12 @@ CLUSTER  GENOME                                 REPRESENTATIVE
 
         ```TSV
         CLUSTER GENOME  REPRESENTATIVE
-1       SRR492065_bin.2.fa      0.0
-3       SRR492065_bin.4.fa      1.0
-2       SRR492065_bin.5.fa      0.0
-2       SRR492183_bin.1.fa      1.0
-4       SRR492183_bin.2.fa      1.0
-1       SRR492183_bin.3.fa      1.0
+        1       SRR492065_bin.2.fa      0.0
+        3       SRR492065_bin.4.fa      1.0
+        2       SRR492065_bin.5.fa      0.0
+        2       SRR492183_bin.1.fa      1.0
+        4       SRR492183_bin.2.fa      1.0
+        1       SRR492183_bin.3.fa      1.0
         ```
 
         This shows you:
@@ -168,18 +168,18 @@ Coverage values are derived from mapping reads from all input samples back to ea
 
         ```
         -rw-r--r-- 1 ubuntu ubuntu  111 Dec  9 18:50 SRR492065_count.tsv
--rw-r--r-- 1 ubuntu ubuntu  120 Dec  9 18:50 SRR492065_mean.tsv
--rw-r--r-- 1 ubuntu ubuntu  138 Dec  9 18:50 SRR492065_relative_abundance.tsv
--rw-r--r-- 1 ubuntu ubuntu  120 Dec  9 18:50 SRR492065_rpkm.tsv
--rw-r--r-- 1 ubuntu ubuntu  116 Dec  9 18:50 SRR492065_tpm.tsv
--rw-r--r-- 1 ubuntu ubuntu  118 Dec  9 18:50 SRR492065_trimmed_mean.tsv
--rw-r--r-- 1 ubuntu ubuntu  110 Dec  9 18:50 SRR492183_count.tsv
--rw-r--r-- 1 ubuntu ubuntu  113 Dec  9 18:50 SRR492183_mean.tsv
--rw-r--r-- 1 ubuntu ubuntu  130 Dec  9 18:50 SRR492183_relative_abundance.tsv
--rw-r--r-- 1 ubuntu ubuntu  110 Dec  9 18:50 SRR492183_rpkm.tsv
--rw-r--r-- 1 ubuntu ubuntu  112 Dec  9 18:50 SRR492183_tpm.tsv
--rw-r--r-- 1 ubuntu ubuntu  113 Dec  9 18:50 SRR492183_trimmed_mean.tsv
-drwxr-xr-x 2 ubuntu ubuntu 4096 Dec  9 18:50 logs
+        -rw-r--r-- 1 ubuntu ubuntu  120 Dec  9 18:50 SRR492065_mean.tsv
+        -rw-r--r-- 1 ubuntu ubuntu  138 Dec  9 18:50 SRR492065_relative_abundance.tsv
+        -rw-r--r-- 1 ubuntu ubuntu  120 Dec  9 18:50 SRR492065_rpkm.tsv
+        -rw-r--r-- 1 ubuntu ubuntu  116 Dec  9 18:50 SRR492065_tpm.tsv
+        -rw-r--r-- 1 ubuntu ubuntu  118 Dec  9 18:50 SRR492065_trimmed_mean.tsv
+        -rw-r--r-- 1 ubuntu ubuntu  110 Dec  9 18:50 SRR492183_count.tsv
+        -rw-r--r-- 1 ubuntu ubuntu  113 Dec  9 18:50 SRR492183_mean.tsv
+        -rw-r--r-- 1 ubuntu ubuntu  130 Dec  9 18:50 SRR492183_relative_abundance.tsv
+        -rw-r--r-- 1 ubuntu ubuntu  110 Dec  9 18:50 SRR492183_rpkm.tsv
+        -rw-r--r-- 1 ubuntu ubuntu  112 Dec  9 18:50 SRR492183_tpm.tsv
+        -rw-r--r-- 1 ubuntu ubuntu  113 Dec  9 18:50 SRR492183_trimmed_mean.tsv
+        drwxr-xr-x 2 ubuntu ubuntu 4096 Dec  9 18:50 logs
         ```
         In `SRR492065_relative_abundance.tsv` we find the right abundances.
 
@@ -189,9 +189,9 @@ drwxr-xr-x 2 ubuntu ubuntu 4096 Dec  9 18:50 logs
 
         ```TSV
         Genome  SRR492065
-unmapped        21.920425
-SRR492065_bin.4 22.608734
-SRR492183_bin.1 45.45554
-SRR492183_bin.2 2.6764407
-SRR492183_bin.3 7.338865
+        unmapped        21.920425
+        SRR492065_bin.4 22.608734
+        SRR492183_bin.1 45.45554
+        SRR492183_bin.2 2.6764407
+        SRR492183_bin.3 7.338865
         ```
