@@ -2,15 +2,9 @@ tempdir: "tmp"
 summary: false
 s3SignIn: false
 input:
-  SRA:
-    pattern:
-      ont: ".+[^(_1|_2)].+fastq.gz$"
-      illumina: ".+(_1|_2).+fastq.gz$"
-    S3:
-      path: "test_data/tutorials/tutorial2/samples.tsv"
-      bucket: "s3://ftp.era.ebi.ac.uk" 
-      prefix: "/vol1/fastq/"
-      watch: false
+  paired:
+    path: "test_data/tutorials/tutorial2/samples.tsv"
+    watch: false
 output: output
 logDir: log
 runid: 1
