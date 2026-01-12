@@ -41,6 +41,11 @@ where
     ---8<--- "default/fullPipelineAggregate.yml"
     ```
 
+
+### Optional
+
+
+
 ### Output
 
 The meaning of the produced output can be inspected on the respective [module page](modules/introduction.md).
@@ -55,6 +60,7 @@ cat  my_data_spades_output/AGGREGATED/1/dereplication/*/bottomUpClustering/clust
 !!! note "Parameter override"
     Please note that the dereplication method produces more meaningful results when more than one sample is
     provided as input.
+
 
 ## Further Reading
 

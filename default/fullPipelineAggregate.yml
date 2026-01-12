@@ -2,6 +2,8 @@ tempdir: "tmp"
 s3SignIn: true
 output: "output"
 input: "fullPipelineOutput"
+input:
+  perSampleOutput: "fullPipelineOutput"
 logDir: log
 runid: 1
 logLevel: 1

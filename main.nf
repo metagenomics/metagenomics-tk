@@ -258,7 +258,7 @@ workflow _wGetSamples() {
     // Filter samples if tsv file is provided
     if(params.containsKey("input") && params.input.containsKey("selectedSamples")){
       Channel.from(file(params.input.selectedSamples)) | splitCsv(sep: '\t', header: true) 
-       | map {elem -> elem.SAMPLE } |  join(sraDatasets) | view | set { sraDatasets }
+       | map {elem -> elem.SAMPLE } |  join(sraDatasets) | set { sraDatasets }
     }
 
     sraDatasets | map { sra ->  [sra, input + "/" + sra + "/" + runID + "/" ]} \
