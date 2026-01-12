@@ -68,3 +68,16 @@ input:
       path: test_data/SRA/samples.tsv
 ```
 
+### Configurtion of input parameters of the aggregation mode
+
+```
+input:
+  perSampleOutput: "output"
+  selectedSamples: "test_data/fullPipeline/filter.tsv" 
+```
+
+where:
+  * `perSampleOutput` is the output folder of the per sample run
+
+  * `selectedSamples` is an optional parameter that allows you to select specific samples of interest.
+  The output of these samples is located in the `perSampleOutput` directory. This option is useful when not all the samples in an output directory are to be used as input for modules such as Read Mapping or Cooccurrence.
