@@ -19,29 +19,6 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
          '/' + TOOL + '/' + filename
 }
 
-
-process pCmseq {
-
-    container "${params.cmseq_image}"
-
-    label 'tiny'
-
-    when params.steps.magAttributes.containsKey("cmseq")
-
-    input:
-    tuple val(sample), val(bin), file(gff), file(bam), file(bai)
-
-    output:
-    file("${sample}_${bin}.txt")
-
-    shell:
-    '''
-    zcat -f !{gff} > input.gff
-    polymut.py --mincov 10 --gff_file input.gff !{bam} > !{sample}_!{bin}.txt
-    '''
-}
-
-
 process pCheckM {
 
     container "${params.checkm_image}"
@@ -169,58 +146,6 @@ process pGtdbtk {
     FILE_TYPE = type == "" ? "" : type + "_"
     template 'gtdb.sh'
 }
-
-
-/*
-* The CMSeq workflow should estimate the heterogenety of a MAG in a given sample.
-* Input:
-*     * genomes  - A table with the columns PATH and  DATASET
-*         Example:
-*          PATH    DATASET
-*          /vol/spool/cmseq_20210607/GCF_000145295.fa      SAMPLE
-* 
-*     * alignments - A table with read alignment against genomes. 
-*           Example:
-*           BAM	PATH    BAI
-*           SAMPLE /vol/spool/fragmentRecruitment_20210607/work/3d/9a45b85c15b22a6bb8ed4635391a40/ERR2019981.bam   /vol/spool/fragmentRecruitment_20210607/work/3d/9a45b85c15b22a6bb8ed4635391a40/ERR2019981.bam.bai
-*
-*/
-workflow wCMSeqWorkflowFile {
-   take:
-      genomes
-      alignments
-   main:
-      wMagAttributesFile(genomes)
-
-      
-      //prepare alignment inputs for CMSeq:
-      alignments | splitCsv(sep: '\t', header: true)  \
-       | map { sample -> [sample.BAM, file(sample.PATH), file(sample.BAI)] } | set {alignments}
-
-      //prepare genome inputs for prokka:
-      genomes | splitCsv(sep: '\t', header: true) \
-       | map { sample -> [sample.DATASET, file(sample.PATH).getName(), file(sample.PATH)] } \
-       | set { genomesForProkka }
-
-      DATASET_IDX = 0 
-      wSaveSettingsList(samplesContigs | map { it -> it[DATASET_IDX] })
-
-      _wCreateProkkaInput(genomesForProkka, wMagAttributesFile.out.gtdb)
-
-      pProkka(Channel.value("meta"), _wCreateProkkaInput.out.prokkaInput)
-
-      SAMPLE_IDX = 0
-      SAMPLE_BIN_IDX = 1
-      GFF_IDX = 2
-      ALIGNMENT_IDX = 3
-      ALIGNMENT_INDEX_IDX = 4
-
-      pProkka.out.gff \
-         | join(alignments, by: SAMPLE_IDX, remainder: true)   \
-         | map { it -> [it[SAMPLE_IDX], it[SAMPLE_BIN_IDX], it[GFF_IDX], it[ALIGNMENT_IDX], it[ALIGNMENT_INDEX_IDX]] } |  pCmseq
-
-}
-
 
 /**
 * This workflow provides the same functionality as wMagAttributesList.
