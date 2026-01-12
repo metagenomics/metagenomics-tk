@@ -13,8 +13,7 @@ include { wLongReadBinningList } from './modules/binning/ontBinning'
 include { wEMGBList; _wExportPipeline } from './modules/export/emgb'
 include { wMagAttributesFile; \
 	wMagAttributesList as wMagAttributesList; \
-	wMagAttributesList as wRecruitedGenomesAttributesList; \
-	wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
+	wMagAttributesList as wRecruitedGenomesAttributesList; } from './modules/magAttributes/module.nf'
 include { wDereplicateFile; wDereplicateList} from './modules/dereplication/bottomUpClustering/module'
 include { wAnalyseMetabolitesList; wAnalyseMetabolitesFile } from './modules/metabolomics/module'
 include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/mapping.nf'
