@@ -117,10 +117,6 @@ workflow wPlasmids {
    wPlasmidsPath()
 }
 
-workflow wCMSeqWorfklowFile {
-   wCMSeqWorkflowFile(Channel.fromPath(params?.steps?.magAttributes?.input?.genomes), Channel.fromPath(params?.steps?.magAttributes?.input?.alignments))
-}
-
 workflow wMagAttributes {
    wMagAttributesFile(Channel.fromPath(params?.steps?.magAttributes?.input))
 }

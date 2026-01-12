@@ -69,33 +69,6 @@ process pMetabinner {
 }
 
 
-
-process pMaxBin {
-
-    container "${params.maxbin_image}"
-
-    label 'highmemLarge'
-
-    tag "$sample"
-
-    when params.maxbin
-
-    input:
-    tuple val(sample), val(TYPE), path(contigs), path(reads)
-
-    output:
-    tuple val("${sample}"), env(NEW_TYPE), file("${TYPE}_${sample}/out.*.fasta"), optional: true, emit: bins
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-
-    shell:
-    '''
-    NEW_TYPE="!{TYPE}_maxbin"
-    mkdir !{TYPE}_!{sample}
-    run_MaxBin.pl -preserve_intermediate -contig !{contigs} -reads !{reads} -thread !{task.cpus} -out !{TYPE}_!{sample}/out
-    '''
-}
-
-
 /**
  * MAGScoT - Run MAGScoT binning refinement
  * @param sample: Sample name
