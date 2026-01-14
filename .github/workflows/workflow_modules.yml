@@ -296,8 +296,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Copy scm to circumvent API rate limit 
         run: |
-          mkdir assets
-          NXF_ASSETS=$(echo "NXF_ASSETS=$(pwd)/assets" | sed 's/\//\\\//g')
+          mkdir nxf_assets
+          NXF_ASSETS=$(echo "NXF_ASSETS=$(pwd)/nxf_assets" | sed 's/\//\\\//g')
           BRANCH=$(git rev-parse --abbrev-ref HEAD)
           BRANCH_SED=$(echo $BRANCH | sed 's/\//\\\//g')
           sed -i "s/master/${BRANCH_SED}/g" scripts/test_quickstart.sh
@@ -341,8 +341,8 @@ jobs:
       - name: Copy scm to circumvent API rate limit 
         run: |
           # Create assets directory for storing the downloaded workflow
-          mkdir assets
-          NXF_ASSETS=$(echo "NXF_ASSETS=$(pwd)/assets" | sed 's/\//\\\//g')
+          mkdir nxf_assets
+          NXF_ASSETS=$(echo "NXF_ASSETS=$(pwd)/nxf_assets" | sed 's/\//\\\//g')
           BRANCH=$(git rev-parse --abbrev-ref HEAD)
           BRANCH_SED=$(echo $BRANCH | sed 's/\//\\\//g')
           # Replace all references of the master branch to the current branch
@@ -388,8 +388,8 @@ jobs:
       - name: Copy scm to circumvent API rate limit 
         run: |
           # Create assets directory for storing the downloaded workflow
-          mkdir assets
-          NXF_ASSETS=$(echo "NXF_ASSETS=$(pwd)/assets" | sed 's/\//\\\//g')
+          mkdir nxf_assets
+          NXF_ASSETS=$(echo "NXF_ASSETS=$(pwd)/nxf_assets" | sed 's/\//\\\//g')
 
           BRANCH=$(git rev-parse --abbrev-ref HEAD)
           BRANCH_SED=$(echo $BRANCH | sed 's/\//\\\//g')
