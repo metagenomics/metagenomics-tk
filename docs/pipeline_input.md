@@ -36,9 +36,7 @@ input:
       bucket: "s3://ftp.era.ebi.ac.uk" 
       prefix: "/vol1/fastq/"
       watch: false
-      patternONT: ".+[^(_1|_2)].+$"
-      patternIllumina: ".+(_1|_2).+$"
-
+      skipDB: false
 ```
 
 where:
@@ -53,6 +51,8 @@ where:
      if only one input type is specified (e.g "ont" or "paired" ...)
 
   *  `patternONT` and `patternIllumina` are patterns that are applied on the specified mirror in order to select the correct input files.
+
+  *  `skipDB` is a flag for skipping SRA run IDs from the local SRA database. This flag is only used for debugging.
 
 ### NCBI SRA
 

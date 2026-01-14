@@ -1,4 +1,3 @@
-nextflow.enable.dsl=2
 import nextflow.splitter.CsvSplitter
 import java.util.regex.*;
 
@@ -48,7 +47,7 @@ process pGetSRAPath {
 }
 
 
-process pGetMetadata {
+process pGetSRAMetadataFromRemote {
 
     label 'tiny'
 
@@ -75,13 +74,42 @@ process pGetMetadata {
 
     shell:
     '''
-    pysradb metadata !{sraid} --saveto output.tsv
-    INSTRUMENT=$(tail -n 1  output.tsv | cut -f 17)
+    pysradb metadata !{sraid} --saveto pysradb_output.tsv
+    INSTRUMENT=$(tail -n 1 pysradb_output.tsv | cut -f 17)
     '''
-   
 }
 
-process pGetSRAIDs {
+/*
+* If possible fetch from local SRA DB instead of fetching from NCBI.
+* Input: List of SRA IDs
+* Output: 
+*  * foundSraRunIDs: File containing matadata of found SRA IDs.
+*  * notFoundSraRunIDs: File containing SRA IDs of not found SRA IDs in DB.
+*/
+process pGetSRAIDsFromDB {
+
+    label 'tiny'
+
+    container "${params.ubuntu_image}"
+
+    errorStrategy 'retry'
+
+    when:
+    params?.input.containsKey("SRA")
+
+    input:
+    val("sraids")
+
+    output:
+    path("found.csv"), emit: foundSraRunIDs
+    path("not_found.csv"), emit: notFoundSraRunIDs
+
+    shell:
+    skipDB=(params.input.SRA.containsKey("skipDB") && params.input.SRA.skipDB) ? "true" : ""
+    template("getSRAIDsFromDB.sh")
+}
+
+process pGetSRAIDsFromRemote {
 
     label 'tiny'
 
@@ -120,11 +148,11 @@ process pGetSRAIDs {
 
       if [ -s containsIDTest.txt ]; then
         echo "run_accession" > output.tsv
-	cut -f 2 containsIDTest.txt >> output.tsv
+	    cut -f 2 containsIDTest.txt >> output.tsv
         unset NOT_FOUND_ID
         break;
       else 
-	echo "No result for ID !{sraid} found. Number of attempt: ${count}";
+	    echo "No result for ID !{sraid} found. Number of attempt: ${count}";
         sleep 2
         NOT_FOUND_ID=!{sraid}
         ((count++)) 
@@ -167,17 +195,38 @@ workflow _wSRAS3 {
 
          if(params.input.SRA.S3.watch){
              Channel.watchPath(params.input.SRA.S3.path, 'create,modify') \
-		| set { idsFromWatch }
+		        | set { idsFromWatch }
              idsFromWatch | mix(idsFromPath) | set {files}
-         } else {
-           idsFromPath | set { files }
-         }
+        } else {
+            idsFromPath | set { files }
+        }
 
-         files | splitCsv(sep: "\t", header: true) | map { it -> it.ACCESSION} | flatten | unique \
-	       | pGetSRAIDs 
+        // First try to fetch SRA IDs from NCBI SRA DB
+        BUFFER_SIZE_WATCH = 1 
+        BUFFER_SIZE_DEFAULT = 50  
+        files | splitCsv(sep: "\t", header: true) | map { it -> it.ACCESSION} 
+            | flatten | unique 
+            | buffer(size: params.input.SRA.S3.watch ? BUFFER_SIZE_WATCH : BUFFER_SIZE_DEFAULT, remainder: true) 
+            | pGetSRAIDsFromDB
 
-         pGetSRAIDs.out.sraRunIDs | splitCsv(sep: "\t", header: true) \
-	        | map { sample -> sample.run_accession }  | unique \
+        pGetSRAIDsFromDB.out.foundSraRunIDs 
+            | splitCsv(sep: ",", header: true) 
+            | map { sample -> sample.run_accession}
+            | set { sraRunIDsFoundInDB }
+
+        // SRA IDs not found in DB should be checked against NCBI directly
+	    pGetSRAIDsFromDB.out.notFoundSraRunIDs 
+	        | splitCsv(sep: ",", header: true) 
+            | map { sample -> sample.run_accession}
+	        | pGetSRAIDsFromRemote 
+
+        pGetSRAIDsFromRemote.out.sraRunIDs | splitCsv(sep: "\t", header: true) \
+ 	        | map { sample -> sample.run_accession }  | unique \
+            | set { sraIDsFoundRemote }
+
+
+        // Mix both outputs
+        sraIDsFoundRemote | mix(sraRunIDsFoundInDB) 
 		| branch {
                    passed: it.length() <= MAX_LENGTH && it.length() >= MIN_LENGTH
                            return it
@@ -195,7 +244,7 @@ workflow _wSRAS3 {
           fastqs = _wCheckSRAFiles.out.passedSamples
           failedSRAFastqFiles = _wCheckSRAFiles.out.failedSRAIDs
           incorrectAccessions = filteredIDs.failed
-          notFoundAccessions = pGetSRAIDs.out.notFoundID
+          notFoundAccessions = pGetSRAIDsFromRemote.out.notFoundID
 }
 
 
@@ -234,7 +283,27 @@ workflow _wCheckSRAFiles {
      FASTQ_FILES_IDX = 2
      ONT_FASTQ_FILE_IDX =2
 
-     samples | map({sample -> sample[SAMPLE_IDX]}) | pGetMetadata \
+     // First try to fetch SRA IDs from NCBI SRA DB
+     BUFFER_SIZE_WATCH = 1 
+     BUFFER_SIZE_DEFAULT = 50  
+     samples | map({sample -> sample[SAMPLE_IDX]}) 
+        | buffer(size: params.input.SRA.S3.watch ? BUFFER_SIZE_WATCH : BUFFER_SIZE_DEFAULT, remainder: true) 
+        | pGetSRAIDsFromDB
+
+     pGetSRAIDsFromDB.out.foundSraRunIDs 
+            | splitCsv(sep: ",", header: true) 
+            | map { sample -> [ sample.run_accession, sample.instrument ]}
+            | set { sraRunIDsMetadataFoundInDB }
+
+     // SRA IDs not found in DB should be checked against NCBI directly
+     pGetSRAIDsFromDB.out.notFoundSraRunIDs 
+            | splitCsv(sep: ",", header: true) 
+            | map { sample -> sample.run_accession}
+            | pGetSRAMetadataFromRemote | set { sraRunIDsMetadataFoundRemote }
+
+
+     // Mix both outputs
+     sraRunIDsMetadataFoundInDB | mix(sraRunIDsMetadataFoundRemote)
         | combine(samples, by: SAMPLE_IDX) | branch {
          ONT: it[INSTRUMENT_IDX]=="OXFORD_NANOPORE"
          ILLUMINA: it[INSTRUMENT_IDX]=="ILLUMINA"
