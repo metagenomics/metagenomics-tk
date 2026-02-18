@@ -30,7 +30,7 @@ process pFastpSplit {
     tuple val("${sample}"), path("*_report.html"), emit: fastpSummaryHtml
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     reportOnly=params.steps.qc?.fastp?.additionalParams?.reportOnly ? " " : " -o read1.fastp.fq.gz -O read2.fastp.fq.gz "
     template 'fastpSplit.sh'
 }
@@ -67,7 +67,7 @@ process pFilterHuman {
     tuple val("${sample}"), path("*_interleaved.removed.fq.gz"), optional: true, emit: interleavedRemoved
     tuple val("${sample}"), path("*_unpaired.removed.fq.gz"), optional: true, emit: unpairedRemoved
 
-    shell:
+    script:
     EXTRACTED_DB=params.steps?.qc?.filterHuman?.database?.extractedDBPath ?: ""
     DOWNLOAD_LINK=params.steps?.qc?.filterHuman?.database?.download?.source ?: ""
     MD5SUM=params?.steps?.qc?.filterHuman?.database?.download?.md5sum ?: ""
@@ -103,7 +103,7 @@ process pNonpareil {
     tuple val("${sample}"), path("*_nonpareil_curves.pdf"), emit: nonpareilCurves
     tuple val("${sample}"), path("*_nonpareil_index.tsv"), emit: nonpareilIndex
 
-    shell:
+    script:
     template 'nonpareil.sh'
 }
 
@@ -132,51 +132,51 @@ process pKMC {
     tuple val("${sample}"), path("*.json"), emit: details
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
 
-    shell:
-    '''
+    script:
+    """
     mkdir work
-    cat !{interleavedReads} !{unpairedReads} > input.fq.gz
+    cat ${interleavedReads} ${unpairedReads} > input.fq.gz
 
-    kmc -j!{sample}.13.kmc.json !{params.steps.qc.kmc.additionalParams.count} -m$(echo !{task.memory} | cut -d ' ' -f 1) -t!{task.cpus} -ci2 -k13  input.fq.gz 13mers work
-    kmc_tools -t!{task.cpus} transform 13mers histogram !{sample}.13.histo.tmp.tsv !{params.steps.qc.kmc.additionalParams.histo}
+    kmc -j${sample}.13.kmc.json ${params.steps.qc.kmc.additionalParams.count} -m\$(echo ${task.memory} | cut -d ' ' -f 1) -t${task.cpus} -ci2 -k13  input.fq.gz 13mers work
+    kmc_tools -t${task.cpus} transform 13mers histogram ${sample}.13.histo.tmp.tsv ${params.steps.qc.kmc.additionalParams.histo}
 
     rm -rf 13mers
 
-    kmc -j!{sample}.21.kmc.json !{params.steps.qc.kmc.additionalParams.count} -m$(echo !{task.memory} | cut -d ' ' -f 1) -t!{task.cpus} -ci2 -k21 input.fq.gz 21mers work
-    kmc_tools -t!{task.cpus} transform 21mers histogram !{sample}.21.histo.tmp.tsv !{params.steps.qc.kmc.additionalParams.histo}
+    kmc -j${sample}.21.kmc.json ${params.steps.qc.kmc.additionalParams.count} -m\$(echo ${task.memory} | cut -d ' ' -f 1) -t${task.cpus} -ci2 -k21 input.fq.gz 21mers work
+    kmc_tools -t${task.cpus} transform 21mers histogram ${sample}.21.histo.tmp.tsv ${params.steps.qc.kmc.additionalParams.histo}
 
     rm -rf 21mers
 
-    kmc -j!{sample}.71.kmc.json !{params.steps.qc.kmc.additionalParams.count} -m$(echo !{task.memory} | cut -d ' ' -f 1) -t!{task.cpus} -ci2 -k71 input.fq.gz 71mers work
-    kmc_tools -t!{task.cpus} transform 71mers histogram !{sample}.71.histo.tmp.tsv !{params.steps.qc.kmc.additionalParams.histo}
+    kmc -j${sample}.71.kmc.json ${params.steps.qc.kmc.additionalParams.count} -m\$(echo ${task.memory} | cut -d ' ' -f 1) -t${task.cpus} -ci2 -k71 input.fq.gz 71mers work
+    kmc_tools -t${task.cpus} transform 71mers histogram ${sample}.71.histo.tmp.tsv ${params.steps.qc.kmc.additionalParams.histo}
 
     rm -rf 71mers
 
-    echo -e "FREQUENCY\tCOUNT\tSAMPLE" > !{sample}.71.histo.tsv
-    cat !{sample}.71.json | jq -r '.Stats."#k-mers_below_min_threshold"' \
+    echo -e "FREQUENCY\tCOUNT\tSAMPLE" > ${sample}.71.histo.tsv
+    cat ${sample}.71.json | jq -r '.Stats."#k-mers_below_min_threshold"' \
 	| sed 's/^/1\t/g' \
-	| sed  -e 's/ /\t/g' -e "s/$/\t!{sample}/g" >> !{sample}.71.histo.tsv
+	| sed  -e 's/ /\t/g' -e "s/\$/\t${sample}/g" >> ${sample}.71.histo.tsv
 
-    sed  -e 's/ /\t/g' -e "s/$/\t!{sample}/g" !{sample}.71.histo.tmp.tsv >> !{sample}.71.histo.tsv
-    sed -i '/\t0\t/d' !{sample}.71.histo.tsv
+    sed  -e 's/ /\t/g' -e "s/\$/\t${sample}/g" ${sample}.71.histo.tmp.tsv >> ${sample}.71.histo.tsv
+    sed -i '/\t0\t/d' ${sample}.71.histo.tsv
 
-    echo -e "FREQUENCY\tCOUNT\tSAMPLE" > !{sample}.21.histo.tsv
-    cat !{sample}.21.json | jq -r '.Stats."#k-mers_below_min_threshold"' \
+    echo -e "FREQUENCY\tCOUNT\tSAMPLE" > ${sample}.21.histo.tsv
+    cat ${sample}.21.json | jq -r '.Stats."#k-mers_below_min_threshold"' \
 	| sed 's/^/1\t/g' \
-	| sed  -e 's/ /\t/g' -e "s/$/\t!{sample}/g" >> !{sample}.21.histo.tsv
+	| sed  -e 's/ /\t/g' -e "s/\$/\t${sample}/g" >> ${sample}.21.histo.tsv
 
-    sed  -e 's/ /\t/g' -e "s/$/\t!{sample}/g" !{sample}.21.histo.tmp.tsv >> !{sample}.21.histo.tsv
-    sed -i '/\t0\t/d' !{sample}.21.histo.tsv
+    sed  -e 's/ /\t/g' -e "s/\$/\t${sample}/g" ${sample}.21.histo.tmp.tsv >> ${sample}.21.histo.tsv
+    sed -i '/\t0\t/d' ${sample}.21.histo.tsv
 
 
-    echo -e "FREQUENCY\tCOUNT\tSAMPLE" > !{sample}.13.histo.tsv
-    cat !{sample}.13.kmc.json | jq -r '.Stats."#k-mers_below_min_threshold"' \
+    echo -e "FREQUENCY\tCOUNT\tSAMPLE" > ${sample}.13.histo.tsv
+    cat ${sample}.13.kmc.json | jq -r '.Stats."#k-mers_below_min_threshold"' \
 	| sed 's/^/1\t/g' \
-	| sed  -e 's/ /\t/g' -e "s/$/\t!{sample}/g" >> !{sample}.13.histo.tsv
+	| sed  -e 's/ /\t/g' -e "s/\$/\t${sample}/g" >> ${sample}.13.histo.tsv
 
-    sed  -e 's/ /\t/g' -e "s/$/\t!{sample}/g" !{sample}.13.histo.tmp.tsv >> !{sample}.13.histo.tsv
-    sed -i '/\t0\t/d' !{sample}.13.histo.tsv
-    '''
+    sed  -e 's/ /\t/g' -e "s/\$/\t${sample}/g" ${sample}.13.histo.tmp.tsv >> ${sample}.13.histo.tsv
+    sed -i '/\t0\t/d' ${sample}.13.histo.tsv
+    """
 }
 
 
@@ -212,7 +212,7 @@ process pFastpSplitDownload {
     tuple val("${sample}"), path("*_report.html"), emit: fastpSummaryHtml
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     reportOnly=params.steps.qc?.fastp?.additionalParams?.reportOnly ? " " : " -o read1.fastp.fq.gz -O read2.fastp.fq.gz "
     template 'fastpSplitDownload.sh'
 }
