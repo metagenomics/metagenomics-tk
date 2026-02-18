@@ -25,12 +25,12 @@ process pPorechop {
     tuple val("${sample}"), path("${sample}_qc.fq.gz"), val("${chunkSize}"), emit: reads
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
-    '''
-    seqkit range -r !{start}:!{stop} !{read1} > reads_extracted.fq
-    porechop -i reads_extracted.fq -o reads.porechoped.fq.gz --threads !{task.cpus} !{params.steps.qcONT.porechop.additionalParams.porechop}
-    filtlong !{params.steps.qcONT.porechop.additionalParams.filtlong} reads.porechoped.fq.gz | pigz --processes !{task.cpus} > !{sample}_qc.fq.gz
-    '''
+    script:
+    """
+    seqkit range -r ${start}:${stop} ${read1} > reads_extracted.fq
+    porechop -i reads_extracted.fq -o reads.porechoped.fq.gz --threads ${task.cpus} ${params.steps.qcONT.porechop.additionalParams.porechop}
+    filtlong ${params.steps.qcONT.porechop.additionalParams.filtlong} reads.porechoped.fq.gz | pigz --processes ${task.cpus} > ${sample}_qc.fq.gz
+    """
 }
 
 /**
@@ -54,11 +54,11 @@ process pCount {
     output:
     tuple val("${sample}"), path(fastq), env(COUNT) 
 
-    shell:
-    '''
+    script:
+    """
     set -o pipefail
-    COUNT=$(seqkit stats -T <(cat !{fastq}) | cut -d$'\t' -f 4 | tail -n 1)
-    '''
+    COUNT=\$(seqkit stats -T <(cat ${fastq}) | cut -d\$'\t' -f 4 | tail -n 1)
+    """
 }
 
 /**
@@ -82,11 +82,11 @@ process pCountDownload {
     output:
     tuple val("${sample}"), path(fastq), env(COUNT) 
 
-    shell:
-    '''
+    script:
+    """
     set -o pipefail
     
-    s5cmd !{params.steps.qcONT.porechop.download.s5cmdParams} cat ${readUrl} > reads.fq.gz 2> error.log
+    s5cmd ${params.steps.qcONT.porechop.download.s5cmdParams} cat \${readUrl} > reads.fq.gz 2> error.log
 
     # This if statement solves issue https://github.com/pbelmann/meta-omics-toolkit/issues/166
     if grep -q "reset by peer" error.log; then
@@ -96,8 +96,8 @@ process pCountDownload {
        echo "No network issue found";
     fi
 
-    COUNT=$(seqkit stats -T <(cat reads.fq.gz) | cut -d$'\t' -f 4 | tail -n 1)
-    '''
+    COUNT=\$(seqkit stats -T <(cat reads.fq.gz) | cut -d\$'\t' -f 4 | tail -n 1)
+    """
 }
 
 /**
@@ -122,10 +122,10 @@ process pCollectFile {
     output:
     tuple val("${sample}"), path("${sample}_qc.fq.gz"), emit: reads
 
-    shell:
-    '''
-    cat !{reads} > !{sample}_qc.fq.gz
-    '''
+    script:
+    """
+    cat ${reads} > ${sample}_qc.fq.gz
+    """
 }
 
 
@@ -156,7 +156,7 @@ process pFilterHumanONT {
     tuple val("${sample}"), path("*_summary_after.tsv"), emit: summaryAfter
     tuple val("${sample}"), path("*_removed.fq.gz"), optional: true, emit: removed
 
-    shell:
+    script:
     EXTRACTED_DB=params.steps?.qcONT?.filterHumanONT?.database?.extractedDBPath ?: ""
     DOWNLOAD_LINK=params.steps?.qcONT?.filterHumanONT?.database?.download?.source ?: ""
     MD5SUM=params?.steps?.qcONT?.filterHumanONT?.database?.download?.md5sum ?: ""
@@ -191,13 +191,13 @@ process pNanoPlot {
     tuple val("${sample}"), env(MEDIAN_QUALITY), emit: medianQuality
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
-    '''
-    NanoPlot --threads !{task.cpus} --tsv_stats  --fastq reads.fq.gz
+    script:
+    """
+    NanoPlot --threads ${task.cpus} --tsv_stats  --fastq reads.fq.gz
     csvtk -tT transpose  <(tail -n +2 NanoStats.txt)  > NanoStatsTmp.tsv
-    paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") NanoStatsTmp.tsv > NanoStats.tsv
-    MEDIAN_QUALITY=$(cut -f 8 NanoStats.tsv | tail -n 1)
-    '''
+    paste -d\$'\t' <(echo -e "SAMPLE\n${sample}") NanoStatsTmp.tsv > NanoStats.tsv
+    MEDIAN_QUALITY=\$(cut -f 8 NanoStats.tsv | tail -n 1)
+    """
 }
 
 /*
