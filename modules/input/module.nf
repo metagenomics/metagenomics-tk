@@ -162,25 +162,65 @@ process pGetSRAIDsFromRemote {
 }
 
 
-
-workflow _wSplitReads {
+/**
+*
+* This workflow processes Illumina input files provided via a sample sheet.
+*
+*/
+workflow _wSplitReadsSheet {
        main:
-         Channel.fromPath(params.input.paired.path) \
-		| set { idsFromPath }
+         Channel.fromPath(params.input.paired.sheet) \
+		    |  set { idsFromPath }
 
          if(params.input.paired.watch){
-            Channel.watchPath(params.input.paired.path, 'create,modify') \
+            Channel.watchPath(params.input.paired.sheet, 'create,modify') \
                 | set {idsFromWatch}
             
             idsFromWatch | mix(idsFromPath) | set { files }
          } else {
             idsFromPath | set {files}
          } 
-         files |  splitCsv(sep: '\t', header: true)  | unique | set { fastqs } 
+         files |  splitCsv(sep: '\t', header: true) | unique | set { fastqs } 
        emit:
          fastqs
 }
 
+
+/**
+*
+* This workflow processes Illumina input files provided via CLI.
+*
+*/
+workflow _wSplitReadsFiles {
+       main:
+         r1 = params.input.paired.r1.tokenize(' ')
+         r2 = params.input.paired.r2.tokenize(' ')
+         names = params.input.paired.names.tokenize(" ")
+
+         if (r1.size() != r2.size() && r2.size() == r3.size() ) {
+            error "Mismatch detected: --input.paired.r1, --input.paired.r2 and --input.paired.names should have the same number of values."
+         }
+
+         Channel.from(r1) \
+	    	| map {file(it)} | set { r1Files }
+
+         Channel.from(r2) \
+	    	| map {file(it)} | set { r2Files }
+         
+         Channel.from(names) \
+	    	| set { sampleNames }
+
+         SAMPLE_IDX=0
+         READS1_IDX=1
+         READS2_IDX=2
+
+         sampleNames | combine(r1Files) | combine(r2Files) 
+            | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS1:sample[READS1_IDX],READS2:sample[READS2_IDX]] }
+            | set { fastqs }
+
+       emit:
+         fastqs
+}
 
 workflow _wSRAS3 {
        main:
@@ -190,21 +230,31 @@ workflow _wSRAS3 {
          SAMPLE_IDX = 0
          BUCKET = params.input.SRA.S3.bucket
 
-         Channel.fromPath(params.input.SRA.S3.path) \
-		| set { idsFromPath }
+        files = Channel.empty()
+        //If files are provided via a sample sheet we allow to watch the file.
+        if("sheet" in params.input.SRA.S3){
+            Channel.fromPath(params.input.SRA.S3.path) \
+		    | set { idsFromPath }
 
-         if(params.input.SRA.S3.watch){
-             Channel.watchPath(params.input.SRA.S3.path, 'create,modify') \
-		        | set { idsFromWatch }
-             idsFromWatch | mix(idsFromPath) | set {files}
-        } else {
-            idsFromPath | set { files }
+            if(params.input.SRA.S3.watch){
+                Channel.watchPath(params.input.SRA.S3.path, 'create,modify') \
+		         | set { idsFromWatch }
+                idsFromWatch | mix(idsFromPath) | set {files}
+            } else {
+                idsFromPath | set { files }
+            }
         }
 
+        // Files provided via CLI 
+        idsFromCLIChannel = Channel.empty()
+        if("id" in params.input.SRA.S3){
+            idsFromCLIChannel = Channel.from(params.input.SRA.S3.id.tokenize(" "))
+        }
         // First try to fetch SRA IDs from NCBI SRA DB
         BUFFER_SIZE_WATCH = 1 
         BUFFER_SIZE_DEFAULT = 50  
         files | splitCsv(sep: "\t", header: true) | map { it -> it.ACCESSION} 
+            | mix(idsFromCLIChannel)
             | flatten | unique 
             | buffer(size: params.input.SRA.S3.watch ? BUFFER_SIZE_WATCH : BUFFER_SIZE_DEFAULT, remainder: true) 
             | pGetSRAIDsFromDB
@@ -234,9 +284,9 @@ workflow _wSRAS3 {
                            return it
 	        } | set { filteredIDs }
 
-         filteredIDs.passed | pGetSRAPath 
+        filteredIDs.passed | pGetSRAPath 
 
-         pGetSRAPath.out.passed | map { it -> [ it[SAMPLE_IDX], file(BUCKET + it[FASTQ_FILES_IDX]).listFiles()]} \
+        pGetSRAPath.out.passed | map { it -> [ it[SAMPLE_IDX], file(BUCKET + it[FASTQ_FILES_IDX]).listFiles()]} \
                 | map { it -> [ it[SAMPLE_IDX],  it[FASTQ_FILES_IDX].collect({ "s3:/$it" }) ] }
                 | _wCheckSRAFiles
 
@@ -356,18 +406,18 @@ workflow _wCheckSRAFiles {
 
 
 
-workflow _wOntReads {
+workflow _wOntReadsSheet {
        main:
-         Channel.fromPath(params.input.ont.path) \
-                | set { idsFromPath }
+         Channel.fromPath(params.input.ont.sheet) \
+                | set { idsFromSheet }
 
          if(params.input.ont.watch){
-            Channel.watchPath(params.input.ont.path, 'create,modify') \
+            Channel.watchPath(params.input.ont.sheet, 'create,modify') \
                 | set {idsFromWatch}
 
-            idsFromWatch | mix(idsFromPath) | set { files }
+            idsFromWatch | mix(idsFromSheet) | set { files }
          } else {
-            idsFromPath | set {files}
+            idsFromSheet | set {files}
          }
 
          files |  splitCsv(sep: '\t', header: true)  | unique | set { fastqs }
@@ -375,19 +425,60 @@ workflow _wOntReads {
          fastqs
 }
 
+workflow _wOntReadsFiles {
+       main:
+         r = params.input.ont.r.tokenize(' ')
+         names = params.input.ont.names.tokenize(" ")
+
+         if (r.size() != names.size()) {
+            error "Mismatch detected: --input.ont.r and --input.ont.names should have the same number of values."
+         }
+
+         Channel.from(r) \
+	    	| map {file(it)} | set { rFiles }
+         
+         Channel.from(names) \
+	    	| set { sampleNames }
+
+         SAMPLE_IDX=0
+         READS_IDX=1
+
+         sampleNames | combine(rFiles) 
+            | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS:sample[READS_IDX]] }
+            | set { fastqs }
+
+       emit:
+         fastqs
+}
+
+
+
 workflow _wSRANCBI {
        main:
          MAX_LENGTH=12
          MIN_LENGTH=9
 
          // Parse TSV file to get access numbers
-         accessions = fetchRunAccessions(params.input.SRA.NCBI.path)
+         accessions = []
+         if("sheet" in params.input.SRA.NCBI){
+            accessions = fetchRunAccessions(params.input.SRA.NCBI.sheet)
+         }
 
          // check if the number of SRA files is correct and return the correct format 
          ACCESSION_ID = 0
          FASTQ_LIST = 1 
-         Channel.fromSRA(accessions.unique()) | set { foundSRAFiles }
-         foundSRAFiles | map { f -> [f[ACCESSION_ID],  Utils.asList(f[FASTQ_LIST])] } | _wCheckSRAFiles 
+
+         // IDs provided via CLI 
+         idsFromCLI = []
+         if("id" in params.input.SRA.NCBI.id){
+            idsFromCLI = params.input.SRA.NCBI.id.tokenize(" ")
+         }
+
+         Channel.fromSRA(accessions.unique() + idsFromCLI.unique()) | set { foundSRAFiles }
+
+         foundSRAFiles | map { f -> [f[ACCESSION_ID],  Utils.asList(f[FASTQ_LIST])] } 
+         | _wCheckSRAFiles 
+
          Channel.from(accessions) \
 		| combine(foundSRAFiles | map { sample -> sample[ACCESSION_ID]} | toList() | toList()) \
   		| filter({ id,idList -> !idList.contains(id) }) | map{ id -> id[ACCESSION_ID] } \
@@ -405,6 +496,7 @@ workflow _wSRANCBI {
  *  and a generic source that allows to consume a file containing local path, https or S3 links of paired end or nanopore reads.
  *  SRA NCBI and generic SRA S3 source must contain a column with `ACCESSION` column header and the file for the generic source 
  *  must contain the columns headers `SAMPLE`, `READS1` and `READS2` for paired end and `SAMPLE` and `READS` for nanopore data.
+ *  The input workflow allows to process files that are provided via a sample sheet or via CLI.
  * 
  *  In all cases a channel is returned containing values of the format: [TYPE: illumina or ont, SAMPLE:name of the sample, READS1: left read, READS2: right read],
  *  [TYPE: illumina or ont, SAMPLE:name of the sample, READS1: left read, READS2: right read] 
@@ -448,7 +540,7 @@ workflow wInputFile {
 
         datasetsS3FailedSRAFastqFiles | mix(datasetsNCBIFailedSRAFastqFiles) | set {failedSRAFastqFiles}
 
-	datasetsNCBInotFoundAccessions | mix(datasetsS3notFoundAccessions) | set {notFoundFiles}
+	    datasetsNCBInotFoundAccessions | mix(datasetsS3notFoundAccessions) | set {notFoundFiles}
 
         incorrectAccessions \
          | collectFile(newLine: true, seed: "ACCESSION", name: 'incorrectAccessions.tsv', storeDir: params.logDir)
@@ -468,18 +560,49 @@ workflow wInputFile {
     }
 
     if("paired" in inputTypes){
-        _wSplitReads().fastqs \
+        // Check whether a sample spreadsheet or files are provided on the CLI.
+        if("sheet" in params.input.paired) {
+            _wSplitReadsSheet().fastqs \
                 | map { data -> data["TYPE"] = "ILLUMINA"; data } \
                 | set { pairedChannel }
-        fastqs | mix(pairedChannel) | set { fastqs }
+            fastqs | mix(pairedChannel) | set { fastqs }
+        }
+
+        if("r1" in params.input.paired || "r2" in params.input.paired) {
+            // Make sure that always left and right read is provided and the sample names
+            if("r1" !in params.input.paired || "r2" !in params.input.paired || "names" !in params.input.paired){
+                error "Missing parameter: --input.paired.r1 and --input.paired.r2 must be provided!"
+            }
+
+            _wSplitReadsFiles().fastqs \
+              | map { data -> data["TYPE"] = "ILLUMINA"; data } \
+              | set { pairedChannel }
+            fastqs | mix(pairedChannel) | set { fastqs }
+        }
     }
 
+
     if("ont" in inputTypes) {
-        _wOntReads().fastqs \
+        // Check whether a sample spreadsheet or files are provided on the CLI.
+        if("sheet" in params.input.ont) {
+            _wOntReadsSheet().fastqs \
                 | map { data -> data["TYPE"] = "OXFORD_NANOPORE"; data } \
                 | set { ontChannel }
 
-        fastqs | mix(ontChannel) | set { fastqs }
+            fastqs | mix(ontChannel) | set { fastqs }
+        }
+
+        if("r" in params.input.ont || "names" in params.input.ont) {
+          // Make sure that always the reads and sample names are provided 
+          if("r" !in params.input.ont || "names" !in params.input.ont){
+                error "Missing parameter: --input.ont.r and --input.ont.names must be provided!"
+          }
+          _wOntReadsFiles().fastqs \
+                | map { data -> data["TYPE"] = "OXFORD_NANOPORE"; data } \
+                | set { ontChannel }
+
+          fastqs | mix(ontChannel) | set { fastqs }
+        }
     }
   emit:
     data = fastqs

@@ -12,7 +12,7 @@ input:
       ont: ".+(_1).+fastq.gz$"
       illumina: ".+(_1|_2).+fastq.gz$"
     S3:
-      path: test_data/SRA/ONTsamples.tsv
+      sheet: test_data/SRA/ONTsamples.tsv
       bucket: "s3://meta_test" 
       prefix: "/vol1/fastq/"
       watch: false
