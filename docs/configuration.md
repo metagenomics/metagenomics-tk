@@ -27,6 +27,9 @@
 
  * `s3SignIn`: If your input data (not the databases) is not publicly accessible via S3, then you will have to set the `s3SignIn` parameter to `true`.
 
+ * `input`: This parameter specifies the input for the toolkit. It is possible to provide the samples via the command line or for many samples via a sample sheet.
+    All possible options are explained [here](pipeline_input.md).
+
 ## S3 Configuration
 
 All module inputs and outputs can be used in conjunction with S3.
