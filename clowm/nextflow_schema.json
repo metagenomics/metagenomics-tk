@@ -12,13 +12,13 @@
       "default": "",
       "fa_icon": "fas fa-gear",
       "properties": {
-        "input.paired.path": {
+        "input.paired.sheet": {
           "type": "string",
           "description": "File with paths to paired read files",
           "format": "file-path",
           "fa_icon": "fas fa-file"
         },
-        "input.ont.path": {
+        "input.ont.sheet": {
           "type": "string",
           "description": "File with paths to ONT read files",
           "format": "file-path",
@@ -79,10 +79,10 @@
       "required": ["output", "runid", "tempdir"],
       "anyOf": [
         {
-          "required": ["input.paired.path"]
+          "required": ["input.paired.sheet"]
         },
         {
-          "required": ["input.ont.path"]
+          "required": ["input.ont.sheet"]
         }
       ]
     },
