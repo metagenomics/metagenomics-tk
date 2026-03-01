@@ -470,7 +470,7 @@ workflow _wSRANCBI {
 
          // IDs provided via CLI 
          idsFromCLI = []
-         if("id" in params.input.SRA.NCBI.id){
+         if("id" in params.input.SRA.NCBI){
             idsFromCLI = params.input.SRA.NCBI.id.tokenize(" ")
          }
 

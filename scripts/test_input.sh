@@ -7,6 +7,7 @@ PROFILE=$2
 ENTRY="wOutputTable"
 
 bash ./scripts/test_SRA.sh " -c  test_data/assets/aws.config \
+				      --input.SRA.NCBI.id 'SRR5651439' \
                                       --input.SRA.S3.id 'ERR12263778 SRR29912082' \
                                       --input.ont.r https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/SRR16328449_qc.fq.gz \
                                       --input.ont.names 'nano' \
@@ -19,7 +20,9 @@ bash ./scripts/test_SRA.sh " -c  test_data/assets/aws.config \
 
 set +e
 
-MISSING_DATASETS="$(cat <(cut -f 1 "${WORK_DIR}_${ENTRY}/logs/samples*.tsv" | grep -v SAMPLE) <(cat test_data/input/expectedSamples.tsv) \
+cat <(cut -f 1 work_wOutputTable/logs/samples*.tsv | grep -v SAMPLE)
+
+MISSING_DATASETS="$(cat <(cut -f 1 ${WORK_DIR}_${ENTRY}/logs/samples*.tsv | grep -v SAMPLE) <(cat test_data/input/expectedSamples.tsv) \
 	| sort | uniq -c | grep -v ' 2 ')"
 
 if [ -z "$MISSING_DATASETS" ]
