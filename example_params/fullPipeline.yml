@@ -4,11 +4,6 @@ input:
   paired:
     sheet: "test_data/fullPipeline/reads_split.tsv"
     watch: false
-input:
-  paired:
-    files:
-      r1: read1_1.fq.gz
-      r2: read2_1.fq.gz
 output: "output"
 logDir: log
 runid: 1
