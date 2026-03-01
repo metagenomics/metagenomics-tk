@@ -233,11 +233,11 @@ workflow _wSRAS3 {
         files = Channel.empty()
         //If files are provided via a sample sheet we allow to watch the file.
         if("sheet" in params.input.SRA.S3){
-            Channel.fromPath(params.input.SRA.S3.path) \
+            Channel.fromPath(params.input.SRA.S3.sheet) \
 		    | set { idsFromPath }
 
             if(params.input.SRA.S3.watch){
-                Channel.watchPath(params.input.SRA.S3.path, 'create,modify') \
+                Channel.watchPath(params.input.SRA.S3.sheet, 'create,modify') \
 		         | set { idsFromWatch }
                 idsFromWatch | mix(idsFromPath) | set {files}
             } else {
