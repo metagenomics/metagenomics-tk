@@ -2,7 +2,7 @@ tempdir: "tmp"
 s3SignIn: true
 input:
   ont:
-    path: "test_data/fullPipeline/ont.tsv"
+    sheet: "test_data/fullPipeline/ont.tsv"
     watch: false
 output: "output"
 logDir: log

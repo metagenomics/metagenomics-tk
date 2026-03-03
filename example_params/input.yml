@@ -1,8 +1,8 @@
 tempdir: "tmp"
-s3SignIn: true
 output: "output"
 runid: 1
 logDir: log
+s3SignIn: true
 scratch: "/vol/scratch"
 publishDirMode: "symlink"
 input:
@@ -11,8 +11,8 @@ input:
       ont: ".+[^(_1|_2)].+fastq.gz$"
       illumina: ".+(_1|_2).+fastq.gz$"
     S3:
-      sheet: test_data/SRA/manyDatasets.txt 
       bucket: "s3://ftp.era.ebi.ac.uk"
       prefix: "/vol1/fastq/"
       watch: false
 steps:
+

@@ -84,7 +84,7 @@ workflow wGetModuleVersions {
        + "." + "$it.value.version.patch" }
 }
 
-workflow wSRATable {
+workflow wOutputTable {
    SAMPLE_IDX = 0
    FASTQ_FILE_LEFT_IDX = 2 
    FASTQ_FILE_RIGHT_IDX = 3 

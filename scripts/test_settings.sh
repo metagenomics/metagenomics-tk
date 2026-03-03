@@ -8,6 +8,7 @@ PROFILE="${4:-standard}"
 VERSION="${5:-}"
 PRESET="${6:-}"
 LOG_DIR="${WORK}/logs"
+
 make run_small_full_test WORK_DIR=${WORK} \
 	        PARAMS_FILE="$YAML" \
 		PRESET="${PRESET}" \

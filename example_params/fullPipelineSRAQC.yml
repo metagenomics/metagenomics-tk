@@ -12,7 +12,7 @@ input:
       ont: ".+[^(_1|_2)].+fastq.gz$"
       illumina: ".+(_1|_2).+fastq.gz$"
     S3:
-      path: test_data/SRA/samples.tsv 
+      sheet: test_data/SRA/samples.tsv 
       bucket: "s3://ftp.era.ebi.ac.uk" 
       prefix: "/vol1/fastq/"
       watch: false

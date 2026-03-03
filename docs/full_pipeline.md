@@ -41,7 +41,7 @@ where
  * `--scratch` is the directory on the worker node where all intermediate results are saved.
  * `--databases` is the directory on the worker node where all databases are saved. Already downloaded and extracted databases on a shared file system can be configured in the database setting of the corresponding [database section](database.md) in the configuration file.
  * `--output` is the output directory where all results are saved. If you want to know more about which outputs are created, then please refer to the [modules section](modules/introduction.md).
- * `--input.paired.path` is the path to a TSV file that lists the datasets that should be processed. Besides paired-end data there are also other input types. Please check the [input section](pipeline_input.md).
+ * `--input.paired.sheet` is the path to a TSV file that lists the datasets that should be processed. Besides paired-end data there are also other input types. Please check the [input section](pipeline_input.md).
 
 !!! note "Parameter override"
     Any parameters defined with a double dash are parameters that override parameters that are already specified in the YAML file.
@@ -89,7 +89,7 @@ For this reason, we will create a file that contains three columns: sample, path
 ```
 
 Now that the files are created, you are ready to execute the Toolkit on your data but with a modified command of the first part.
-The only difference is that you modify the `--input.paired.path` variable.
+The only difference is that you modify the `--input.paired.sheet` variable.
 
 ```BASH
 ---8<--- "scripts/gettingStarted/test_gettingStarted_part2.sh:12:22"

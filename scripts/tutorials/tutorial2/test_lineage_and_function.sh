@@ -8,7 +8,7 @@ NXF_VER=25.04.2 nextflow run metagenomics/metagenomics-tk \
 	  -ansi-log false \
 	  -entry wFullPipeline \
 	  -resume \
-	  --input.paired.path https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/doc/exhibition-day/tutorial/test_data/tutorials/tutorial2/samples.tsv \
+	  --input.paired.sheet https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/doc/exhibition-day/tutorial/test_data/tutorials/tutorial2/samples.tsv \
 	  --logDir logs_lineage_and_function 
 
 

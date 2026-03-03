@@ -11,5 +11,5 @@ input:
       ont: ".+[^(_1|_2)].+fastq.gz$"
       illumina: ".+(_1|_2).+fastq.gz$"
     NCBI:
-      path: test_data/SRA/ncbi_samples.tsv 
+      sheet: test_data/SRA/ncbi_samples.tsv 
 steps:

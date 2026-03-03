@@ -9,7 +9,7 @@ NXF_HOME=$PWD/.nextflow NXF_VER=25.04.2 nextflow run metagenomics/metagenomics-t
     --scratch /vol/scratch \
     --databases /vol/scratch/databases \
     --output my_data_spades_output \
-    --input.paired.path inputFiles/input.tsv
+    --input.paired.sheet inputFiles/input.tsv
 
 cat my_data_spades_output/MYDATA/1/assembly/*/metaspades/MYDATA_contigs_stats.tsv
 #SAMPLE  file                    format  type    num_seqs  sum_len    min_len avg_len max_len Q1      Q2      Q3      sum_gap N50     Q20(%)  Q30(%)  GC(%)
