@@ -1,6 +1,15 @@
 include { pCollectFile } from './processes'
 include { pDumpLogs } from '../utils/processes'
 
+// Function to generate the right output path for each tool/process to be feed into the publishDir call of said processes.
+def getOutput(SAMPLE, RUNID, TOOL, filename){
+    return SAMPLE + '/' + RUNID + '/' + params.modules.annotation.name + '/' + 
+          params.modules.annotation.version.major + "." + 
+          params.modules.annotation.version.minor + "." + 
+          params.modules.annotation.version.patch +
+          '/' + TOOL + '/' + filename
+}
+
 /**
 *
 * MMseqs2 is used to search for big input queries in large databases. 
@@ -105,6 +114,115 @@ process pMMseqs2_taxonomy {
    template("mmseqs2Taxonomy.sh")
 }
 
+/**
+*
+* pKEGGFromMMseqs2 is build to handle results in the outfmt 6 file standard.
+* These search results will be compared to kegg link-files to produce a file where all available kegg information
+* for these search results is collected in a centralized way/file.
+* You need to call (and fill out) the aws credential file with -c to use this module as kegg is commercial an the database has to be placed in your project s3!
+*
+**/
+process pKEGGFromMMseqs2 {
+
+      tag "$sample"
+
+      label 'small'
+
+      container "${params.python_env_image}"
+
+      // Databases will be downloaded to a fixed place so that they can be used by future processes.
+      // These fixed place has to be outside of the working-directory to be easy to find for every process.
+      // Therefore this place has to be mounted to the docker container to be accessible during runtime.
+      // Another mount flag is used to get a key file (aws format) into the docker-container. 
+      // This file is then used by s5cmd. 
+
+      containerOptions Utils.getDockerMount(params.steps?.annotation?.keggFromMMseqs2?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork())
+
+      publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromMMseqs2", filename) }, \
+         pattern: "{**.tsv}"
+
+      when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("keggFromMMseqs2")
+
+   secret { "${S3_KEGG_ACCESS}"!="" ? ["S3_kegg_ACCESS", "S3_kegg_SECRET"] : [] } 
+
+   input:
+      tuple val(sample), val(binType), file(blastResult)
+
+   output:
+      tuple val("${sample}"), path("*.keggPaths.tsv"), emit: keggPaths
+      tuple val("${sample}_${binType}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
+        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+
+   shell:
+      output = getOutput("${sample}", params.runid, "keggFromMMseqs2", "")
+      DOWNLOAD_LINK=params.steps?.annotation?.keggFromMMseqs2?.database?.download?.source ?: ""
+      MD5SUM=params?.steps?.annotation?.keggFromMMseqs2?.database?.download?.md5sum ?: ""
+      S5CMD_PARAMS=params.steps?.annotation?.keggFromMMseqs2?.database?.download?.s5cmd?.params ?: ""
+      EXTRACTED_DB=params.steps?.annotation?.keggFromMMseqs2?.database?.extractedDBPath ?: ""
+      S3_KEGG_ACCESS=params.steps?.annotation?.keggFromMMseqs2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_kegg_ACCESS" : ""
+      S3_KEGG_SECRET=params.steps?.annotation?.keggFromMMseqs2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_kegg_SECRET" : ""
+      '''
+      # Check developer documentation
+      KEGG_DB=""
+      if [[ -z "!{EXTRACTED_DB}" ]] 
+      then
+        DATABASE=!{params.polished.databases}/kegg
+        LOCK_FILE=${DATABASE}/lock.txt
+
+	# Check if access and secret keys are necessary for s5cmd
+        if [ ! -z "!{S3_KEGG_ACCESS}" ]
+        then
+          export AWS_ACCESS_KEY_ID=!{S3_KEGG_ACCESS}
+          export AWS_SECRET_ACCESS_KEY=!{S3_KEGG_SECRET}
+        fi
+
+        # Download KEGG database
+        mkdir -p ${DATABASE}
+        flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
+         --link=!{DOWNLOAD_LINK} \
+         --httpsCommand="wgetStatic --no-check-certificate -qO- !{DOWNLOAD_LINK} | tar -xz " \
+         --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
+         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat !{DOWNLOAD_LINK} | tar -xz " \
+	     --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
+         --localCommand="tar -xzvf !{DOWNLOAD_LINK} " \
+         --expectedMD5SUM=!{MD5SUM}
+
+         KEGG_DB="${DATABASE}/out/"
+      else
+         KEGG_DB="!{EXTRACTED_DB}"
+      fi
+      blast2kegg.py !{blastResult} ${KEGG_DB} !{blastResult.baseName}.keggPaths.tsv
+      '''
+}
+
+
+
+/**
+*
+* The pCount process is designed to count the number of sequences in a given FASTA file.
+* It uses the seqkit tool to calculate the sequence statistics of a FASTA file, specifically extracting the sequence count.
+*
+**/
+process pCount {
+
+    label 'tiny'
+
+    tag "Sample: $sample, BinID: $binID"
+
+    container "${params.ubuntu_image}"
+
+    input:
+    tuple val(sample), val(binID), path(fasta), path(metadata)
+
+    output:
+    tuple val("${sample}"), val("${binID}"), path(fasta), path(metadata), env(COUNT) 
+
+    shell:
+    '''
+    COUNT=$(seqkit stats -T <(cat !{fasta}) | cut -d$'\t' -f 4 | tail -n 1)
+    '''
+}
+
 workflow _wSplit {
   take:
     input
@@ -126,13 +244,16 @@ workflow _wSplit {
     chunks
 }
 
-
 workflow _wAnalyseProkaryotes {
-  emit:
+  take:
     sourceChannel
     contig2GeneMapping
     proteins
+    fastaCounter
   main:
+
+    SAMPLE_IDX=0
+    PATH_IDX=2
 
     // Collect all databases
     selectedDBs = params?.steps?.annotation?.mmseqs2
@@ -208,10 +329,11 @@ workflow _wAnalyseProkaryotes {
                 dataset.stream().map { elem -> elem[ELEM_PATH_IDX] }.collect(),
             ]
         }
-        | combine(Channel.value("metaeuk"))
+        | combine(Channel.value("mmseqs2"))
         | combine(Channel.value("blast"))
         | pCollectFile
-        | flatMap { sample, type, dbType, blastFiles -> blastFiles.stream().map { fi -> [sample, type, dbType, fi] }.collect() }
+
+    pCollectFile.out.gff  | flatMap { sample, type, dbType, blastFiles -> blastFiles.stream().map { fi -> [sample, type, dbType, fi] }.collect() }
         | set { collectedMMseqsResults }
 
     // The kegg database result is selected and reordered for the pKEGGFromMMseqs2 process input
@@ -225,7 +347,6 @@ workflow _wAnalyseProkaryotes {
 
 	pMMseqs2.out.logs \
     | mix(pMMseqs2_taxonomy.out.logs) \
-	| mix(pResistanceGeneIdentifier.out.logs) \
 	| mix(pKEGGFromMMseqs2.out.logs) | pDumpLogs
 
  emit:

@@ -3,6 +3,7 @@ include { wSaveSettingsList } from '../config/module'
 include { pDumpLogs } from '../utils/processes'
 include { pCollectFile } from './processes'
 include { _wAnalyseEukaryotes } from './eukaryotes'
+include { _wAnalyseProkaryotes } from './prokaryotes'
 
 
 
@@ -281,87 +282,6 @@ process pHmmSearch {
 
 }
 
-/**
-*
-* pKEGGFromMMseqs2 is build to handle results in the outfmt 6 file standard.
-* These search results will be compared to kegg link-files to produce a file where all available kegg information
-* for these search results is collected in a centralized way/file.
-* You need to call (and fill out) the aws credential file with -c to use this module as kegg is commercial an the database has to be placed in your project s3!
-*
-**/
-process pKEGGFromMMseqs2 {
-
-      tag "$sample"
-
-      label 'small'
-
-      container "${params.python_env_image}"
-
-      // Databases will be downloaded to a fixed place so that they can be used by future processes.
-      // These fixed place has to be outside of the working-directory to be easy to find for every process.
-      // Therefore this place has to be mounted to the docker container to be accessible during runtime.
-      // Another mount flag is used to get a key file (aws format) into the docker-container. 
-      // This file is then used by s5cmd. 
-
-      containerOptions Utils.getDockerMount(params.steps?.annotation?.keggFromMMseqs2?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork())
-
-      publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "keggFromMMseqs2", filename) }, \
-         pattern: "{**.tsv}"
-
-      when params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("keggFromMMseqs2")
-
-   secret { "${S3_KEGG_ACCESS}"!="" ? ["S3_kegg_ACCESS", "S3_kegg_SECRET"] : [] } 
-
-   input:
-      tuple val(sample), val(binType), file(blastResult)
-
-   output:
-      tuple val("${sample}"), path("*.keggPaths.tsv"), emit: keggPaths
-      tuple val("${sample}_${binType}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
-        file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
-
-   shell:
-      output = getOutput("${sample}", params.runid, "keggFromMMseqs2", "")
-      DOWNLOAD_LINK=params.steps?.annotation?.keggFromMMseqs2?.database?.download?.source ?: ""
-      MD5SUM=params?.steps?.annotation?.keggFromMMseqs2?.database?.download?.md5sum ?: ""
-      S5CMD_PARAMS=params.steps?.annotation?.keggFromMMseqs2?.database?.download?.s5cmd?.params ?: ""
-      EXTRACTED_DB=params.steps?.annotation?.keggFromMMseqs2?.database?.extractedDBPath ?: ""
-      S3_KEGG_ACCESS=params.steps?.annotation?.keggFromMMseqs2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_kegg_ACCESS" : ""
-      S3_KEGG_SECRET=params.steps?.annotation?.keggFromMMseqs2?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_kegg_SECRET" : ""
-      '''
-      # Check developer documentation
-      KEGG_DB=""
-      if [[ -z "!{EXTRACTED_DB}" ]] 
-      then
-        DATABASE=!{params.polished.databases}/kegg
-        LOCK_FILE=${DATABASE}/lock.txt
-
-	# Check if access and secret keys are necessary for s5cmd
-        if [ ! -z "!{S3_KEGG_ACCESS}" ]
-        then
-          export AWS_ACCESS_KEY_ID=!{S3_KEGG_ACCESS}
-          export AWS_SECRET_ACCESS_KEY=!{S3_KEGG_SECRET}
-        fi
-
-        # Download KEGG database
-        mkdir -p ${DATABASE}
-        flock ${LOCK_FILE} concurrentDownload.sh --output=${DATABASE} \
-         --link=!{DOWNLOAD_LINK} \
-         --httpsCommand="wgetStatic --no-check-certificate -qO- !{DOWNLOAD_LINK} | tar -xz " \
-         --s3DirectoryCommand="s5cmd !{S5CMD_PARAMS} cp --concurrency !{task.cpus} !{DOWNLOAD_LINK} . " \
-         --s3FileCommand="s5cmd !{S5CMD_PARAMS} cat !{DOWNLOAD_LINK} | tar -xz " \
-	 --s5cmdAdditionalParams="!{S5CMD_PARAMS}" \
-         --localCommand="tar -xzvf !{DOWNLOAD_LINK} " \
-         --expectedMD5SUM=!{MD5SUM}
-
-         KEGG_DB="${DATABASE}/out/"
-      else
-         KEGG_DB="!{EXTRACTED_DB}"
-      fi
-      blast2kegg.py !{blastResult} ${KEGG_DB} !{blastResult.baseName}.keggPaths.tsv
-      '''
-}
-
 
 /**
 *
@@ -506,6 +426,7 @@ process pWhokaryote {
 
     output:
       tuple val("${sample}"), val("${binID}"), env("IS_EUKARYOTE"), file("${binID}_eukaryote_contig_headers.tsv"), optional: true, emit: eukaryotes 
+      tuple val("${sample}"), val("${binID}"), env("IS_EUKARYOTE"), file("${binID}_all_contig_headers.tsv"), optional: true, emit: all 
       tuple val("${sample}"), val("${binID}"), file("${binID}_featuretable.tsv"), optional: true, emit: features 
       tuple val("${sample}"), val("${binID}"), file("${binID}_featuretable_predictions_T.tsv"), optional: true, emit: predictions 
       tuple val("${sample}"), val("${binID}"), file("${binID}_prokaryote_contig_headers.tsv"), optional: true, emit: prokaryotes 
@@ -586,31 +507,7 @@ workflow wAnnotateList {
       mmseqs2_blast = _wAnnotation.out.mmseqs2_blast
 }
 
-/**
-*
-* The pCount process is designed to count the number of sequences in a given FASTA file.
-* It uses the seqkit tool to calculate the sequence statistics of a FASTA file, specifically extracting the sequence count.
-*
-**/
-process pCount {
 
-    label 'tiny'
-
-    tag "Sample: $sample, BinID: $binID"
-
-    container "${params.ubuntu_image}"
-
-    input:
-    tuple val(sample), val(binID), path(fasta), path(metadata)
-
-    output:
-    tuple val("${sample}"), val("${binID}"), path(fasta), path(metadata), env(COUNT) 
-
-    shell:
-    '''
-    COUNT=$(seqkit stats -T <(cat !{fasta}) | cut -d$'\t' -f 4 | tail -n 1)
-    '''
-}
 
 /**
 *
@@ -655,7 +552,6 @@ process pCountFilter {
 * 
 * This method splits the input file in chunks.
 *
-*/
 workflow _wSplit {
   take:
     input
@@ -676,6 +572,7 @@ workflow _wSplit {
   emit:
     chunks
 }
+*/
 
 /*
 * 
@@ -725,13 +622,16 @@ workflow _wRunWhokaryote {
   emit:
       logs = pWhokaryote.out.logs
       eukaryotes = pWhokaryote.out.eukaryotes
+      all = pWhokaryote.out.all
 }
 
 /**
 *
 * The main annotation workflow. 
 * It is build to handle one big input fasta file.
-* Based on this file genes will be predicted and annotated using Prokka, these genes will be blasted against KEGG.
+* Based on this file genes will be predicted and annotated using Prokka, these genes will be blasted against KEGG
+* and possible other databases specified by the user.
+* In addition, different analyses are executed depending if the sequence is labelled as eukaryotic or prokaryotic.
 * Gtdb results are optional to set the domain for annotation with Prokka.
 * At the end kegg- and prokka-infos of the results will be collected and presented.
 *
@@ -750,76 +650,12 @@ workflow _wAnnotation {
 
       pProkka(prodigalMode, fasta | combine(contigCoverage, by: SAMPLE_IDX))
 
-       // Collect all databases
-      selectedDBs = params?.steps?.annotation?.mmseqs2.findAll({ it.key != "chunkSize" }).collect({
-            [it.key, it.value?.additionalParams?.search ?: "", \
-		it.value?.additionalParams?.additionalColumns ?: "", \
-	         it.value?.database?.extractedDBPath ?: "", \
-            it.value.database?.download?.source ?: "", \
-            it.value.database?.download?.md5sum ?: "", \
-            it.value.database?.download?.s5cmd?.params ?: "" ]
-      })
-
-       selectedTaxDBs = params?.steps?.annotation?.mmseqs2_taxonomy.findAll({  it.key != "runOnMAGs"  }).collect({
-            [it.key, it.value?.params ?: "", \
-             it.value?.ramMode ? "true" : "false", \
-             it.value?.initialMaxSensitivity ?: "", \
-             it.value?.database?.extractedDBPath ?: "", \
-             it.value.database?.download?.source ?: "", \
-             it.value.database?.download?.md5sum ?: "", \
-             it.value.database?.download?.s5cmd?.params ?: "" ]
-      })
-
-      // The following groupTuple operators need a counter for the expected number of bins or fasta files of a sample.
-      // This allows groupTuple to not block until all samples are processed.
-
       // Create contig to gene mapping
       pProkka.out.tsv | map { [it[SAMPLE_IDX], it[PATH_IDX]] } | combine(fastaCounter, by:SAMPLE_IDX) \
-	|  map { sample, path, size -> tuple( groupKey(sample, size), path ) } | groupTuple() | set { contig2GeneMapping }
+	     |  map { sample, path, size -> tuple( groupKey(sample, size), path ) } | groupTuple() | set { contig2GeneMapping }
 
-      // Run all amino acid outputs against all databases
-      // Collect by sample name to bundle searches and avoid calls with small input files
-      pProkka.out.faa | map { [it[SAMPLE_IDX], it[PATH_IDX]] } | combine(fastaCounter, by:SAMPLE_IDX) \
-	| map { sample, path, size -> tuple( groupKey(sample, size), path ) } | groupTuple() | set { groupedProkkaFaa }
-
-      MMSEQS2_CHUNK_SIZE_DEFAULT=7000
-
-
-      // Split fasta files and run blast on each part in parallel
-      _wSplit(groupedProkkaFaa | combine(contig2GeneMapping, by: SAMPLE_IDX), \
-	Channel.from(params.steps?.annotation?.mmseqs2?.chunkSize?:MMSEQS2_CHUNK_SIZE_DEFAULT)) \
-           | combine(Channel.from(selectedDBs)) | set { combinedMMseqs }
-
-      pMMseqs2(sourceChannel, combinedMMseqs)
-
-      FIRST_ELEM_IDX = 0
-      FIRST_ELEM_DB_IDX = 0
-      FIRST_ELEM_SAMPLE_IDX = 1
-      FIRST_ELEM_TYPE_IDX = 2
-
-      ELEM_PATH_IDX = 3
-      
-      pMMseqs2.out.blast \
-          // An artificial group key is created which consists of the db, sample name and the type of the data (e.g. binned)
-	| map { db, sample, type, start, stop, chunks, out -> [db + "_-_" + sample + "_-_" + type, db, sample, type, start, stop, chunks, out] } \
-        | map { key, db, sample, type, start, stop, chunks, out -> tuple(groupKey(key, chunks.toInteger()), [db, sample, type, out]) } \
-          // Based on the artificial group key and the expected number of chunks, the groupTuple operator is executed
-	| groupTuple() \
-          // All values of each entry are then reordered and prepared for the pCollectFile process input
-        | map { key, dataset -> [dataset[FIRST_ELEM_IDX][FIRST_ELEM_DB_IDX], dataset[FIRST_ELEM_IDX][FIRST_ELEM_SAMPLE_IDX], \
-	dataset[FIRST_ELEM_IDX][FIRST_ELEM_TYPE_IDX], dataset.stream().map{ elem -> elem[ELEM_PATH_IDX] }.collect()] } \
-	| combine(Channel.value("metaeuk")) \
-	| combine(Channel.value("blast")) | pCollectFile
-	pCollectFile.out.gff | flatMap({ sample, type, dbType, blastFiles -> blastFiles.stream().map({ fi -> [sample, type, dbType, fi] }).collect() }) \
-        | set { collectedMMseqsResults }
-
-	  // The kegg database result is selected and reordered for the pKEGGFromMMseqs2 process input
-	collectedMMseqsResults | filter({ sample, type, dbType, blastFiles -> dbType == "kegg" }) \
-        | map { sample, type, dbType, blastFiles -> [sample, type, blastFiles]}
-        | pKEGGFromMMseqs2
-
-      combinedMMseqsTax = groupedProkkaFaa | combine(Channel.from(selectedTaxDBs))
-      pMMseqs2_taxonomy(sourceChannel, combinedMMseqsTax)
+      // Analyse prokaryotic sequences
+      _wAnalyseProkaryotes(sourceChannel, contig2GeneMapping,pProkka.out.faa, fastaCounter)
 
       // Run Resistance Gene Identifier with amino acid outputs
       pProkka.out.faa | pResistanceGeneIdentifier
@@ -828,26 +664,34 @@ workflow _wAnnotation {
      // for predicting, annotating and classifying eukaryotic genes and contigs
      _wRunWhokaryote(fasta, pProkka.out.prodigalGff)
       HEADER_IDX=3
+      HEADER_2_IDX=1
+      IS_EUKARYOTE_IDX=2
+      IS_EUKARYOTE_2_IDX=0
+      _wRunWhokaryote.out.all | map { [it[SAMPLE_IDX], it[IS_EUKARYOTE_IDX], it[HEADER_IDX]] } \
+      | combine(fastaCounter, by:SAMPLE_IDX) \
+      | map { sample, isEukaryote, path, size -> tuple( groupKey(sample, size), [isEukaryote, path] ) } 
+      | groupTuple()
+      | map({ data -> [data[SAMPLE_IDX], data[HEADER_2_IDX].findAll{ it[IS_EUKARYOTE_2_IDX].toBoolean() == true }.collect{ it[HEADER_2_IDX]}] })
+      | filter(data -> data[HEADER_2_IDX].size() > 0) | view
+      | set { headerFiles }
+
       _wRunWhokaryote.out.eukaryotes | map { [it[SAMPLE_IDX], it[HEADER_IDX]] } \
       | combine(fastaCounter, by:SAMPLE_IDX) \
-      |  map { sample, path, size -> tuple( groupKey(sample, size), path ) } \
-      | groupTuple() | set { headerFiles }
+      | map { sample, path, size -> tuple( groupKey(sample, size), path ) } \
 
       _wAnalyseEukaryotes(sourceChannel, fasta, headerFiles,\
       binContigMapping, fastaCounter, Channel.value("false"))
 
       pProkka.out.logs \
 	| mix(_wRunWhokaryote.out.logs) \
-	| mix(pMMseqs2.out.logs) \
-        | mix(pMMseqs2_taxonomy.out.logs) \
 	| mix(pResistanceGeneIdentifier.out.logs) \
-	| mix(pKEGGFromMMseqs2.out.logs) | pDumpLogs
+	| pDumpLogs
    emit:
-      keggAnnotation = pKEGGFromMMseqs2.out.keggPaths
-      mmseqs2_kronaHtml = pMMseqs2_taxonomy.out.kronaHtml
-      mmseqs2_krakenTaxonomy = pMMseqs2_taxonomy.out.krakenStyleTaxonomy
-      mmseqs2_taxonomy = pMMseqs2_taxonomy.out.taxonomy
-      mmseqs2_blast = collectedMMseqsResults
+      keggAnnotation = _wAnalyseProkaryotes.out.keggAnnotation
+      mmseqs2_kronaHtml = _wAnalyseProkaryotes.out.mmseqs2_kronaHtml
+      mmseqs2_krakenTaxonomy = _wAnalyseProkaryotes.out.mmseqs2_krakenTaxonomy
+      mmseqs2_taxonomy = _wAnalyseProkaryotes.out.mmseqs2_taxonomy
+      mmseqs2_blast = _wAnalyseProkaryotes.out.mmseqs2_blast
       prokka_faa = pProkka.out.faa
       prokka_ffn = pProkka.out.ffn
       prokka_fna = pProkka.out.fna

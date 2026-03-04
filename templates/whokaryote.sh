@@ -24,11 +24,15 @@ sed -i '1i CONTIG' output/eukaryote_contig_headers.txt output/prokaryote_contig_
 sed -i 's/,/\t/g' output/featuretable.csv
 
 EUKARYOTE_HEADER="!{binID}_eukaryote_contig_headers.tsv"
+PROKARYOTE_HEADER="!{binID}_prokaryote_contig_headers.tsv"
+ALL_HEADER="!{binID}_all_contig_headers.tsv"
 
 addColumns output/featuretable.csv !{binID}_featuretable.tsv
 addColumns output/featuretable_predictions_T.tsv !{binID}_featuretable_predictions_T.tsv
 addColumns output/eukaryote_contig_headers.txt ${EUKARYOTE_HEADER}
 addColumns output/prokaryote_contig_headers.txt !{binID}_prokaryote_contig_headers.tsv
+
+cat ${PROKARYOTE_HEADER} <(tail -n +2 ${EUKARYOTE_HEADER}) > ${ALL_HEADER}
 
 # In case Tiara is used
 if [ -f output/tiara_pred.txt ]; then
