@@ -152,7 +152,7 @@ The corresponding command-line argument would be `--resources.highmemLarge.cpus`
     How would you specify the parameter on the command line?
 
     ??? Solution
-        `--input.paired.path`
+        `--input.paired.sheet`
 
 Command-line arguments supersede the configuration file. This is a quick way to change variables without touching files. 
 

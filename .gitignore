@@ -1,5 +1,5 @@
 *.log*
-assets
+test_data/assets
 log
 work
 .nextflow
@@ -20,6 +20,7 @@ aws*
 output
 .chglog/
 .idea
+.vscode
 *.iml
 databases
 credentials

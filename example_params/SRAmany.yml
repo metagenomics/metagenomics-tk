@@ -11,7 +11,7 @@ input:
       ont: ".+[^(_1|_2)].+fastq.gz$"
       illumina: ".+(_1|_2).+fastq.gz$"
     S3:
-      path: test_data/SRA/manyDatasets.txt 
+      sheet: test_data/SRA/manyDatasets.txt 
       bucket: "s3://ftp.era.ebi.ac.uk"
       prefix: "/vol1/fastq/"
       watch: false

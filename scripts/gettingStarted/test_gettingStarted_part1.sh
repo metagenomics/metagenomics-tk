@@ -9,7 +9,7 @@ NXF_HOME=$PWD/.nextflow NXF_VER=25.04.2 nextflow run metagenomics/metagenomics-t
     --scratch /vol/scratch \
     --databases /vol/scratch/databases \
     --output output \
-    --input.paired.path https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/fullPipeline/reads_split.tsv
+    --input.paired.sheet https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/fullPipeline/reads_split.tsv
 
 
 make check LOG_DIR=$(pwd)/log1

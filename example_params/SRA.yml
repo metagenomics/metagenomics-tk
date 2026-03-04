@@ -11,17 +11,17 @@ input:
       ont: ".+[^(_1|_2)].+fastq.gz$"
       illumina: ".+(_1|_2).+fastq.gz$"
     S3:
-      path: test_data/SRA/samples.tsv 
+      sheet: test_data/SRA/samples.tsv 
       bucket: "s3://meta_test" 
       prefix: "/vol1/fastq/"
       watch: false
     NCBI:
-      path: test_data/SRA/ncbi_samples.tsv 
+      sheet: test_data/SRA/ncbi_samples.tsv 
   paired:
-    path: "test_data/fullPipeline/reads_split.tsv"
+    sheet: "test_data/fullPipeline/reads_split.tsv"
     watch: false
   ont:
-    path: "test_data/fullPipeline/ont.tsv"
+    sheet: "test_data/fullPipeline/ont.tsv"
     watch: false
 steps:
 

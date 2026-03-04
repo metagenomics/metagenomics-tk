@@ -2,12 +2,12 @@ tempdir: "tmp"
 s3SignIn: false
 input:
   paired:
-    path: "test_data/fullPipeline/reads_split.tsv"
+    sheet: "test_data/fullPipeline/reads_split.tsv"
     watch: false
 output: "output"
 logDir: log
 runid: 1
-databases: "/mnt/databases"
+databases: "/vol/scratch/databases"
 logLevel: 1
 scratch: "/vol/scratch"
 steps:

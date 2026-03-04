@@ -1,6 +1,6 @@
 set -e
 
-ENTRY="wSRATable"
+ENTRY="wOutputTable"
 OPTIONS=$1
 YAML="${2:-example_params/SRA.yml}" 
 WORK="${3:-work}_${ENTRY}"

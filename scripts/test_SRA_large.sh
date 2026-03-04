@@ -4,7 +4,7 @@ WORK_DIR=$1
 
 PROFILE=$2
 
-ENTRY="wSRATable"
+ENTRY="wOutputTable"
 
 bash ./scripts/test_SRA.sh " -c  test_data/assets/aws.config " ./example_params/SRAmany.yml ${WORK_DIR} ${PROFILE} 
 
