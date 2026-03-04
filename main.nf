@@ -84,7 +84,7 @@ workflow wGetModuleVersions {
        + "." + "$it.value.version.patch" }
 }
 
-workflow wSRATable {
+workflow wOutputTable {
    SAMPLE_IDX = 0
    FASTQ_FILE_LEFT_IDX = 2 
    FASTQ_FILE_RIGHT_IDX = 3 
@@ -146,7 +146,7 @@ workflow wCooccurrence {
 * This method either returns file path or url
 */
 def getPath(f){
-  return params.input.startsWith("s3://")? "s3:/" + f: f
+  return params.input.perSampleOutput.startsWith("s3://")? "s3:/" + f: f
 }
 
 workflow _wFindSamplesONT { 
@@ -248,12 +248,18 @@ workflow _wFragmentRecruitment {
 workflow _wGetSamples() {
   main:
     def runID = params.runid
-    def input = params.input
+    def input = params.input.perSampleOutput
 
     // List all available SRAIDs
     Channel.from(file(input).list()) | filter({ path -> !(path ==~ /.*summary$/) && !(path ==~ /null$/) }) \
      | filter({ path -> !(path ==~ /.*AGGREGATED$/)}) \
      | set { sraDatasets }
+
+    // Filter samples if tsv file is provided
+    if(params.containsKey("input") && params.input.containsKey("selectedSamples")){
+      Channel.from(file(params.input.selectedSamples)) | splitCsv(sep: '\t', header: true) 
+       | map {elem -> elem.SAMPLE } |  join(sraDatasets) | set { sraDatasets }
+    }
 
     sraDatasets | map { sra ->  [sra, input + "/" + sra + "/" + runID + "/" ]} \
      | set {sraIDs}

@@ -1,0 +1,18 @@
+tempdir: "tmp"
+output: "output"
+runid: 1
+logDir: log
+s3SignIn: true
+scratch: "/vol/scratch"
+publishDirMode: "symlink"
+input:
+  SRA:
+    pattern:
+      ont: ".+[^(_1|_2)].+fastq.gz$"
+      illumina: ".+(_1|_2).+fastq.gz$"
+    S3:
+      bucket: "s3://ftp.era.ebi.ac.uk"
+      prefix: "/vol1/fastq/"
+      watch: false
+steps:
+

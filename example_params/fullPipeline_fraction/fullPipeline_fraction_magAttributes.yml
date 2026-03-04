@@ -2,7 +2,7 @@ tempdir: "tmp"
 s3SignIn: true
 input:
   paired: 
-    path: "test_data/fullPipeline/reads_split.tsv"
+    sheet: "test_data/fullPipeline/reads_split.tsv"
     watch: false
 output: "output"
 logDir: log

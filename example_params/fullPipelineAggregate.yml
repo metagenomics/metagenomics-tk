@@ -1,7 +1,8 @@
 tempdir: "tmp"
 s3SignIn: true
 output: "output"
-input: "output"
+input:
+  perSampleOutput: "output"
 logDir: log
 runid: 1
 logLevel: 1

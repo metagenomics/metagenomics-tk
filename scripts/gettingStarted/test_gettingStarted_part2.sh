@@ -1,4 +1,4 @@
-# Download files to demonstrating the local path case
+# Download files to demonstrating the local sheet case
 mkdir inputFiles
 wget -P inputFiles https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz 
 wget -P inputFiles https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1.fq.gz 
@@ -19,7 +19,7 @@ NXF_HOME=$PWD/.nextflow NXF_VER=25.04.2 nextflow run metagenomics/metagenomics-t
     --scratch /vol/scratch \
     --databases /vol/scratch/databases \
     --output my_data_output \
-    --input.paired.path inputFiles/input.tsv
+    --input.paired.sheet inputFiles/input.tsv
 
 
 make check LOG_DIR=$(pwd)/log2

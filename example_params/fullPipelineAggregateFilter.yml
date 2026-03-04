@@ -1,0 +1,69 @@
+tempdir: "tmp"
+s3SignIn: true
+output: "output"
+input:
+  perSampleOutput: "output"
+  selectedSamples: "test_data/fullPipeline/filter.tsv" 
+logDir: log
+runid: 1
+logLevel: 1
+scratch: "/vol/scratch"
+publishDirMode: "symlink"
+steps:
+  dereplication:
+    bottomUpClustering:
+      minimumCompleteness: 0
+      maximumContamination: 5000
+      ANIBuffer: 20
+      mashBuffer: 2000
+      method: 'ANI'
+      additionalParams:
+        mash_sketch: ""
+        mash_dist: ""
+        #  cluster cutoff
+        cluster: " -c 0.05 "
+        pyani: " -m ANIb "
+        representativeAniCutoff: 0.95
+  readMapping:
+    bwa2:
+      additionalParams:
+        bwa2_index: ""
+        bwa2_mem: ""
+    coverm: " --min-covered-fraction 0 "
+    covermONT: " --min-covered-fraction 0 "
+    minimap:
+      additionalParams:
+        minimap_index: ""
+        minimap: ""
+  cooccurrence:
+     inference:
+       additionalParams: 
+         method: 'correlation'
+         rscript: " --mincovthreshold 0.1 --maxzero 110 --minweight 0.4 "
+         timeLimit: "AUTO"
+     metabolicAnnotation:
+       additionalParams:
+         metabolicEdgeBatches: 20
+         metabolicEdgeReplicates: 3
+         smetana: " --molweight "
+
+resources:
+  highmemLarge:
+    cpus: 28
+    memory: 230
+  highmemMedium:
+    cpus: 14
+    memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
+  small:
+    cpus: 7
+    memory: 14
+  tiny:
+    cpus: 1
+    memory: 1
+

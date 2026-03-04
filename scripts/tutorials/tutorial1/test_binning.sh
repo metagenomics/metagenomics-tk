@@ -8,7 +8,7 @@ NXF_VER=25.04.2 nextflow run metagenomics/metagenomics-tk \
 	  -ansi-log false \
 	  -entry wFullPipeline \
 	  -resume \
-	  --input.paired.path https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv \
+	  --input.paired.sheet https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/test_data/tutorials/tutorial1/reads.tsv \
 	  --logDir logs_binning 
 
 make check LOG_DIR=$(pwd)/logs_binning

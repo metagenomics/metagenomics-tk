@@ -1,0 +1,60 @@
+tempdir: "tmp"
+summary: false
+s3SignIn: false
+output: "output"
+input: "output"
+logDir: log
+runid: 1
+logLevel: 1
+scratch: false
+publishDirMode: "copy"
+steps:
+  dereplication:
+    bottomUpClustering:
+      # stricter MIMAG medium quality
+      minimumCompleteness: 50
+      maximumContamination: 5
+      ANIBuffer: 20
+      mashBuffer: 2000
+      method: 'ANI'
+      additionalParams:
+        mash_sketch: ""
+        mash_dist: ""
+        # cluster cutoff
+        cluster: " -c 0.05 "
+        pyani: " -m ANIb "
+        representativeAniCutoff: 0.95
+  readMapping:
+    bwa2:
+      additionalParams:
+        bwa2_index: ""
+        bwa2_mem: ""
+     # This module produces two abundance tables.
+     # One table is based on relative abundance and the second one on the trimmed mean.
+     # Just using relative abundance makes it difficult to tell if a genome is part of a dataset.
+     # Thats why it makes sense to set at leat a low min covered fraction parameter.
+    coverm: " --min-covered-fraction 80  --min-read-percent-identity 95 --min-read-aligned-percent 95 "
+    covermONT: " --min-covered-fraction 80  --min-read-aligned-percent 95 "
+    minimap:
+      additionalParams:
+        minimap_index: ""
+        minimap: ""
+resources:
+  highmemLarge:
+    cpus: 28
+    memory: 230
+  highmemMedium:
+    cpus: 14
+    memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
+  small:
+    cpus: 7
+    memory: 14
+  tiny:
+    cpus: 1
+    memory: 1
