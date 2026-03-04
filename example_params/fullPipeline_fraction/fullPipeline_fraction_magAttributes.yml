@@ -7,7 +7,7 @@ input:
 output: "output"
 logDir: log
 runid: 1
-databases: "/mnt/databases/"
+databases: "/vol/scratch/databases/"
 logLevel: 1
 scratch: "/vol/scratch"
 publishDirMode: "symlink"
