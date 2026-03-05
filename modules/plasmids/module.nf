@@ -117,6 +117,7 @@ workflow wPlasmidsList {
        _wPlasmids(samplesContigs, assemblyGraph, illuminaReads, ontReads, ontMedianQuality)
     emit:
       newPlasmids = _wPlasmids.out.newPlasmids
+      newPlasmidsStats = _wPlasmids.out.newPlasmidsStats
       newPlasmidsCoverage = _wPlasmids.out.newPlasmidsCoverage
 }
 
@@ -404,6 +405,7 @@ workflow _runCircularAnalysis {
 
     emit:
       plasmids = filteredPlasmids
+      plasmidsStats = pSCAPP.out.plasmidsStats
       coverage = coverage
 }
 
@@ -428,6 +430,7 @@ workflow _wPlasmids {
 
        pPLSDB.out.logs | mix(_wRunMobTyper.out.logs) | pDumpLogs
      emit:
+       newPlasmidsStats = _runCircularAnalysis.out.plasmidsStats
        newPlasmids = _runCircularAnalysis.out.plasmids
        newPlasmidsCoverage = _runCircularAnalysis.out.coverage
 }
