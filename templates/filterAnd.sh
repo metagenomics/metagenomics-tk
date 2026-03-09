@@ -31,6 +31,7 @@ for file in $(ls -1 input/*); do
 done
 
 PLASMID_OUT_FASTA=!{binID}_filtered.fasta.gz 
+PLASMID_OUT_TMP_FASTA=!{binID}_filtered.tmp.fasta.gz 
 PLASMID_OUT_TSV=!{binID}_filtered.tsv
 
 if [ -s filtered_tools_header.tsv ]; then
@@ -50,7 +51,7 @@ if [ -s filtered_tools_header.tsv ]; then
 
 		seqkit grep -f filtered_selected_header.tsv !{contigs} \
 		 | seqkit seq --min-len !{MIN_LENGTH} \
-		 | pigz -c > ${PLASMID_OUT_FASTA}
+		 | pigz -c > ${PLASMID_OUT_TMP_FASTA}
 
 		if ! [[ -z "$(zcat ${PLASMID_OUT_TMP_FASTA} | head -c 1)" ]]; then
 	          mv ${PLASMID_OUT_TMP_FASTA} ${PLASMID_OUT_FASTA}
