@@ -294,6 +294,7 @@ process pFilter {
     shell:
     MIN_LENGTH=params.steps?.plasmid?.Filter?.minLength
     NUMBER_OF_CONTIGS=size+1
+    output = getOutput("${sample}", params.runid, "filtered", "")
     switch(params.steps?.plasmid?.Filter.method) {
       case "OR":
        '''
