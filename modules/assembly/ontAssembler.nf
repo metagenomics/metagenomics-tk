@@ -50,27 +50,27 @@ process pMetaflye {
     tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigsStats
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
     
-    shell:
+    script:
     metaFlyeQualityParameter = params.steps?.assemblyONT?.metaflye.quality == "AUTO" ? \
 	getMetaflyeQualityParam(Double.parseDouble(medianQuality)) : [quality: params.steps?.assemblyONT?.metaflye.quality, error: " "]
     quality = metaFlyeQualityParameter.quality
     error = metaFlyeQualityParameter.error
-    '''
-    ASSEMBLY_OUTPUT="!{sample}_contigs.fa.gz"
-    HEADER_MAPPING_OUTPUT="!{sample}_contigs_header_mapping.tsv"
+    """
+    ASSEMBLY_OUTPUT="${sample}_contigs.fa.gz"
+    HEADER_MAPPING_OUTPUT="${sample}_contigs_header_mapping.tsv"
 
-    flye !{quality} reads.fq.gz -o out --meta -t !{task.cpus} !{params.steps.assemblyONT.metaflye.additionalParams} !{error}
+    flye ${quality} reads.fq.gz -o out --meta -t ${task.cpus} ${params.steps.assemblyONT.metaflye.additionalParams} ${error}
 
     # The following function modifies the assembly fasta headers according to the pattern: SAMPLEID_SEQUENCECOUNTER_SEQUENCEHASH
-    transform.sh out/assembly.fasta ${ASSEMBLY_OUTPUT} ${HEADER_MAPPING_OUTPUT} !{sample} !{task.cpus}
+    transform.sh out/assembly.fasta \${ASSEMBLY_OUTPUT} \${HEADER_MAPPING_OUTPUT} ${sample} ${task.cpus}
 
-    mv out/assembly_graph.gfa !{sample}_assembly_graph.gfa
+    mv out/assembly_graph.gfa ${sample}_assembly_graph.gfa
 
-    mv out/assembly_info.txt !{sample}_assembly_info.txt
+    mv out/assembly_info.txt ${sample}_assembly_info.txt
 
     # get basic contig stats 
-    paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") <(seqkit stat -Ta ${ASSEMBLY_OUTPUT}) > !{sample}_contigs_stats.tsv
-    '''
+    paste -d\$'\t' <(echo -e "SAMPLE\n${sample}") <(seqkit stat -Ta \${ASSEMBLY_OUTPUT}) > ${sample}_contigs_stats.tsv
+    """
 }
 
 
