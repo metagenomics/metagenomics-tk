@@ -39,20 +39,20 @@ process pPredictFlavor {
     tuple val("${sample}"), env(MEMORY), emit: memory
     tuple val("${sample}"), path("*.tsv"), emit: details
 
-    shell:
+    script:
     error = modelType == "sensitive" ?12 : 5
-    '''
-    zcat !{interleavedReads} !{unpairedReads} | seqkit stats --all -T > seqkit.stats.tsv
-    GC_CONTENT=$(cut -d$'\t' -f 16 seqkit.stats.tsv | tail -n 1)
-    MAX_READ_LEN=$(cut -d$'\t' -f 7 seqkit.stats.tsv | tail -n 1)
-    if [ "${MAX_READ_LEN}" -gt 71 ]; then
-    	MEMORY=$(cli.py predict -m !{model} -k21 !{kmerFrequencies21} -k71 !{kmerFrequencies71} -k13 !{kmerFrequencies13} -e !{error} -g ${GC_CONTENT} -d !{nonpareilDiversity} -o .)
+    """
+    zcat ${interleavedReads} ${unpairedReads} | seqkit stats --all -T > seqkit.stats.tsv
+    GC_CONTENT=\$(cut -d\$'\t' -f 16 seqkit.stats.tsv | tail -n 1)
+    MAX_READ_LEN=\$(cut -d\$'\t' -f 7 seqkit.stats.tsv | tail -n 1)
+    if [ "\${MAX_READ_LEN}" -gt 71 ]; then
+    	MEMORY=\$(cli.py predict -m ${model} -k21 ${kmerFrequencies21} -k71 ${kmerFrequencies71} -k13 ${kmerFrequencies13} -e ${error} -g \${GC_CONTENT} -d ${nonpareilDiversity} -o .)
     else
         MEMORY="0"
     fi
-    echo -e "SAMPLE\tMEMORY" > !{sample}_ram_prediction.tsv
-    echo -e "!{sample}\t${MEMORY}" >> !{sample}_ram_prediction.tsv
-    '''
+    echo -e "SAMPLE\tMEMORY" > ${sample}_ram_prediction.tsv
+    echo -e "${sample}\t\${MEMORY}" >> ${sample}_ram_prediction.tsv
+    """
 }
 
 
@@ -123,7 +123,7 @@ process pMegahit {
     tuple val("${sample}"), path("${sample}_contigs.fastg"), env(maxKmer), optional: true, emit: fastg
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     includeUnpairedReads = unpairedReads.name != "NOT_SET" ? " -r ${unpairedReads} " : ''
     convertToFastg = params?.steps?.assembly?.megahit?.fastg ? "TRUE" : "FALSE"
     template 'megahit.sh'
@@ -155,7 +155,7 @@ process pMetaspades {
     tuple val("${sample}"), path("${sample}_contigs.fastg"), env(maxKmer), emit: fastg, optional: true
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     outputFastg = params?.steps?.assembly?.metaspades?.fastg ? "TRUE" : "FALSE"
     memory = task.memory.toGiga()
     template 'metaspades.sh'

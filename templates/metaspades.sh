@@ -1,24 +1,24 @@
 METASPADES_OUTPUT_DIR=output
-ASSEMBLY_OUTPUT=${METASPADES_OUTPUT_DIR}/contigs.fasta
-ASSEMBLY_GRAPH_OUTPUT=${METASPADES_OUTPUT_DIR}/assembly_graph.fastg
+ASSEMBLY_OUTPUT=\${METASPADES_OUTPUT_DIR}/contigs.fasta
+ASSEMBLY_GRAPH_OUTPUT=\${METASPADES_OUTPUT_DIR}/assembly_graph.fastg
 
 # run metaspades
-spades.py -t !{task.cpus} --memory !{memory} \
-	--meta -o ${METASPADES_OUTPUT_DIR} --12 interleaved.fq.gz !{params.steps.assembly.metaspades.additionalParams}
+spades.py -t ${task.cpus} --memory ${memory} \\
+	--meta -o \${METASPADES_OUTPUT_DIR} --12 interleaved.fq.gz ${params.steps.assembly.metaspades.additionalParams}
 
-ASSEMBLY_GZIPPED_OUTPUT=!{sample}_contigs.fa.gz
-HEADER_MAPPING_OUTPUT=!{sample}_contigs_header_mapping.tsv
+ASSEMBLY_GZIPPED_OUTPUT=${sample}_contigs.fa.gz
+HEADER_MAPPING_OUTPUT=${sample}_contigs_header_mapping.tsv
 
 # The following function modifies the assembly fasta headers according to the pattern: SAMPLEID_SEQUENCECOUNTER_SEQUENCEHASH
-transform.sh ${ASSEMBLY_OUTPUT} ${ASSEMBLY_GZIPPED_OUTPUT} ${HEADER_MAPPING_OUTPUT} !{sample} !{task.cpus}
+transform.sh \${ASSEMBLY_OUTPUT} \${ASSEMBLY_GZIPPED_OUTPUT} \${HEADER_MAPPING_OUTPUT} ${sample} ${task.cpus}
 
 # get basic contig stats 
-paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") <(seqkit stat -Ta ${ASSEMBLY_GZIPPED_OUTPUT}) > !{sample}_contigs_stats.tsv
+paste -d\$'\\t' <(echo -e "SAMPLE\\n${sample}") <(seqkit stat -Ta \${ASSEMBLY_GZIPPED_OUTPUT}) > ${sample}_contigs_stats.tsv
 
 # transform assembly to assembly graph
 maxKmer="default"
-if [[ "!{outputFastg}" == "TRUE" ]]; then
+if [[ "${outputFastg}" == "TRUE" ]]; then
 	# Maximum chosen Kmer
-	maxKmer=$(ls -1  ${METASPADES_OUTPUT_DIR}* | grep "^K" | sed 's/K//g' | sort -n | tail -n 1)
-	mv ${ASSEMBLY_GRAPH_OUTPUT} !{sample}_contigs.fastg
+	maxKmer=\$(ls -1  \${METASPADES_OUTPUT_DIR}* | grep "^K" | sed 's/K//g' | sort -n | tail -n 1)
+	mv \${ASSEMBLY_GRAPH_OUTPUT} ${sample}_contigs.fastg
 fi
