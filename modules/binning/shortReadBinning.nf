@@ -36,7 +36,7 @@ process pGetMappingQuality {
     tuple val("${sample}"), file("${sample}_flagstat_failed.tsv"), emit: flagstatFailed
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     template 'mapping_quality.sh'
 }
 
@@ -64,7 +64,7 @@ process pMetabinner {
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     template 'metabinner.sh'
 }
 
@@ -87,12 +87,12 @@ process pMaxBin {
     tuple val("${sample}"), env(NEW_TYPE), file("${TYPE}_${sample}/out.*.fasta"), optional: true, emit: bins
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
-    '''
-    NEW_TYPE="!{TYPE}_maxbin"
-    mkdir !{TYPE}_!{sample}
-    run_MaxBin.pl -preserve_intermediate -contig !{contigs} -reads !{reads} -thread !{task.cpus} -out !{TYPE}_!{sample}/out
-    '''
+    script:
+    """
+    NEW_TYPE="${TYPE}_maxbin"
+    mkdir ${TYPE}_${sample}
+    run_MaxBin.pl -preserve_intermediate -contig ${contigs} -reads ${reads} -thread ${task.cpus} -out ${TYPE}_${sample}/out
+    """
 }
 
 
@@ -135,58 +135,58 @@ process pMAGScoT {
     tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
-    '''
+    script:
+    """
     # Once in a blue moon Nextflow leaves the header in the file
     # Failsafe to remove header from contigMaps file if it exists
-    sed -i '/^BIN_ID\tCONTIG\tBINNER$/d' !{contigMaps}
-    Rscript /opt/MAGScoT.R !{params.steps?.binning?.magscot?.additionalParams} -i !{contigMaps} --hmm !{allHits} -o !{sample}_MagScoT
+    sed -i '/^BIN_ID\tCONTIG\tBINNER\$/d' ${contigMaps}
+    Rscript /opt/MAGScoT.R ${params.steps?.binning?.magscot?.additionalParams} -i ${contigMaps} --hmm ${allHits} -o ${sample}_MagScoT
 
     # Create a new binning file according to the naming convention
     echo "Converting MAGScoT binning according to the naming convention"
-    echo -e 'BIN_ID\tCONTIG\tBINNER' > !{sample}_bin_contig_mapping.tsv
+    echo -e 'BIN_ID\tCONTIG\tBINNER' > ${sample}_bin_contig_mapping.tsv
 
     # Use head to get the first line, awk to print the first field (the filename),
     # and sed to remove everything up to and including the last dot (.) in the filename, leaving only the file extension.
     # Export the variable to use it in the xargs commands subshell further down
-    export EXT=$(head -n 1 !{contigMaps} | awk '{print $1}' | sed 's/.*\\.//')
+    export EXT=\$(head -n 1 ${contigMaps} | awk '{print \$1}' | sed 's/.*\\.//')
 
     # Remove the header and pipe the remaining lines to xargs to run the script line by line
-    sed 1d !{sample}_MagScoT.refined.contig_to_bin.out | xargs -n 2 sh -c '
+    sed 1d ${sample}_MagScoT.refined.contig_to_bin.out | xargs -n 2 sh -c '
         # Get the first column and separate the number, remove the leading zeros
-        binID=$(echo $0 | cut -d"_" -f4 | sed 's/^0*//')
-        CONTIG=$1
+        binID=\$(echo \$0 | cut -d"_" -f4 | sed 's/^0*//')
+        CONTIG=\$1
         # Create a file with the contigs for each bin for reconstruction with seqkit
-        echo $CONTIG >> !{sample}_bin.$binID.lst
-        echo "!{sample}_bin.$binID.$EXT\t$CONTIG\tMAGScot" >> !{sample}_bin_contig_mapping.tsv
+        echo \$CONTIG >> ${sample}_bin.\$binID.lst
+        echo "${sample}_bin.\$binID.\$EXT\t\$CONTIG\tMAGScot" >> ${sample}_bin_contig_mapping.tsv
     '
     echo "Done converting"
     # Reconstructing the bins from the converted MAGScoT output list
     echo "Reconstructing bins"
-    for bin in !{sample}_bin.*.lst; do
-        seqkit grep -f $bin !{contigs} -o ${bin%.lst}.fa.tmp
+    for bin in ${sample}_bin.*.lst; do
+        seqkit grep -f \$bin ${contigs} -o \${bin%.lst}.fa.tmp
     done
     echo "Done reconstructing bins"
 
     # Rename the bins to the naming convention
-    for bin in $(find * -name "*bin*.fa.tmp"); do
-    	BIN_NAME="$(basename ${bin})"
-    	echo "Renaming bin: ${BIN_NAME}"
+    for bin in \$(find * -name "*bin*.fa.tmp"); do
+    	BIN_NAME="\$(basename \${bin})"
+    	echo "Renaming bin: \${BIN_NAME}"
 
     	# Get id of the bin (e.g get 2 of the bin SAMPLEID_bin.2.fa.tmp)
-    	ID=$(echo ${BIN_NAME} | rev | cut -d '.' -f 3 | rev)
-    	echo "Bin id: ${ID}"
+    	ID=\$(echo \${BIN_NAME} | rev | cut -d '.' -f 3 | rev)
+    	echo "Bin id: \${ID}"
 
     	# Append bin id to every header
-    	seqkit replace  -p '(.*)' -r "\\${1} MAG=${ID}" $bin > ${BIN_NAME%.tmp}
+    	seqkit replace  -p '(.*)' -r "\\\${1} MAG=\${ID}" \$bin > \${BIN_NAME%.tmp}
     	# Remove temporary file
-    	rm $bin
+    	rm \$bin
     done
 
     # Creating un-binned contigs file
-    seqkit grep -f <(cat !{sample}_bin.*.lst) -v !{contigs} -o !{sample}_notBinned.fa.tmp
-    seqkit replace -p '(.*)' -r "\\${1} MAG=NotBinned" !{sample}_notBinned.fa.tmp > !{sample}_notBinned.fa
-    '''
+    seqkit grep -f <(cat ${sample}_bin.*.lst) -v ${contigs} -o ${sample}_notBinned.fa.tmp
+    seqkit replace -p '(.*)' -r "\\\${1} MAG=NotBinned" ${sample}_notBinned.fa.tmp > ${sample}_notBinned.fa
+    """
 }
 
 /*

@@ -35,7 +35,7 @@ process pGetMappingQuality {
     tuple val("${sample}"), file("${sample}_flagstat_failed.tsv"), emit: flagstatFailed
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     template 'mapping_quality.sh'
 }
 
@@ -69,7 +69,7 @@ process pMetaCoAG {
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     template "metacoag.sh"
 }
 
