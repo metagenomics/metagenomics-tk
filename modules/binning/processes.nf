@@ -39,7 +39,7 @@ process pGetBinStatistics {
     tuple val("${sample}"), file("${sample}_bins_stats.tsv"), optional: true, emit: binsStats
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     DO_NOT_ESTIMATE_QUALITY = -1 
     MEDIAN_QUALITY=Double.parseDouble(medianQuality)
     percentIdentity = MEDIAN_QUALITY != DO_NOT_ESTIMATE_QUALITY ? \
@@ -72,24 +72,24 @@ process pCovermContigsCoverage {
     tuple val("${sample}"), path("${sample}_metabat_coverm_coverage.tsv"), emit: metabat_coverage, optional: true
     tuple file(".command.out"), file(".command.err"), file(".command.log"), file(".command.sh"), emit: logs
 
-    shell:
+    script:
     DO_NOT_ESTIMATE_QUALITY = -1 
     MEDIAN_QUALITY=Double.parseDouble(medianQuality)
     percentIdentity = MEDIAN_QUALITY != DO_NOT_ESTIMATE_QUALITY ? \
 	" --min-read-percent-identity "+Utils.getMappingIdentityParam(MEDIAN_QUALITY) : " "
-    '''
-    coverm contig --threads !{task.cpus} \
-	--bam-files !{bamFile} !{covermParams} !{percentIdentity} \
+    """
+    coverm contig --threads ${task.cpus} \
+	--bam-files ${bamFile} ${covermParams} ${percentIdentity} \
 	--methods mean trimmed_mean variance length count reads_per_base rpkm tpm \
-	| sed '1 s/^.*$/SAMPLE\tCONTIG\tMEAN_CONTIG\tTRIMMED_MEAN_CONTIG\tVARIANCE_CONTIG\tLENGTH_CONTIG\tREAD_COUNT_CONTIG\tREADS_PER_BASE_CONTIG\tRPKM_CONTIG\tTPM_CONTIG/g' \
-	| sed "2,$ s/^/!{sample}\t/g" > !{sample}_default_coverm_coverage.tsv
+	| sed '1 s/^.*\$/SAMPLE\tCONTIG\tMEAN_CONTIG\tTRIMMED_MEAN_CONTIG\tVARIANCE_CONTIG\tLENGTH_CONTIG\tREAD_COUNT_CONTIG\tREADS_PER_BASE_CONTIG\tRPKM_CONTIG\tTPM_CONTIG/g' \
+	| sed "2,\$ s/^/${sample}\t/g" > ${sample}_default_coverm_coverage.tsv
 
-    coverm contig --threads !{task.cpus} \
-	--bam-files !{bamFile} !{covermParams} !{percentIdentity} \
+    coverm contig --threads ${task.cpus} \
+	--bam-files ${bamFile} ${covermParams} ${percentIdentity} \
         --methods metabat \
-	| sed '1 s/^.*$/SAMPLE\tCONTIG_NAME\tMETABAT_CONTIG_LENGTH\tMETABAT_TOTAL_AVG_DEPTH_CONTIG\tMETABAT_BAM_CONTIG\tMETABAT_VARIANCE_CONTIG/g' \
-	| sed "2,$ s/^/!{sample}\t/g" > !{sample}_metabat_coverm_coverage.tsv
-    '''
+	| sed '1 s/^.*\$/SAMPLE\tCONTIG_NAME\tMETABAT_CONTIG_LENGTH\tMETABAT_TOTAL_AVG_DEPTH_CONTIG\tMETABAT_BAM_CONTIG\tMETABAT_VARIANCE_CONTIG/g' \
+	| sed "2,\$ s/^/${sample}\t/g" > ${sample}_metabat_coverm_coverage.tsv
+    """
 }
 
 
@@ -124,14 +124,14 @@ process pCovermGenomeCoverage {
 	val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     DO_NOT_ESTIMATE_QUALITY = -1 
     MEDIAN_QUALITY=Double.parseDouble(medianQuality)
     percentIdentity = MEDIAN_QUALITY != DO_NOT_ESTIMATE_QUALITY ? \
 	" --min-read-percent-identity "+Utils.getMappingIdentityParam(MEDIAN_QUALITY) : " "
     prefixOutput = prefix.trim() ? prefix : sample
     output = getOutput(prefixOutput, params.runid, module, outputToolDir, "")
-    template('coverm.sh')
+    template 'coverm.sh'
 }
 
 
@@ -161,18 +161,18 @@ process pMinimap2 {
     tuple val("${sample}"), file("${sample}_unmapped.fq.gz"), optional: true, emit: unmappedReads
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     getUnmapped = getUnmapped ? "TRUE" : ""
-    '''
-    minimap2 -t !{task.cpus} !{minimapParams} -ax map-ont !{contigs} reads.fq.gz \
-             | samtools view !{samtoolsViewParams} --threads !{task.cpus} -bS - \
-             | samtools sort -l 9 --threads !{task.cpus} - > !{sample}.bam
+    """
+    minimap2 -t ${task.cpus} ${minimapParams} -ax map-ont ${contigs} reads.fq.gz \
+             | samtools view ${samtoolsViewParams} --threads ${task.cpus} -bS - \
+             | samtools sort -l 9 --threads ${task.cpus} - > ${sample}.bam
 
     # If Fragment Recruitment is selected then reads that could not be mapped should be returned
-    if [[ "!{getUnmapped}" == "TRUE" ]]; then
-        samtools bam2fq -f 4 !{sample}.bam | pigz --best --processes !{task.cpus} > !{sample}_unmapped.fq.gz
+    if [[ "${getUnmapped}" == "TRUE" ]]; then
+        samtools bam2fq -f 4 ${sample}.bam | pigz --best --processes ${task.cpus} > ${sample}_unmapped.fq.gz
     fi
-    '''
+    """
 }
 
 
@@ -204,24 +204,24 @@ process pBowtie2 {
     tuple val("${sample}"), file("${sample}_bowtie_stats.txt"), optional: true, emit: stats
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     getUnmapped = getUnmapped ? "TRUE" : ""
-    '''
-    INDEX=!{sample}.index
+    """
+    INDEX=${sample}.index
     # Build Bowtie Index
-    bowtie2-build --threads !{task.cpus} --quiet !{contigs} $INDEX
+    bowtie2-build --threads ${task.cpus} --quiet ${contigs} \$INDEX
 
     # Run Bowtie
-    bowtie2 -p !{task.cpus} !{bowtieParams} -x $INDEX \
-              --interleaved paired.fq.gz -U unpaired.fq.gz 2> !{sample}_bowtie_stats.txt \
-             | samtools view !{samtoolsViewParams} --threads !{task.cpus} -bS - \
-             | samtools sort -l 9 --threads !{task.cpus} - > !{sample}.bam
+    bowtie2 -p ${task.cpus} ${bowtieParams} -x \$INDEX \
+              --interleaved paired.fq.gz -U unpaired.fq.gz 2> ${sample}_bowtie_stats.txt \
+             | samtools view ${samtoolsViewParams} --threads ${task.cpus} -bS - \
+             | samtools sort -l 9 --threads ${task.cpus} - > ${sample}.bam
 
     # If Fragment Recruitment is selected then reads that could not be mapped should be returned
-    if [[ "!{getUnmapped}" == "TRUE" ]]; then
-        samtools bam2fq -f 4 !{sample}.bam | pigz --best --processes !{task.cpus} > !{sample}_unmapped.fq.gz
+    if [[ "${getUnmapped}" == "TRUE" ]]; then
+        samtools bam2fq -f 4 ${sample}.bam | pigz --best --processes ${task.cpus} > ${sample}_unmapped.fq.gz
     fi
-    '''
+    """
 }
 
 
@@ -251,23 +251,23 @@ process pBwa {
     tuple val("${sample}"), file("${sample}_unmapped.fq.gz"), optional: true, emit: unmappedReads
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     getUnmapped = getUnmapped ? "TRUE" : ""
-    '''
+    """
     # Build BWA Index
-    bwa index !{contigs}
+    bwa index ${contigs}
 
     # Run BWA
-    bwa mem !{bwaParams} -p  \
-       -t !{task.cpus} !{contigs} <(cat !{pairedReads} !{unpairedReads}) - \
-      | samtools view !{samtoolsViewParams} -@ !{task.cpus} -S -b - \
-      | samtools sort -l 9 -@ !{task.cpus} - > !{sample}.bam
+    bwa mem ${bwaParams} -p  \
+       -t ${task.cpus} ${contigs} <(cat ${pairedReads} ${unpairedReads}) - \
+      | samtools view ${samtoolsViewParams} -@ ${task.cpus} -S -b - \
+      | samtools sort -l 9 -@ ${task.cpus} - > ${sample}.bam
 
     # If Fragment Recruitment is selected then reads that could not be mapped should be returned
-    if [[ "!{getUnmapped}" == "TRUE" ]]; then
-        samtools bam2fq -f 4 !{sample}.bam | pigz --best --processes !{task.cpus} > !{sample}_unmapped.fq.gz
+    if [[ "${getUnmapped}" == "TRUE" ]]; then
+        samtools bam2fq -f 4 ${sample}.bam | pigz --best --processes ${task.cpus} > ${sample}_unmapped.fq.gz
     fi
-    '''
+    """
 }
 
 
@@ -297,23 +297,23 @@ process pBwa2 {
     tuple val("${sample}"), file("${sample}_unmapped.fq.gz"), optional: true, emit: unmappedReads
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     getUnmapped = getUnmapped ? "TRUE" : ""
-    '''
+    """
     # Build BWA2 Index
-    bwa-mem2 index !{contigs}
+    bwa-mem2 index ${contigs}
 
     # Run BWA
-    bwa-mem2 mem !{bwaParams} -p  \
-       -t !{task.cpus} !{contigs} <(cat !{pairedReads} !{unpairedReads}) - \
-      | samtools view !{samtoolsViewParams} -@ !{task.cpus} -S -b - \
-      | samtools sort -l 9 -@ !{task.cpus} - > !{sample}.bam
+    bwa-mem2 mem ${bwaParams} -p  \
+       -t ${task.cpus} ${contigs} <(cat ${pairedReads} ${unpairedReads}) - \
+      | samtools view ${samtoolsViewParams} -@ ${task.cpus} -S -b - \
+      | samtools sort -l 9 -@ ${task.cpus} - > ${sample}.bam
 
     # If Fragment Recruitment is selected then reads that could not be mapped should be returned
-    if [[ "!{getUnmapped}" == "TRUE" ]]; then
-        samtools bam2fq -f 4 !{sample}.bam | pigz --best --processes !{task.cpus} > !{sample}_unmapped.fq.gz
+    if [[ "${getUnmapped}" == "TRUE" ]]; then
+        samtools bam2fq -f 4 ${sample}.bam | pigz --best --processes ${task.cpus} > ${sample}_unmapped.fq.gz
     fi
-    '''
+    """
 }
 
 
@@ -347,7 +347,7 @@ process pMetabat {
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
 
-    shell:
+    script:
     DO_NOT_ESTIMATE_QUALITY = -1 
     MEDIAN_QUALITY=Double.parseDouble(medianQuality)
     percentIdentity = MEDIAN_QUALITY != DO_NOT_ESTIMATE_QUALITY ? \
