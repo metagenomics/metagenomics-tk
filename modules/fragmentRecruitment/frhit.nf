@@ -39,27 +39,27 @@ process pFrHit {
     tuple val("${sample}"), file("coverage"), optional: true, emit: coverageStats
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
-    '''
+    script:
+    """
     mkdir coverage
-    seqkit fq2fa !{reads} -o reads.fasta.gz
-    AVG_LEN=$(seqkit stats -T reads.fasta.gz | tail -n 1 | cut -f 7)
-    HALF_AVG_LEN=$(bc <<< "${AVG_LEN} / 2")
+    seqkit fq2fa ${reads} -o reads.fasta.gz
+    AVG_LEN=\$(seqkit stats -T reads.fasta.gz | tail -n 1 | cut -f 7)
+    HALF_AVG_LEN=\$(bc <<< "\${AVG_LEN} / 2")
     gunzip reads.fasta.gz
-    echo "Min. Coverage Parameter: ${HALF_AVG_LEN}"
-    fr-hit !{params.steps.fragmentRecruitment.frhit.additionalParams.frhit} -f 1 -m ${HALF_AVG_LEN} -T !{task.cpus} -a reads.fasta -d !{genomesCombined} -o coverage/out.psl
+    echo "Min. Coverage Parameter: \${HALF_AVG_LEN}"
+    fr-hit ${params.steps.fragmentRecruitment.frhit.additionalParams.frhit} -f 1 -m \${HALF_AVG_LEN} -T ${task.cpus} -a reads.fasta -d ${genomesCombined} -o coverage/out.psl
     if [ -s "coverage/out.psl" ] 
     then
-      psl2sam.pl coverage/out.psl | samtools view -bT !{genomesCombined} - | samtools calmd -E - genomes | samtools view -Sb - | samtools sort -o - out > !{sample}.bam 2> /dev/null
-      coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b !{sample}.bam --genome-fasta-list !{genomesList} --methods count --output-file coverage/readCount.tsv
-      coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b !{sample}.bam --genome-fasta-list !{genomesList} --methods covered_fraction --output-file coverage/coveredFraction.tsv
-      coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b !{sample}.bam --genome-fasta-list !{genomesList} --methods covered_bases --output-file coverage/coveredBases.tsv
-      coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b !{sample}.bam --genome-fasta-list !{genomesList} --methods length --output-file coverage/genomeLength.tsv
-      coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b !{sample}.bam --genome-fasta-list !{genomesList} --methods trimmed_mean --output-file coverage/trimmedMean.tsv
+      psl2sam.pl coverage/out.psl | samtools view -bT ${genomesCombined} - | samtools calmd -E - genomes | samtools view -Sb - | samtools sort -o - out > ${sample}.bam 2> /dev/null
+      coverm genome -t ${task.cpus} ${params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b ${sample}.bam --genome-fasta-list ${genomesList} --methods count --output-file coverage/readCount.tsv
+      coverm genome -t ${task.cpus} ${params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b ${sample}.bam --genome-fasta-list ${genomesList} --methods covered_fraction --output-file coverage/coveredFraction.tsv
+      coverm genome -t ${task.cpus} ${params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b ${sample}.bam --genome-fasta-list ${genomesList} --methods covered_bases --output-file coverage/coveredBases.tsv
+      coverm genome -t ${task.cpus} ${params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b ${sample}.bam --genome-fasta-list ${genomesList} --methods length --output-file coverage/genomeLength.tsv
+      coverm genome -t ${task.cpus} ${params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b ${sample}.bam --genome-fasta-list ${genomesList} --methods trimmed_mean --output-file coverage/trimmedMean.tsv
     else
       echo "No reads could be recruited!"
     fi
-    '''
+    """
 }
 
 
@@ -100,16 +100,16 @@ process pCombinedAlignmentAnalysis {
     path("coverage"), emit: coverageStats
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
-    '''
+    script:
+    """
     mkdir coverage
-    samtools merge -@ !{task.cpus} combined_alignments.bam !{alignments}
-    coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods count --output-file coverage/readCount.tsv
-    coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods covered_fraction --output-file coverage/coveredFraction.tsv
-    coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods covered_bases --output-file coverage/coveredBases.tsv
-    coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods length --output-file coverage/genomeLength.tsv
-    coverm genome -t !{task.cpus} !{params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b combined_alignments.bam --genome-fasta-list !{genomesList} --methods trimmed_mean --output-file coverage/trimmedMean.tsv
-    '''
+    samtools merge -@ ${task.cpus} combined_alignments.bam ${alignments}
+    coverm genome -t ${task.cpus} ${params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b combined_alignments.bam --genome-fasta-list ${genomesList} --methods count --output-file coverage/readCount.tsv
+    coverm genome -t ${task.cpus} ${params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b combined_alignments.bam --genome-fasta-list ${genomesList} --methods covered_fraction --output-file coverage/coveredFraction.tsv
+    coverm genome -t ${task.cpus} ${params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b combined_alignments.bam --genome-fasta-list ${genomesList} --methods covered_bases --output-file coverage/coveredBases.tsv
+    coverm genome -t ${task.cpus} ${params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b combined_alignments.bam --genome-fasta-list ${genomesList} --methods length --output-file coverage/genomeLength.tsv
+    coverm genome -t ${task.cpus} ${params.steps.fragmentRecruitment.frhit.additionalParams.coverm} -b combined_alignments.bam --genome-fasta-list ${genomesList} --methods trimmed_mean --output-file coverage/trimmedMean.tsv
+    """
 
 }
 
