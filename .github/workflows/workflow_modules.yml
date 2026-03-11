@@ -212,7 +212,7 @@ jobs:
           bash ./scripts/test_input.sh "${WORK_DIR}" ${PROFILE} || exit 1
 
 
-  mag_attributes:
+  mag_attributes_1:
     timeout-minutes: 2500
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
@@ -267,7 +267,22 @@ jobs:
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/checkm2_yaml_database_tests" \
                                MODULE_DB_TEST_SKIP_TESTS="noSkip" MODULE_DB_TEST_REMOVE_DB="yes"
  
-      
+  mag_attributes_2:
+    timeout-minutes: 2500
+    needs: [codePolicy]
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set Secrets
+        run: |
+          make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_checkm_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_checkm_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_checkm2_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_checkm2_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_gtdb_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_gtdb_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Test GTDB runs against different database parameters
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/gtdbtk_r226_v2_data/release226" \
@@ -284,6 +299,8 @@ jobs:
                                MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/gtdb_yaml_database_tests"  \
                                MODULE_DB_TEST_SKIP_TESTS="s3File,s3Directory,https" \
                                MODULE_DB_TEST_REMOVE_DB="yes"
+
+
 
   dereplication:
     timeout-minutes: 800
