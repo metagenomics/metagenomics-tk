@@ -16,7 +16,7 @@ echo -e \${HEADER} > \${FINAL_OUTPUT}
 if [ -s \${SEQUENCE_PROBABILITIES} ]; then
   csvtk join --tabs --no-header-row  --fields "1" \${SEQUENCE_PROBABILITIES} \\
 	 <(seqkit fx2tab --length --only-id --name \${contigs} | sort -k 1,1) \\
-	| sed "s/\$/\\t${sample}\\t${binID}/g" >> \${PLASCLASS_OUT}
+	| sed "s|\$|\\t${sample}\\t${binID}|g" >> \${PLASCLASS_OUT}
 
   echo -e \${HEADER} > \${TMP_OUTPUT}
 
