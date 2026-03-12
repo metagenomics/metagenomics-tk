@@ -212,7 +212,7 @@ jobs:
           bash ./scripts/test_input.sh "${WORK_DIR}" ${PROFILE} || exit 1
 
 
-  mag_attributes:
+  mag_attributes_1:
     timeout-minutes: 2500
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
@@ -267,7 +267,22 @@ jobs:
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_magAttributes.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/checkm2_yaml_database_tests" \
                                MODULE_DB_TEST_SKIP_TESTS="noSkip" MODULE_DB_TEST_REMOVE_DB="yes"
  
-      
+  mag_attributes_2:
+    timeout-minutes: 2500
+    needs: [codePolicy]
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set Secrets
+        run: |
+          make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_checkm_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_checkm_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_checkm2_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_checkm2_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_gtdb_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_gtdb_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Test GTDB runs against different database parameters
         run: |
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/gtdbtk_r226_v2_data/release226" \
@@ -284,6 +299,8 @@ jobs:
                                MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/gtdb_yaml_database_tests"  \
                                MODULE_DB_TEST_SKIP_TESTS="s3File,s3Directory,https" \
                                MODULE_DB_TEST_REMOVE_DB="yes"
+
+
 
   dereplication:
     timeout-minutes: 800
@@ -703,7 +720,7 @@ jobs:
           make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/Pfam-A_37.4.hmm" \
                                MODULE_DB_TEST_MD5SUM="9ca99e4396bb7c123e884057e91eff8d" MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/Pfam-A_37.4.hmm.gz" \
                                MODULE_DB_TEST_PATH="/vol/spool/toolkit/Pfam-A_37.4.hmm.gz" MODULE_DB_TEST_S3PATH="s3://databases/Pfam-A_37.4.hmm.gz" \
-                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/pfam-A_35.*.hmm" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/Pfam-A_37.4.hmm" \
                                MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/plasmids MODULE_DB_TEST_YML=example_params/plasmid.yml \
                                MODULE_DB_TEST_YML_PATH="'.steps.plasmid.ViralVerifyPlasmid.database=env(database),del(.steps.plasmid.Platon,.steps.plasmid.PlasClass,.steps.plasmid.MobTyper,.steps.plasmid.PLSDB)'" \
