@@ -1,1 +1,1 @@
-FROM cdiener/gapseq:2022.01.1
+FROM cdiener/gapseq:2022.11.1
