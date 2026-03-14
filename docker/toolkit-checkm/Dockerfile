@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:18.10
 ENV CHECKM_VERSION=1.1.3
 COPY run_checkm.sh /usr/local/bin/
 COPY config_location.patch /root/
