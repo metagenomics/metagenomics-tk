@@ -240,7 +240,7 @@ workflow _wBinning {
         params.steps?.binningONT?.semibin2?.additionalParams,
       ]
     ),
-    contigs | join(mappedReads, by: SAMPLE_IDX) | join(medianQuality, by: SAMPLE_IDX),
+    contigs | join(mappedReads, by: SAMPLE_IDX)
   )
 
   pMetabat.out.bins

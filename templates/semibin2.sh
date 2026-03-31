@@ -11,7 +11,7 @@ for bin in \$(find output/output_bins/ -name "*.fa"); do
 	BIN_NAME="${sample}_bin.\${ID}.fa"
   
   # Append bin id to every header
-	seqkit replace  -p '(.*)' -r "\\${1} MAG=\${ID}" \$bin > \${BIN_NAME}
+	seqkit replace  -p '(.*)' -r "\\\${1} MAG=\${ID}" \$bin > \${BIN_NAME}
 
 	# Create bin to contig mapping and add the used binner to each line
 	grep ">" \${bin} | sed 's/>//g' \\
@@ -25,9 +25,9 @@ grep -h ">" \$(find output/output_bins/ -name "*.fa") | tr -d ">" > \${BINNED_ID
 if [ -s \${BINNED_IDS} ]; then
 	# Get all not binned Ids
 	seqkit grep -vf \${BINNED_IDS} ${contigs} \\
-		| seqkit replace  -p '(.*)' -r "\\${1} MAG=NotBinned" > \${NOT_BINNED}
+		| seqkit replace  -p '(.*)' -r "\\\${1} MAG=NotBinned" > \${NOT_BINNED}
 else
-	seqkit replace  -p '(.*)' -r "\\${1} MAG=NotBinned" ${contigs} > \${NOT_BINNED}
+	seqkit replace  -p '(.*)' -r "\\\${1} MAG=NotBinned" ${contigs} > \${NOT_BINNED}
 fi
 
 # Fix for ownership issue https://github.com/nextflow-io/nextflow/issues/4565
