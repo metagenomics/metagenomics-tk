@@ -60,6 +60,12 @@ jobs:
           bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/     " \
           example_params/fullPipeline_fraction/fullPipeline_fraction_binning_metabinner.yml \
           "${WORK_DIR}" ${PROFILE} || exit 1
+      - name: Test Full Pipeline run that ends with SemiBin2
+        run: |
+          bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/     " \
+          example_params/fullPipeline_fraction/fullPipeline_fraction_binning_semibin2.yml \
+          "${WORK_DIR}" ${PROFILE} || exit 1
+
 
   full_pipeline_ont:
     timeout-minutes: 2500
