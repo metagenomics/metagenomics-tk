@@ -278,6 +278,7 @@ workflow _runNonPlasmidAssemblyAnalysis {
 	| mix(pViralVerifyPlasmidLinear.out.plasmidsStats) \
 	| set { plasmidsStats }
 
+      filterLogs = channel.empty()
       if(params?.steps?.plasmid.find{ it.key == "Filter" }?.value){
       	// Group outputs of multiple tools (e.g. Platon and Plasclass output) and use them for filtering
       	SAMPLE_ID_IDX = 0 
@@ -294,12 +295,13 @@ workflow _runNonPlasmidAssemblyAnalysis {
          | pContigsPlasmidsFilter
 
       	pContigsPlasmidsFilter.out.plasmids | set { samplesContigsPlasmids }
+      	pContigsPlasmidsFilter.out.logs | set { filterLogs }
       } else {
       	samplesContigs | set { samplesContigsPlasmids }
       }
 
       _wRunPlasClass.out.logs \
-	| mix(pViralVerifyPlasmidLinear.out.logs) | mix(pPlatonLinear.out.logs) | pDumpLogs
+	| mix(pViralVerifyPlasmidLinear.out.logs) | mix(filterLogs) | mix(pPlatonLinear.out.logs) | pDumpLogs
 
     emit:
       plasmids = samplesContigsPlasmids
@@ -379,6 +381,7 @@ workflow _runCircularAnalysis {
 	| mix(pViralVerifyPlasmidCircular.out.plasmidsStats) \
 	| set { plasmidsStats }
 
+       filterLogs = channel.empty()
        if(params?.steps?.plasmid.find{ it.key == "Filter" }?.value){
       	// Group outputs of multiple tools (e.g. Platon and Plasclass output) and use them for filtering
       	 SAMPLE_ID_IDX = 0 
@@ -395,13 +398,14 @@ workflow _runCircularAnalysis {
           | pCircularPlasmidsFilter
 
       	 pCircularPlasmidsFilter.out.plasmids | set { filteredPlasmids }
+      	 pCircularPlasmidsFilter.out.logs | set { filterLogs }
 
       } else {
       	 newPlasmids | set { filteredPlasmids }
       }
 
       pSCAPP.out.logs | mix(_wRunPlasClass.out.logs)  \
-	| mix(pViralVerifyPlasmidCircular.out.logs) | mix(pPlatonCircular.out.logs) | pDumpLogs
+	| mix(pViralVerifyPlasmidCircular.out.logs) | mix(filterLogs) | mix(pPlatonCircular.out.logs) | pDumpLogs
 
     emit:
       plasmids = filteredPlasmids

@@ -4,7 +4,7 @@ s3SignIn: false
 logDir: log
 tempdir: "tmp"
 scratch: "/vol/scratch"
-databases: "/mnt/databases"
+databases: "/vol/scratch/databases"
 publishDirMode: "symlink"
 steps:
    annotation:

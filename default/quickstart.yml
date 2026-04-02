@@ -2,7 +2,7 @@ tempdir: "tmp"
 s3SignIn: false
 input:
   paired:
-    path: "test_data/fullPipeline/quickstart.tsv"
+    sheet: "test_data/fullPipeline/quickstart.tsv"
     watch: false
 output: fullPipelineOutput
 logDir: log

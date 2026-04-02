@@ -44,7 +44,7 @@ process pMashScreen {
     tuple val("${sample}"), file("selected_genomes.tsv"), optional: true, emit: mashScreenFilteredOutput
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     template "mashScreen.sh"
 }
 
@@ -66,12 +66,12 @@ process pGenomeContigMapping {
     tuple val("${sample}"), path("${sample}_genome_contig_mapping.tsv"), emit: mapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
-    '''
-    for g in $(ls -1 !{genomes}); do
-       seqkit fx2tab -i -n ${g} | sed "s/^/${g}\t/g" >> !{sample}_genome_contig_mapping.tsv
+    script:
+    """
+    for g in \$(ls -1 ${genomes}); do
+       seqkit fx2tab -i -n \${g} | sed "s/^/\${g}\t/g" >> ${sample}_genome_contig_mapping.tsv
     done
-    '''
+    """
 }
 
 
@@ -96,12 +96,12 @@ process pSaveMatchedGenomes {
     tuple val("${sample}"), val("${output}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
       file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = getOutput("${sample}", params.runid, "matches", "")
-    '''
+    """
     mkdir matches
-    cp !{genomes} matches
-    '''
+    cp ${genomes} matches
+    """
 }
 
 
@@ -423,7 +423,7 @@ process pUnzipGroup {
   output:
   path("*", type: "file")
 
-  shell:
+  script:
   '''
   for f in input/*; do  
 	cp $f . ; 
@@ -455,12 +455,12 @@ process pMashSketchGenomeGroup {
     output:
     path("*.msh"), emit: sketches
 
-    shell:
-    '''
+    script:
+    """
     for f in * ; do  
-    	mash sketch !{mashSketchParams} $f -o $(basename $f).msh
+    	mash sketch ${mashSketchParams} \$f -o \$(basename \$f).msh
     done
-    '''
+    """
 }
 
 

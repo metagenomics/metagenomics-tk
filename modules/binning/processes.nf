@@ -1,5 +1,6 @@
 
 
+
 String getOutput(SAMPLE, RUNID, MODULE , TOOL, filename){
 
     def module = ""
@@ -355,4 +356,35 @@ process pMetabat {
     template 'metabat.sh'
 }
 
+process pSemiBin2 {
 
+    container "${params.semibin2_image}"
+
+    tag "$sample"
+
+    label 'small'
+
+    memory { Utils.getMemoryResources(params.resources.small, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.small, "${sample}", task.attempt, params.resources) }
+
+    publishDir params.output, mode: "${params.publishDirMode}", \
+	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
+
+    when:
+    run
+
+    input:
+    val(run)
+    tuple val(module), val(outputToolDir), val(semibinParams)
+    tuple val(sample), path(contigs), path(bam)
+
+    output:
+    tuple val("${sample}"), file("${sample}_bin.*.fa"), optional: true, emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    script:
+    template 'semibin2.sh'
+}
