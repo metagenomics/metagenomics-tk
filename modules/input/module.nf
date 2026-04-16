@@ -193,29 +193,22 @@ workflow _wSplitReadsSheet {
 */
 workflow _wSplitReadsFiles {
        main:
-         r1 = params.input.paired.r1.tokenize(' ')
-         r2 = params.input.paired.r2.tokenize(' ')
-         names = params.input.paired.names.tokenize(" ")
+         def r1 = params.input.paired.r1.tokenize(' ')
+         def r2 = params.input.paired.r2.tokenize(' ')
+         def names = params.input.paired.names.tokenize(" ")
 
          if (r1.size() != r2.size() && r2.size() == r3.size() ) {
             error "Mismatch detected: --input.paired.r1, --input.paired.r2 and --input.paired.names should have the same number of values."
          }
 
-         Channel.from(r1) \
-	    	| map {file(it)} | set { r1Files }
-
-         Channel.from(r2) \
-	    	| map {file(it)} | set { r2Files }
-         
-         Channel.from(names) \
-	    	| set { sampleNames }
+	 def samples = [names, r1, r2].transpose()
 
          SAMPLE_IDX=0
          READS1_IDX=1
          READS2_IDX=2
 
-         sampleNames | combine(r1Files) | combine(r2Files) 
-            | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS1:sample[READS1_IDX],READS2:sample[READS2_IDX]] }
+         channel.from(samples) 
+	    | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS1:file(sample[READS1_IDX]),READS2:file(sample[READS2_IDX])] }
             | set { fastqs }
 
        emit:
@@ -427,24 +420,19 @@ workflow _wOntReadsSheet {
 
 workflow _wOntReadsFiles {
        main:
-         r = params.input.ont.r.tokenize(' ')
-         names = params.input.ont.names.tokenize(" ")
+         def r = params.input.ont.r.tokenize(' ')
+         def names = params.input.ont.names.tokenize(" ")
 
          if (r.size() != names.size()) {
             error "Mismatch detected: --input.ont.r and --input.ont.names should have the same number of values."
          }
 
-         Channel.from(r) \
-	    	| map {file(it)} | set { rFiles }
-         
-         Channel.from(names) \
-	    	| set { sampleNames }
-
          SAMPLE_IDX=0
          READS_IDX=1
 
-         sampleNames | combine(rFiles) 
-            | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS:sample[READS_IDX]] }
+	 def samples = [names, r].transpose()
+
+         channel.from(samples) | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS:file(sample[READS_IDX])] }
             | set { fastqs }
 
        emit:
@@ -580,7 +568,6 @@ workflow wInputFile {
             fastqs | mix(pairedChannel) | set { fastqs }
         }
     }
-
 
     if("ont" in inputTypes) {
         // Check whether a sample spreadsheet or files are provided on the CLI.
