@@ -193,29 +193,22 @@ workflow _wSplitReadsSheet {
 */
 workflow _wSplitReadsFiles {
        main:
-         r1 = params.input.paired.r1.tokenize(' ')
-         r2 = params.input.paired.r2.tokenize(' ')
-         names = params.input.paired.names.tokenize(" ")
+         def r1 = params.input.paired.r1.tokenize(' ')
+         def r2 = params.input.paired.r2.tokenize(' ')
+         def names = params.input.paired.names.tokenize(" ")
 
          if (r1.size() != r2.size() && r2.size() == r3.size() ) {
             error "Mismatch detected: --input.paired.r1, --input.paired.r2 and --input.paired.names should have the same number of values."
          }
 
-         Channel.from(r1) \
-	    	| map {file(it)} | set { r1Files }
-
-         Channel.from(r2) \
-	    	| map {file(it)} | set { r2Files }
-         
-         Channel.from(names) \
-	    	| set { sampleNames }
+	 def samples = [names, r1, r2].transpose()
 
          SAMPLE_IDX=0
          READS1_IDX=1
          READS2_IDX=2
 
-         sampleNames | combine(r1Files) | combine(r2Files) 
-            | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS1:sample[READS1_IDX],READS2:sample[READS2_IDX]] }
+         channel.from(samples) 
+	    | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS1:file(sample[READS1_IDX]),READS2:file(sample[READS2_IDX])] }
             | set { fastqs }
 
        emit:
@@ -228,6 +221,8 @@ workflow _wSRAS3 {
          MIN_LENGTH=9
          FASTQ_FILES_IDX = 1
          SAMPLE_IDX = 0
+         SAMPLE_CONTENT_IDX = 1
+         CO_BINNING_IDX = 2
          BUCKET = params.input.SRA.S3.bucket
 
         files = Channel.empty()
@@ -250,6 +245,11 @@ workflow _wSRAS3 {
         if("id" in params.input.SRA.S3){
             idsFromCLIChannel = Channel.from(params.input.SRA.S3.id.tokenize(" "))
         }
+
+        if("binGroup" in params.input.SRA.S3){
+            binGroupFromCLIChannel = Channel.from(params.input.SRA.S3.binGroup.tokenize(" "))
+        }
+
         // First try to fetch SRA IDs from NCBI SRA DB
         BUFFER_SIZE_WATCH = 1 
         BUFFER_SIZE_DEFAULT = 50  
@@ -290,8 +290,24 @@ workflow _wSRAS3 {
                 | map { it -> [ it[SAMPLE_IDX],  it[FASTQ_FILES_IDX].collect({ "s3:/$it" }) ] }
                 | _wCheckSRAFiles
 
+        files | splitCsv(sep: "\t", header: true) 
+            | branch { sample ->
+                coBinningSample: sample.containsKey("CO_BINNING") 
+                samples: !sample.containsKey("CO_BINNING") 
+            } | set{ possibleCoBinnedSamples } 
+
+         possibleCoBinnedSamples.coBinningSample
+            | map { sample -> [sample.ACCESSION, sample.CO_BINNING] } 
+            | set { coBinningSamples }
+
+        _wCheckSRAFiles.out.passedSamples | map { sample -> [sample.SAMPLE, sample]} 
+            | combine(coBinningSamples, by: SAMPLE_IDX) 
+            | map { sample -> sample[SAMPLE_CONTENT_IDX] + ["CO_BINNING":sample[CO_BINNING_IDX]] }   
+            | mix(possibleCoBinnedSamples.samples)
+            | set { passedSamples }
+
         emit:
-          fastqs = _wCheckSRAFiles.out.passedSamples
+          fastqs = passedSamples
           failedSRAFastqFiles = _wCheckSRAFiles.out.failedSRAIDs
           incorrectAccessions = filteredIDs.failed
           notFoundAccessions = pGetSRAIDsFromRemote.out.notFoundID
@@ -427,24 +443,19 @@ workflow _wOntReadsSheet {
 
 workflow _wOntReadsFiles {
        main:
-         r = params.input.ont.r.tokenize(' ')
-         names = params.input.ont.names.tokenize(" ")
+         def r = params.input.ont.r.tokenize(' ')
+         def names = params.input.ont.names.tokenize(" ")
 
          if (r.size() != names.size()) {
             error "Mismatch detected: --input.ont.r and --input.ont.names should have the same number of values."
          }
 
-         Channel.from(r) \
-	    	| map {file(it)} | set { rFiles }
-         
-         Channel.from(names) \
-	    	| set { sampleNames }
-
          SAMPLE_IDX=0
          READS_IDX=1
 
-         sampleNames | combine(rFiles) 
-            | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS:sample[READS_IDX]] }
+	 def samples = [names, r].transpose()
+
+         channel.from(samples) | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS:file(sample[READS_IDX])] }
             | set { fastqs }
 
        emit:
@@ -492,6 +503,69 @@ workflow _wSRANCBI {
 
 
 /*
+* This method adds the number of samples per co-binned sample, as well as a general flag to indicate whether co-binning should be performed.
+*/
+def setCoBinning(group_id, samples_list){ 
+    // 1. Get the number of elements in the second index
+    def total_count = samples_list.size()
+
+    // 2. Add this count to every map in the list
+    def updated_list = samples_list.collect { sample_map ->
+        return sample_map + [CO_BINNING_COUNT: total_count, DO_CO_BINNING: true]
+    } 
+
+    // 3. Return the original structure with the updated list
+    return [group_id, updated_list]
+}
+
+
+/*
+* This workflow sets the binning specific variables DO_CO_BINNING, CO_BINNING_COUNT and CO_BINNING per sample. 
+*/
+workflow _wSetCoBinningMetadata {
+    take:
+        fastqs
+    main:
+        // Distinguish between samples with and without CO_BINNING column value.
+        fastqs | branch { sample ->
+            coBinning: sample.containsKey("CO_BINNING")
+            singleSample: !sample.containsKey("CO_BINNING")
+        } | set { sampleType }
+
+        SAMPLE_IDX=0
+        GROUP_IDX=0
+        SAMPLE_LIST_IDX=1
+
+        // Set the number of samples per group in every sample array
+        // by setting the variables DO_CO_BINNING, CO_BINNING_COUNT and CO_BINNING.
+        sampleType.coBinning
+            | map { sample -> [sample["CO_BINNING"], sample] }
+            | groupTuple(by: GROUP_IDX)
+            | map { group_id, samples_list -> setCoBinning(group_id, samples_list) }
+            | map { sample ->  sample[SAMPLE_LIST_IDX] } | flatten  | branch { sample -> 
+                coBinningSamples: sample["CO_BINNING_COUNT"]>1
+                singleBinningSamples: sample["CO_BINNING_COUNT"]==1
+            } | set { verifiedSamples }
+
+        // If just a single sample should be processed then indicate that in the metadata.
+        sampleType.singleSample  
+            | map { sample -> sample + [DO_CO_BINNING: false, CO_BINNING_COUNT:null, CO_BINNING:null] }
+            | set { singleSamples }
+
+        // If the CO_BINNING column exists but only one sample is specified, treat that sample as a single sample.
+        verifiedSamples.singleBinningSamples
+            | map { sample -> sample + [DO_CO_BINNING: false, CO_BINNING_COUNT:null, CO_BINNING:null] }
+            | set {verifiedSingleBinningSamples}
+
+        verifiedSamples.coBinningSamples 
+            | mix(singleSamples) 
+            | mix(verifiedSingleBinningSamples) 
+            | set {samples}
+    emit:
+        samples = samples
+}
+
+/*
  *  The input modules defined three input sources: SRA NCBI, generic SRA S3 source that contains a column consisting of SRA IDs 
  *  and a generic source that allows to consume a file containing local path, https or S3 links of paired end or nanopore reads.
  *  SRA NCBI and generic SRA S3 source must contain a column with `ACCESSION` column header and the file for the generic source 
@@ -499,7 +573,8 @@ workflow _wSRANCBI {
  *  The input workflow allows to process files that are provided via a sample sheet or via CLI.
  * 
  *  In all cases a channel is returned containing values of the format: [TYPE: illumina or ont, SAMPLE:name of the sample, READS1: left read, READS2: right read],
- *  [TYPE: illumina or ont, SAMPLE:name of the sample, READS1: left read, READS2: right read] 
+ *  [TYPE: illumina or ont, SAMPLE:name of the sample, READS1: left read, READS2: right read, DO_CO_BINNING: should be co binning done, 
+ *  CO_BINNING_COUNT: how many samples should be co-binned, CO_BINNING: name of the group of samples that should be co-binned] 
  */
 workflow wInputFile {
   main:
@@ -581,7 +656,6 @@ workflow wInputFile {
         }
     }
 
-
     if("ont" in inputTypes) {
         // Check whether a sample spreadsheet or files are provided on the CLI.
         if("sheet" in params.input.ont) {
@@ -604,6 +678,9 @@ workflow wInputFile {
           fastqs | mix(ontChannel) | set { fastqs }
         }
     }
+
+    // Set co binning specific metadata such as which samples should be co binned.
+    fastqs | _wSetCoBinningMetadata
   emit:
-    data = fastqs
+    data = _wSetCoBinningMetadata.out.samples 
 }

@@ -2,7 +2,7 @@
 
 #cd ~/mgcourse/
 
-NXF_VER=25.04.2 nextflow run metagenomics/metagenomics-tk \
+NXF_VER=25.10.4 nextflow run metagenomics/metagenomics-tk \
 	  -profile standard \
 	  -params-file https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/doc/exhibition-day/tutorial/default/tutorials/tutorial2/fullPipeline_lineage_and_function.yml \
 	  -ansi-log false \

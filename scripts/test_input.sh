@@ -11,9 +11,9 @@ bash ./scripts/test_SRA.sh " -c  test_data/assets/aws.config \
                                       --input.SRA.S3.id 'ERR12263778 SRR29912082' \
                                       --input.ont.r https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/SRR16328449_qc.fq.gz \
                                       --input.ont.names 'nano' \
-                                      --input.paired.r1 https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz \
-                                      --input.paired.r2 https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1.fq.gz \
-                                      --input.paired.names 'test1' " \
+                                      --input.paired.r1 'https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1bla.fq.gz https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz' \
+                                      --input.paired.r2 'https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1bla.fq.gz https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1.fq.gz' \
+                                      --input.paired.names 'test1bla test2' " \
                                       "./example_params/input.yml" ${WORK_DIR} ${PROFILE} 
 
 # Check if the produces SRA IDs are exactly the ones that we used as input

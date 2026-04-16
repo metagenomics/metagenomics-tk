@@ -24,4 +24,5 @@ input:
     sheet: "test_data/fullPipeline/ont.tsv"
     watch: false
 steps:
+  empty:
 

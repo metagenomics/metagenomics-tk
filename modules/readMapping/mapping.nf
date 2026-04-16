@@ -41,8 +41,8 @@ process pVerticalConcatFinal {
     output:
     path("abundance.tsv")
 
-    shell:
-    template("verticalConcat.sh")
+    script:
+    template "verticalConcat.sh"
 }
 
 
@@ -60,8 +60,8 @@ process pVerticalConcat {
     output:
     path("abundance.tsv")
 
-    shell:
-    template("verticalConcat.sh")
+    script:
+    template "verticalConcat.sh"
 }
 
 
@@ -76,9 +76,9 @@ process pBwaIndex {
       path(representatives)
     output:
       path('*.{amb,ann,bwt,pac,sa,fa}')
-    shell:
+    script:
       """
-      bwa index !{params.steps.readMapping.bwa.additionalParams.bwa_index} !{representatives}
+      bwa index ${params.steps.readMapping.bwa.additionalParams.bwa_index} ${representatives}
       """
 }
 
@@ -90,9 +90,9 @@ process pBwa2Index {
       path(representatives)
     output:
       path('*.{0123,amb,ann,64,pac}')
-    shell:
+    script:
       """
-      bwa-mem2 index !{params.steps.readMapping.bwa2.additionalParams.bwa2_index} !{representatives}
+      bwa-mem2 index ${params.steps.readMapping.bwa2.additionalParams.bwa2_index} ${representatives}
       """
 }
 
@@ -107,9 +107,9 @@ process pMapBwa {
       tuple val("${sampleID}"), path("*bam"), path("*bai"), emit: alignment
       tuple val("${sampleID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
-    shell:
+    script:
     output = getOutput(params.runid, "bwa", "")
-    template('bwa.sh')
+    template 'bwa.sh'
 }
 
 
@@ -126,9 +126,9 @@ process pMapBwa2 {
       tuple val("${sampleID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = getOutput(params.runid, "bwa2", "")
-    template('bwa2.sh')
+    template 'bwa2.sh'
 }
 
 

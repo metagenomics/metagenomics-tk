@@ -26,9 +26,9 @@ process pMinimap2Index {
     output:
       path('seq.mmi')
 
-    shell:
+    script:
       """
-      minimap2 !{params.steps.readMapping.minimap.additionalParams.minimap_index} -x !{seqType} -d seq.mmi !{representatives}
+      minimap2 ${params.steps.readMapping.minimap.additionalParams.minimap_index} -x ${seqType} -d seq.mmi ${representatives}
       """
 }
 
@@ -51,9 +51,9 @@ process pMapMinimap2 {
       tuple val("${sampleID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = getOutput(params.runid, "minimap", "")
-    template('minimap2.sh')
+    template 'minimap2.sh'
 }
 
 

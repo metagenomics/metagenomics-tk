@@ -8,13 +8,14 @@ include { wShortReadQualityControlFile; wShortReadQualityControlList} from './mo
 include { wOntQualityControlFile; wOntQualityControlList} from './modules/qualityControl/ontQC'
 include { wShortReadAssemblyFile; wShortReadAssemblyList; wTestMemSelection } from './modules/assembly/shortReadAssembler'
 include { wOntAssemblyFile; wOntAssemblyList } from './modules/assembly/ontAssembler'
-include { wShortReadBinningList } from './modules/binning/shortReadBinning'
-include { wLongReadBinningList } from './modules/binning/ontBinning'
+include { wShortReadBinningList; wShortReadBinningFile; } from './modules/binning/shortReadBinning'
+include { wMultiBinningShortReadList;
+  wMultiBinningLongReadList; wMultiBinningShortReadFile; wMultiBinningLongReadFile; } from './modules/binning/multiBinning'
+include { wLongReadBinningList; wOntBinningFile; } from './modules/binning/ontBinning'
 include { wEMGBList; _wExportPipeline } from './modules/export/emgb'
 include { wMagAttributesFile; \
 	wMagAttributesList as wMagAttributesList; \
-	wMagAttributesList as wRecruitedGenomesAttributesList; \
-	wCMSeqWorkflowFile; } from './modules/magAttributes/module.nf'
+	wMagAttributesList as wRecruitedGenomesAttributesList; } from './modules/magAttributes/module.nf'
 include { wDereplicateFile; wDereplicateList} from './modules/dereplication/bottomUpClustering/module'
 include { wAnalyseMetabolitesList; wAnalyseMetabolitesFile } from './modules/metabolomics/module'
 include { wListReadMappingBwa; wFileReadMappingBwa} from './modules/readMapping/mapping.nf'
@@ -62,6 +63,22 @@ workflow wShortReadAssembly {
    wShortReadAssemblyFile()
 }
 
+workflow wShortReadBinning {
+   wShortReadBinningFile()
+}
+
+workflow wMultiBinningShortRead {
+   wMultiBinningShortReadFile()
+}
+
+workflow wMultiBinningLongRead {
+   wMultiBinningLongReadFile()
+}
+
+workflow wOntBinning {
+   wOntBinningFile()
+}
+
 workflow wOntAssembly {
    wOntAssemblyFile()
 }
@@ -86,27 +103,30 @@ workflow wGetModuleVersions {
 
 workflow wOutputTable {
    SAMPLE_IDX = 0
-   FASTQ_FILE_LEFT_IDX = 2 
-   FASTQ_FILE_RIGHT_IDX = 3 
+   FASTQ_FILE_LEFT_IDX = 3 
+   FASTQ_FILE_RIGHT_IDX = 4 
    INSTRUMENT_IDX = 1
+   CO_BINNING_IDX = 2
 
    wInputFile() | branch {  
         ONT: it.TYPE == "OXFORD_NANOPORE"
         ILLUMINA: it.TYPE == "ILLUMINA"
    } | set { input }
      
-   input.ILLUMINA | map { sample ->  [ sample.SAMPLE, sample.TYPE, sample.READS1, sample.READS2 ] } \
-	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tREADS1\tREADS2"){ it -> [ "samplesILLUMINA.tsv", it[SAMPLE_IDX] \
+   input.ILLUMINA | map { sample ->  [ sample.SAMPLE, sample.TYPE, sample.CO_BINNING, sample.READS1, sample.READS2 ] } \
+	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tCO_BINNING\tREADS1\tREADS2"){ it -> [ "samplesILLUMINA.tsv", it[SAMPLE_IDX] \
         + "\t" + it[INSTRUMENT_IDX] \
+        + "\t" + it[CO_BINNING_IDX] \
 	+ "\t" + it[FASTQ_FILE_LEFT_IDX].toString() \
 	+ "\t" + it[FASTQ_FILE_RIGHT_IDX].toString()] } \
 	| set {illuminaFile} 
    illuminaFile | view({ it -> it.text })
    pPublishIllumina(params.logDir, illuminaFile)
 
-   input.ONT | map { sample ->  [ sample.SAMPLE, sample.TYPE, sample.READS ] } \
-	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tREADS"){ it -> [ "samplesONT.tsv", it[SAMPLE_IDX] \
+   input.ONT | map { sample ->  [ sample.SAMPLE, sample.TYPE,  sample.CO_BINNING, sample.READS ] } \
+	| collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tCO_BINNING\tREADS"){ it -> [ "samplesONT.tsv", it[SAMPLE_IDX] \
         + "\t" + it[INSTRUMENT_IDX] \
+        + "\t" + it[CO_BINNING_IDX] \
 	+ "\t" + it[FASTQ_FILE_LEFT_IDX].toString() ]} \
 	| set {ontFile} 
    ontFile | view({ it -> it.text })
@@ -115,10 +135,6 @@ workflow wOutputTable {
 
 workflow wPlasmids {
    wPlasmidsPath()
-}
-
-workflow wCMSeqWorfklowFile {
-   wCMSeqWorkflowFile(Channel.fromPath(params?.steps?.magAttributes?.input?.genomes), Channel.fromPath(params?.steps?.magAttributes?.input?.alignments))
 }
 
 workflow wMagAttributes {
@@ -423,37 +439,96 @@ workflow wSaveSettings {
 }
 
 
-def flattenBins(binning){
-  def chunkList = [];
-  def SAMPLE_IDX = 0;
-  def BIN_PATHS_IDX = 1;
-  binning[BIN_PATHS_IDX].each {
-     chunkList.add([binning[SAMPLE_IDX], it]);
-  }
-  return chunkList;
-}
-
-
-
 workflow _wProcessIllumina {
     take:
       reads
+      binningLabels
     main:
+
+      SAMPLE_IDX=0
       wShortReadQualityControlList(reads)
       wShortReadQualityControlList.out.readsPair \
  	| join(wShortReadQualityControlList.out.readsSingle) | set { qcReads }
-      wShortReadAssemblyList(qcReads, wShortReadQualityControlList.out.nonpareil, wShortReadQualityControlList.out.kmerFrequencies)
-      wShortReadBinningList(wShortReadAssemblyList.out.contigs, qcReads)
+      wShortReadAssemblyList(qcReads, wShortReadQualityControlList.out.nonpareil, 
+      wShortReadQualityControlList.out.kmerFrequencies)
+
+      qcReads | combine(binningLabels, by:0 ) | branch { sample ->
+        singleSample: !sample[3]
+        multiSample: sample[3]
+      } | set {sampleTypeReads}
+
+      // Make also sure that the number of contigs per group matches the number of read samples per group.
+      // eventuell nicht nötig, da letzer binning schritt ein join mit sample contigs macht. Am besten testen mit filter der contigs....
+
+      // Make also sure that the number of contigs per group matches the number of read samples per group. Certain samples may fail.
+      sampleTypeReads.multiSample 
+        |  map { sample -> [sample[SAMPLE_IDX], sample[1]] } | combine(wShortReadAssemblyList.out.contigs, by: SAMPLE_IDX)  | set { qualityCheckedData }
+      
+    // Check the number of samples per group
+      // If it is more then one then go on to multibinning
+      // otherwise go on with single binning
+      qualityCheckedData  | join(binningLabels | map { sample -> [sample[0], sample[1], sample[3]]}, by: SAMPLE_IDX) 
+        | map { sample, readsPair, readsSingle, contigs, group, groupSize -> tuple( groupKey(group, groupSize), [sample, readsPair, readsSingle, contigs, group, groupSize]) }
+        | groupTuple(remainder: true)
+        | branch { group, samples ->
+            singleSample: samples.size() == 1
+            multiSample: samples.size() > 1
+            failedSample: samples.size() == 0 
+        } | set { checkedSamples }
+
+        checkedSamples.multiSample | map{ group, samples -> samples} | flatMap | set { multiSamples}
+
+        checkedSamples.singleSample | map{ group, samples -> samples} | flatMap | set { singleSample}
+
+        multiSamples | multiMap { sample, readsPair, readsSingle, contigs, group, groupSize  ->
+            contigs: [sample, contigs]
+            reads: [sample, readsPair, readsSingle]
+            binningLabels: [sample, group, groupSize]
+        } | set { multiSamplesInput } 
+
+
+        singleSample | multiMap { sample, readsPair, readsSingle, contigs, group, groupSize  ->
+            contigs: [sample, contigs]
+            reads: [sample, reads]
+        } | set { singleSampleInput } 
+
+      wMultiBinningShortReadList(multiSamplesInput.contigs, multiSamplesInput.reads, multiSamplesInput.binningLabels)
+
+      wShortReadBinningList(wShortReadAssemblyList.out.contigs | mix(singleSampleInput.contigs),  sampleTypeReads.singleSample | mix(singleSampleInput.reads))
+
+      wShortReadBinningList.out.notBinnedContigs 
+        | mix(wMultiBinningShortReadList.out.notBinnedContigs)
+        | set { notBinnedContigs }
+
+      wShortReadBinningList.out.bins
+        | mix(wMultiBinningShortReadList.out.bins)
+        | set { bins }
+
+      wShortReadBinningList.out.binsStats
+        | mix(wMultiBinningShortReadList.out.binsStats)
+        | set { binsStats }
+
+      wShortReadBinningList.out.mapping
+        | mix(wMultiBinningShortReadList.out.mapping)
+        | set { mapping }
+
+      wShortReadBinningList.out.unmappedReads
+        | mix(wMultiBinningShortReadList.out.unmappedReads)
+        | set { unmappedReads }
+
+      wShortReadBinningList.out.contigCoverage
+        | mix(wMultiBinningShortReadList.out.contigCoverage)
+        | set { contigCoverage }
 
     emit:
       contigs = wShortReadAssemblyList.out.contigs 
-      notBinnedContigs = wShortReadBinningList.out.notBinnedContigs 
-      bins = wShortReadBinningList.out.bins 
-      binsStats = wShortReadBinningList.out.binsStats
+      notBinnedContigs = notBinnedContigs 
+      bins = bins 
+      binsStats = binsStats
       fastg = wShortReadAssemblyList.out.fastg
-      mapping = wShortReadBinningList.out.mapping
-      unmappedReads = wShortReadBinningList.out.unmappedReads
-      contigCoverage = wShortReadBinningList.out.contigCoverage
+      mapping = mapping
+      unmappedReads = unmappedReads
+      contigCoverage = contigCoverage
       readsPair = wShortReadQualityControlList.out.readsPair
       readsSingle = wShortReadQualityControlList.out.readsSingle
       readsPairSingle = qcReads
@@ -462,21 +537,97 @@ workflow _wProcessIllumina {
 workflow _wProcessOnt {
     take:
       reads
+      binningLabels
     main:
+      SAMPLE_IDX=0
+      GROUP_IDX=0
       wOntQualityControlList(reads)
       wOntQualityControlList.out.reads | set { ontQCReads }
       wOntQualityControlList.out.medianQuality | set { medianQuality }
       wOntAssemblyList(ontQCReads | join(medianQuality))
-      wLongReadBinningList(wOntAssemblyList.out.contigs, ontQCReads, wOntAssemblyList.out.graph, \
-	 wOntAssemblyList.out.headerMapping, wOntAssemblyList.out.info, medianQuality)
+
+      ontQCReads | combine(binningLabels, by:0 ) | branch { sample ->
+        singleSample: !sample[3]
+        multiSample: sample[3]
+      } | set {sampleTypeReads}
+
+
+            // Make also sure that the number of contigs per group matches the number of read samples per group.
+      // eventuell nicht nötig, da letzer binning schritt ein join mit sample contigs macht. Am besten testen mit filter der contigs....
+
+      // Make also sure that the number of contigs per group matches the number of read samples per group. Certain samples may fail.
+      sampleTypeReads.multiSample 
+        |  map { sample -> [sample[SAMPLE_IDX], sample[1]] } | combine(wOntAssemblyList.out.contigs, by: SAMPLE_IDX)  | set { qualityCheckedData }
+      
+    // Check the number of samples per group
+      // If it is more then one then go on to multibinning
+      // otherwise go on with single binning
+      qualityCheckedData  | join(binningLabels | map { sample -> [sample[0], sample[1], sample[3]]}, by: SAMPLE_IDX) 
+        | map { sample, reads, contigs, group, groupSize -> tuple( groupKey(group, groupSize), [sample, reads, contigs, group, groupSize]) }
+        | groupTuple(remainder: true)
+        | branch { group, samples ->
+            singleSample: samples.size() == 1
+            multiSample: samples.size() > 1
+            failedSample: samples.size() == 0 
+        } | set { checkedSamples }
+
+        checkedSamples.multiSample | map{ group, samples -> samples} | flatMap | set { multiSamples}
+
+        checkedSamples.singleSample | map{ group, samples -> samples} | flatMap | set { singleSample}
+
+        multiSamples | multiMap { sample, reads, contigs, group, groupSize  ->
+            contigs: [sample, contigs]
+            reads: [sample, reads]
+            binningLabels: [sample, group, groupSize]
+        } | set { multiSamplesInput } 
+
+
+        singleSample | multiMap { sample, reads, contigs, group, groupSize  ->
+            contigs: [sample, contigs]
+            reads: [sample, reads]
+        } | set { singleSampleInput } 
+
+
+      wMultiBinningLongReadList(multiSamplesInput.contigs,
+        multiSamplesInput.reads, 
+        multiSamplesInput.binningLabels, medianQuality)
+
+      wLongReadBinningList(wOntAssemblyList.out.contigs | mix(singleSampleInput.contigs), 
+        sampleTypeReads.singleSample | map { sample -> [sample[0], sample[1]]} | mix(singleSampleInput.reads) , wOntAssemblyList.out.graph, \
+    	wOntAssemblyList.out.headerMapping, wOntAssemblyList.out.info, medianQuality)
+
+      wLongReadBinningList.out.notBinnedContigs 
+        | mix(wMultiBinningLongReadList.out.notBinnedContigs)
+        | set { notBinnedContigs }
+
+      wLongReadBinningList.out.bins
+        | mix(wMultiBinningLongReadList.out.bins)
+        | set { bins }
+
+      wLongReadBinningList.out.binsStats
+        | mix(wMultiBinningLongReadList.out.binsStats)
+        | set { binsStats }
+
+      wLongReadBinningList.out.mapping
+        | mix(wMultiBinningLongReadList.out.mapping)
+        | set { mapping }
+
+      wLongReadBinningList.out.unmappedReads
+        | mix(wMultiBinningLongReadList.out.unmappedReads)
+        | set { unmappedReads }
+
+      wLongReadBinningList.out.contigCoverage
+        | mix(wMultiBinningLongReadList.out.contigCoverage)
+        | set { contigCoverage }
+
     emit:
       contigs = wOntAssemblyList.out.contigs
-      notBinnedContigs = wLongReadBinningList.out.notBinnedContigs 
-      bins = wLongReadBinningList.out.bins 
-      binsStats = wLongReadBinningList.out.binsStats
-      mapping = wLongReadBinningList.out.mapping
-      unmappedReads = wLongReadBinningList.out.unmappedReads
-      contigCoverage = wLongReadBinningList.out.contigCoverage
+      notBinnedContigs = notBinnedContigs
+      bins = bins 
+      binsStats = binsStats
+      mapping = mapping
+      unmappedReads = unmappedReads
+      contigCoverage = contigCoverage
       reads = ontQCReads
       gfa = wOntAssemblyList.out.graph
       medianQuality = medianQuality
@@ -515,9 +666,13 @@ workflow wFullPipeline {
 
     inputSamples = wInputFile()
 
-    illumina = _wProcessIllumina(inputSamples | filter({ sample -> sample.TYPE == 'ILLUMINA' }) | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]} )
+    inputSamples | filter({ sample -> sample.TYPE == 'ILLUMINA' }) | set { illuminaInputSamples } 
+    illumina = _wProcessIllumina( illuminaInputSamples | map { it -> [ it.SAMPLE, it.READS1, it.READS2 ]}, 
+    illuminaInputSamples | map { it -> [ it.SAMPLE, it.CO_BINNING, it.CO_BINNING, it.DO_CO_BINNING, it.CO_BINNING_COUNT]})
 
-    ont = _wProcessOnt(inputSamples | filter({ sample -> sample.TYPE == 'OXFORD_NANOPORE' }) | map { it -> [ it.SAMPLE, it.READS ]} )
+    inputSamples | filter({ sample -> sample.TYPE == 'OXFORD_NANOPORE' }) | set { nanoporeSamples }
+    ont = _wProcessOnt(nanoporeSamples | map { it -> [ it.SAMPLE, it.READS ]},
+    nanoporeSamples | map { it -> [ it.SAMPLE, it.CO_BINNING, it.DO_CO_BINNING, it.CO_BINNING_COUNT]})
 
     ont.binsStats | mix(illumina.binsStats) | set { binsStats }
 

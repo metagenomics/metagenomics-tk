@@ -8,7 +8,7 @@ output: "output"
 logDir: log
 runid: 1
 logLevel: 1
-databases: "/mnt/databases/"
+databases: "/vol/scratch/databases/"
 scratch: "/vol/scratch"
 publishDirMode: "symlink"
 steps:
