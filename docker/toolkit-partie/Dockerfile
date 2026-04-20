@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:22.10
 
 # Install tzdata to set the timezone to UTC (required for R)
 # A non-interactive frontend is used to avoid tzdata asking for user input
