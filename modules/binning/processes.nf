@@ -1,31 +1,11 @@
 
-
-
-String getOutput(SAMPLE, RUNID, MODULE , TOOL, filename){
-
-    def module = ""
-    if(MODULE.isEmpty()){
-       module = params.modules.binning.name + '/' +
-          params.modules.binning.version.major + "." +
-          params.modules.binning.version.minor + "." +
-          params.modules.binning.version.patch;
-    } else {
-       module = MODULE
-    }
-
-    return SAMPLE + '/' + RUNID + '/' + module  +
-          '/' + TOOL + '/' + filename
-}
-
-
-
 process pGetBinStatistics {
 
     container "${params.samtools_image}"
 
     tag "Sample: $sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${binner}", filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "${binner}", module, filename) }
 
     memory { Utils.getMemoryResources(params.resources.tiny, "${sample}", task.attempt, params.resources) }
 
@@ -56,7 +36,7 @@ process pCovermContigsCoverage {
 
     tag "Sample: $sample"
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "${module}" , "${outputToolDir}", filename) }, \
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "${outputToolDir}", module, filename) }, \
         pattern: "{**.tsv,**.fasta.gz,**.out,**.err,**.log,**.sh}"
 
     input:
@@ -102,7 +82,7 @@ process pCovermGenomeCoverage {
     tag "Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", \
-	saveAs: { filename -> getOutput("${prefixOutput}", params.runid, "${module}" , "${outputToolDir}", filename) }, \
+	saveAs: { filename -> Output.getOutput("${prefixOutput}", params.runid, "${outputToolDir}", module, filename) }, \
         pattern: "{**.tsv}"
 
     input:
@@ -131,7 +111,7 @@ process pCovermGenomeCoverage {
     percentIdentity = MEDIAN_QUALITY != DO_NOT_ESTIMATE_QUALITY ? \
 	" --min-read-percent-identity "+Utils.getMappingIdentityParam(MEDIAN_QUALITY) : " "
     prefixOutput = prefix.trim() ? prefix : sample
-    output = getOutput(prefixOutput, params.runid, module, outputToolDir, "")
+    output = Output.getOutput(prefixOutput, params.runid, outputToolDir, module, "")
     template('coverm.sh')
 }
 
@@ -147,7 +127,7 @@ process pMinimap2 {
     cache 'deep'
 
     publishDir params.output, mode: "${params.publishDirMode}", \
-	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
+	saveAs: { filename -> Output.getOutput("${sample}", params.runid, "${outputToolDir}", module, filename) }
 
     input:
     val(run)
@@ -181,14 +161,14 @@ process pGetMappingQuality {
 
     container "${params.samtools_image}"
 
-    tag "${sample}"
+    tag "Sample: ${sample}"
 
-//TODO:  it should not only be binning modules output
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "readMappingQuality", params.modules.binning, filename) }
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "readMappingQuality", module, filename) }
 
     label 'tiny'
 
     input:
+    val(module)
     tuple val(sample), path(bam)
 
     output:
@@ -204,15 +184,15 @@ process pGetMappingQuality {
 
 workflow wGetMappingQuality {
     take:
+        module
         bam
     main:
-        bam | pGetMappingQuality        
+        pGetMappingQuality(module, bam)        
     emit:
         flagstatRaw = pGetMappingQuality.out.flagstatRaw
         flagstatPassed = pGetMappingQuality.out.flagstatPassed
         flagstatFailed = pGetMappingQuality.out.flagstatFailed
 }
-
 
 process pBowtie2 {
 
@@ -225,7 +205,7 @@ process pBowtie2 {
     cache 'deep'
 
     publishDir params.output, mode: "${params.publishDirMode}", \
-	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
+	saveAs: { filename -> Output.getOutput("${sample}", params.runid, "${outputToolDir}", module, filename) }
 
     input:
     val(run)
@@ -272,7 +252,7 @@ process pBwa {
     tag "Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", \
-	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
+	saveAs: { filename -> Output.getOutput("${sample}", params.runid, "${outputToolDir}", module, filename) }
 
     input:
     val(run)
@@ -318,7 +298,7 @@ process pBwa2 {
     tag "Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", \
-	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
+	saveAs: { filename -> Output.getOutput("${sample}", params.runid, "${outputToolDir}", module, filename) }
 
     input:
     val(run)
@@ -366,7 +346,7 @@ process pMetabat {
     cpus { Utils.getCPUsResources(params.resources.small, "${sample}", task.attempt, params.resources) }
 
     publishDir params.output, mode: "${params.publishDirMode}", \
-	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
+	saveAs: { filename -> Output.getOutput("${sample}", params.runid, "${outputToolDir}", module, filename) }
 
     when:
     run
@@ -381,7 +361,6 @@ process pMetabat {
     tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-
 
     shell:
     DO_NOT_ESTIMATE_QUALITY = -1 
@@ -404,7 +383,7 @@ process pSemiBin2 {
     cpus { Utils.getCPUsResources(params.resources.small, "${sample}", task.attempt, params.resources) }
 
     publishDir params.output, mode: "${params.publishDirMode}", \
-	saveAs: { filename -> getOutput("${sample}", params.runid, "${module}", "${outputToolDir}", filename) }
+	saveAs: { filename -> Output.getOutput("${sample}", params.runid, "${outputToolDir}", module, filename) }
 
     when:
     run
@@ -424,29 +403,34 @@ process pSemiBin2 {
     template 'semibin2.sh'
 }
 
+/*
+* Training for all samples is done seperately. However it uses the input features that account for all the sample data.
+*/ 
 process pSemiBin2Training {
 
     container "${params.semibin2_image}"
 
     tag "Group: $group, Sample: $sample"
 
-    label 'small'
+    publishDir params.output, mode: "${params.publishDirMode}", \
+	saveAs: { filename -> Output.getOutput("${sample}", params.runid, "${outputToolDir}", module, filename) }
 
     memory { Utils.getMemoryResources(params.resources.medium, "${group}", task.attempt, params.resources) }
 
     cpus { Utils.getCPUsResources(params.resources.medium, "${group}", task.attempt, params.resources) }
 
     input:
-    tuple val(group), val(sample), path(featureOutput) 
+    tuple val(module), val(outputToolDir), val(semibinParams)
+    tuple val(group), val(sample), path(featureOutput), path(featureCompressedOutput)  
 
     output:
-    tuple val("${group}"), val("${sample}"), file("${sample}_output"), optional: true, emit: trainingOutput 
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-//TODO: output log files per group or nothing at all
+    tuple val("${group}"), val("${sample}"), path("${featureCompressedOutput}", includeInputs: true), optional: true, emit: featureGeneration 
+    tuple val("${group}"), val("${sample}"), path("${sample}_output"), optional: true, emit: trainingOutput 
+    tuple path(".command.sh"), path(".command.out"), path(".command.err"), path(".command.log")
 
     script:
     """
-    SemiBin2 train_self \
+    SemiBin2 train_self ${semibinParams} \
         --processes ${task.cpus} \
         --data output/samples/${sample}_contigs/data.csv \
         --data-split output/samples/${sample}_contigs/data_split.csv \
@@ -454,6 +438,11 @@ process pSemiBin2Training {
     """
 }
 
+/*
+*
+* This process executes the SemiBin2 binning step. 
+*
+*/
 process pSemiBin2Binning {
 
     container "${params.semibin2_image}"
@@ -462,35 +451,40 @@ process pSemiBin2Binning {
 
     label 'small'
 
+    publishDir params.output, mode: "${params.publishDirMode}", \
+	saveAs: { filename -> Output.getOutput("${sample}", params.runid, "${outputToolDir}", module, filename) }
+
     memory { Utils.getMemoryResources(params.resources.medium, "${group}", task.attempt, params.resources) }
 
     cpus { Utils.getCPUsResources(params.resources.medium, "${group}", task.attempt, params.resources) }
 
     input:
-    tuple val(group), val(sample), path(trainingOutput), path(contigs), path(featureOutput) 
+    tuple val(module), val(outputToolDir), val(semibinParams)
+    val(sequenceType)
+    tuple val(group), val(sample), path(trainingOutput), path(contigs), \
+        path(featureOutput), path(compressedFeatureOutput), path(sampleGroupsFile) 
 
     output:
-    tuple val("${sample}"), path("rawBins/*.fa", arity: '1..*'), optional: true, emit: rawBins
     tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '1..*'), optional: true, emit: bins
     tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
+    tuple val("${sample}"), path("${sampleGroupsFile}", includeInputs: true), optional: true, emit: groupsFile 
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
-    tuple val("${sample}"), file("${sample}_raw_bin_contig_mapping.tsv"), optional: true, emit: rawBinContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-//TODO: output log files per group or nothing at all
 
     script:
+    semibin2Command =  sequenceType == "LONG" ? "bin_long" : "bin_short"
     """
-    SemiBin2 bin_short \
+    # Run SemiBin2  
+    SemiBin2 ${semibin2Command} ${semibinParams} \
         -i ${contigs} \
+        --processes ${task.cpus} \
         --compression none \
         --model ${trainingOutput}/model.pt \
         --data ${featureOutput}/samples/${sample}_contigs/data.csv \
         -o binningOutput
 
-    mkdir rawBins
-
+    # Process all produced bins 
     BIN_CONTIG_MAPPING=${sample}_bin_contig_mapping.tsv
-    RAW_BIN_CONTIG_MAPPING=${sample}_raw_bin_contig_mapping.tsv
     echo -e "BIN_ID\tCONTIG\tBINNER" > \${BIN_CONTIG_MAPPING}
     for bin in \$(find binningOutput/output_bins/ -name "*.fa"); do 
 
@@ -504,11 +498,7 @@ process pSemiBin2Binning {
 	    # Create bin to contig mapping and add the used binner to each line
 	    grep ">" \${bin} | sed 's/>//g' \
 		    | sed "s/^/\${BIN_NAME}\t/g;s/\$/\tsemibin2/" >> \${BIN_CONTIG_MAPPING}
-
-        seqkit replace  -p '(.*)' -r "${sample}_contigs:\\\${1}" \$bin > rawBins/\${BIN_NAME}
-	    grep ">" rawBins/\${BIN_NAME} | sed 's/>//g' \
-		    | sed "s/^/\${BIN_NAME}\t/g;s/\$/\tsemibin2/" >> \${RAW_BIN_CONTIG_MAPPING}
-     done
+    done
 
     # return not binned fasta files
     BINNED_IDS=binned.tsv
@@ -527,37 +517,79 @@ process pSemiBin2Binning {
     """
 }
 
+/*
+* This process runs SemiBin2 to collect all sequence related features on the concatenated assembly.
+*/
 process pSemiBin2GenerateSequenceFeatures {
 
     container "${params.semibin2_image}"
 
     tag "Group: $group"
 
-    label 'small'
-
     memory { Utils.getMemoryResources(params.resources.small, "${group}", task.attempt, params.resources) }
 
     cpus { Utils.getCPUsResources(params.resources.small, "${group}", task.attempt, params.resources) }
 
     input:
+    val(semibinParams)
     tuple val(group), path(bam), path(contigs) 
 
     output:
-    tuple val("${group}"), file("output"), optional: true, emit: features
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-//TODO: output log files per group or nothing at all
+    tuple val("${group}"), file("output"), file("feature_generation.tar.gz"), optional: true, emit: features
 
     script:
     """
     SemiBin2 generate_sequence_features_multi \
+    ${semibinParams} \
+    --processes ${task.cpus} \
     -i ${contigs} \
     -b ${bam} \
     -o output  
+
+    tar czvf feature_generation.tar.gz .command.sh .command.out .command.err .command.log output
     """
 }
 
+
+/*
+* This process saves the information of which sample belongs to which binning group in a file. 
+*/
+process pSemiBin2SaveGroupingInfo {
+
+    container "${params.semibin2_image}"
+
+    tag "Group: $group"
+
+    label "tiny"
+
+    input:
+    tuple val(group), val(samples) 
+
+    output:
+    tuple val("${group}"), path("samples_in_group_${group}.tsv") 
+
+    script:
+    """
+    OUTPUT=samples_in_group_${group}.tsv
+    echo -e "GROUP\tSAMPLE" > \${OUTPUT}
+    for sample in ${samples.join(' ')}; do
+        echo -e "${group}\t\$sample" >> \${OUTPUT}
+    done
+    """
+}
+
+/*
+*
+* This workflow runs the mapping tool that was selected by the user.
+* module: This parameter selects the output path defined by the module
+* condition: This parameter contains the tool name and executes the corresponding mapper. 
+* option: This parameter defined all parameters that are needed for the tool itself and samtools.
+* mapperInput: The contigs and reads that are used as input.
+*
+*/ 
 workflow _wRunMappers {
   take:
+    module
     condition
     options
     mapperInput
@@ -585,14 +617,23 @@ workflow _wRunMappers {
     pBowtie2.out.unmappedReads 
     | mix(pBwa.out.unmappedReads, pBwa2.out.unmappedReads) | set { unmappedReads }
 
-    mappedReads | wGetMappingQuality
+    wGetMappingQuality(module, mappedReads)
    emit:
      mappedReads = mappedReads
      unmappedReads = unmappedReads
 }
 
-workflow _wMultiMappingSemiBin2 {
+/*
+* This workflow executes the SemiBin2 binning workflow where the training and binning
+* procedure can be parallelized.
+*
+*/
+workflow _wMultiBinningSemiBin2 {
     take:
+       sequenceType
+       featureGenerationConfig
+       trainingConfig
+       binningConfig
        sampleGroups
        concatContigs
        sampleContigs
@@ -601,29 +642,45 @@ workflow _wMultiMappingSemiBin2 {
       SAMPLE_IDX = 0
       GROUP_IDX = 0
 
+      // First we try to detect sequence related features on the concatenated contigs.
       sampleGroups
         | combine(mapping, by: SAMPLE_IDX)
         | map { _sample, group, groupSize, bam -> tuple( groupKey(group, groupSize), bam ) }
         | groupTuple(remainder: true)
         | join(concatContigs)
-        | pSemiBin2GenerateSequenceFeatures
+        | set { semibin2FeatureGenerationInput }
 
-      sampleGroups 
+     pSemiBin2GenerateSequenceFeatures(featureGenerationConfig, semibin2FeatureGenerationInput)
+
+      // Then we train Semibin on each sample independently using all features detected previously.
+     sampleGroups 
        | map{ sample, group, _groupSize -> [group, sample]} 
        | combine(pSemiBin2GenerateSequenceFeatures.out.features, by:GROUP_IDX)
-       | pSemiBin2Training
+       | set { semibin2TrainingInput } 
+
+     pSemiBin2Training(trainingConfig, semibin2TrainingInput)
+
+
+     sampleGroups 
+        | map { sample, group, groupSize -> tuple( groupKey(group, groupSize), sample ) }
+        | groupTuple(remainder: true)
+        | pSemiBin2SaveGroupingInfo
+        | set { sampleGroupsFile }
 
      pSemiBin2Training.out.trainingOutput  
      | map { group, sample, trainingOutput -> [sample, group, trainingOutput] }
      | join(sampleContigs, by: SAMPLE_IDX)
      | map { sample, group, trainingOutput, contigs -> [group, sample, trainingOutput, contigs]} 
      | combine(pSemiBin2GenerateSequenceFeatures.out.features, by: GROUP_IDX) 
-     | view | pSemiBin2Binning
+     | combine(sampleGroupsFile, by: GROUP_IDX) 
+     | set { semibin2Input }
+
+    // Now we execute the actual binning step.
+     pSemiBin2Binning(binningConfig, sequenceType, semibin2Input)
 
     emit:
      bins = pSemiBin2Binning.out.bins 
-     rawBins = pSemiBin2Binning.out.rawBins 
      notBinned = pSemiBin2Binning.out.notBinned 
      binContigMapping = pSemiBin2Binning.out.binContigMapping
-     rawBinContigMapping = pSemiBin2Binning.out.rawBinContigMapping
+
 }
