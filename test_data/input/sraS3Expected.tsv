@@ -1,0 +1,5 @@
+SAMPLE	INSTRUMENT	MULTI_BINNING_GROUP	READS1	READS2
+ERR12263778	ILLUMINA	A	s3://ftp.era.ebi.ac.uk/vol1/fastq/ERR122/078/ERR12263778/ERR12263778_1.fastq.gz	s3://ftp.era.ebi.ac.uk/vol1/fastq/ERR122/078/ERR12263778/ERR12263778_2.fastq.gz
+SRR29912082	ILLUMINA	A	s3://ftp.era.ebi.ac.uk/vol1/fastq/SRR299/082/SRR29912082/SRR29912082_1.fastq.gz	s3://ftp.era.ebi.ac.uk/vol1/fastq/SRR299/082/SRR29912082/SRR29912082_2.fastq.gz
+SRR6436014	ILLUMINA	B	s3://ftp.era.ebi.ac.uk/vol1/fastq/SRR643/004/SRR6436014/SRR6436014_1.fastq.gz	s3://ftp.era.ebi.ac.uk/vol1/fastq/SRR643/004/SRR6436014/SRR6436014_2.fastq.gz
+SRR3984908	ILLUMINA	B	s3://ftp.era.ebi.ac.uk/vol1/fastq/SRR398/008/SRR3984908/SRR3984908_1.fastq.gz	s3://ftp.era.ebi.ac.uk/vol1/fastq/SRR398/008/SRR3984908/SRR3984908_2.fastq.gz

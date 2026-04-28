@@ -1,0 +1,48 @@
+tempdir: "tmp"
+s3SignIn: false
+output: "output"
+logDir: log
+runid: 1
+logLevel: 1
+scratch: "/vol/scratch"
+publishDirMode: "symlink"
+steps:
+  binningONT:
+    input:
+      reads: test_data/binningONT/samplesONT.tsv
+      contigs: test_data/binningONT/assemblyONT.tsv
+      quality: test_data/binningONT/quality.tsv
+      graph: test_data/binningONT/graph.tsv
+      headerMapping: test_data/binningONT/headerMapping.tsv
+      assemblyInfo: test_data/binningONT/assemblyInfo.tsv
+    minimap:
+      additionalParams: 
+        minimap: " "
+        # samtools flags are used to filter resulting bam file
+        samtoolsView: " " 
+    contigsCoverage:
+      additionalParams: " "
+    genomeCoverage:
+      additionalParams: " --min-covered-fraction 0 "
+    semibin2:
+      additionalParams: " --environment global --sequencing-type long_read  "
+
+resources:
+  highmemLarge:
+    cpus: 28
+    memory: 230
+  highmemMedium:
+    cpus: 14
+    memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
+  small:
+    cpus: 7
+    memory: 14
+  tiny:
+    cpus: 1
+    memory: 1

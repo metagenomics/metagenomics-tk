@@ -1,0 +1,73 @@
+tempdir: "tmp"
+s3SignIn: true
+input:
+  paired:
+    sheet: "test_data/fullPipeline/reads_split_multi_sample.tsv"
+    watch: false
+output: "output"
+logDir: log
+runid: 1
+logLevel: 1
+databases: "/mnt/databases/"
+scratch: "/vol/scratch"
+publishDirMode: "symlink"
+steps:
+  qc:
+    fastp:
+       # Example params: " --cut_front --cut_tail --detect_adapter_for_pe  "
+       additionalParams:
+         fastp: "  "
+         reportOnly: false
+       timeLimit: "AUTO"
+  assembly:
+    megahit:
+      additionalParams: " --min-contig-len 200 "
+      resources:
+         RAM: 
+            mode: 'DEFAULT'
+            predictMinLabel: 'AUTO' 
+  multiBinning:
+    bowtie:
+      additionalParams: 
+        bowtie: " --quiet --very-sensitive "
+        # samtools flags are used to filter resulting bam file
+        samtoolsView: " -F 3584 " 
+    contigsCoverage:
+      additionalParams: " "
+    genomeCoverage:
+      additionalParams: " "
+    semibin2:
+      additionalParams: 
+        featureGeneration: " "
+        training: " "
+        binning: " "
+
+  annotation:
+    mmseqs2:
+      chunkSize: 7000
+      kegg:
+        additionalParams:
+          search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
+          additionalColumns: ""
+        database:
+          extractedDBPath: '/vol/spool/toolkit/kegg-mirror-202506_mmseqs/keggDB'
+resources:
+  highmemLarge:
+    cpus: 28
+    memory: 230
+  highmemMedium:
+    cpus: 14
+    memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
+  small:
+    cpus: 7
+    memory: 14
+  tiny:
+    cpus: 1
+    memory: 1
+
