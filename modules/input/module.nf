@@ -204,9 +204,7 @@ workflow _wSplitReadsFiles {
          SAMPLE_IDX=0
          READS1_IDX=1
          READS2_IDX=2
-         CO_BINNING_IDX=3
-
-      
+         MULTI_BINNING_GROUP_IDX=3
 
 	     def samples = []
          fastqs = channel.empty()
@@ -217,7 +215,7 @@ workflow _wSplitReadsFiles {
             }
 	        samples = [names, r1, r2, binGroup].transpose()
             channel.from(samples) 
-	            | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS1:file(sample[READS1_IDX]),READS2:file(sample[READS2_IDX]),CO_BINNING:sample[CO_BINNING_IDX]] }
+	            | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS1:file(sample[READS1_IDX]),READS2:file(sample[READS2_IDX]),MULTI_BINNING_GROUP:sample[MULTI_BINNING_GROUP_IDX]] }
                 | set { fastqs }
          } else {
 	        samples = [names, r1, r2].transpose()
@@ -225,8 +223,6 @@ workflow _wSplitReadsFiles {
 	            | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS1:file(sample[READS1_IDX]),READS2:file(sample[READS2_IDX])] }
                 | set { fastqs }
          }
-
-
       emit:
          fastqs
 }
@@ -238,7 +234,7 @@ workflow _wSRAS3 {
          FASTQ_FILES_IDX = 1
          SAMPLE_IDX = 0
          SAMPLE_CONTENT_IDX = 1
-         CO_BINNING_IDX = 2
+         MULTI_BINNING_GROUP_IDX = 2
          BUCKET = params.input.SRA.S3.bucket
 
         files = Channel.empty()
@@ -258,22 +254,23 @@ workflow _wSRAS3 {
 
         // Files provided via CLI 
         idsFromCLIChannel = Channel.empty()
-        def idsCLI = null
-        if("id" in params.input.SRA.S3){
-            idsCLI = params.input.SRA.S3.id.tokenize(" ")
-            idsFromCLIChannel = Channel.from(params.input.SRA.S3.id.tokenize(" "))
-        }
-
+        idsCLI = null
         binGroupFromCLIChannel = Channel.empty()
-        if("binGroup" in params.input.SRA.S3){
-            groupsCLI = params.input.SRA.S3.binGroup.tokenize(" ")
-            if (idsCLI.size() != groupsCLI.size()) {
-                error "Mismatch detected: --input.SRA.S3.id and --input.SRA.S3.binGroup should have the same number of values."
-            }
-	        coBinningSamplesCLI = [idsCLI, groupsCLI].transpose()
-            binGroupFromCLIChannel = channel.from(coBinningSamplesCLI)
+        idsWithoutBinGroupCLIChannel = Channel.empty()
+        if("id" in params.input.SRA.S3){
+            idsFromCLIChannel = Channel.from(params.input.SRA.S3.id.tokenize(" "))
+            if("binGroup" in params.input.SRA.S3){
+                idsCLI = params.input.SRA.S3.id.tokenize(" ")
+                groupsCLI = params.input.SRA.S3.binGroup.tokenize(" ")
+                if (idsCLI.size() != groupsCLI.size()) {
+                    error "Mismatch detected: --input.SRA.S3.id and --input.SRA.S3.binGroup should have the same number of values."
+                }
+                coBinningSamplesCLI = [idsCLI, groupsCLI].transpose()
+                binGroupFromCLIChannel = channel.from(coBinningSamplesCLI)
+            } else {
+                idsWithoutBinGroupCLIChannel = Channel.from(params.input.SRA.S3.id.tokenize(" "))
+            } 
         }
-
         // First try to fetch SRA IDs from NCBI SRA DB
         BUFFER_SIZE_WATCH = 1 
         BUFFER_SIZE_DEFAULT = 50  
@@ -316,20 +313,24 @@ workflow _wSRAS3 {
 
         files | splitCsv(sep: "\t", header: true) 
             | branch { sample ->
-                coBinningSample: sample.containsKey("CO_BINNING") 
-                notCoBinnedSample: !sample.containsKey("CO_BINNING") 
+                coBinningSample: sample.containsKey("MULTI_BINNING_GROUP") 
+                notCoBinnedSample: !sample.containsKey("MULTI_BINNING_GROUP") 
             } | set{ possibleCoBinnedSamples } 
 
          possibleCoBinnedSamples.coBinningSample
-            | map { sample -> [sample.ACCESSION, sample.CO_BINNING] } 
+            | map { sample -> [sample.ACCESSION, sample.MULTI_BINNING_GROUP] } 
             | mix(binGroupFromCLIChannel) | set { coBinningSamples }
 
-        _wCheckSRAFiles.out.passedSamples | map { sample -> [sample.SAMPLE, sample]} 
-            | combine(coBinningSamples, by: SAMPLE_IDX) 
-            | map { sample -> sample[SAMPLE_CONTENT_IDX] + ["CO_BINNING":sample[CO_BINNING_IDX]] }   
-            | mix(possibleCoBinnedSamples.notCoBinnedSample)
-            | set { passedSamples }
+        _wCheckSRAFiles.out.passedSamples | map { sample -> [sample.SAMPLE, sample]} | set { passedSamples }
 
+         passedSamples | combine(possibleCoBinnedSamples.notCoBinnedSample | mix(idsWithoutBinGroupCLIChannel), by: SAMPLE_IDX)
+                | map { sample -> sample[SAMPLE_CONTENT_IDX]  }   
+                | set { passedSamplesWithoutCoBinning }
+
+         passedSamples | combine(coBinningSamples, by: SAMPLE_IDX) 
+            | map { sample -> sample[SAMPLE_CONTENT_IDX] + ["MULTI_BINNING_GROUP":sample[MULTI_BINNING_GROUP_IDX]] }   
+            | mix(passedSamplesWithoutCoBinning)
+            | set { passedSamples }
         emit:
           fastqs = passedSamples
           failedSRAFastqFiles = _wCheckSRAFiles.out.failedSRAIDs
@@ -356,8 +357,8 @@ def fetchRunAccessions( tsv ) {
     Map<String, String> row
 
     while( row = splitter.fetchRecord( reader ) ) {
-       if(row.containsKey("CO_BINNING")){
-        runAccessions.add( [row['ACCESSION'], row['CO_BINNING']] )
+       if(row.containsKey("MULTI_BINNING_GROUP")){
+        runAccessions.add( [row['ACCESSION'], row['MULTI_BINNING_GROUP']] )
        } else {
         runAccessions.add([row['ACCESSION']])
        }
@@ -480,7 +481,7 @@ workflow _wOntReadsFiles {
 
          SAMPLE_IDX=0
          READS_IDX=1
-         CO_BINNING_IDX=2
+         MULTI_BINNING_GROUP_IDX=2
 
 	     def samples = []
          fastqs = channel.empty()
@@ -492,7 +493,7 @@ workflow _wOntReadsFiles {
 
 	        samples = [names, r, binGroup].transpose()
             channel.from(samples) 
-	            | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS:file(sample[READS_IDX]),CO_BINNING:sample[CO_BINNING_IDX]] }
+	            | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS:file(sample[READS_IDX]),MULTI_BINNING_GROUP:sample[MULTI_BINNING_GROUP_IDX]] }
                 | set { fastqs }
          } else {
 	        samples = [names, r].transpose()
@@ -500,7 +501,6 @@ workflow _wOntReadsFiles {
                 | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS:file(sample[READS_IDX])] }
                 | set { fastqs }
          }
-
        emit:
          fastqs
 }
@@ -514,10 +514,11 @@ workflow _wSRANCBI {
          ACCESSION_ID = 0
          SAMPLE_IDX = 0
          SAMPLE_CONTENT_IDX = 1
-         CO_BINNING_IDX = 2
+         MULTI_BINNING_GROUP_IDX = 2
 
          // Parse TSV file to get access numbers
          accessions = []
+         samples = []
          if("sheet" in params.input.SRA.NCBI){
             samples = fetchRunAccessions(params.input.SRA.NCBI.sheet)
             accessions = samples.collect { sample ->  sample[ACCESSION_ID] }
@@ -528,19 +529,24 @@ workflow _wSRANCBI {
 
          // IDs provided via CLI 
          idsFromCLI = []
-         if("id" in params.input.SRA.NCBI){
-            idsFromCLI = params.input.SRA.NCBI.id.tokenize(" ")
-         }
 
          binGroupFromCLIChannel = Channel.empty()
-         if("binGroup" in params.input.SRA.NCBI){
-            groupsCLI = params.input.SRA.NCBI.binGroup.tokenize(" ")
-            if (idsFromCLI.size() != groupsCLI.size()) {
-                error "Mismatch detected: --input.SRA.NCBI.id and --input.SRA.NCBI.binGroup should have the same number of values."
+         idsFromCLIChannel = channel.empty()
+         if("id" in params.input.SRA.NCBI){
+            idsFromCLI = params.input.SRA.NCBI.id.tokenize(" ")
+            idsFromCLIChannel = Channel.from(idsFromCLI)
+
+            if("binGroup" in params.input.SRA.NCBI){
+                groupsCLI = params.input.SRA.NCBI.binGroup.tokenize(" ")
+                if (idsFromCLI.size() != groupsCLI.size()) {
+                    error "Mismatch detected: --input.SRA.NCBI.id and --input.SRA.NCBI.binGroup should have the same number of values."
+                }
+                coBinningSamplesCLI = [idsFromCLI, groupsCLI].transpose()
+                binGroupFromCLIChannel = channel.from(coBinningSamplesCLI)
+            } else {
+                idsWithoutBinGroupCLIChannel = Channel.from(params.input.SRA.NCBI.id.tokenize(" "))
             }
-	        coBinningSamplesCLI = [idsFromCLI, groupsCLI].transpose()
-            binGroupFromCLIChannel = channel.from(coBinningSamplesCLI)
-         }
+         } 
 
          Channel.fromSRA(accessions.unique() + idsFromCLI.unique()) | set { foundSRAFiles }
 
@@ -552,11 +558,24 @@ workflow _wSRANCBI {
   		| filter({ id,idList -> !idList.contains(id) }) | map{ id -> id[ACCESSION_ID] } \
 		| set { notFoundAccessions }
 
-        _wCheckSRAFiles.out.passedSamples | map { sample -> [sample.SAMPLE, sample]} 
-            | combine(samples, by: SAMPLE_IDX) 
-            | map { sample -> sample[SAMPLE_CONTENT_IDX] + ["CO_BINNING":sample[CO_BINNING_IDX]] }   
-            | mix(binGroupFromCLIChannel)
-            | set { passedSamples }
+        _wCheckSRAFiles.out.passedSamples | map { sample -> [sample.SAMPLE, sample]} | set { passedSamples }
+
+        passedSamples | combine(samples, by: SAMPLE_IDX) 
+            |  map { sample -> 
+                def meta = sample[SAMPLE_CONTENT_IDX]
+                if (sample[MULTI_BINNING_IDX]) meta += ["MULTI_BINNING_GROUP": sample[MULTI_BINNING_GROUP_IDX]]
+                return meta
+            }
+            | set { passedSamplesInSheet }
+
+        passedSamples | combine(binGroupFromCLIChannel | mix(idsWithoutBinGroupCLIChannel), by: SAMPLE_IDX) 
+            | map { sample -> 
+                def meta = sample[SAMPLE_CONTENT_IDX]
+                if (sample[MULTI_BINNING_GROUP_IDX]) meta += ["MULTI_BINNING_GROUP": sample[MULTI_BINNING_GROUP_IDX]]
+                return meta
+                }
+            | mix( passedSamplesInSheet )
+            | set {passedSamples}
 
        emit:
          fastqs = passedSamples
@@ -574,7 +593,7 @@ def setCoBinning(group_id, samples_list){
 
     // 2. Add this count to every map in the list
     def updated_list = samples_list.collect { sample_map ->
-        return sample_map + [CO_BINNING_COUNT: total_count, DO_CO_BINNING: true]
+        return sample_map + [MULTI_BINNING_GROUP_COUNT: total_count, DO_MULTI_BINNING_GROUP: true]
     } 
 
     // 3. Return the original structure with the updated list
@@ -583,16 +602,16 @@ def setCoBinning(group_id, samples_list){
 
 
 /*
-* This workflow sets the binning specific variables DO_CO_BINNING, CO_BINNING_COUNT and CO_BINNING per sample. 
+* This workflow sets the binning specific variables DO_MULTI_BINNING_GROUP, MULTI_BINNING_GROUP_COUNT and MULTI_BINNING_GROUP per sample. 
 */
 workflow _wSetCoBinningMetadata {
     take:
         fastqs
     main:
-        // Distinguish between samples with and without CO_BINNING column value.
+        // Distinguish between samples with and without MULTI_BINNING_GROUP column value.
         fastqs | branch { sample ->
-            coBinning: sample.containsKey("CO_BINNING")
-            singleSample: !sample.containsKey("CO_BINNING")
+            coBinning: sample.containsKey("MULTI_BINNING_GROUP")
+            singleSample: !sample.containsKey("MULTI_BINNING_GROUP")
         } | set { sampleType }
 
         SAMPLE_IDX=0
@@ -600,24 +619,24 @@ workflow _wSetCoBinningMetadata {
         SAMPLE_LIST_IDX=1
 
         // Set the number of samples per group in every sample array
-        // by setting the variables DO_CO_BINNING, CO_BINNING_COUNT and CO_BINNING.
+        // by setting the variables DO_MULTI_BINNING_GROUP, MULTI_BINNING_GROUP_COUNT and MULTI_BINNING_GROUP.
         sampleType.coBinning
-            | map { sample -> [sample["CO_BINNING"], sample] }
-            | groupTuple(by: GROUP_IDX)
+            | map { sample -> [sample["MULTI_BINNING_GROUP"], sample] }
+            | groupTuple(by: GROUP_IDX, remainder: true)
             | map { group_id, samples_list -> setCoBinning(group_id, samples_list) }
             | map { sample ->  sample[SAMPLE_LIST_IDX] } | flatten  | branch { sample -> 
-                coBinningSamples: sample["CO_BINNING_COUNT"]>1
-                singleBinningSamples: sample["CO_BINNING_COUNT"]==1
+                coBinningSamples: sample["MULTI_BINNING_GROUP_COUNT"]>1
+                singleBinningSamples: sample["MULTI_BINNING_GROUP_COUNT"]==1
             } | set { verifiedSamples }
 
         // If just a single sample should be processed then indicate that in the metadata.
         sampleType.singleSample  
-            | map { sample -> sample + [DO_CO_BINNING: false, CO_BINNING_COUNT:null, CO_BINNING:null] }
+            | map { sample -> sample + [DO_MULTI_BINNING_GROUP: false, MULTI_BINNING_GROUP_COUNT:null, MULTI_BINNING_GROUP:null] }
             | set { singleSamples }
 
-        // If the CO_BINNING column exists but only one sample is specified, treat that sample as a single sample.
+        // If the MULTI_BINNING_GROUP column exists but only one sample is specified, treat that sample as a single sample.
         verifiedSamples.singleBinningSamples
-            | map { sample -> sample + [DO_CO_BINNING: false, CO_BINNING_COUNT:null, CO_BINNING:null] }
+            | map { sample -> sample + [DO_MULTI_BINNING_GROUP: false, MULTI_BINNING_GROUP_COUNT:null, MULTI_BINNING_GROUP:null] }
             | set {verifiedSingleBinningSamples}
 
         verifiedSamples.coBinningSamples 
@@ -636,8 +655,8 @@ workflow _wSetCoBinningMetadata {
  *  The input workflow allows to process files that are provided via a sample sheet or via CLI.
  * 
  *  In all cases a channel is returned containing values of the format: [TYPE: illumina or ont, SAMPLE:name of the sample, READS1: left read, READS2: right read],
- *  [TYPE: illumina or ont, SAMPLE:name of the sample, READS1: left read, READS2: right read, DO_CO_BINNING: should be co binning done, 
- *  CO_BINNING_COUNT: how many samples should be co-binned, CO_BINNING: name of the group of samples that should be co-binned] 
+ *  [TYPE: illumina or ont, SAMPLE:name of the sample, READS1: left read, READS2: right read, DO_MULTI_BINNING_GROUP: should be co binning done, 
+ *  MULTI_BINNING_GROUP_COUNT: how many samples should be binned per group, MULTI_BINNING_GROUP: name of the group of samples that should be co-binned] 
  */
 workflow wInputFile {
   main:
