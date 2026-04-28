@@ -201,17 +201,33 @@ workflow _wSplitReadsFiles {
             error "Mismatch detected: --input.paired.r1, --input.paired.r2 and --input.paired.names should have the same number of values."
          }
 
-	 def samples = [names, r1, r2].transpose()
-
          SAMPLE_IDX=0
          READS1_IDX=1
          READS2_IDX=2
+         CO_BINNING_IDX=3
 
-         channel.from(samples) 
-	    | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS1:file(sample[READS1_IDX]),READS2:file(sample[READS2_IDX])] }
-            | set { fastqs }
+      
 
-       emit:
+	     def samples = []
+         fastqs = channel.empty()
+         if(params.input.paired.containsKey("binGroup")){
+            def binGroup = params.input.paired.binGroup.tokenize(" ")
+            if (r1.size() != binGroup.size()) {
+                error "Mismatch detected: --input.paired.r and --input.paired.binGroup should have the same number of values."
+            }
+	        samples = [names, r1, r2, binGroup].transpose()
+            channel.from(samples) 
+	            | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS1:file(sample[READS1_IDX]),READS2:file(sample[READS2_IDX]),CO_BINNING:sample[CO_BINNING_IDX]] }
+                | set { fastqs }
+         } else {
+	        samples = [names, r1, r2].transpose()
+            channel.from(samples) 
+	            | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS1:file(sample[READS1_IDX]),READS2:file(sample[READS2_IDX])] }
+                | set { fastqs }
+         }
+
+
+      emit:
          fastqs
 }
 
@@ -242,12 +258,20 @@ workflow _wSRAS3 {
 
         // Files provided via CLI 
         idsFromCLIChannel = Channel.empty()
+        def idsCLI = null
         if("id" in params.input.SRA.S3){
+            idsCLI = params.input.SRA.S3.id.tokenize(" ")
             idsFromCLIChannel = Channel.from(params.input.SRA.S3.id.tokenize(" "))
         }
 
+        binGroupFromCLIChannel = Channel.empty()
         if("binGroup" in params.input.SRA.S3){
-            binGroupFromCLIChannel = Channel.from(params.input.SRA.S3.binGroup.tokenize(" "))
+            groupsCLI = params.input.SRA.S3.binGroup.tokenize(" ")
+            if (idsCLI.size() != groupsCLI.size()) {
+                error "Mismatch detected: --input.SRA.S3.id and --input.SRA.S3.binGroup should have the same number of values."
+            }
+	        coBinningSamplesCLI = [idsCLI, groupsCLI].transpose()
+            binGroupFromCLIChannel = channel.from(coBinningSamplesCLI)
         }
 
         // First try to fetch SRA IDs from NCBI SRA DB
@@ -293,17 +317,17 @@ workflow _wSRAS3 {
         files | splitCsv(sep: "\t", header: true) 
             | branch { sample ->
                 coBinningSample: sample.containsKey("CO_BINNING") 
-                samples: !sample.containsKey("CO_BINNING") 
+                notCoBinnedSample: !sample.containsKey("CO_BINNING") 
             } | set{ possibleCoBinnedSamples } 
 
          possibleCoBinnedSamples.coBinningSample
             | map { sample -> [sample.ACCESSION, sample.CO_BINNING] } 
-            | set { coBinningSamples }
+            | mix(binGroupFromCLIChannel) | set { coBinningSamples }
 
         _wCheckSRAFiles.out.passedSamples | map { sample -> [sample.SAMPLE, sample]} 
             | combine(coBinningSamples, by: SAMPLE_IDX) 
             | map { sample -> sample[SAMPLE_CONTENT_IDX] + ["CO_BINNING":sample[CO_BINNING_IDX]] }   
-            | mix(possibleCoBinnedSamples.samples)
+            | mix(possibleCoBinnedSamples.notCoBinnedSample)
             | set { passedSamples }
 
         emit:
@@ -328,11 +352,15 @@ def fetchRunAccessions( tsv ) {
 
     splitter.parseHeader( reader )
 
-    List<String> runAccessions = []
+    List runAccessions = []
     Map<String, String> row
 
     while( row = splitter.fetchRecord( reader ) ) {
-       runAccessions.add( row['ACCESSION'] )
+       if(row.containsKey("CO_BINNING")){
+        runAccessions.add( [row['ACCESSION'], row['CO_BINNING']] )
+       } else {
+        runAccessions.add([row['ACCESSION']])
+       }
     }
     return runAccessions
 }
@@ -452,11 +480,26 @@ workflow _wOntReadsFiles {
 
          SAMPLE_IDX=0
          READS_IDX=1
+         CO_BINNING_IDX=2
 
-	 def samples = [names, r].transpose()
+	     def samples = []
+         fastqs = channel.empty()
+         if(params.input.ont.containsKey("binGroup")){
+            def binGroup = params.input.ont.binGroup.tokenize(" ")
+            if (r.size() != binGroup.size()) {
+                error "Mismatch detected: --input.ont.r and --input.ont.binGroup should have the same number of values."
+            }
 
-         channel.from(samples) | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS:file(sample[READS_IDX])] }
-            | set { fastqs }
+	        samples = [names, r, binGroup].transpose()
+            channel.from(samples) 
+	            | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS:file(sample[READS_IDX]),CO_BINNING:sample[CO_BINNING_IDX]] }
+                | set { fastqs }
+         } else {
+	        samples = [names, r].transpose()
+            channel.from(samples) 
+                | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS:file(sample[READS_IDX])] }
+                | set { fastqs }
+         }
 
        emit:
          fastqs
@@ -468,21 +511,35 @@ workflow _wSRANCBI {
        main:
          MAX_LENGTH=12
          MIN_LENGTH=9
+         ACCESSION_ID = 0
+         SAMPLE_IDX = 0
+         SAMPLE_CONTENT_IDX = 1
+         CO_BINNING_IDX = 2
 
          // Parse TSV file to get access numbers
          accessions = []
          if("sheet" in params.input.SRA.NCBI){
-            accessions = fetchRunAccessions(params.input.SRA.NCBI.sheet)
+            samples = fetchRunAccessions(params.input.SRA.NCBI.sheet)
+            accessions = samples.collect { sample ->  sample[ACCESSION_ID] }
          }
 
          // check if the number of SRA files is correct and return the correct format 
-         ACCESSION_ID = 0
          FASTQ_LIST = 1 
 
          // IDs provided via CLI 
          idsFromCLI = []
          if("id" in params.input.SRA.NCBI){
             idsFromCLI = params.input.SRA.NCBI.id.tokenize(" ")
+         }
+
+         binGroupFromCLIChannel = Channel.empty()
+         if("binGroup" in params.input.SRA.NCBI){
+            groupsCLI = params.input.SRA.NCBI.binGroup.tokenize(" ")
+            if (idsFromCLI.size() != groupsCLI.size()) {
+                error "Mismatch detected: --input.SRA.NCBI.id and --input.SRA.NCBI.binGroup should have the same number of values."
+            }
+	        coBinningSamplesCLI = [idsFromCLI, groupsCLI].transpose()
+            binGroupFromCLIChannel = channel.from(coBinningSamplesCLI)
          }
 
          Channel.fromSRA(accessions.unique() + idsFromCLI.unique()) | set { foundSRAFiles }
@@ -495,8 +552,14 @@ workflow _wSRANCBI {
   		| filter({ id,idList -> !idList.contains(id) }) | map{ id -> id[ACCESSION_ID] } \
 		| set { notFoundAccessions }
 
+        _wCheckSRAFiles.out.passedSamples | map { sample -> [sample.SAMPLE, sample]} 
+            | combine(samples, by: SAMPLE_IDX) 
+            | map { sample -> sample[SAMPLE_CONTENT_IDX] + ["CO_BINNING":sample[CO_BINNING_IDX]] }   
+            | mix(binGroupFromCLIChannel)
+            | set { passedSamples }
+
        emit:
-         fastqs = _wCheckSRAFiles.out.passedSamples
+         fastqs = passedSamples
          failedSRAFastqFiles = _wCheckSRAFiles.out.failedSRAIDs
          notFoundAccessions = notFoundAccessions
 }
