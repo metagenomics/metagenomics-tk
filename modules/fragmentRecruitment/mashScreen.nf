@@ -252,21 +252,21 @@ workflow _wRunMapping {
 
      pBowtie2(Channel.value(params?.steps.containsKey("fragmentRecruitment")  \
  	&& params.steps?.fragmentRecruitment?.mashScreen?.additionalParams.containsKey("bowtie")), \
-	Channel.value([Utils.getModulePath(params.modules.fragmentRecruitment), \
+	Channel.value([params.modules.fragmentRecruitment, \
         "readMapping/bowtie", params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.bowtie, \
 	params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.samtoolsViewBowtie, \
 	params.steps.containsKey("fragmentRecruitment")]), mapperInput)
 
      pBwa(Channel.value(params?.steps.containsKey("fragmentRecruitment") \
 	&& params.steps?.fragmentRecruitment?.mashScreen?.additionalParams.containsKey("bwa")), \
-	Channel.value([Utils.getModulePath(params.modules.fragmentRecruitment), \
+	Channel.value([params.modules.fragmentRecruitment, \
         "readMapping/bwa", params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.bwa, \
 	params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.samtoolsViewBwa, \
 	params.steps.containsKey("fragmentRecruitment")]), mapperInput)
 
      pBwa2(Channel.value(params?.steps.containsKey("fragmentRecruitment") \
 	&& params.steps?.fragmentRecruitment?.mashScreen?.additionalParams.containsKey("bwa2")), \
-	Channel.value([Utils.getModulePath(params.modules.fragmentRecruitment), \
+	Channel.value([params.modules.fragmentRecruitment, \
         "readMapping/bwa2", params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.bwa2, \
 	params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.samtoolsViewBwa2, \
 	params.steps.containsKey("fragmentRecruitment")]), mapperInput)
@@ -276,7 +276,7 @@ workflow _wRunMapping {
 	| set { minimapInput }
 
      pMinimap2(Channel.value(params?.steps.containsKey("fragmentRecruitment")), \
-	Channel.value([Utils.getModulePath(params.modules.fragmentRecruitment), \
+	Channel.value([params.modules.fragmentRecruitment, \
         "readMapping/minimap",  params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.minimap, \
         params.steps?.fragmentRecruitment?.mashScreen?.additionalParams?.samtoolsViewMinimap, \
 	params.steps.containsKey("fragmentRecruitment")]), minimapInput)
@@ -366,10 +366,10 @@ workflow _wGetStatistics {
         | join(ontMedianQuality, by: SAMPLE_IDX)
         | set { minimapMappingStatsInput }
 
-     pGetBinStatistics(Utils.getModulePath(params.modules.fragmentRecruitment), shortReadMappingStatsInput | mix(minimapMappingStatsInput))
+     pGetBinStatistics(channel.value(params.modules.fragmentRecruitment), shortReadMappingStatsInput | mix(minimapMappingStatsInput))
 
      pCovermContigsCoverage(Channel.value(params?.steps?.fragmentRecruitment.find{ it.key == "contigsCoverage"}?.value), \
-	Channel.value([Utils.getModulePath(params.modules.fragmentRecruitment), \
+	Channel.value([params.modules.fragmentRecruitment, \
 	"contigCoverage", params?.steps?.fragmentRecruitment?.contigsCoverage?.additionalParams]), \
 	mappedShortReads | combine(Channel.value(DO_NOT_SET_IDENTITY_AUTOMATICALLY)) \
 	| mix(minimapMappedReads | join(ontMedianQuality, by: SAMPLE_IDX)))
@@ -386,7 +386,7 @@ workflow _wGetStatistics {
      ALIGNMENT_INDEX = 2
      pCovermGenomeCoverage(Channel.value(params?.steps?.fragmentRecruitment.find{ it.key == "genomeCoverage"}?.value), \
         Channel.value(""), \
-	Channel.value([Utils.getModulePath(params.modules.fragmentRecruitment), \
+	Channel.value([params.modules.fragmentRecruitment, \
 	"genomeCoverage", params?.steps?.fragmentRecruitment?.genomeCoverage?.additionalParams]), \
 	 minimapMappedReadsCovInput | mix(mappedShortReadsCovInput) \
 	| map { sample -> sample.addAll(ALIGNMENT_INDEX, emptyFile); sample })

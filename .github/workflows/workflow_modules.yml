@@ -213,10 +213,40 @@ jobs:
       - name: Test if just the input SRA datasets are reported 
         run: |
           bash ./scripts/test_SRA_large.sh "${WORK_DIR}" ${PROFILE} || exit 1
+
+  test_input_parameters:
+    timeout-minutes: 800
+    runs-on: [ self-hosted, slurm]
+    needs: [codePolicy]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set Secrets
+        run: |
+          make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
       - name: Test if CLI input parameter work 
         run: |
-          bash ./scripts/test_input.sh "${WORK_DIR}" ${PROFILE} || exit 1
+          bash ./scripts/test_input.sh  " -c  test_data/assets/aws.config \
+                                      --input.SRA.NCBI.id 'SRR5651439' \
+                                      --input.SRA.S3.id 'ERR12263778 SRR29912082' \
+                                      --input.ont.r https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/SRR16328449_qc.fq.gz \
+                                      --input.ont.names 'nano' \
+                                      --input.paired.r1 'https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1bla.fq.gz https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_3.fq.gz' \
+                                      --input.paired.r2 'https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1bla.fq.gz https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1.fq.gz https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_3.fq.gz' \
+                                      --input.paired.names 'test1 test2 test3' --input.paired.binGroup 'A A B' " ./test_data/input/cliExpected.tsv "${WORK_DIR}" ${PROFILE}  || exit 1
 
+      - name: Test if combination of file and CLI based input works for paired data
+        run: |
+          bash scripts/test_input.sh " -c  test_data/assets/aws.config \
+                                      --input.paired.r1 'https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1bla.fq.gz https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_3.fq.gz' \
+                                      --input.paired.r2 'https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1bla.fq.gz https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1.fq.gz https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_3.fq.gz' \
+                                      --input.paired.names 'test1 test2 test3' --input.paired.binGroup 'A A B' " ./test_data/input/pairedExpected.tsv "${WORK_DIR}" ${PROFILE}  || exit 1
+
+      - name: Test if combination of file and CLI based input works for SRA S3 data
+        run: |
+          bash scripts/test_input.sh " -c  test_data/assets/aws.config \
+                                      --input.SRA.S3.id 'ERR12263778 SRR29912082' --input.SRA.S3.sheet ./test_data/input/sraS3Input.tsv  \
+                                      --input.SRA.S3.binGroup 'A A' " ./test_data/input/sraS3Expected.tsv  work
 
   mag_attributes_1:
     timeout-minutes: 2500
@@ -473,6 +503,26 @@ jobs:
       - name: Test Metaflye Assembly
         run: |
           bash ./scripts/test_assemblyONT.sh "    " example_params/assemblyONT.yml "${WORK_DIR}" ${PROFILE}  || exit 1
+
+  binning:
+    timeout-minutes: 800
+    needs: [codePolicy]
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test Metabat Binning 
+        run: |
+          bash ./scripts/test_binning.sh "    " "" "${WORK_DIR}" ${PROFILE}  || exit 1
+      - name: Test Binning based on ONT data
+        run: |
+          bash ./scripts/test_binningONT.sh "    " "" "${WORK_DIR}" ${PROFILE}  || exit 1
+      - name: Test Multi Binning
+        run: |
+          bash ./scripts/test_multiBinning.sh "    " "" "${WORK_DIR}" ${PROFILE}  || exit 1
+      - name: Test Multi Binning Long Reads
+        run: |
+          bash ./scripts/test_multiBinningONT.sh "    " "" "${WORK_DIR}" ${PROFILE}  || exit 1
+
 
   cooccurrence:
     timeout-minutes: 800
