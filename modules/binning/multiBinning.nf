@@ -322,7 +322,7 @@ workflow _wBinningLongRead {
     semibinTrainingConfig = channel.value(
         [
             params.modules.multiBinningONT,
-            "semibin2/training",
+            "semibin2ONT/training",
             params.steps?.multiBinningONT?.semibin2?.additionalParams?.training,
         ]
     )
@@ -330,7 +330,7 @@ workflow _wBinningLongRead {
     semibinBinningConfig = channel.value(
         [
             params.modules.multiBinningONT,
-            "semibin2",
+            "semibin2ONT",
             params.steps?.multiBinningONT?.semibin2?.additionalParams?.binning,
         ]
     )
