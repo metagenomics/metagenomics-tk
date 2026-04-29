@@ -415,9 +415,9 @@ process pSemiBin2Training {
     publishDir params.output, mode: "${params.publishDirMode}", \
 	saveAs: { filename -> Output.getOutput("${sample}", params.runid, "${outputToolDir}", module, filename) }
 
-    memory { Utils.getMemoryResources(params.resources.medium, "${group}", task.attempt, params.resources) }
+    memory { Utils.getMemoryResources(params.resources.large, "${group}", task.attempt, params.resources) }
 
-    cpus { Utils.getCPUsResources(params.resources.medium, "${group}", task.attempt, params.resources) }
+    cpus { Utils.getCPUsResources(params.resources.large, "${group}", task.attempt, params.resources) }
 
     input:
     tuple val(module), val(outputToolDir), val(semibinParams)
@@ -454,9 +454,9 @@ process pSemiBin2Binning {
     publishDir params.output, mode: "${params.publishDirMode}", \
 	saveAs: { filename -> Output.getOutput("${sample}", params.runid, "${outputToolDir}", module, filename) }
 
-    memory { Utils.getMemoryResources(params.resources.medium, "${group}", task.attempt, params.resources) }
+    memory { Utils.getMemoryResources(params.resources.small, "${group}", task.attempt, params.resources) }
 
-    cpus { Utils.getCPUsResources(params.resources.medium, "${group}", task.attempt, params.resources) }
+    cpus { Utils.getCPUsResources(params.resources.small, "${group}", task.attempt, params.resources) }
 
     input:
     tuple val(module), val(outputToolDir), val(semibinParams)
@@ -538,9 +538,10 @@ process pSemiBin2GenerateSequenceFeatures {
     tuple val("${group}"), file("output"), file("feature_generation.tar.gz"), optional: true, emit: features
 
     script:
+    parameters = semibinParams[0]
     """
     SemiBin2 generate_sequence_features_multi \
-    ${semibinParams} \
+    ${parameters} \
     --processes ${task.cpus} \
     -i ${contigs} \
     -b ${bam} \
