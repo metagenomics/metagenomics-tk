@@ -434,7 +434,7 @@ workflow _wBinningShortRead {
     // Reads of all samples per group must be mapped to the concatenated assembly.
     sampleGroups
         | join(inputReads, by: GROUP_IDX)
-        | map { sample, group, pairedFilePath, unpairedFilePath -> [group, sample, pairedFilePath, unpairedFilePath] }
+        | map { sample, group, _groupSize, pairedFilePath, unpairedFilePath -> [group, sample, pairedFilePath, unpairedFilePath] }
         | set { readsList }
 
     pConcatContigs.out.contigs

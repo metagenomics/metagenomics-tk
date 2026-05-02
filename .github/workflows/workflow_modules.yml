@@ -65,7 +65,16 @@ jobs:
           bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/     " \
           example_params/fullPipeline_fraction/fullPipeline_fraction_binning_semibin2.yml \
           "${WORK_DIR}" ${PROFILE} || exit 1
-
+      - name: Test Full Pipeline with multi sample binning option
+        run: |
+          bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/     " \
+          example_params/fullPipeline_fraction/fullPipeline_fraction_binning_multi_sample.yml \
+          "${WORK_DIR}" ${PROFILE} || exit 1
+      - name: Test Full Pipeline with multi sample ONT binning option
+        run: |
+          bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/     " \
+          example_params/fullPipeline_fraction/fullPipeline_ONT_fraction_binning_multi_sample.yml \
+          "${WORK_DIR}" ${PROFILE} || exit 1
 
   full_pipeline_ont:
     timeout-minutes: 2500

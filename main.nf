@@ -485,6 +485,7 @@ workflow _wProcessIllumina {
       // Figure out whether the sample belongs to a multi binning group
       IS_MULTI_SAMPLE_IDX = 3
       READS_FILE_IDX = 1
+      READS_UNPAIRED_FILE_IDX = 1
       qcReads | combine(binningLabels, by:SAMPLE_IDX ) | branch { sample ->
         singleSample: !sample[IS_MULTI_SAMPLE_IDX]
         multiSample: sample[IS_MULTI_SAMPLE_IDX]
@@ -492,7 +493,7 @@ workflow _wProcessIllumina {
 
       // Make sure that the number of contigs per group matches the number of read samples per group because certain samples may fail.
       sampleTypeReads.multiSample 
-        |  map { sample -> [sample[SAMPLE_IDX], sample[READS_FILE_IDX]] } 
+        |  map { sample -> [sample[SAMPLE_IDX], sample[READS_FILE_IDX], sample[READS_UNPAIRED_FILE_IDX]] } 
         | combine(wShortReadAssemblyList.out.contigs, by: SAMPLE_IDX)  | set { qualityCheckedData }
       
       // Check the number of samples per group
@@ -521,7 +522,7 @@ workflow _wProcessIllumina {
 
         singleSample | multiMap { sample, readsPair, readsSingle, contigs, group, groupSize  ->
             contigs: [sample, contigs]
-            reads: [sample, reads]
+            reads: [sample, readsPair, readsSingle]
         } | set { singleSampleInput } 
 
 
