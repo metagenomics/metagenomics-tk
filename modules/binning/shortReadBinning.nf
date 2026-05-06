@@ -1,5 +1,6 @@
 include {
     pGetBinStatistics ;
+    wGetMappingQuality ;
     pCovermContigsCoverage ;
     pCovermGenomeCoverage ;
     pSemiBin2 ;
@@ -322,13 +323,14 @@ workflow _wBinning {
 
         contigs | combine(inputReads, by: SAMPLE_IDX) | set { mapperInput }
 
-        _wRunMappers(params.modules.binning, channel.value(activeMapper), mapperConfig, mapperInput)
+        _wRunMappers(channel.value(activeMapper), mapperConfig, mapperInput)
 
         _wRunMappers.out.mappedReads | set { mappedReads }
 
         _wRunMappers.out.unmappedReads | set { unmappedReads }
     }
 
+    wGetMappingQuality(params.modules.binning, mappedReads)
 
     pCovermContigsCoverage(
         channel.value(params?.steps?.binning.find { it.key == "contigsCoverage" }?.value),

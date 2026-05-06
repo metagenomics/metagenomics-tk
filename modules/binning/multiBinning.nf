@@ -5,7 +5,8 @@ include {
     pSemiBin2 ;
     pMinimap2 ;
     wGetMappingQuality ;
-    _wMultiBinningSemiBin2 ;
+    wMultiBinningSemiBin2 ;
+    wMultiBinningSemiBin2ONT ;
     _wRunMappers
 } from './processes'
 include { pProdigal ; pHmmSearch } from '../annotation/module'
@@ -15,77 +16,6 @@ include { createMap ; mapJoin } from '../utils/methods'
 
 include { pDumpLogs } from '../utils/processes'
 
-
-/*
-*
-* Semibin2 expects all contig names to have a prefix with the sample name.
-*
-*/
-process pConcatContigs {
-
-    container "${params.semibin2_image}"
-
-    tag "Group: ${group}"
-
-    label 'medium'
-
-    input:
-    tuple val(group), path(contigs, stageAs: 'input_*'), val(samples)
-
-    output:
-    tuple val("${group}"), file("${group}.fa.gz"), emit: contigs
-
-    script:
-    def file_list = contigs.join(' ')
-    def name_list = samples.join(' ')
-    """
-    # Convert space-separated strings into Bash arrays
-    raw_files=(${file_list})
-    names=(${name_list})
-
-    mkdir contigs
-    # Loop through and create symlinks using the sample name
-    for i in \${!raw_files[@]}; do
-        REAL_PATH=\$(readlink -f \${raw_files[\$i]})
-        ln -s "\$REAL_PATH" contigs/\${names[\$i]}_contigs.fa.gz
-    done 
-
-    SemiBin2 concatenate_fasta \
-    --input-fasta contigs/* \
-    --output output
-
-    mv output/concatenated.fa.gz ${group}.fa.gz
-    chmod a+rwx ${group}.fa.gz
-    """
-}
-
-/*
-*
-* This method renames contigs in the bam file to their original name before they were renamed by SemiBin2.
-*
-*/
-process pRenameContigsInMapping {
-
-    container "${params.samtools_image}"
-
-    tag "Sample: ${sample}"
-
-    label 'small'
-
-    input:
-    tuple val(sample), path(mapping)
-
-    output:
-    tuple val("${sample}"), path("output/output.bam"), emit: mapping
-
-    script:
-    """
-    mkdir output
-    samtools view -H ${mapping} \
-        | sed "s/${sample}_contigs://g" > new_header.sam
-    samtools reheader new_header.sam ${mapping} > output/output.bam
-    """
-}
 
 /*
  * This entrypoint takes the following tab separated file of files containing contigs, group information for co binning, paired and optional single reads 
@@ -258,27 +188,6 @@ workflow _wBinningLongRead {
     main:
     DO_NOT_ESTIMATE_IDENTITY = "-1"
     SAMPLE_IDX = 0
-    GROUP_IDX = 0
-
-    // Concatenate all assemblies per groups using the semibin specific method.
-    sampleGroups
-        | join(contigs, by: SAMPLE_IDX)
-        | map { sample, group, groupSize, filePath -> tuple(groupKey(group, groupSize), filePath, sample) }
-        | groupTuple(remainder: true)
-        | set { assemblyList }
-
-    pConcatContigs(assemblyList)
-
-    // Reads of all samples per group must be mapped to the concatenated assembly.
-    sampleGroups
-        | join(inputReads, by: GROUP_IDX)
-        | map { sample, group, _groupSize, readsFilePath -> [group, sample, readsFilePath] }
-        | set { readsList }
-
-    pConcatContigs.out.contigs
-        | combine(readsList, by: GROUP_IDX)
-        | map { _group, concatContigs, sample, pairedFilePath -> [sample, concatContigs, pairedFilePath] }
-        | set { mapperInput }
 
     pMinimap2(
         channel.value(params?.steps?.containsKey("multiBinningONT")),
@@ -291,17 +200,12 @@ workflow _wBinningLongRead {
                 params.steps.containsKey("fragmentRecruitment"),
             ]
         ),
-        mapperInput,
+        contigs | join(inputReads, by: SAMPLE_IDX),
     )
 
     pMinimap2.out.mappedReads | set { mappedReads }
 
     wGetMappingQuality(params.modules.multiBinningONT, mappedReads)
-
-    // We need to rename contigs in the bam file to their original name for consistency in follow up methods.
-    mappedReads
-        | pRenameContigsInMapping
-        | set { renamedContigsMappedReads }
 
     pCovermContigsCoverage(
         channel.value(params?.steps?.multiBinningONT.find { it.key == "contigsCoverage" }?.value),
@@ -312,7 +216,7 @@ workflow _wBinningLongRead {
                 params?.steps?.multiBinningONT?.contigsCoverage?.additionalParams,
             ]
         ),
-        renamedContigsMappedReads | join(medianQuality, by: SAMPLE_IDX),
+        mappedReads | join(medianQuality, by: SAMPLE_IDX),
     )
 
     semibinGenerateFeaturesConfig = channel.value(
@@ -336,20 +240,18 @@ workflow _wBinningLongRead {
     )
 
     // Run SembiBin2 workflow 
-    _wMultiBinningSemiBin2(
-        channel.value("LONG"),
+    wMultiBinningSemiBin2ONT(
         semibinGenerateFeaturesConfig,
         semibinTrainingConfig,
         semibinBinningConfig,
         sampleGroups,
-        pConcatContigs.out.contigs,
+        inputReads,
         contigs,
-        mappedReads,
     )
 
-    _wMultiBinningSemiBin2.out.bins | set { bins }
+    wMultiBinningSemiBin2ONT.out.bins | set { bins }
 
-    _wMultiBinningSemiBin2.out.notBinned | set { notBinned }
+    wMultiBinningSemiBin2ONT.out.notBinned | set { notBinned }
 
     emptyFile = file(params.tempdir + "/empty")
     emptyFile.text = ""
@@ -365,7 +267,7 @@ workflow _wBinningLongRead {
                 params?.steps?.multiBinningONT?.genomeCoverage?.additionalParams,
             ]
         ),
-        renamedContigsMappedReads | join(bins, by: SAMPLE_IDX) | map { sample ->
+        mappedReads | join(bins, by: SAMPLE_IDX) | map { sample ->
             sample.addAll(ALIGNMENT_INDEX, emptyFile)
             sample
         } | join(medianQuality, by: SAMPLE_IDX),
@@ -377,8 +279,8 @@ workflow _wBinningLongRead {
     // following entries [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
     bins | map { it -> Utils.flattenTuple(it) } | flatMap { it -> createMap(it) } | set { binMap }
 
-    _wMultiBinningSemiBin2.out.binContigMapping
-        | join(renamedContigsMappedReads, by: SAMPLE_IDX)
+    wMultiBinningSemiBin2ONT.out.binContigMapping
+        | join(mappedReads, by: SAMPLE_IDX)
         | combine(channel.from("semibin2"))
         | join(bins, by: SAMPLE_IDX)
         | set { semibin2BinStatisticsInput }
@@ -399,7 +301,7 @@ workflow _wBinningLongRead {
     emit:
     binsStats = binMap
     bins = bins
-    mapping = renamedContigsMappedReads
+    mapping = mappedReads
     notBinnedContigs = notBinned
     unmappedReads = pMinimap2.out.unmappedReads
     contigCoverage = pCovermContigsCoverage.out.coverage
@@ -420,30 +322,8 @@ workflow _wBinningShortRead {
     main:
     DO_NOT_ESTIMATE_IDENTITY = "-1"
     SAMPLE_IDX = 0
-    GROUP_IDX = 0
 
-    // Concatenate all assemblies per groups using the semibin specific method.
-    sampleGroups
-        | join(contigs, by: SAMPLE_IDX)
-        | map { sample, group, groupSize, filePath -> tuple(groupKey(group, groupSize), filePath, sample) }
-        | groupTuple(remainder: true)
-        | set { assemblyList }
-
-    pConcatContigs(assemblyList)
-
-    // Reads of all samples per group must be mapped to the concatenated assembly.
-    sampleGroups
-        | join(inputReads, by: GROUP_IDX)
-        | map { sample, group, _groupSize, pairedFilePath, unpairedFilePath -> [group, sample, pairedFilePath, unpairedFilePath] }
-        | set { readsList }
-
-    pConcatContigs.out.contigs
-        | combine(readsList, by: GROUP_IDX)
-        | map { _group, concatContigs, sample, pairedFilePath, unpairedFilePath -> [sample, concatContigs, pairedFilePath, unpairedFilePath] }
-        | set { mapperInput }
-
-    mappedReads = channel.empty()
-    unmappedReads = channel.empty()
+    mapping = channel.empty()
     if (params.steps.containsKey("multiBinning")) {
         // 2. Identify which tool is active (e.g., via a param or checking keys)
         def activeMapper = params.steps?.multiBinning?.keySet()?.find { tool -> ["bwa", "bowtie", "bwa2"].contains(tool) }
@@ -462,17 +342,16 @@ workflow _wBinningShortRead {
             )
             : channel.empty()
 
-        _wRunMappers(params.modules.multiBinning, channel.value(activeMapper), mapperConfig, mapperInput)
+        contigs | combine(inputReads, by: SAMPLE_IDX) | set { mapperInput }
 
-        _wRunMappers.out.mappedReads | set { mappedReads }
+        _wRunMappers(channel.value(activeMapper), mapperConfig, mapperInput)
+
+        _wRunMappers.out.mappedReads | set { mapping }
 
         _wRunMappers.out.unmappedReads | set { unmappedReads }
     }
 
-    // We need to rename contigs in the bam file to their original name for consistency for follow up methods.
-    mappedReads
-        | pRenameContigsInMapping
-        | set { renamedContigsMappedReads }
+    wGetMappingQuality(params.modules.multiBinning, mapping)
 
     pCovermContigsCoverage(
         channel.value(params?.steps?.multiBinning.find { mapperVal -> mapperVal.key == "contigsCoverage" }?.value),
@@ -483,7 +362,7 @@ workflow _wBinningShortRead {
                 params?.steps?.multiBinning?.contigsCoverage?.additionalParams,
             ]
         ),
-        renamedContigsMappedReads | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY)),
+        mapping | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY)),
     )
 
     semibinGenerateFeaturesConfig = channel.value(
@@ -507,20 +386,18 @@ workflow _wBinningShortRead {
     )
 
     // Run SembiBin2 workflow 
-    _wMultiBinningSemiBin2(
-        channel.value("SHORT"),
+    wMultiBinningSemiBin2(
         semibinGenerateFeaturesConfig,
         semibinTrainingConfig,
         semibinBinningConfig,
         sampleGroups,
-        pConcatContigs.out.contigs,
+        inputReads,
         contigs,
-        mappedReads,
     )
 
-    _wMultiBinningSemiBin2.out.bins | set { bins }
+    wMultiBinningSemiBin2.out.bins | set { bins }
 
-    _wMultiBinningSemiBin2.out.notBinned | set { notBinned }
+    wMultiBinningSemiBin2.out.notBinned | set { notBinned }
 
     emptyFile = file(params.tempdir + "/empty")
 
@@ -535,7 +412,7 @@ workflow _wBinningShortRead {
                 params?.steps?.multiBinning?.genomeCoverage?.additionalParams,
             ]
         ),
-        renamedContigsMappedReads | join(bins, by: SAMPLE_IDX) | map { sample ->
+        mapping | join(bins, by: SAMPLE_IDX) | map { sample ->
             sample.addAll(ALIGNMENT_INDEX, emptyFile)
             sample
         } | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY)),
@@ -547,10 +424,10 @@ workflow _wBinningShortRead {
     // following entries [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
     bins | map { it -> Utils.flattenTuple(it) } | flatMap { it -> createMap(it) } | set { binMap }
 
-    _wMultiBinningSemiBin2.out.binContigMapping
-        | join(renamedContigsMappedReads, by: SAMPLE_IDX)
+    wMultiBinningSemiBin2.out.binContigMapping
+        | join(mapping, by: SAMPLE_IDX)
         | combine(channel.from("semibin2"))
-        | join(_wMultiBinningSemiBin2.out.bins, by: SAMPLE_IDX)
+        | join(wMultiBinningSemiBin2.out.bins, by: SAMPLE_IDX)
         | set { semibin2BinStatisticsInput }
 
     semibin2BinStatisticsInput
@@ -569,7 +446,7 @@ workflow _wBinningShortRead {
     emit:
     binsStats = binMap
     bins = bins
-    mapping = renamedContigsMappedReads
+    mapping = mapping
     notBinnedContigs = notBinned
     unmappedReads = unmappedReads
     contigCoverage = pCovermContigsCoverage.out.coverage

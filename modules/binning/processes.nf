@@ -582,7 +582,6 @@ process pSemiBin2SaveGroupingInfo {
 /*
 *
 * This workflow runs the mapping tool that was selected by the user.
-* module: This parameter selects the output path defined by the module
 * condition: This parameter contains the tool name and executes the corresponding mapper. 
 * option: This parameter defined all parameters that are needed for the tool itself and samtools.
 * mapperInput: The contigs and reads that are used as input.
@@ -590,7 +589,6 @@ process pSemiBin2SaveGroupingInfo {
 */ 
 workflow _wRunMappers {
   take:
-    module
     condition
     options
     mapperInput
@@ -618,11 +616,204 @@ workflow _wRunMappers {
     pBowtie2.out.unmappedReads 
     | mix(pBwa.out.unmappedReads, pBwa2.out.unmappedReads) | set { unmappedReads }
 
-    wGetMappingQuality(module, mappedReads)
    emit:
      mappedReads = mappedReads
      unmappedReads = unmappedReads
 }
+
+/*
+*
+* Semibin2 expects all contig names to have a prefix with the sample name.
+*
+*/
+process pConcatContigs {
+
+    container "${params.semibin2_image}"
+
+    tag "Group: ${group}"
+
+    label 'medium'
+
+    input:
+    tuple val(group), path(contigs, stageAs: 'input_*'), val(samples)
+
+    output:
+    tuple val("${group}"), file("${group}.fa.gz"), emit: contigs
+
+    script:
+    def file_list = contigs.join(' ')
+    def name_list = samples.join(' ')
+    """
+    # Convert space-separated strings into Bash arrays
+    raw_files=(${file_list})
+    names=(${name_list})
+
+    mkdir contigs
+    # Loop through and create symlinks using the sample name
+    for i in \${!raw_files[@]}; do
+        REAL_PATH=\$(readlink -f \${raw_files[\$i]})
+        ln -s "\$REAL_PATH" contigs/\${names[\$i]}_contigs.fa.gz
+    done 
+
+    SemiBin2 concatenate_fasta \
+    --input-fasta contigs/* \
+    --output output
+
+    mv output/concatenated.fa.gz ${group}.fa.gz
+    chmod a+rwx ${group}.fa.gz
+    """
+}
+
+
+/*
+* This workflow prepares and runs the SemiBin2 binning workflow.
+* It thereby represents the ONT version of it.
+*/
+workflow wMultiBinningSemiBin2ONT {
+    take:
+       featureGenerationConfig
+       trainingConfig
+       binningConfig
+       sampleGroups
+       inputReads
+       sampleContigs
+    main:
+      SAMPLE_IDX = 0
+      GROUP_IDX = 0
+
+      // Concatenate all assemblies per groups using the semibin specific method.
+      sampleGroups
+        | join(sampleContigs, by: SAMPLE_IDX)
+        | map { sample, group, groupSize, filePath -> tuple(groupKey(group, groupSize), filePath, sample) }
+        | groupTuple(remainder: true)
+        | set { assemblyList }
+
+      pConcatContigs(assemblyList)
+
+      pConcatContigs.out.contigs | set { concatContigs }
+
+      // Reads of all samples per group must be mapped to the concatenated assembly.
+      sampleGroups
+      | join(inputReads, by: GROUP_IDX)
+      | map { sample, group, _groupSize, readsFilePath -> [group, sample, readsFilePath] }
+      | set { readsList }
+
+      pConcatContigs.out.contigs
+      | combine(readsList, by: GROUP_IDX)
+      | map { _group, concatenatedContigs, sample, ontFilePath -> [sample, concatenatedContigs, ontFilePath] }
+      | set { mapperInput }
+
+      pMinimap2(
+      channel.value(params?.steps?.containsKey("multiBinningONT")),
+      channel.value(
+          [
+              params.modules.multiBinningONT,
+              "concatenatedAssemblyMapping",
+              params.steps?.multiBinningONT?.minimap?.additionalParams?.minimap,
+              params.steps?.multiBinningONT?.minimap?.additionalParams?.samtoolsView,
+              params.steps.containsKey("fragmentRecruitment"),
+          ]
+      ),
+      mapperInput,
+      )
+
+      pMinimap2.out.mappedReads | set { mapping }
+
+      _wMultiBinningSemiBin2(
+       channel.value("LONG"),
+       featureGenerationConfig,
+       trainingConfig,
+       binningConfig,
+       sampleGroups,
+       concatContigs,
+       sampleContigs,
+       mapping
+      )
+    emit:
+     bins = _wMultiBinningSemiBin2.out.bins 
+     notBinned = _wMultiBinningSemiBin2.out.notBinned 
+     binContigMapping = _wMultiBinningSemiBin2.out.binContigMapping
+}
+
+
+/*
+* This workflow prepares and runs the SemiBin2 binning workflow.
+* It thereby represents the short read version of it.
+*/
+workflow wMultiBinningSemiBin2 {
+    take:
+       featureGenerationConfig
+       trainingConfig
+       binningConfig
+       sampleGroups
+       inputReads
+       sampleContigs
+    main:
+      SAMPLE_IDX = 0
+      GROUP_IDX = 0
+
+      // Concatenate all assemblies per groups using the semibin specific method.
+      sampleGroups
+        | join(sampleContigs, by: SAMPLE_IDX)
+        | map { sample, group, groupSize, filePath -> tuple(groupKey(group, groupSize), filePath, sample) }
+        | groupTuple(remainder: true)
+        | set { assemblyList }
+
+      pConcatContigs(assemblyList)
+
+      // Reads of all samples per group must be mapped to the concatenated assembly.
+      sampleGroups
+        | join(inputReads, by: GROUP_IDX)
+        | map { sample, group, _groupSize, pairedFilePath, unpairedFilePath -> [group, sample, pairedFilePath, unpairedFilePath] }
+        | set { readsList }
+
+      pConcatContigs.out.contigs | set { concatContigs }
+
+      concatContigs  | combine(readsList, by: GROUP_IDX)
+        | map { _group, concatenatedContigs, sample, pairedFilePath, unpairedFilePath -> [sample, concatenatedContigs, pairedFilePath, unpairedFilePath] }
+        | set { mapperInput }
+
+
+      // 2. Identify which tool is active (e.g., via a param or checking keys)
+      def activeMapper = params.steps?.multiBinning?.keySet()?.find { tool -> ["bwa", "bowtie", "bwa2"].contains(tool) }
+      def mapper = params.steps?.multiBinning[activeMapper]
+
+      // 3. Create the dynamic channel
+      mapperConfig = mapper
+            ? channel.value(
+                [
+                    params.modules.multiBinning,
+                    "concatenatedAssemblyMapping",
+                    mapper.additionalParams[activeMapper],
+                    mapper.additionalParams.samtoolsView,
+                    params.steps.containsKey("fragmentRecruitment"),
+                ]
+            )
+            : channel.empty()
+
+      _wRunMappers(channel.value(activeMapper), mapperConfig, mapperInput)
+
+      _wRunMappers.out.mappedReads | set { mapping }
+
+
+      _wMultiBinningSemiBin2(
+       channel.value("SHORT"),
+       featureGenerationConfig,
+       trainingConfig,
+       binningConfig,
+       sampleGroups,
+       concatContigs,
+       sampleContigs,
+       mapping
+      )
+    emit:
+     bins = _wMultiBinningSemiBin2.out.bins 
+     notBinned = _wMultiBinningSemiBin2.out.notBinned 
+     binContigMapping = _wMultiBinningSemiBin2.out.binContigMapping
+
+}
+
+
 
 /*
 * This workflow executes the SemiBin2 binning workflow where the training and binning
@@ -636,7 +827,7 @@ workflow _wMultiBinningSemiBin2 {
        trainingConfig
        binningConfig
        sampleGroups
-       concatContigs
+       concatContigs 
        sampleContigs
        mapping
     main:
@@ -683,5 +874,4 @@ workflow _wMultiBinningSemiBin2 {
      bins = pSemiBin2Binning.out.bins 
      notBinned = pSemiBin2Binning.out.notBinned 
      binContigMapping = pSemiBin2Binning.out.binContigMapping
-
 }
