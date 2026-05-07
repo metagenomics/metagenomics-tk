@@ -12,7 +12,7 @@ PROFILE=$4
 ENTRY="wOutputTable"
 
 # Cleanup existing output tables
-rm ${WORK_DIR}_${ENTRY}/logs/samples*.tsv
+rm -rf ${WORK_DIR}_${ENTRY}/logs/samples*.tsv
 
 bash ./scripts/test_SRA.sh "${PARAMETERS}" "./example_params/input.yml" ${WORK_DIR} ${PROFILE} 
 

@@ -1,6 +1,4 @@
-import nextflow.splitter.CsvSplitter
-import java.util.regex.*;
-
+import java.util.regex.*
 
 def getOutput(SAMPLE, RUNID, TOOL, filename){
     return SAMPLE + '/' + RUNID + '/' + params.modules.qc.name + '/' + 
@@ -348,7 +346,7 @@ workflow _wSRAS3 {
 */
 def fetchRunAccessions( tsv ) {
 
-    def splitter = new CsvSplitter().options( header:true, sep:'\t' )
+    def splitter = new nextflow.splitter.CsvSplitter().options( header:true, sep:'\t' )
     def reader = new BufferedReader( new FileReader( tsv ) )
 
     splitter.parseHeader( reader )
@@ -530,11 +528,12 @@ workflow _wSRANCBI {
          // IDs provided via CLI 
          idsFromCLI = []
 
-         binGroupFromCLIChannel = Channel.empty()
+         binGroupFromCLIChannel = channel.empty()
          idsFromCLIChannel = channel.empty()
+         idsWithoutBinGroupCLIChannel = channel.empty()
          if("id" in params.input.SRA.NCBI){
             idsFromCLI = params.input.SRA.NCBI.id.tokenize(" ")
-            idsFromCLIChannel = Channel.from(idsFromCLI)
+            idsFromCLIChannel = channel.from(idsFromCLI)
 
             if("binGroup" in params.input.SRA.NCBI){
                 groupsCLI = params.input.SRA.NCBI.binGroup.tokenize(" ")
@@ -563,7 +562,7 @@ workflow _wSRANCBI {
         passedSamples | combine(samples, by: SAMPLE_IDX) 
             |  map { sample -> 
                 def meta = sample[SAMPLE_CONTENT_IDX]
-                if (sample[MULTI_BINNING_IDX]) meta += ["MULTI_BINNING_GROUP": sample[MULTI_BINNING_GROUP_IDX]]
+                if (sample[MULTI_BINNING_GROUP_IDX]) meta += ["MULTI_BINNING_GROUP": sample[MULTI_BINNING_GROUP_IDX]]
                 return meta
             }
             | set { passedSamplesInSheet }

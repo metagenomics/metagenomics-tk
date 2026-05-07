@@ -219,39 +219,47 @@ workflow _wBinningLongRead {
         mappedReads | join(medianQuality, by: SAMPLE_IDX),
     )
 
-    semibinGenerateFeaturesConfig = channel.value(
-        [params.steps?.multiBinningONT?.semibin2?.additionalParams?.featureGeneration]
-    )
+    bins = channel.empty()
+    notBinned = channel.empty()
+    binContigMapping = channel.empty()
+    if (params.steps.containsKey("multiBinningONT")) {
 
-    semibinTrainingConfig = channel.value(
-        [
-            params.modules.multiBinningONT,
-            "semibin2ONT/training",
-            params.steps?.multiBinningONT?.semibin2?.additionalParams?.training,
-        ]
-    )
+        semibinGenerateFeaturesConfig = channel.value(
+            [params.steps?.multiBinningONT?.semibin2?.additionalParams?.featureGeneration]
+        )
 
-    semibinBinningConfig = channel.value(
-        [
-            params.modules.multiBinningONT,
-            "semibin2ONT",
-            params.steps?.multiBinningONT?.semibin2?.additionalParams?.binning,
-        ]
-    )
+        semibinTrainingConfig = channel.value(
+            [
+                params.modules.multiBinningONT,
+                "semibin2ONT/training",
+                params.steps?.multiBinningONT?.semibin2?.additionalParams?.training,
+            ]
+        )
 
-    // Run SembiBin2 workflow 
-    wMultiBinningSemiBin2ONT(
-        semibinGenerateFeaturesConfig,
-        semibinTrainingConfig,
-        semibinBinningConfig,
-        sampleGroups,
-        inputReads,
-        contigs,
-    )
+        semibinBinningConfig = channel.value(
+            [
+                params.modules.multiBinningONT,
+                "semibin2ONT",
+                params.steps?.multiBinningONT?.semibin2?.additionalParams?.binning,
+            ]
+        )
 
-    wMultiBinningSemiBin2ONT.out.bins | set { bins }
+        // Run SembiBin2 workflow 
+        wMultiBinningSemiBin2ONT(
+            semibinGenerateFeaturesConfig,
+            semibinTrainingConfig,
+            semibinBinningConfig,
+            sampleGroups,
+            inputReads,
+            contigs,
+        )
 
-    wMultiBinningSemiBin2ONT.out.notBinned | set { notBinned }
+        wMultiBinningSemiBin2ONT.out.bins | set { bins }
+
+        wMultiBinningSemiBin2ONT.out.notBinned | set { notBinned }
+
+        wMultiBinningSemiBin2ONT.out.binContigMapping | set { binContigMapping }
+    }
 
     emptyFile = file(params.tempdir + "/empty")
     emptyFile.text = ""
@@ -279,7 +287,7 @@ workflow _wBinningLongRead {
     // following entries [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
     bins | map { it -> Utils.flattenTuple(it) } | flatMap { it -> createMap(it) } | set { binMap }
 
-    wMultiBinningSemiBin2ONT.out.binContigMapping
+    binContigMapping
         | join(mappedReads, by: SAMPLE_IDX)
         | combine(channel.from("semibin2"))
         | join(bins, by: SAMPLE_IDX)
@@ -324,6 +332,7 @@ workflow _wBinningShortRead {
     SAMPLE_IDX = 0
 
     mapping = channel.empty()
+    unmappedReads = channel.empty()
     if (params.steps.containsKey("multiBinning")) {
         // 2. Identify which tool is active (e.g., via a param or checking keys)
         def activeMapper = params.steps?.multiBinning?.keySet()?.find { tool -> ["bwa", "bowtie", "bwa2"].contains(tool) }
@@ -365,39 +374,46 @@ workflow _wBinningShortRead {
         mapping | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY)),
     )
 
-    semibinGenerateFeaturesConfig = channel.value(
-        [params.steps?.multiBinning?.semibin2?.additionalParams?.featureGeneration]
-    )
 
-    semibinTrainingConfig = channel.value(
-        [
-            params.modules.multiBinning,
-            "semibin2/training",
-            params.steps?.multiBinning?.semibin2?.additionalParams?.training,
-        ]
-    )
+    bins = channel.empty()
+    notBinned = channel.empty()
+    binContigMapping = channel.empty()
+    if (params.steps.containsKey("multiBinning")) {
+        semibinGenerateFeaturesConfig = channel.value(
+            [params.steps?.multiBinning?.semibin2?.additionalParams?.featureGeneration]
+        )
 
-    semibinBinningConfig = channel.value(
-        [
-            params.modules.multiBinning,
-            "semibin2",
-            params.steps?.multiBinning?.semibin2?.additionalParams?.binning,
-        ]
-    )
+        semibinTrainingConfig = channel.value(
+            [
+                params.modules.multiBinning,
+                "semibin2/training",
+                params.steps?.multiBinning?.semibin2?.additionalParams?.training,
+            ]
+        )
 
-    // Run SembiBin2 workflow 
-    wMultiBinningSemiBin2(
-        semibinGenerateFeaturesConfig,
-        semibinTrainingConfig,
-        semibinBinningConfig,
-        sampleGroups,
-        inputReads,
-        contigs,
-    )
+        semibinBinningConfig = channel.value(
+            [
+                params.modules.multiBinning,
+                "semibin2",
+                params.steps?.multiBinning?.semibin2?.additionalParams?.binning,
+            ]
+        )
+        // Run SembiBin2 workflow 
+        wMultiBinningSemiBin2(
+            semibinGenerateFeaturesConfig,
+            semibinTrainingConfig,
+            semibinBinningConfig,
+            sampleGroups,
+            inputReads,
+            contigs,
+        )
 
-    wMultiBinningSemiBin2.out.bins | set { bins }
+        wMultiBinningSemiBin2.out.bins | set { bins }
 
-    wMultiBinningSemiBin2.out.notBinned | set { notBinned }
+        wMultiBinningSemiBin2.out.notBinned | set { notBinned }
+
+        wMultiBinningSemiBin2.out.binContigMapping | set { binContigMapping }
+    }
 
     emptyFile = file(params.tempdir + "/empty")
 
@@ -424,10 +440,10 @@ workflow _wBinningShortRead {
     // following entries [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
     bins | map { it -> Utils.flattenTuple(it) } | flatMap { it -> createMap(it) } | set { binMap }
 
-    wMultiBinningSemiBin2.out.binContigMapping
+    binContigMapping
         | join(mapping, by: SAMPLE_IDX)
         | combine(channel.from("semibin2"))
-        | join(wMultiBinningSemiBin2.out.bins, by: SAMPLE_IDX)
+        | join(bins, by: SAMPLE_IDX)
         | set { semibin2BinStatisticsInput }
 
     semibin2BinStatisticsInput
