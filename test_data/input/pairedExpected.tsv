@@ -1,0 +1,8 @@
+SAMPLE	INSTRUMENT	MULTI_BINNING_GROUP	READS1	READS2
+test1	ILLUMINA	A	/swift/v1/meta_test/small/read1_1bla.fq.gz	/swift/v1/meta_test/small/read2_1bla.fq.gz
+test2	ILLUMINA	A	/swift/v1/meta_test/small/read1_1.fq.gz	/swift/v1/meta_test/small/read2_1.fq.gz
+test5	ILLUMINA	C	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1.fq.gz
+test3	ILLUMINA	null	/swift/v1/meta_test/small/read1_3.fq.gz	/swift/v1/meta_test/small/read2_3.fq.gz
+test4	ILLUMINA	C	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1.fq.gz
+SAMPLE	INSTRUMENT	MULTI_BINNING_GROUP	READS
+nano	OXFORD_NANOPORE	null	/swift/v1/meta_test/SRR16328449_qc.fq.gz

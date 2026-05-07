@@ -33,7 +33,7 @@ steps:
       additionalParams: ""
     genomeCoverage:
       additionalParams: " --min-covered-fraction 0 "
-    semibin2ONT:
+    semibin2:
       additionalParams: " --environment global --sequencing-type long_read  "
   magAttributes:
     gtdb:

@@ -1,0 +1,48 @@
+tempdir: "tmp"
+s3SignIn: false
+output: "output"
+logDir: log
+runid: 1
+logLevel: 1
+scratch: "/vol/scratch"
+publishDirMode: "symlink"
+steps:
+  multiBinning:
+    input:
+      paired: test_data/multiBinning/samples.tsv
+      single: test_data/multiBinning/samplesUnpaired.tsv
+      contigs: test_data/multiBinning/assembly.tsv
+      groups: test_data/multiBinning/groups.tsv
+    bowtie:
+      additionalParams: 
+        bowtie: " --quiet --very-sensitive "
+        # samtools flags are used to filter resulting bam file
+        samtoolsView: " -F 3584 " 
+    contigsCoverage:
+      additionalParams: " "
+    genomeCoverage:
+      additionalParams: " "
+    semibin2:
+      additionalParams: 
+        featureGeneration: " "
+        training: " "
+        binning: " "
+resources:
+  highmemLarge:
+    cpus: 28
+    memory: 230
+  highmemMedium:
+    cpus: 14
+    memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
+  small:
+    cpus: 7
+    memory: 14
+  tiny:
+    cpus: 1
+    memory: 1

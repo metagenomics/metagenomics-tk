@@ -330,13 +330,13 @@ workflow _wReadMappingBwa {
      ALIGNMENT_INDEX = 2
      pCovermGenomeCoverage(Channel.value(params.steps?.readMapping?.find{ it.key == "coverm" }?.value), \
 	Channel.value("AGGREGATED"), \
-	Channel.value([getModulePath(params.modules.readMapping), \
+	Channel.value([params.modules.readMapping, \
 	"genomeCoverage", params.steps?.readMapping?.coverm]), \
 	covermBWAInput)
 
      pCovermGenomeCoverageONT(Channel.value(params.steps?.readMapping?.find{ it.key == "covermONT" }?.value), \
 	Channel.value("AGGREGATED"), \
-	Channel.value([getModulePath(params.modules.readMapping), \
+	Channel.value([params.modules.readMapping, \
 	"genomeCoverage", params.steps?.readMapping?.covermONT]), \
 	covermMinimapInput)
 
