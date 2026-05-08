@@ -547,7 +547,7 @@ process pSemiBin2GenerateSequenceFeatures {
     -b ${bam} \
     -o output  
 
-    tar czvf feature_generation.tar.gz .command.sh .command.out .command.err .command.log output
+    tar czvf feature_generation.tar.gz .command.out .command.err output
     """
 }
 

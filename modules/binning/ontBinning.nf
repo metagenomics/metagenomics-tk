@@ -274,7 +274,6 @@ workflow _wBinning {
     _wRunBinningTools.out.binStatsInput | set { binStatsInput }
 
     emptyFile = file(params.tempdir + "/empty")
-    emptyFile.text = ""
 
     ALIGNMENT_INDEX = 2
     pCovermGenomeCoverage(

@@ -249,7 +249,11 @@ jobs:
           bash scripts/test_input.sh " -c  test_data/assets/aws.config \
                                       --input.paired.r1 'https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1bla.fq.gz https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1.fq.gz https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_3.fq.gz' \
                                       --input.paired.r2 'https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1bla.fq.gz https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_1.fq.gz https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read2_3.fq.gz' \
-                                      --input.paired.names 'test1 test2 test3' --input.paired.binGroup 'A A B' " ./test_data/input/pairedExpected.tsv "${WORK_DIR}" ${PROFILE}  || exit 1
+                                      --input.paired.names 'test1 test2 test3' --input.paired.binGroup 'A A B' \
+                                      --input.paired.sheet ./test_data/input/pairedInput.tsv \
+                                      --input.ont.r https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/SRR16328449_qc.fq.gz \
+                                      --input.ont.names 'nano' \
+                                      " ./test_data/input/pairedExpected.tsv "${WORK_DIR}" ${PROFILE}  || exit 1
 
       - name: Test if combination of file and CLI based input works for SRA S3 data
         run: |

@@ -262,7 +262,6 @@ workflow _wBinningLongRead {
     }
 
     emptyFile = file(params.tempdir + "/empty")
-    emptyFile.text = ""
 
     ALIGNMENT_INDEX = 2
     pCovermGenomeCoverage(
