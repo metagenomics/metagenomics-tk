@@ -526,7 +526,9 @@ workflow _wProcessIllumina {
         } | set { singleSampleInput } 
 
 
-      wShortReadBinningList(wShortReadAssemblyList.out.contigs | mix(singleSampleInput.contigs),  sampleTypeReads.singleSample | mix(singleSampleInput.reads))
+      wShortReadBinningList(wShortReadAssemblyList.out.contigs | mix(singleSampleInput.contigs),  sampleTypeReads.singleSample 
+        | map { sample -> [sample[SAMPLE_IDX], sample[READS_FILE_IDX], sample[READS_UNPAIRED_FILE_IDX]] } 
+        | mix(singleSampleInput.reads))
 
       wShortReadBinningList.out.notBinnedContigs 
         | mix(wMultiBinningShortReadList.out.notBinnedContigs)

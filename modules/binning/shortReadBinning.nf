@@ -344,7 +344,7 @@ workflow _wBinning {
         mappedReads | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY)),
     )
 
-    // RUn the actual Binning tools
+    // Run the actual Binning tools
     _wRunBinningTools(contigs, mappedReads)
     _wRunBinningTools.out.bins | set { bins }
     _wRunBinningTools.out.notBinned | set { notBinned }

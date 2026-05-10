@@ -547,6 +547,7 @@ process pSemiBin2GenerateSequenceFeatures {
     -b ${bam} \
     -o output  
 
+    chmod -R a+rwx output 
     tar czvf feature_generation.tar.gz .command.out .command.err output
     """
 }
@@ -608,7 +609,7 @@ workflow _wRunMappers {
     pBwa2(
         condition | map { mapper -> mapper == "bwa2" },
         options, 
-        mapperInput
+        mapperInput 
     )
 
     pBowtie2.out.mappedReads 
