@@ -326,7 +326,7 @@ workflow _wSRAS3 {
                 | map { sample -> sample[SAMPLE_CONTENT_IDX]  }   
                 | set { passedSamplesWithoutCoBinning }
 
-         passedSamples | combine(coBinningSamples | map { sample -> [ sample.ACCESSION ] } , by: SAMPLE_IDX) 
+         passedSamples | combine(coBinningSamples, by: SAMPLE_IDX) 
             | map { sample -> sample[SAMPLE_CONTENT_IDX] + ["MULTI_BINNING_GROUP":sample[MULTI_BINNING_GROUP_IDX]] }   
             |  mix(passedSamplesWithoutCoBinning)
             | set { passedSamples }
