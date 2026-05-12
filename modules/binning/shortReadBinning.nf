@@ -274,6 +274,11 @@ workflow _wRunBinningTools {
         | join(pSemiBin2.out.bins, by: SAMPLE_IDX)
         | set { semibin2BinStatisticsInput }
 
+    pMetabinner.out.binContigMapping
+        | mix(pSemiBin2.out.binContigMapping)
+        | mix(pMetabat.out.binContigMapping)
+        | set { binContigMapping }
+
     metabatBinStatisticsInput
         | mix(semibin2BinStatisticsInput)
         | mix(metabinnerBinStatisticsInput)
@@ -284,6 +289,7 @@ workflow _wRunBinningTools {
     bins = bins
     notBinned = notBinned
     binStatsInput = binStatsInput
+    binContigMapping = binContigMapping
 }
 
 
@@ -358,9 +364,7 @@ workflow _wBinning {
     if (params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")) {
         pProdigal(contigs)
         pHmmSearch(pProdigal.out.prodigal_faa)
-        pMetabinner.out.binContigMapping
-            | mix(pSemiBin2.out.binContigMapping)
-            | mix(pMetabat.out.binContigMapping)
+        _wRunBinningTools.out.binContigMapping
             | collectFile(keepHeader: false) { item -> ["${item[SAMPLE_IDX]}", item[CONTIG_MAPPING_IDX].text] }
             | map { f -> [file(f).name, f] }
             | join(pHmmSearch.out.allhits, by: SAMPLE_IDX)

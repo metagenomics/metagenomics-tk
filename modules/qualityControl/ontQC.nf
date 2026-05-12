@@ -7,12 +7,11 @@ process pPorechop {
 
     label 'small'
 
-    tag "$sample"
+    tag "${sample}"
 
     cache 'deep'
 
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "porechop", params.modules.qcONT, filename) }, \
-	pattern: "{.command.sh,.command.out,.command.err,.command.log}"
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "porechop", params.modules.qcONT, filename) }, pattern: "{.command.sh,.command.out,.command.err,.command.log}"
 
     when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("porechop")
 
@@ -42,7 +41,7 @@ process pCount {
 
     label 'tiny'
 
-    tag "Sample: $sample"
+    tag "Sample: ${sample}"
 
     container "${params.ubuntu_image}"
 
@@ -52,7 +51,7 @@ process pCount {
     tuple val(sample), path(fastq)
 
     output:
-    tuple val("${sample}"), path(fastq), env(COUNT) 
+    tuple val("${sample}"), path(fastq), env(COUNT)
 
     script:
     """
@@ -70,7 +69,7 @@ process pCountDownload {
 
     label 'tiny'
 
-    tag "Sample: $sample"
+    tag "Sample: ${sample}"
 
     container "${params.ubuntu_image}"
 
@@ -80,7 +79,7 @@ process pCountDownload {
     tuple val(sample), env(readUrl)
 
     output:
-    tuple val("${sample}"), path(fastq), env(COUNT) 
+    tuple val("${sample}"), path("reads.fq.gz"), env(COUNT)
 
     script:
     """
@@ -109,12 +108,10 @@ process pCollectFile {
 
     label 'tiny'
 
-    tag "Sample: $sample"
+    tag "Sample: ${sample}"
 
     container "${params.ubuntu_image}"
-    publishDir params.output, mode: "${params.publishDirMode}", \
-	saveAs: { filename -> Output.getOutput("${sample}", params.runid, "porechop", params.modules.qcONT, filename) }, \
-        pattern: "{**_qc.fq.gz}"
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "porechop", params.modules.qcONT, filename) }, pattern: "{**_qc.fq.gz}"
 
     input:
     tuple val(sample), path(reads, stageAs: "reads_*")
@@ -138,7 +135,7 @@ process pFilterHumanONT {
 
     label 'medium'
 
-    tag "Sample: $sample"
+    tag "Sample: ${sample}"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "filterHumanONT", params.modules.qcONT, filename) }
 
@@ -157,15 +154,15 @@ process pFilterHumanONT {
     tuple val("${sample}"), path("*_removed.fq.gz"), optional: true, emit: removed
 
     script:
-    EXTRACTED_DB=params.steps?.qcONT?.filterHumanONT?.database?.extractedDBPath ?: ""
-    DOWNLOAD_LINK=params.steps?.qcONT?.filterHumanONT?.database?.download?.source ?: ""
-    MD5SUM=params?.steps?.qcONT?.filterHumanONT?.database?.download?.md5sum ?: ""
-    S5CMD_PARAMS=params.steps?.qcONT?.filterHumanONT?.database?.download?.s5cmd?.params ?: ""
+    EXTRACTED_DB = params.steps?.qcONT?.filterHumanONT?.database?.extractedDBPath ?: ""
+    DOWNLOAD_LINK = params.steps?.qcONT?.filterHumanONT?.database?.download?.source ?: ""
+    MD5SUM = params?.steps?.qcONT?.filterHumanONT?.database?.download?.md5sum ?: ""
+    S5CMD_PARAMS = params.steps?.qcONT?.filterHumanONT?.database?.download?.s5cmd?.params ?: ""
     output = Output.getOutput("${sample}", params.runid, "filterHumanONT", params.modules.qcONT, "")
-    ADDITIONAL_PARAMS=params.steps?.qcONT?.filterHumanONT?.additionalParams ?: ""
-    S3_filter_ACCESS=params?.steps?.qcONT?.filterHumanONT?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_filter_ACCESS" : ""
-    S3_filter_SECRET=params?.steps?.qcONT?.filterHumanONT?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_filter_SECRET" : ""
-    template 'filterHumanONT.sh'
+    ADDITIONAL_PARAMS = params.steps?.qcONT?.filterHumanONT?.additionalParams ?: ""
+    S3_filter_ACCESS = params?.steps?.qcONT?.filterHumanONT?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_filter_ACCESS" : ""
+    S3_filter_SECRET = params?.steps?.qcONT?.filterHumanONT?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_filter_SECRET" : ""
+    template('filterHumanONT.sh')
 }
 
 
@@ -173,7 +170,7 @@ process pNanoPlot {
 
     label 'small'
 
-    tag "Sample: $sample"
+    tag "Sample: ${sample}"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "nanoplot", params.modules.qcONT, filename) }
 
@@ -206,64 +203,77 @@ process pNanoPlot {
 *
 */
 workflow _wSplit {
-  take:
+    take:
     sample
     chunkSize
-  main:
+
+    main:
 
     SAMPLE_IDX = 0
     FASTQ_FILE = 1
     FASTQ_LENGTH_IDX = 2
     CHUNK_SIZE_IDX = 3
 
-    sample | combine(chunkSize) \
-	| flatMap { sample -> Utils.splitFilesIndex(Integer.parseInt(sample[FASTQ_LENGTH_IDX]), sample[CHUNK_SIZE_IDX], [sample[SAMPLE_IDX], sample[FASTQ_FILE]]) } \
+    sample
+        | combine(chunkSize)
+        | flatMap { sample -> Utils.splitFilesIndex(Integer.parseInt(sample[FASTQ_LENGTH_IDX]), sample[CHUNK_SIZE_IDX], [sample[SAMPLE_IDX], sample[FASTQ_FILE]]) }
         | set { chunks }
-  emit:
+
+    emit:
     chunks = chunks
 }
 
 
 workflow _wONTFastq {
-       take:
-         reads
-       main:
-            // Check if files are S3 URLs and if the download parameter is specified in the config
-            FASTP_FILE_IDX = 1
-            reads | branch {
-              download: it[FASTP_FILE_IDX].startsWith("s3://") && params?.steps?.qcONT.porechop.containsKey("download")
-              noDownload: !params?.steps?.qcONT.porechop.containsKey("download")
-             } | set { samples }
+    take:
+    reads
 
-             // Input files can either be directly provided as input or downloaded.
-             // Sequences are then split in chunks to avoid any RAM issues
-             samples.noDownload | pCount | set { notDownloadedSamples }
-             samples.download | pCountDownload | set { downloadedSamples }
+    main:
+    // Check if files are S3 URLs and if the download parameter is specified in the config
+    FASTP_FILE_IDX = 1
+    reads
+        | branch {
+            download: it[FASTP_FILE_IDX].startsWith("s3://") && params?.steps?.qcONT.porechop.containsKey("download")
+            noDownload: !params?.steps?.qcONT.porechop.containsKey("download")
+        }
+        | set { samples }
 
-             PORECHOP_CHUNK_SIZE_DEFAULT=450000
-             _wSplit(notDownloadedSamples \
-		| mix(downloadedSamples), Channel.value(params.steps?.qcONT?.porechop?.additionalParams?.chunkSize?:PORECHOP_CHUNK_SIZE_DEFAULT)) \
-		| pPorechop
+    // Input files can either be directly provided as input or downloaded.
+    // Sequences are then split in chunks to avoid any RAM issues
+    samples.noDownload | pCount | set { notDownloadedSamples }
+    samples.download | pCountDownload | set { downloadedSamples }
 
-             // Porechop processes chunks and the resulting fastq files are collected
-             pPorechop.out.reads | map { sample, fastq, chunkSize  ->  tuple(groupKey(sample, chunkSize.toInteger()), [sample, fastq])  } \
-              | groupTuple() | map { sample, dataset ->  [sample ,dataset.stream().map{ elem -> elem[FASTP_FILE_IDX] }.collect()] } \
-	      | pCollectFile
+    PORECHOP_CHUNK_SIZE_DEFAULT = 450000
+    _wSplit(
+        notDownloadedSamples
+            | mix(downloadedSamples),
+        Channel.value(params.steps?.qcONT?.porechop?.additionalParams?.chunkSize ?: PORECHOP_CHUNK_SIZE_DEFAULT),
+    )
+        | pPorechop
 
-             pCollectFile.out.reads | set { reads }
+    // Porechop processes chunks and the resulting fastq files are collected
+    pPorechop.out.reads
+        | map { sample, fastq, chunkSize -> tuple(groupKey(sample, chunkSize.toInteger()), [sample, fastq]) }
+        | groupTuple()
+        | map { sample, dataset -> [sample, dataset.stream().map { elem -> elem[FASTP_FILE_IDX] }.collect()] }
+        | pCollectFile
 
-             filteredSeqs = Channel.empty()
-             if(params.steps.containsKey("qcONT") && params.steps.qcONT.containsKey("filterHumanONT")){
-             	reads | pFilterHumanONT
-                pFilterHumanONT.out.filteredSeqs | set{ filteredSeqs }
-	     } else {
-                reads | set { filteredSeqs }
-             }
+    pCollectFile.out.reads | set { reads }
 
-             filteredSeqs | pNanoPlot
-      emit:
-        reads = reads
-        medianQuality = pNanoPlot.out.medianQuality
+    filteredSeqs = Channel.empty()
+    if (params.steps.containsKey("qcONT") && params.steps.qcONT.containsKey("filterHumanONT")) {
+        reads | pFilterHumanONT
+        pFilterHumanONT.out.filteredSeqs | set { filteredSeqs }
+    }
+    else {
+        reads | set { filteredSeqs }
+    }
+
+    filteredSeqs | pNanoPlot
+
+    emit:
+    reads = reads
+    medianQuality = pNanoPlot.out.medianQuality
 }
 
 
@@ -276,11 +286,13 @@ workflow _wONTFastq {
  * 
  */
 workflow wOntQualityControlList {
-  take:
+    take:
     reads
-  main:
-    reads | _wONTFastq | set { results } 
-  emit:
+
+    main:
+    reads | _wONTFastq | set { results }
+
+    emit:
     reads = results.reads
     medianQuality = results.medianQuality
 }
@@ -298,15 +310,18 @@ workflow wOntQualityControlList {
  * 
  */
 workflow wOntQualityControlFile {
-     main:
-        Channel.from(file(params.steps.qcONT.input)) 
-            | splitCsv(sep: '\t', header: true) \
-            | map { it -> [ it.SAMPLE, it.READS ]} | set { reads }
 
-	_wONTFastq(reads) | set { results }
+    main:
+    Channel.from(file(params.steps.qcONT.input))
+        | splitCsv(sep: '\t', header: true)
+        | map { it -> [it.SAMPLE, it.READS] }
+        | set { reads }
 
-        SAMPLE_IDX = 0
-        wSaveSettingsList(reads | map { it -> it[SAMPLE_IDX] })
+    _wONTFastq(reads) | set { results }
+
+    SAMPLE_IDX = 0
+    wSaveSettingsList(reads | map { it -> it[SAMPLE_IDX] })
+
     emit:
-      reads = results.reads
+    reads = results.reads
 }

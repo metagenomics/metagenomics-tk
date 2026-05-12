@@ -511,9 +511,6 @@ process pSemiBin2Binning {
     else
 	    seqkit replace  -p '(.*)' -r "\\\${1} MAG=NotBinned" ${contigs} > \${NOT_BINNED}
     fi
-
-    # Fix for ownership issue https://github.com/nextflow-io/nextflow/issues/4565
-    chmod a+rw -R output binningOutput
     """
 }
 
@@ -852,7 +849,6 @@ workflow _wMultiBinningSemiBin2 {
        | set { semibin2TrainingInput } 
 
      pSemiBin2Training(trainingConfig, semibin2TrainingInput)
-
 
      sampleGroups 
         | map { sample, group, groupSize -> tuple( groupKey(group, groupSize), sample ) }
