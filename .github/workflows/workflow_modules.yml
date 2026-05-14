@@ -523,18 +523,36 @@ jobs:
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare Shell Scripts 
+        run: |
+          # Create assets directory for storing the downloaded workflow
+          mkdir nxf_assets
+          NXF_ASSETS=$(echo "NXF_ASSETS=$(pwd)/nxf_assets" | sed 's/\//\\\//g')
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          BRANCH_SED=$(echo $BRANCH | sed 's/\//\\\//g')
+          # Replace all references of the master branch to the current branch
+          sed -i "s/master/${BRANCH_SED}/g"  scripts/modules/binning/*.sh
+          # Set correct branch when testing the Toolkit
+          sed -i "s/ nextflow run / nextflow run -r ${BRANCH_SED} /g" scripts/modules/binning/*.sh
+          # Set assets directory for storing the workflow
+          sed -i "s/ nextflow / ${NXF_ASSETS} nextflow /g" scripts/modules/binning/*.sh
+          # Set slurm executor 
+          sed -i "s/ standard / slurm /g" scripts/modules/binning/*.sh
+          # Copy scm file
+          mkdir -p .nextflow
+          cp ~/.nextflow/scm .nextflow
       - name: Test Metabat Binning 
         run: |
-          bash ./scripts/test_binning.sh "    " "" "${WORK_DIR}" ${PROFILE}  || exit 1
+          bash ./scripts/modules/test_binning.sh || exit 1
       - name: Test Binning based on ONT data
         run: |
-          bash ./scripts/test_binningONT.sh "    " "" "${WORK_DIR}" ${PROFILE}  || exit 1
+          bash ./scripts/modules/test_binningONT.sh || exit 1
       - name: Test Multi Binning
         run: |
-          bash ./scripts/test_multiBinning.sh "    " "" "${WORK_DIR}" ${PROFILE}  || exit 1
+          bash ./scripts/modules/test_multiBinning.sh || exit 1
       - name: Test Multi Binning Long Reads
         run: |
-          bash ./scripts/test_multiBinningONT.sh "    " "" "${WORK_DIR}" ${PROFILE}  || exit 1
+          bash ./scripts/modules/test_multiBinningONT.sh || exit 1
 
 
   cooccurrence:

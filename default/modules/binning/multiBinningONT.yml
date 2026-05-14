@@ -1,11 +1,12 @@
 tempdir: "tmp"
 s3SignIn: false
-output: "output"
+output: output
 logDir: log
 runid: 1
+databases: "/vol/scratch/databases"
+publishDirMode: "symlink"
 logLevel: 1
 scratch: "/vol/scratch"
-publishDirMode: "symlink"
 steps:
   multiBinningONT:
     input:
@@ -17,11 +18,11 @@ steps:
       additionalParams: 
         minimap: " "
         # samtools flags are used to filter resulting bam file
-        samtoolsView: " " 
+        samtoolsView: " -F 3584 " 
     contigsCoverage:
-      additionalParams: " "
+      additionalParams: " --min-covered-fraction 0  --min-read-aligned-percent 100 "
     genomeCoverage:
-      additionalParams: " --min-covered-fraction 0 "
+      additionalParams: " --min-covered-fraction 0  --min-read-aligned-percent 100 "
     semibin2:
       additionalParams: 
         featureGeneration: " "
