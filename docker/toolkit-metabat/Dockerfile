@@ -1,1 +1,1 @@
-FROM metabat/metabat:v2.15-5-g1a9bac2
+FROM metabat/metabat:v2.17
