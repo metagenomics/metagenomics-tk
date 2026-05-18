@@ -543,16 +543,16 @@ jobs:
           cp ~/.nextflow/scm .nextflow
       - name: Test Metabat Binning 
         run: |
-          bash ./scripts/modules/test_binning.sh || exit 1
+          bash ./scripts/modules/binning/test_binning.sh || exit 1
       - name: Test Binning based on ONT data
         run: |
-          bash ./scripts/modules/test_binningONT.sh || exit 1
+          bash ./scripts/modules/binning/test_binningONT.sh || exit 1
       - name: Test Multi Binning
         run: |
-          bash ./scripts/modules/test_multiBinning.sh || exit 1
+          bash ./scripts/modules/binning/test_multiBinning.sh || exit 1
       - name: Test Multi Binning Long Reads
         run: |
-          bash ./scripts/modules/test_multiBinningONT.sh || exit 1
+          bash ./scripts/modules/binning/test_multiBinningONT.sh || exit 1
 
 
   cooccurrence:
