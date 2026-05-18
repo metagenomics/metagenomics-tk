@@ -59,6 +59,7 @@ The TSV file only describes the input data, while the YAML file represents the T
   
     Must include the columns `SAMPLE`, `READS1` and `READS2`. `SAMPLE` must contain unique dataset identifiers
     without whitespaces or special characters. `READS1` and `READS2` are paired reads and can be HTTPS URLs, S3 links or files.
+    An additional optional column is "MULTI_BINNING_GROUP", which is used for [multi-sample binning](pipeline_input.md/#multi-sample-binning).
 
 === "Configuration File"
 

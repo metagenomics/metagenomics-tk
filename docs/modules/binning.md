@@ -14,7 +14,7 @@ For short read data the Toolkit supports MetaBAT2 and Semibin2.
 
 ### Input
 
-=== "Command for short read data with optional single end reads (Metabat2)"
+=== "Example command with optional single end reads (Metabat2)"
 
     ```
     ---8<--- "scripts/modules/binning/test_binning.sh:func"
@@ -42,9 +42,9 @@ For short read data the Toolkit supports MetaBAT2 and Semibin2.
 
 #### Contig Coverage
 
-CoverM is executed on all alginment files to provide basic contig coverage information.
-Here the output are two files. One file is the output of all coverm default methods.
-The other file are metabat specific metrics which are offered by CoverM.
+CoverM is executed on all alignment files to provide basic contig coverage information.
+The output consists of two files. One file contains the output of all CoverM's default methods.
+The other file contains metabat-specific metrics offered by CoverM.
 
 `contigCoverage/*_default_coverm_coverage.tsv`
 
@@ -155,9 +155,9 @@ For Nanopore data the Toolkit supports MetaBAT2 and MetaCoAG.
 
 The output is the same as for short read data. 
 
-## Multi Sample Binning Short Read
+## Multi-sample Binning Short Read
 
-For short read multi sample data the Toolkit supports SemiBin2.
+For short read multi-sample data the Toolkit supports SemiBin2.
 
 ### Input
 
@@ -193,20 +193,19 @@ For short read multi sample data the Toolkit supports SemiBin2.
 
 ### Output
 
-In addition to the files produced for short read data, there are also
-the following files created:
+In addition to the files produced for short read data, the following files are also created:
 
 #### Concatenated Assembly Alignment
 
 `concatenatedAssemblyMapping/*.bam`
 
-: This is an alignment file containing the alignment of reads from every sample mapped back to the concatenated assembly consisting of all the assemblies specified in the groups file.
+: This alignment file contains the mapping of reads from each sample back to the concatenated assembly, which consists of all the assemblies specified in the groups file.
 
 `concatenatedAssemblyMapping/*_unmapped.fq.gz`
 
 : Reads that could not be mapped back.
 
-## Multi Sample Binning ONT
+## Multi-sample Binning ONT
 
 ### Input
 
@@ -242,4 +241,4 @@ the following files created:
 
 ### Output
 
-The output is the same as for multi sample short read data. 
+The output is the same as for multi-sample short read data. 
