@@ -649,15 +649,10 @@ process pConcatContigs {
     mkdir contigs
     # Loop through and create symlinks using the sample name
     for i in \${!raw_files[@]}; do
-        REAL_PATH=\$(readlink -f \${raw_files[\$i]})
-        ln -s "\$REAL_PATH" contigs/\${names[\$i]}_contigs.fa.gz
-    done 
+	name="\${names[\$i]}_contigs"
+	seqkit replace -p "^" -r "\${name}:" "\${raw_files[\$i]}" ;
+    done | pigz > ${group}.fa.gz
 
-    SemiBin2 concatenate_fasta \
-    --input-fasta contigs/* \
-    --output output
-
-    mv output/concatenated.fa.gz ${group}.fa.gz
     chmod a+rwx ${group}.fa.gz
     """
 }
