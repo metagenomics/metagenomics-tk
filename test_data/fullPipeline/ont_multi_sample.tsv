@@ -1,0 +1,4 @@
+SAMPLE	READS	MULTI_BINNING_GROUP
+nano	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/SRR16328449_qc.fq.gz	A
+nano2	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/SRR16328449_qc.fq.gz	A
+nano3	https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/SRR16328449_qc.fq.gz	B

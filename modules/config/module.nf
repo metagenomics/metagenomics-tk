@@ -1,14 +1,5 @@
-nextflow.enable.dsl=2
-import groovy.json.*
-import org.yaml.snakeyaml.Yaml
-
-
-def getOutput(SAMPLE, RUNID, TOOL, filename){
-    return SAMPLE + '/' + RUNID + '/' + params.modules.config.name + '/' +
-         params.modules.config.version.major + "." + 
-         params.modules.config.version.minor + "." + 
-         params.modules.config.version.patch +
-         '/' + TOOL + '/' + filename
+def getYaml() {
+  return new org.yaml.snakeyaml.Yaml()
 }
 
 
@@ -16,9 +7,9 @@ process pConfigUpload {
 
   label 'tiny'
 
-  tag "$sample"
+  tag "${sample}"
 
-  publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "parameters", filename) }
+  publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "parameters", params.modules.config, filename) }
 
   input:
   tuple val(sample), val(config), val(manifest)
@@ -27,18 +18,16 @@ process pConfigUpload {
   tuple val("${sample}"), file("*.yml")
   tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-  shell:
-  Yaml yaml = new Yaml()
-  parameterName = config.steps.keySet().join(".")
-  configStr = yaml.dump(config)
+  script:
+  configStr = getYaml().dump(config)
   workflowVersion = manifest.version
   workflowName = manifest.name
   timestamp = new java.util.Date().format('YYYYMMdd-HHmmss-SSS')
-  '''
-  echo "!{configStr}" > params_!{timestamp}.yml
-  echo "version: !{workflowVersion}" >> manifest_!{timestamp}.yml
-  echo "name: !{workflowName}" >> manifest_!{timestamp}.yml
-  '''
+  """
+  echo "${configStr}" > params_${timestamp}.yml
+  echo "version: ${workflowVersion}" >> manifest_${timestamp}.yml
+  echo "name: ${workflowName}" >> manifest_${timestamp}.yml
+  """
 }
 
 
@@ -47,9 +36,12 @@ process pConfigUpload {
  *
  */
 workflow wSaveSettingsList {
-     take:
-       samples
-     main:
-       samples | combine(Channel.from(params)) \
-           | combine(Channel.from(workflow.manifest)) | pConfigUpload
+  take:
+  samples
+
+  main:
+  samples
+    | combine(channel.from(params))
+    | combine(channel.from(workflow.manifest))
+    | pConfigUpload
 }
