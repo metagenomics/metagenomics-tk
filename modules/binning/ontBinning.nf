@@ -232,12 +232,12 @@ workflow _wBinning {
   )
 
   pSemiBin2(
-    channel.value(params?.steps?.containsKey("binningONT") && params?.steps?.binningONT.containsKey("semibin2ONT")),
+    channel.value(params?.steps?.containsKey("binningONT") && params?.steps?.binningONT.containsKey("semibin2")),
     channel.value(
       [
         getModulePath(params.modules.binningONT),
-        "semibin2ONT",
-        params.steps?.binningONT?.semibin2ONT?.additionalParams,
+        "semibin2",
+        params.steps?.binningONT?.semibin2?.additionalParams,
       ]
     ),
     contigs | join(mappedReads, by: SAMPLE_IDX)
