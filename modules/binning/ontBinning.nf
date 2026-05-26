@@ -295,7 +295,7 @@ workflow _wBinning {
     | set { metabatBinStatisticsInput }
   pSemiBin2.out.binContigMapping
     | join(mappedReads, by: SAMPLE_IDX)
-    | combine(channel.from("semibin2ONT"))
+    | combine(channel.from("semibin2"))
     | join(pSemiBin2.out.bins, by: SAMPLE_IDX)
     | set { semibin2BinStatisticsInput }
   pMetaCoAG.out.binContigMapping
