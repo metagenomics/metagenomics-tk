@@ -236,7 +236,7 @@ workflow _wBinning {
     channel.value(
       [
         getModulePath(params.modules.binningONT),
-        "semibin2",
+        "semibin2ONT",
         params.steps?.binningONT?.semibin2?.additionalParams,
       ]
     ),
