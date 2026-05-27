@@ -43,7 +43,7 @@ workflow wMultiBinningShortReadFile {
         | set { groupNames }
 
     groupNames
-        | groupTuple(by: GROUP_IDX, remainder: true)
+        | groupTuple(by: GROUP_IDX)
         | map { samplesList, group -> [samplesList.size(), group] }
         | combine(groupNames, by: GROUP_IDX)
         | map { group, groupSize, sample -> [sample, group, groupSize] }
