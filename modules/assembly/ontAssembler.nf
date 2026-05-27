@@ -73,6 +73,79 @@ process pMetaflye {
     """
 }
 
+/*
+*
+* metaMDBG only runs for flowcells > 10.4.1 
+*
+*/
+process pMetaMDBG {
+    label 'highmemLarge'
+    tag "Sample: $sample"
+
+    container "quay.io/biocontainers/metamdbg:1.4--h3be2455_0"
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaMDBG", filename) }
+
+    when:
+    params?.steps?.containsKey("assemblyONT") && params?.steps?.assemblyONT?.containsKey("metaMDBG")
+
+    input:
+    tuple val(sample), path(reads, stageAs: 'reads.fq.gz'), val(medianQuality)
+
+    output:
+    tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs
+    tuple val("${sample}"), path("${sample}_contigs_header_mapping.tsv"), emit: headerMapping
+    tuple val("${sample}"), path("${sample}_assembly_graph.gfa"), emit: graph
+    tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigsStats
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    shell:
+    // Erlaube zusätzliche Parameter und einen konfigurierbaren k-Wert für den Graphen (Standard: 21)
+    additionalParams = params.steps.assemblyONT.metaMDBG.additionalParams.metaMDBG ?: ""
+    kVal = params.steps.assemblyONT.metaMDBG.additionalParams.kVal ?: "21"
+    
+    '''
+    ASSEMBLY_OUTPUT="!{sample}_contigs.fa.gz"
+    HEADER_MAPPING_OUTPUT="!{sample}_contigs_header_mapping.tsv"
+
+    # 1. Assembly
+    metaMDBG asm --out-dir out --in-ont reads.fq.gz --threads !{task.cpus} !{additionalParams}
+    
+    # 2. If k_val is set use that for graph generation, otherwise take the largest
+    K_VAL="!{kVal}"
+
+    if [ -z "$K_VAL" ]; then
+    
+        #find biggest k:
+        MAX_K=$(metaMDBG gfa --assembly-dir out --k 0 2>&1 | grep '-' | awk -F'-' '{print $2}' | awk '{print $1}' | sort -n | tail -n 1)    
+        
+        if [ -n "$MAX_K" ]; then
+            K_VAL=$MAX_K
+        fi
+    fi
+
+    # 3. Graphen mit ermitteltem K_VAL generieren
+    metaMDBG gfa --assembly-dir out --k $K_VAL --threads !{task.cpus}
+
+    # Uncompress contigs for transform.sh
+    gunzip out/contigs.fasta.gz
+
+    # Header Transformation
+    transform.sh out/contigs.fasta ${ASSEMBLY_OUTPUT} ${HEADER_MAPPING_OUTPUT} !{sample} !{task.cpus}
+
+    # Find and rename assembly graph
+    GFA_FILE=$(ls out/*.gfa 2>/dev/null | head -n 1)
+    if [ -n "$GFA_FILE" ]; then
+        mv "$GFA_FILE" !{sample}_assembly_graph.gfa
+    else
+        # Fallback, falls die Graph-Generierung fehlschlägt oder übersprungen wird
+        touch !{sample}_assembly_graph.gfa
+    fi
+
+    # get basic contig stats
+    paste -d$'\t' <(echo -e "SAMPLE\n!{sample}") <(seqkit stat -Ta ${ASSEMBLY_OUTPUT}) > !{sample}_contigs_stats.tsv
+    '''
+}
 
 /*
  * Takes a list as input with the format [SAMPLE, READS]
@@ -126,10 +199,15 @@ workflow _wOntAssembly {
      take:
        readsList
      main:
-       readsList | pMetaflye 
+       readsList | pMetaflye
+       readsList | pMetaMDBG 
+       pMetaflye.out.contigs | mix(pMetaMDBG.out.contigs) | set { contigs }
+       pMetaflye.out.graph | mix(pMetaMDBG.out.graph) | set { graph }
+       pMetaflye.out.headerMapping | mix(pMetaMDBG.out.headerMapping) | set { headerMapping }
+
      emit:
-       contigs = pMetaflye.out.contigs
-       graph = pMetaflye.out.graph
-       mapping = pMetaflye.out.headerMapping
+       contigs = contigs
+       graph = graph
+       mapping = headerMapping
        info = pMetaflye.out.info
 }

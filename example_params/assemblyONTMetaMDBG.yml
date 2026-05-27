@@ -1,0 +1,36 @@
+tempdir: "tmp"
+s3SignIn: false
+output: "output"
+logDir: log
+runid: 1
+logLevel: 1
+scratch: "/vol/scratch"
+steps:
+  assemblyONT:
+    input: test_data/assembly/samplesONT.tsv 
+    metaMDBG:
+      additionalParams:
+        metaMDBG: " "
+        # Optional - max k value is default
+        # kVal: 21
+
+resources:
+  highmemLarge:
+    cpus: 128
+    memory: 230
+  highmemMedium:
+    cpus: 14
+    memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
+  small:
+    cpus: 7
+    memory: 14
+  tiny:
+    cpus: 1
+    memory: 1
+

@@ -44,6 +44,18 @@
     ```YAML
     ---8<--- "example_params/assemblyONT.yml"
     ```
+=== "MetaMDBG Configuration File"
+
+
+    !!! warning "Warning"
+     
+        **The configuration file shown here is for demonstration and testing purposes only. 
+          Parameters that should be used in production can be viewed in the assemblyONT section 
+          of one of the yaml files located in the `default` folder of the Toolkit's Github repository.**
+
+    ```YAML
+    ---8<--- "example_params/assemblyONTMetaMDBG.yml"
+    ```
 
 === "TSV Table Short Read"
 
@@ -91,3 +103,10 @@ where
     * MODE can be either 'PREDICT' for predicting memory usage or 'DEFAULT' for using a default flavor defined in the resources section.
 
     * LABEL is the flavor that will be used if the predicted RAM is below the memory value defined as part of the LABEL flavor. It can also be set to AUTO to always use the predicted flavor.
+    
+## ONT Assembly 
+
+There are two different assemblers implemented: metaFlye and metaMDBG. Use metaMDBG if you have newer ONT data with flowcell R10.4+. Otherwise use metaFlye.
+
+    
+    

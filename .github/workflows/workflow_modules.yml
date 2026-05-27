@@ -473,6 +473,10 @@ jobs:
       - name: Test Metaflye Assembly
         run: |
           bash ./scripts/test_assemblyONT.sh "    " example_params/assemblyONT.yml "${WORK_DIR}" ${PROFILE}  || exit 1
+          
+      - name: Test MetaMDBG Assembly
+        run: |
+          bash ./scripts/test_assemblyONT.sh "    " example_params/assemblyONTMetaMDBG.yml "${WORK_DIR}" ${PROFILE}  || exit 1
 
   cooccurrence:
     timeout-minutes: 800
