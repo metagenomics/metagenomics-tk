@@ -483,9 +483,9 @@ workflow _wProcessIllumina {
       wShortReadQualityControlList.out.kmerFrequencies)
 
       // Figure out whether the sample belongs to a multi binning group
-      IS_MULTI_SAMPLE_IDX = 3
+      IS_MULTI_SAMPLE_IDX = 4
       READS_FILE_IDX = 1
-      READS_UNPAIRED_FILE_IDX = 1
+      READS_UNPAIRED_FILE_IDX = 2
       qcReads | combine(binningLabels, by:SAMPLE_IDX ) | branch { sample ->
         singleSample: !sample[IS_MULTI_SAMPLE_IDX]
         multiSample: sample[IS_MULTI_SAMPLE_IDX]
@@ -493,8 +493,8 @@ workflow _wProcessIllumina {
 
       // Make sure that the number of contigs per group matches the number of read samples per group because certain samples may fail.
       sampleTypeReads.multiSample 
-        |  map { sample -> [sample[SAMPLE_IDX], sample[READS_FILE_IDX], sample[READS_UNPAIRED_FILE_IDX]] } 
-        | combine(wShortReadAssemblyList.out.contigs, by: SAMPLE_IDX)  | set { qualityCheckedData }
+        | map { sample -> [sample[SAMPLE_IDX], sample[READS_FILE_IDX], sample[READS_UNPAIRED_FILE_IDX]] } 
+        | combine(wShortReadAssemblyList.out.contigs, by: SAMPLE_IDX) | set { qualityCheckedData }
       
       // Check the number of samples per group
       // If there is more than one sample then go on to multibinning
@@ -520,13 +520,18 @@ workflow _wProcessIllumina {
 
       wMultiBinningShortReadList(multiSamplesInput.contigs, multiSamplesInput.reads, multiSamplesInput.binningLabels)
 
-        singleSample | multiMap { sample, readsPair, readsSingle, contigs, group, groupSize  ->
+      singleSample | multiMap { sample, readsPair, readsSingle, contigs, group, groupSize  ->
             contigs: [sample, contigs]
             reads: [sample, readsPair, readsSingle]
         } | set { singleSampleInput } 
 
+      wShortReadAssemblyList.out.contigs 
+	| combine(binningLabels 
+	| filter({sample, group, isMultiSample, groupCount -> !isMultiSample }), by: SAMPLE_IDX)  
+	| map { sample, contigs, group, isMultiSample, groupCount -> [sample, contigs] }  
+	| set { singleSampleContigs }
 
-      wShortReadBinningList(wShortReadAssemblyList.out.contigs | mix(singleSampleInput.contigs),  sampleTypeReads.singleSample 
+      wShortReadBinningList(singleSampleContigs | mix(singleSampleInput.contigs),  sampleTypeReads.singleSample 
         | map { sample -> [sample[SAMPLE_IDX], sample[READS_FILE_IDX], sample[READS_UNPAIRED_FILE_IDX]] } 
         | mix(singleSampleInput.reads))
 
@@ -584,7 +589,7 @@ workflow _wProcessOnt {
       wOntAssemblyList(ontQCReads | join(medianQuality))
 
       // Figure out whether the sample belongs to a multi binning group
-      IS_MULTI_SAMPLE_IDX = 3
+      IS_MULTI_SAMPLE_IDX = 4
       READS_FILE_IDX = 1
       ontQCReads | combine(binningLabels, by:SAMPLE_IDX ) | branch { sample ->
         singleSample: !sample[IS_MULTI_SAMPLE_IDX]
