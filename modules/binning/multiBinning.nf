@@ -18,7 +18,7 @@ include { pDumpLogs } from '../utils/processes'
 
 
 /*
- * This entrypoint takes the following tab separated file of files containing contigs, group information for co binning, paired and optional single reads 
+ * This entry point takes the following tab separated file of files containing contigs, group information for co-binning, paired and optional single reads 
  * as input and produces binning results.
  * The input file for reads must have two columns seperated by tabs:
  * SAMPLE and READS
@@ -105,7 +105,7 @@ workflow wMultiBinningShortReadList {
  * This entrypoint takes the following file of files as input:
  * Contigs: The contigs file must have the columns SAMPLE and CONTIGS where CONTIGS points to the actual file containing contigs.
  * Reads: The reads file must have the columns SAMPLE and READS where READS points to the actual fastq file.
- * Quality: The quality tsv file contains the columns SAMPLE and QUALITY. The qualiy column contains the median quality for every sample.
+ * Quality: The quality tsv file contains the columns SAMPLE and QUALITY. The quality column contains the median quality for every sample.
  * The input file for groups contains two columns: SAMPLE and GROUP.
  */
 workflow wMultiBinningLongReadFile {
@@ -244,7 +244,7 @@ workflow _wBinningLongRead {
             ]
         )
 
-        // Run SembiBin2 workflow 
+        // Run SemiBin2 workflow 
         wMultiBinningSemiBin2ONT(
             semibinGenerateFeaturesConfig,
             semibinTrainingConfig,
@@ -397,7 +397,7 @@ workflow _wBinningShortRead {
                 params.steps?.multiBinning?.semibin2?.additionalParams?.binning,
             ]
         )
-        // Run SembiBin2 workflow 
+        // Run SemiBin2 workflow 
         wMultiBinningSemiBin2(
             semibinGenerateFeaturesConfig,
             semibinTrainingConfig,

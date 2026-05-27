@@ -115,7 +115,7 @@ workflow wOntBinningFile {
 
 
 /*
-* The the format for every channel is described in corresponding file entrypoint.
+* The format for every channel is described in corresponding file entry point.
 *
 */
 workflow wLongReadBinningList {
@@ -194,7 +194,7 @@ workflow _wRunBinningTools {
         | mix(pMetaCoAG.out.notBinned)
         | set { notBinned }
 
-    // Compute bin statistcs (e.g. N50, average coverage depth, etc. ...)
+    // Compute bin statistics (e.g. N50, average coverage depth, etc. ...)
     pMetabat.out.binContigMapping
         | join(mappedReads, by: SAMPLE_IDX)
         | combine(channel.from("metabatONT"))
