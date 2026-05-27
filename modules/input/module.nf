@@ -655,7 +655,7 @@ workflow _wSetCoBinningMetadata {
  *  The input workflow allows to process files that are provided via a sample sheet or via CLI.
  * 
  *  In all cases a channel is returned containing values of the format: [TYPE: illumina or ont, SAMPLE:name of the sample, READS1: left read, READS2: right read],
- *  [TYPE: illumina or ont, SAMPLE:name of the sample, READS1: left read, READS2: right read, DO_MULTI_BINNING_GROUP: should be co binning done, 
+ *  [TYPE: illumina or ont, SAMPLE:name of the sample, READS1: left read, READS2: right read, DO_MULTI_BINNING_GROUP: whether co-binning should be performed, 
  *  MULTI_BINNING_GROUP_COUNT: how many samples should be binned per group, MULTI_BINNING_GROUP: name of the group of samples that should be co-binned] 
  */
 workflow wInputFile {
@@ -761,7 +761,7 @@ workflow wInputFile {
         }
     }
 
-    // Set co binning specific metadata such as which samples should be co binned.
+    // Set co-binning specific metadata such as which samples should be co-binned.
     fastqs | _wSetCoBinningMetadata
   emit:
     data = _wSetCoBinningMetadata.out.samples 

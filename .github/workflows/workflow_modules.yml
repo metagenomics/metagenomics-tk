@@ -65,12 +65,12 @@ jobs:
           bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/     " \
           example_params/fullPipeline_fraction/fullPipeline_fraction_binning_semibin2.yml \
           "${WORK_DIR}" ${PROFILE} || exit 1
-      - name: Test Full Pipeline with multi sample binning option
+      - name: Test full Pipeline with multi-sample binning option
         run: |
           bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/     " \
           example_params/fullPipeline_fraction/fullPipeline_fraction_binning_multi_sample.yml \
           "${WORK_DIR}" ${PROFILE} || exit 1
-      - name: Test Full Pipeline with multi sample ONT binning option
+      - name: Test full Pipeline with multi-sample ONT binning option
         run: |
           bash ./scripts/test_fullPipeline.sh " --databases=/vol/scratch/databases/     " \
           example_params/fullPipeline_fraction/fullPipeline_ONT_fraction_binning_multi_sample.yml \
@@ -233,7 +233,7 @@ jobs:
         run: |
           make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
           make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
-      - name: Test if CLI input parameter work 
+      - name: Test if CLI input parameters work 
         run: |
           bash ./scripts/test_input.sh  " -c  test_data/assets/aws.config \
                                       --input.SRA.NCBI.id 'SRR5651439' \

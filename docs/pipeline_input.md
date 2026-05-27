@@ -174,13 +174,12 @@ Example:
 
 ### Multi-sample Binning
 
-In Multi-sample binning seperate samples are assembled individually, 
+In multi-sample binning separate samples are assembled individually, 
 and are clustered into bins using coverage (abundance) 
 data tracked across multiple samples.
 
-This can be executed by providing the information which samples should
-be used for the binning step as one group. This can be configured for
-illumina, Nanopore or data stored in SRA by providing the `MULTI_BINNING_GROUP`
+This can be executed by providing information on which samples should be used for the binning step as one group. It is configurable for
+Illumina, Nanopore or data stored in SRA by providing the `MULTI_BINNING_GROUP`
 column:
 
 #### Examples

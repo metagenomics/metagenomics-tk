@@ -1,7 +1,7 @@
 # Binning 
 
 The binning module groups together assembled contigs to create bins representing genomes.
-Depending on whether ONT, short read and/or multi-sample binning should be executed, 
+Depending on whether ONT, short-read and/or multi-sample binning should be executed, 
 multiple binning configurations are offered.
 
 For multi-sample binning, a group of samples must first be configured. 
@@ -10,11 +10,11 @@ then the sample is switched from multi-sample binning to per-sample binning.
 
 ## Short Read 
 
-For short read data the Toolkit supports MetaBAT2 and Semibin2.
+For short-read data the Toolkit supports MetaBAT2 and Semibin2.
 
 ### Input
 
-=== "Example command with optional single end reads (Metabat2)"
+=== "Example command with optional single-end reads (Metabat2)"
 
     ```
     ---8<--- "scripts/modules/binning/test_binning.sh:func"
@@ -66,7 +66,7 @@ The other file contains metabat-specific metrics offered by CoverM.
 
 #### Genome Coverage
 
-CoverM is executed on all alginment files to provide basic coverage information of all generated genomes.
+CoverM is executed on all alignment files to provide basic coverage information of all generated genomes.
 Every file is based on a CoverM method `mean trimmed_mean variance length count reads_per_base rpkm tpm`.
 
 `genomeCoverage/*_count.tsv`
@@ -97,7 +97,7 @@ Every file is based on a CoverM method `mean trimmed_mean variance length count 
 
 #### Binning Tool Output
 
-The output has always the same directory structure for all binning tools:
+The output always has the same directory structure for all binning tools:
 
 Example Semibin2:
 
@@ -161,7 +161,7 @@ For short read multi-sample data the Toolkit supports SemiBin2.
 
 ### Input
 
-=== "Command for Nanopore reads (SemiBin2)"
+=== "Command for short reads (SemiBin2)"
 
     ```BASH
     ---8<--- "scripts/modules/binning/test_multiBinning.sh:func"
@@ -217,13 +217,13 @@ In addition to the files produced for short read data, the following files are a
 
 === "TSV for ONT reads"
 
-    ```BASH
+    
     ---8<--- "test_data/multiBinningONT/samplesONT.tsv"
     ```
 
 === "TSV for contigs"
 
-    ```BASH
+    
     ---8<--- "test_data/multiBinningONT/assemblyONT.tsv"
     ```
 
