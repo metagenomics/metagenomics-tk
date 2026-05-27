@@ -200,6 +200,9 @@ SRA:
 ---8<--- "test_data/input/sraS3Input.tsv"
 ```
 
+!!! warning ""
+
+    If the MULTI_BINNING_GROUP is provided all fields of that columns must be filled in.
 
 ### Configuration of input parameters of the aggregation mode
 
