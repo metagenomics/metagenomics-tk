@@ -79,7 +79,7 @@ process pCountDownload {
     tuple val(sample), env(readUrl)
 
     output:
-    tuple val("${sample}"), path("reads.fq.gz"), env(COUNT)
+    tuple val("${sample}"), path("reads.fq.gz"), env(COUNT) 
 
     script:
     """
