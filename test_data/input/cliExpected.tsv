@@ -1,0 +1,9 @@
+SAMPLE	INSTRUMENT	MULTI_BINNING_GROUP	READS1	READS2
+test1	ILLUMINA	A	/swift/v1/meta_test/small/read1_1bla.fq.gz	/swift/v1/meta_test/small/read2_1bla.fq.gz
+test2	ILLUMINA	A	/swift/v1/meta_test/small/read1_1.fq.gz	/swift/v1/meta_test/small/read2_1.fq.gz
+SRR5651439	ILLUMINA	null	/vol1/fastq/SRR565/009/SRR5651439/SRR5651439_1.fastq.gz	/vol1/fastq/SRR565/009/SRR5651439/SRR5651439_2.fastq.gz
+SRR29912082	ILLUMINA	null	s3://ftp.era.ebi.ac.uk/vol1/fastq/SRR299/082/SRR29912082/SRR29912082_1.fastq.gz	s3://ftp.era.ebi.ac.uk/vol1/fastq/SRR299/082/SRR29912082/SRR29912082_2.fastq.gz
+test3	ILLUMINA	null	/swift/v1/meta_test/small/read1_3.fq.gz	/swift/v1/meta_test/small/read2_3.fq.gz
+ERR12263778	ILLUMINA	null	s3://ftp.era.ebi.ac.uk/vol1/fastq/ERR122/078/ERR12263778/ERR12263778_1.fastq.gz	s3://ftp.era.ebi.ac.uk/vol1/fastq/ERR122/078/ERR12263778/ERR12263778_2.fastq.gz
+SAMPLE	INSTRUMENT	MULTI_BINNING_GROUP	READS
+nano	OXFORD_NANOPORE	null	/swift/v1/meta_test/SRR16328449_qc.fq.gz
