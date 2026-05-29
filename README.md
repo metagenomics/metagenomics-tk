@@ -9,7 +9,16 @@ Furthermore, the Metagenomics-Toolkit includes a machine learning-optimized asse
 
 Quickstart and documentation can be found [here](https://metagenomics.github.io/metagenomics-tk/).
 
+<br>
+
 ## Citation
 
 Peter Belmann, Benedikt Osterholz, Nils Kleinbölting, Alfred Pühler, Andreas Schlüter, Alexander Sczyrba, Metagenomics-Toolkit: the flexible and efficient cloud-based metagenomics workflow featuring machine learning-enabled resource allocation,
 NAR Genomics and Bioinformatics, Volume 7, Issue 3, September 2025, lqaf093, [https://doi.org/10.1093/nargab/lqaf093](https://doi.org/10.1093/nargab/lqaf093)
+
+<br>
+
+## The Metagenomics-Toolkit is a de.NBI service. 
+[![de.NBI logo](logos/deNBI_Logo_rgb.png)](https://www.denbi.de/) 
+
+If you use the Metagenomics-Toolkit please take the time to answer our short survey to help us improve de.NBI services: [surveymonkey](https://www.surveymonkey.de/r/denbi-service?sc=bigi&tool=mgtk)

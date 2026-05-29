@@ -1,0 +1,73 @@
+tempdir: "tmp"
+s3SignIn: true
+input:
+  ont:
+    sheet: "test_data/fullPipeline/ont_multi_sample.tsv"
+    watch: false
+output: "output"
+logDir: log
+runid: 1
+databases: "/vol/scratch/databases"
+logLevel: 1
+scratch: "/vol/scratch"
+steps:
+  qcONT:
+    porechop:
+       additionalParams:
+         porechop: " "
+         chunkSize: 450000
+         filtlong: " --min_length 1000 --keep_percent 90  "
+    nanoplot:
+      additionalParams: " "
+  assemblyONT:
+    metaflye:
+      additionalParams: " -i 1 "
+      quality: "AUTO"
+  binningONT:
+    minimap:
+      additionalParams: 
+        minimap: " "
+        # samtools flags are used to filter resulting bam file
+        samtoolsView: " " 
+    contigsCoverage:
+      additionalParams: " "
+    genomeCoverage:
+      additionalParams: " --min-covered-fraction 0 "
+    semibin2:
+      additionalParams: " --environment global --sequencing-type long_read  "
+
+
+  multiBinningONT:
+    minimap:
+      additionalParams: 
+        minimap: " "
+        # samtools flags are used to filter resulting bam file
+        samtoolsView: " " 
+    contigsCoverage:
+      additionalParams: " "
+    genomeCoverage:
+      additionalParams: " --min-covered-fraction 0 "
+    semibin2:
+      additionalParams: 
+        featureGeneration: " "
+        training: " "
+        binning: " "
+resources:
+  highmemLarge:
+    cpus: 28
+    memory: 230
+  highmemMedium:
+    cpus: 14
+    memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
+  small:
+    cpus: 7
+    memory: 14
+  tiny:
+    cpus: 1
+    memory: 1

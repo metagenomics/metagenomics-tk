@@ -1,0 +1,3 @@
+SAMPLE	CONTIGS
+test1	https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/small/contigs1.fa.gz
+test2	https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/small/contigs2.fa.gz
