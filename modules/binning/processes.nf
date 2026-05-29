@@ -376,8 +376,6 @@ process pSemiBin2 {
 
     tag "$sample"
 
-    label 'small'
-
     memory { Utils.getMemoryResources(params.resources.small, "${sample}", task.attempt, params.resources) }
 
     cpus { Utils.getCPUsResources(params.resources.small, "${sample}", task.attempt, params.resources) }
@@ -448,8 +446,6 @@ process pSemiBin2Binning {
     container "${params.semibin2_image}"
 
     tag "Group: $group, Sample: $sample"
-
-    label 'small'
 
     publishDir params.output, mode: "${params.publishDirMode}", \
 	saveAs: { filename -> Output.getOutput("${sample}", params.runid, "${outputToolDir}", module, filename) }
