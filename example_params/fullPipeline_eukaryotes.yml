@@ -2,12 +2,12 @@ tempdir: "tmp"
 s3SignIn: true
 input:
   paired:
-    sheet: "test_data/fullPipeline/reads_split.tsv"
+    sheet: "test_data/fullPipeline/reads_split_euk.tsv"
     watch: false
 output: "output"
 logDir: log
 runid: 1
-databases: "/vol/scratch/databases"
+databases: "/mnt/databases"
 logLevel: 1
 scratch: "/vol/scratch"
 publishDirMode: "symlink"
@@ -115,15 +115,6 @@ steps:
         smetana: " --molweight "
 
   plasmid:
-    SCAPP:
-      additionalParams: 
-        SCAPP: "  "
-        bwa2: "  "
-        coverm: "  "
-        covermONT: "  "
-        minimap: " "
-        samtoolsViewBwa2: " -F 3584 " 
-        samtoolsViewMinimap: " " 
     ViralVerifyPlasmid:
       filter: true
       filterString: "Uncertain - plasmid or chromosomal|Plasmid"
@@ -140,13 +131,6 @@ steps:
         download:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/mob_20250620.tar.gz
           md5sum: d73fce2d4fc03ca8466b8b1baf1e5634
-    Platon:
-      filter: false
-      database:
-        download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/platon_20220929.tar.gz
-          md5sum: f6d1701704396182c6c9daca053eb9d6
-      additionalParams: "   "
     PlasClass:
       filter: true
       threshold: 0.5 
@@ -172,38 +156,6 @@ steps:
       additionalParams: " --minsize 3000 "
     mmseqs2:
       chunkSize: 20000
-      kegg:
-        additionalParams:
-          search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
-          additionalColumns: ""
-        database:
-          extractedDBPath: '/vol/spool/toolkit/kegg-mirror-202506_mmseqs/keggDB'
-
-#      vfdb:
-#        params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
-#        database:
-#          download:
-#            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/vfdb_full_20250620.tar.zst
-#            md5sum: f2ab1259b36fa906ff91f2575e8ee442
-#      bacmet20_experimental:
-#        params: ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
-#        database:
-#          download:
-#            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet20_experimental.tar.zst
-#            md5sum: 57a6d328486f0acd63f7e984f739e8fe
-      uniref90:
-        additionalParams:
-          search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
-          additionalColumns: ""
-
-
-        database:
-          download:
-            source: s3://databases/uniref90_20250604_mmseqs/*
-            md5sum: 6889d75f437857a07b23c6150cd938bf
-            s5cmd:
-              params: '--retry-count 30 --no-verify-ssl  --no-sign-request  --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080'
-
       bacmet20_predicted:
         additionalParams:
           search : ' -s 1 --max-seqs 100 --max-accept 50 --alignment-mode 1 --exact-kmer-matching 1 --db-load-mode 3'
@@ -222,43 +174,6 @@ steps:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/uniref90_20250604_mmseqs.tar.zst
             md5sum: 6889d75f437857a07b23c6150cd938bf
-    rgi:
-      additionalParams: ""
-      database:
-        download:
-          source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_broadstreet-v4.0.1.tar.bz2
-          md5sum: 2396eaf95f2d35c58c135f7db2211dbb
-    mmseqs2_taxonomy:
-      runOnMAGs: true
-      ncbi_nr:
-        params: ' --orf-filter-s 1 -e 1e-15'
-        ramMode: false
-        initialMaxSensitivity: 1
-        database:
-          download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2023-04-29_mmseqs_taxonomy.tar.zst
-            md5sum: 79b9fb6b3dada41e602d70e12e7351c2
-    keggFromMMseqs2:
-      database:
-        extractedDBPath: "/vol/spool/toolkit/kegg-links-mirror-202506/" 
-  metabolomics:
-     filter:
-       minCompleteness: 49
-       maxContamination: 5
-     carveme:
-       additionalParams: " --solver scip "
-     smetana:
-       beforeProcessScript: /vol/spool/dockerPull.sh
-       global: false
-       detailed: false
-       additionalParams:
-         detailed: ""
-         global: ""
-     memote:
-       beforeProcessScript: /vol/spool/dockerPull.sh
-       additionalParams:
-         run: ""
-         report: ""
   export:
     emgb:
       titles:

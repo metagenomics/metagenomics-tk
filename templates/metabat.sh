@@ -45,5 +45,10 @@ else
 	seqkit replace  -p '(.*)' -r "\${1} MAG=NotBinned" !{contigs} > ${NOT_BINNED}
 fi
 
+# Add not binned contigs to mapping and add the used binning tool to each line
+if [ -s ${NOT_BINNED} ]; then
+		  	seqkit seq ${NOT_BINNED} -n -i | sed "s/^/NotBinned\t/g;s/$/\tmetabat/" >> ${BIN_CONTIG_MAPPING}
+fi
+
 # Fix for ownership issue https://github.com/nextflow-io/nextflow/issues/4565
 chmod a+rw -R ${TEMP_DIR}

@@ -27,7 +27,8 @@ if [ -s *.confident_cycs.fasta ]; then
   csvtk concat --out-tabs -H <(csvtk transpose <(echo -e "SAMPLE\n!{sample}") ) <(csvtk transpose  <(seqkit stat -Ta ${PLASMIDS_OUTPUT}) ) \
 	        | csvtk --tabs transpose | sed 's/"//g' > ${PLASMID_SUMMARY_STATS}
 
-  echo -e "SAMPLE\tID\tLENGTH\tGC" > ${PLASMID_STATS}
-  seqkit fx2tab -l -g -n -i  ${PLASMIDS_OUTPUT} \
-	| sed "s/^/!{sample}\t/g"  >> ${PLASMID_STATS} 
+  echo -e "SAMPLE\tCONTIG\tLENGTH\tGC" > ${PLASMID_STATS}
+   seqkit fx2tab -l -g -n -i  ${PLASMIDS_OUTPUT} \
+	| sed "s/^/!{sample}\t/g" | csvtk cut -t -f 1-,1 | sed 's/SAMPLE/BIN_ID/' >> ${PLASMID_STATS} 
+
 fi
