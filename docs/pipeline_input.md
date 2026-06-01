@@ -23,6 +23,15 @@ Example:
 
 ```
 
+If the input reads are in interleaved format it is also possible to specify just a single column, i.e. `READS`.
+
+
+Example:
+```
+---8<--- "test_data/fullPipeline/reads_split_interleaved.tsv"
+
+```
+
 #### Command line
 
 For a small number of samples it is sometimes easier to provide them directly on the command line instead of creating a sample sheet. 
@@ -42,7 +51,10 @@ where
   * `--input.paired.names` are the sample names. If multiple samples are provided they must be enclosed in double ticks (e.g. "test1 test2").
     The number of sample names must match the number of files provided for `--input.paired.r1` and `--input.paired.r2`.
 
-The `--input.paired.r1` and `--input.paired.r2` can point to the same type of resources (URL, S3, etc.) as the `READS1` and `READS2` columns (see "Sample Sheet" section).
+  * The `--input.paired.r` parameter can be used to specify input reads in interleaved format instaed of using the `--input.paired.r1` and `--input.paired.r2` options.
+
+The `--input.paired.r1`, `--input.paired.r2` and `--input.paired.r` parameters can point to the same type of resources (URL, S3, etc.) as 
+the `READS1` and `READS2` for split columns and `READS` for interleaved format (see "Sample Sheet" section).
 See [Quickstart](quickstart.md#run-the-toolkit) section for a working example.
 
 ### Nanopore
