@@ -2,8 +2,14 @@
 
 set -o pipefail
 
-s5cmd ${params.steps.qc.fastp.download.s5cmdParams} cat  --concurrency ${task.cpus} \${read1Url} 2> error1.log  > inputReads1.fq.gz
-s5cmd ${params.steps.qc.fastp.download.s5cmdParams} cat  --concurrency ${task.cpus} \${read2Url} 2> error2.log  > inputReads2.fq.gz
+if [[ "\${isInterleaved}" == "true" ]]; then
+    s5cmd ${params.steps.qc.fastp.download.s5cmdParams} cat  --concurrency ${task.cpus} \${read1Url} 2> error1.log  \\
+       | zcat | paste - - - - - - - -  | tee >(cut -f 1-4 | tr "\t" "\n" | pigz --best --processes ${task.cpus} > inputReads1.fq.gz)  \\
+       | cut -f 5-8 | tr "\t" "\n" | pigz --best --processes ${task.cpus} > inputReads2.fq.gz
+else
+    s5cmd ${params.steps.qc.fastp.download.s5cmdParams} cat  --concurrency ${task.cpus} \${read1Url} 2> error1.log  > inputReads1.fq.gz
+    s5cmd ${params.steps.qc.fastp.download.s5cmdParams} cat  --concurrency ${task.cpus} \${read2Url} 2> error2.log  > inputReads2.fq.gz
+fi
 
 fastp -i inputReads1.fq.gz \\
       -I inputReads2.fq.gz \\

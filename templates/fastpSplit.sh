@@ -1,7 +1,17 @@
 # run fastp
-fastp -i read1.fq.gz -I read2.fq.gz ${reportOnly} \\
-	-w ${task.cpus} -h ${sample}_report.html \\
-	--unpaired1 ${sample}_tmp_unpaired.qc.fq.gz --unpaired2 ${sample}_tmp_unpaired.qc.fq.gz ${params.steps.qc.fastp.additionalParams.fastp}
+
+if [[ "\${isInterleaved}" == "true" ]]; then
+       fastp -i read1.fq.gz --interleaved_in  ${reportOnly} \\
+              -o read1.fastp.fq.gz \\
+              -O read2.fastp.fq.gz \\
+       	-w ${task.cpus} -h ${sample}_report.html \\
+       	--unpaired1 ${sample}_tmp_unpaired.qc.fq.gz --unpaired2 ${sample}_tmp_unpaired.qc.fq.gz ${params.steps.qc.fastp.additionalParams.fastp}
+
+else
+       fastp -i read1.fq.gz -I read2.fq.gz ${reportOnly} \\
+       	-w ${task.cpus} -h ${sample}_report.html \\
+       	--unpaired1 ${sample}_tmp_unpaired.qc.fq.gz --unpaired2 ${sample}_tmp_unpaired.qc.fq.gz ${params.steps.qc.fastp.additionalParams.fastp}
+fi
 
 # fix 'unexpected end of file' of unpaired reads gzip file
 touch empty.txt
