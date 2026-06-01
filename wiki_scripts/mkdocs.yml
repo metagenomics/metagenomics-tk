@@ -63,6 +63,7 @@ nav:
     - modules/qualityControl.md
     - modules/annotation.md
     - modules/assembly.md
+    - modules/binning.md
     - modules/cooccurrence.md
     - modules/dereplication.md
     - modules/fragment_recruitment.md

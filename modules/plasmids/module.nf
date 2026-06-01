@@ -277,6 +277,7 @@ workflow _runNonPlasmidAssemblyAnalysis {
 	| mix(pViralVerifyPlasmidLinear.out.plasmidsStats) \
 	| set { plasmidsStats }
 
+      filterLogs = channel.empty()
       if(params?.steps?.plasmid.find{ it.key == "Filter" }?.value){
       	// Group outputs of multiple tools (e.g. Platon and Plasclass output) and use them for filtering
       	SAMPLE_ID_IDX = 0 
@@ -293,12 +294,13 @@ workflow _runNonPlasmidAssemblyAnalysis {
          | pContigsPlasmidsFilter
 
       	pContigsPlasmidsFilter.out.plasmids | set { samplesContigsPlasmids }
+      	pContigsPlasmidsFilter.out.logs | set { filterLogs }
       } else {
       	samplesContigs | set { samplesContigsPlasmids }
       }
 
       _wRunPlasClass.out.logs \
-	| mix(pViralVerifyPlasmidLinear.out.logs) | mix(pPlatonLinear.out.logs) | pDumpLogs
+	| mix(pViralVerifyPlasmidLinear.out.logs) | mix(filterLogs) | mix(pPlatonLinear.out.logs) | pDumpLogs
 
     emit:
       plasmids = samplesContigsPlasmids
@@ -327,27 +329,27 @@ workflow _runCircularAnalysis {
 
        pBowtie2(Channel.value(params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("SCAPP") \
                && params.steps?.plasmid?.SCAPP?.additionalParams.containsKey("bowtie")), \
-	Channel.value([Utils.getModulePath(params.modules.plasmids), \
+	Channel.value([params.modules.plasmids, \
 	"SCAPP/readMapping/bowtie", params.steps?.plasmid?.SCAPP?.additionalParams?.bowtie, \
         params.steps?.plasmid?.SCAPP?.additionalParams?.samtoolsViewBowtie, \
 	false]), pSCAPP.out.plasmids | join(illuminaReads))
 
        pBwa(Channel.value(params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("SCAPP") \
 		&& params.steps?.plasmid?.SCAPP?.additionalParams.containsKey("bwa")), \
-	Channel.value([Utils.getModulePath(params.modules.plasmids), \
+	Channel.value([params.modules.plasmids, \
 	"SCAPP/readMapping/bwa", params.steps?.plasmid?.SCAPP?.additionalParams?.bwa, \
         params.steps?.plasmid?.SCAPP?.additionalParams?.samtoolsViewBwa, \
 	false]), pSCAPP.out.plasmids | join(illuminaReads))
 
        pBwa2(Channel.value(params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("SCAPP") \
 		&& params.steps?.plasmid?.SCAPP?.additionalParams.containsKey("bwa2")), \
-	Channel.value([Utils.getModulePath(params.modules.plasmids), \
+	Channel.value([params.modules.plasmids, \
 	"SCAPP/readMapping/bwa2", params.steps?.plasmid?.SCAPP?.additionalParams?.bwa2, \
         params.steps?.plasmid?.SCAPP?.additionalParams?.samtoolsViewBwa2, \
 	false]), pSCAPP.out.plasmids | join(illuminaReads))
 
        pMinimap2(Channel.value(params.steps.containsKey("plasmid") && params?.steps?.plasmid.containsKey("SCAPP")), \
-	Channel.value([Utils.getModulePath(params.modules.plasmids), \
+	Channel.value([params.modules.plasmids, \
         "SCAPP/readMapping/minimap", params.steps?.plasmid?.SCAPP?.additionalParams?.minimap, \
         params.steps?.plasmid?.SCAPP?.additionalParams?.samtoolsViewMinimap, false]), \
        pSCAPP.out.plasmids | join(ontReads))
@@ -358,10 +360,10 @@ workflow _runCircularAnalysis {
        pMinimap2.out.mappedReads | join(ontMedianQuality, by: SAMPLE_IDX) \
 	| set { covermInputONT }
 
-       pCovermContigsCoverage(Channel.value(true), Channel.value([Utils.getModulePath(params?.modules?.plasmids) \
+       pCovermContigsCoverage(Channel.value(true), Channel.value([params?.modules?.plasmids \
 	,"SCAPP/coverage", params?.steps?.plasmid?.SCAPP?.additionalParams?.coverm]), covermInput) 
 
-       pCovermContigsCoverageONT(Channel.value(true), Channel.value([Utils.getModulePath(params?.modules?.plasmids) \
+       pCovermContigsCoverageONT(Channel.value(true), Channel.value([params?.modules?.plasmids \
 	,"SCAPP/coverage", params?.steps?.plasmid?.SCAPP?.additionalParams?.covermONT]), covermInputONT) 
 
        pCovermContigsCoverage.out.coverage | mix(pCovermContigsCoverageONT.out.coverage) | set { coverage }
@@ -378,6 +380,7 @@ workflow _runCircularAnalysis {
 	| mix(pViralVerifyPlasmidCircular.out.plasmidsStats) \
 	| set { plasmidsStats }
 
+       filterLogs = channel.empty()
        if(params?.steps?.plasmid.find{ it.key == "Filter" }?.value){
       	// Group outputs of multiple tools (e.g. Platon and Plasclass output) and use them for filtering
       	 SAMPLE_ID_IDX = 0 
@@ -394,13 +397,14 @@ workflow _runCircularAnalysis {
           | pCircularPlasmidsFilter
 
       	 pCircularPlasmidsFilter.out.plasmids | set { filteredPlasmids }
+      	 pCircularPlasmidsFilter.out.logs | set { filterLogs }
 
       } else {
       	 newPlasmids | set { filteredPlasmids }
       }
 
       pSCAPP.out.logs | mix(_wRunPlasClass.out.logs)  \
-	| mix(pViralVerifyPlasmidCircular.out.logs) | mix(pPlatonCircular.out.logs) | pDumpLogs
+	| mix(pViralVerifyPlasmidCircular.out.logs) | mix(filterLogs) | mix(pPlatonCircular.out.logs) | pDumpLogs
 
     emit:
       plasmids = filteredPlasmids

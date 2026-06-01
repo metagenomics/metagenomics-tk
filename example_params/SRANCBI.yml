@@ -13,3 +13,4 @@ input:
     NCBI:
       sheet: test_data/SRA/ncbi_samples.tsv 
 steps:
+  empty:

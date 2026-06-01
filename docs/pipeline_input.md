@@ -172,7 +172,39 @@ Example:
 	  --input.SRA.NCBI.id "SRR29912082 ERR12263778"  
 ```
 
-### Configurtion of input parameters of the aggregation mode
+### Multi-sample Binning
+
+In multi-sample binning separate samples are assembled individually, 
+and are clustered into bins using coverage (abundance) 
+data tracked across multiple samples.
+
+This can be executed by providing information on which samples should be used for the binning step as one group. It is configurable for
+Illumina, Nanopore or data stored in SRA by providing the `MULTI_BINNING_GROUP`
+column:
+
+#### Examples
+
+Paired-end:
+
+```
+---8<--- "test_data/fullPipeline/reads_split_multi_sample.tsv"
+```
+
+Nanopore:
+```
+---8<--- "test_data/fullPipeline/ont_multi_sample.tsv"
+```
+
+SRA:
+```
+---8<--- "test_data/input/sraS3Input.tsv"
+```
+
+!!! warning ""
+
+    If the MULTI_BINNING_GROUP is provided all fields of that columns must be filled in.
+
+### Configuration of input parameters of the aggregation mode
 
 ```
 input:

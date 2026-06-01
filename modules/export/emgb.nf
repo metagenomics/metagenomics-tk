@@ -142,10 +142,20 @@ workflow _wExportPipeline {
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binning]) } \
 	| set { binningFilesIllumina } 
 
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.multiBinning]) } \
+	| set { multiBinningFilesIllumina } 
+
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.binningONT])} \
         | set { binningONTFiles }
 
-    binningFilesIllumina | mix(binningONTFiles) | set {binningFiles}
+    sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.multiBinningONT])} \
+        | set { multiBinningONTFiles }
+
+    binningFilesIllumina 
+        | mix(multiBinningFilesIllumina)
+        | mix(binningONTFiles) 
+        | mix(multiBinningONTFiles) 
+        | set {binningFiles}
 
     sraIDs | flatMap { sraID, path -> collectModuleFiles(path, sraID, [params.modules.magAttributes])} \
 	| set { selectedSRAMagAttributes}
@@ -166,9 +176,20 @@ workflow _wExportPipeline {
     binningFiles | _wGetIlluminaBinningFiles | filter({ sra, path -> binsIlluminaPattern.matcher(path.toString()).matches()}) \
      | set{ illuminaBins }
 
+    Pattern multiBinningBinsIlluminaPattern = Pattern.compile('.*/multiBinning/' + params.modules.multiBinning.version.major + '..*/.*/.*_bin.*.fa$')
+    binningFiles | _wGetIlluminaBinningFiles | filter({ sra, path -> multiBinningBinsIlluminaPattern.matcher(path.toString()).matches()}) \
+     | set{ multiBinningIlluminaBins }
+
+    Pattern multiBinningBinsONTPattern = Pattern.compile('.*/multiBinningONT/' + params.modules.multiBinningONT.version.major + '..*/.*/.*_bin.*.fa$')
+    binningFiles | filter({ sra, path -> multiBinningBinsONTPattern.matcher(path.toString()).matches()}) \
+     | set{ multiBinningONTBins }
+
     Pattern binsONTPattern = Pattern.compile('.*/binningONT/' + params.modules.binningONT.version.major + '..*/.*/.*_bin.*.fa$')
     binningFiles | filter({ sra, path -> binsONTPattern.matcher(path.toString()).matches()}) \
-     | mix(illuminaBins) | groupTuple(by: SAMPLE_IDX) | set{ binFiles }
+     | mix(illuminaBins) 
+     | mix(multiBinningIlluminaBins) 
+     | mix(multiBinningONTBins)
+     | groupTuple(by: SAMPLE_IDX) | set{ binFiles }
 
     MAX_BIN_COUNTER = 1000000
     // get not Binned gff files
@@ -263,12 +284,24 @@ workflow _wExportPipeline {
     binningFiles | filter({ sra, path -> mappingIlluminaPattern.matcher(path.toString()).matches()}) \
      | set{ illuminaMapping }
 
+    Pattern mappingMultiBinningIlluminaPattern = Pattern.compile('.*/multiBinning/' + params.modules.multiBinning.version.major + '..*/.*/.*.bam$')
+    binningFiles | filter({ sra, path -> mappingMultiBinningIlluminaPattern.matcher(path.toString()).matches()}) \
+     | set{ multiBinningIlluminaMapping }
+
     // get ONT mapping files
     Pattern mappingONTPattern = Pattern.compile('.*/binningONT/' + params.modules.binningONT.version.major + '..*/.*/.*.bam$')
     binningFiles | filter({ sra, path -> mappingONTPattern.matcher(path.toString()).matches()}) \
      | set{ ontMapping }
 
-    illuminaMapping | mix(ontMapping) | set { mapping } 
+    Pattern multiBinningMappingONTPattern = Pattern.compile('.*/multiBinningONT/' + params.modules.multiBinningONT.version.major + '..*/.*/.*.bam$')
+    binningFiles | filter({ sra, path -> multiBinningMappingONTPattern.matcher(path.toString()).matches()}) \
+     | set{ multiBinningOntMapping }
+
+    illuminaMapping 
+        | mix(multiBinningIlluminaMapping)
+        | mix(ontMapping) 
+        | mix(multiBinningOntMapping) 
+        | set { mapping } 
 
     wEMGBList(assembly, \
 	mapping, \
