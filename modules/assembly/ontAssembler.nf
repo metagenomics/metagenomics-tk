@@ -28,10 +28,11 @@ def getMetaflyeQualityParam(medianQuality) {
 *
 */
 process pMetaflye {
-
-    label 'highmemLarge'
-
     tag "Sample: $sample"
+
+    memory { Utils.getMemoryResources(params.resources.highmemMedium, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.highmemMedium, "${sample}", task.attempt, params.resources) }
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaflye", filename) }
 
@@ -75,19 +76,21 @@ process pMetaflye {
 
 /*
 *
-* metaMDBG only runs for flowcells > 10.4.1 
+* metaMDBG only runs for flowcells > 10.4.1 - it does not return an info file like metaFlye, so MetaCoAG does not work when using metaMDBG.
 *
 */
 process pMetaMDBG {
-    label 'highmemLarge'
-    tag "Sample: $sample"
+    tag "Sample: $sample"   
+    
+    memory { Utils.getMemoryResources(params.resources.highmemMedium, "${sample}", task.attempt, params.resources) }
 
-    container "${params.metamdbg_image}"
+    cpus { Utils.getCPUsResources(params.resources.highmemMedium, "${sample}", task.attempt, params.resources) }
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaMDBG", filename) }
 
-    when:
-    params?.steps?.containsKey("assemblyONT") && params?.steps?.assemblyONT?.containsKey("metaMDBG")
+    when params?.steps?.containsKey("assemblyONT") && params?.steps?.assemblyONT?.containsKey("metaMDBG")
+    
+    container "${params.metamdbg_image}"
 
     input:
     tuple val(sample), path(reads, stageAs: 'reads.fq.gz'), val(medianQuality)

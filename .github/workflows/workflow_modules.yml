@@ -470,13 +470,13 @@ jobs:
         run: |
           bash ./scripts/test_assembly.sh "    " example_params/assemblyMetaspades.yml "${WORK_DIR}" ${PROFILE}  || exit 1
 
-      - name: Test Metaflye Assembly
+      - name: Test MetaMDBG Assembly
         run: |
           bash ./scripts/test_assemblyONT.sh "    " example_params/assemblyONT.yml "${WORK_DIR}" ${PROFILE}  || exit 1
           
-      - name: Test MetaMDBG Assembly
+      - name: Test metaFlye Assembly
         run: |
-          bash ./scripts/test_assemblyONT.sh "    " example_params/assemblyONTMetaMDBG.yml "${WORK_DIR}" ${PROFILE}  || exit 1
+          bash ./scripts/test_assemblyONT.sh "    " example_params/assemblyONTmetaFlye.yml "${WORK_DIR}" ${PROFILE}  || exit 1
 
   cooccurrence:
     timeout-minutes: 800

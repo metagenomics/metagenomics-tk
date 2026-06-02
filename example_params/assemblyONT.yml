@@ -13,7 +13,6 @@ steps:
         metaMDBG: " "
         # Optional - max k value is default
         # kVal: 21
-
 resources:
   highmemLarge:
     cpus: 28
