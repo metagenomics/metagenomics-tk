@@ -51,9 +51,9 @@ process pSCAPP {
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
 
-    shell:
+    script:
     output = getOutput("${sample}", params.runid, "SCAPP", "")
-    template("scapp.sh")
+    template "scapp.sh"
 }
 
 
@@ -86,12 +86,12 @@ process pPLSDB {
     tuple val("${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = getOutput("${sample}", params.runid, "PLSDB", "")
     S5CMD_PARAMS=params.steps?.plasmid?.PLSDB?.database?.download?.s5cmd?.params ?: ""
     S3_PLSDB_ACCESS=params?.steps?.plasmid?.PLSDB?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_PLSDB_ACCESS" : ""
     S3_PLSDB_SECRET=params?.steps?.plasmid?.PLSDB?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_PLSDB_SECRET" : ""
-    template("plsdb.sh")
+    template "plsdb.sh"
 }
 
 
@@ -136,10 +136,10 @@ process pCount {
     output:
     tuple val("${sample}"), val("${binID}"), path(plasmids), env(COUNT) 
 
-    shell:
-    '''
-    COUNT=$(seqkit stats -T !{plasmids} | cut -d$'\t' -f 4 | tail -n 1)
-    '''
+    script:
+    """
+    COUNT=\$(seqkit stats -T ${plasmids} | cut -d\$'\t' -f 4 | tail -n 1)
+    """
 }
 
 
@@ -230,10 +230,10 @@ process pCollectFile {
     output:
     tuple val("${sample}"), val("${bin}"), val("${tool}"), path("*_toolOutputConcat_${tool}.tsv")
 
-    shell:
-    '''
-    csvtk -t -T concat !{toolOutputs} > !{sample}_!{bin}_toolOutputConcat_!{tool}.tsv
-    '''
+    script:
+    """
+    csvtk -t -T concat ${toolOutputs} > ${sample}_${bin}_toolOutputConcat_${tool}.tsv
+    """
 }
 
 /*
