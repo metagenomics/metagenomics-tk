@@ -256,7 +256,6 @@ workflow _wSplitReadsFiles {
 	            | map { sample -> [SAMPLE:sample[SAMPLE_IDX],READS1:file(sample[READS1_IDX]),READS2:file(sample[READS2_IDX])] }
                 | set { fastqs }
          }
-         fastqs | view
       emit:
          fastqs
 }
