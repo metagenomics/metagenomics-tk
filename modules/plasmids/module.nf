@@ -51,9 +51,9 @@ process pSCAPP {
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
 
-    shell:
+    script:
     output = getOutput("${sample}", params.runid, "SCAPP", "")
-    template("scapp.sh")
+    template "scapp.sh"
 }
 
 
@@ -86,12 +86,12 @@ process pPLSDB {
     tuple val("${binID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = getOutput("${sample}", params.runid, "PLSDB", "")
     S5CMD_PARAMS=params.steps?.plasmid?.PLSDB?.database?.download?.s5cmd?.params ?: ""
     S3_PLSDB_ACCESS=params?.steps?.plasmid?.PLSDB?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_PLSDB_ACCESS" : ""
     S3_PLSDB_SECRET=params?.steps?.plasmid?.PLSDB?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_PLSDB_SECRET" : ""
-    template("plsdb.sh")
+    template "plsdb.sh"
 }
 
 
@@ -136,10 +136,10 @@ process pCount {
     output:
     tuple val("${sample}"), val("${binID}"), path(plasmids), env(COUNT) 
 
-    shell:
-    '''
-    COUNT=$(seqkit stats -T !{plasmids} | cut -d$'\t' -f 4 | tail -n 1)
-    '''
+    script:
+    """
+    COUNT=\$(seqkit stats -T ${plasmids} | cut -d\$'\t' -f 4 | tail -n 1)
+    """
 }
 
 
@@ -230,10 +230,10 @@ process pCollectFile {
     output:
     tuple val("${sample}"), val("${bin}"), val("${tool}"), path("*_toolOutputConcat_${tool}.tsv")
 
-    shell:
-    '''
-    csvtk -t -T concat !{toolOutputs} > !{sample}_!{bin}_toolOutputConcat_!{tool}.tsv
-    '''
+    script:
+    """
+    csvtk -t -T concat ${toolOutputs} > ${sample}_${bin}_toolOutputConcat_${tool}.tsv
+    """
 }
 
 /*
@@ -329,27 +329,27 @@ workflow _runCircularAnalysis {
 
        pBowtie2(Channel.value(params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("SCAPP") \
                && params.steps?.plasmid?.SCAPP?.additionalParams.containsKey("bowtie")), \
-	Channel.value([Utils.getModulePath(params.modules.plasmids), \
+	Channel.value([params.modules.plasmids, \
 	"SCAPP/readMapping/bowtie", params.steps?.plasmid?.SCAPP?.additionalParams?.bowtie, \
         params.steps?.plasmid?.SCAPP?.additionalParams?.samtoolsViewBowtie, \
 	false]), pSCAPP.out.plasmids | join(illuminaReads))
 
        pBwa(Channel.value(params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("SCAPP") \
 		&& params.steps?.plasmid?.SCAPP?.additionalParams.containsKey("bwa")), \
-	Channel.value([Utils.getModulePath(params.modules.plasmids), \
+	Channel.value([params.modules.plasmids, \
 	"SCAPP/readMapping/bwa", params.steps?.plasmid?.SCAPP?.additionalParams?.bwa, \
         params.steps?.plasmid?.SCAPP?.additionalParams?.samtoolsViewBwa, \
 	false]), pSCAPP.out.plasmids | join(illuminaReads))
 
        pBwa2(Channel.value(params.steps.containsKey("plasmid") && params.steps.plasmid?.containsKey("SCAPP") \
 		&& params.steps?.plasmid?.SCAPP?.additionalParams.containsKey("bwa2")), \
-	Channel.value([Utils.getModulePath(params.modules.plasmids), \
+	Channel.value([params.modules.plasmids, \
 	"SCAPP/readMapping/bwa2", params.steps?.plasmid?.SCAPP?.additionalParams?.bwa2, \
         params.steps?.plasmid?.SCAPP?.additionalParams?.samtoolsViewBwa2, \
 	false]), pSCAPP.out.plasmids | join(illuminaReads))
 
        pMinimap2(Channel.value(params.steps.containsKey("plasmid") && params?.steps?.plasmid.containsKey("SCAPP")), \
-	Channel.value([Utils.getModulePath(params.modules.plasmids), \
+	Channel.value([params.modules.plasmids, \
         "SCAPP/readMapping/minimap", params.steps?.plasmid?.SCAPP?.additionalParams?.minimap, \
         params.steps?.plasmid?.SCAPP?.additionalParams?.samtoolsViewMinimap, false]), \
        pSCAPP.out.plasmids | join(ontReads))
@@ -360,10 +360,10 @@ workflow _runCircularAnalysis {
        pMinimap2.out.mappedReads | join(ontMedianQuality, by: SAMPLE_IDX) \
 	| set { covermInputONT }
 
-       pCovermContigsCoverage(Channel.value(true), Channel.value([Utils.getModulePath(params?.modules?.plasmids) \
+       pCovermContigsCoverage(Channel.value(true), Channel.value([params?.modules?.plasmids \
 	,"SCAPP/coverage", params?.steps?.plasmid?.SCAPP?.additionalParams?.coverm]), covermInput) 
 
-       pCovermContigsCoverageONT(Channel.value(true), Channel.value([Utils.getModulePath(params?.modules?.plasmids) \
+       pCovermContigsCoverageONT(Channel.value(true), Channel.value([params?.modules?.plasmids \
 	,"SCAPP/coverage", params?.steps?.plasmid?.SCAPP?.additionalParams?.covermONT]), covermInputONT) 
 
        pCovermContigsCoverage.out.coverage | mix(pCovermContigsCoverageONT.out.coverage) | set { coverage }

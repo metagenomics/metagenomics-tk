@@ -48,6 +48,8 @@ process pFilterHuman {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "filterHuman", params.modules.qc, filename) }
 
+    containerOptions Utils.getDockerMount(params.steps?.qc?.filterHuman?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork())
+
     when params.steps.containsKey("qc") && params?.steps?.qc.containsKey("filterHuman")
 
     container "${params.scrubber_image}"
@@ -223,7 +225,6 @@ workflow _wFastqSplit {
          reads
        main:
             // Check if files are S3 URLs and if the download parameter is specified in the config
-            FASTP_FILE_IDX = 1
             reads | branch {
               download: it[2].startsWith("s3://") && params?.steps?.qc.fastp.containsKey("download")
               noDownload: !params?.steps?.qc.fastp.containsKey("download")
@@ -236,20 +237,26 @@ workflow _wFastqSplit {
              pFastpSplit.out.readsSingle | mix(pFastpSplitDownload.out.readsSingle) | set {readsSingle}
 
              readsPair | join(readsSingle) | set{ singleAndPairReads }
-             filteredSeqs = Channel.empty()
+
+             filteredSeqs = channel.empty()
+             readsPairFinal = channel.empty()
+             readsSingleFinal = channel.empty()
              if(params.steps.containsKey("qc") && params.steps.qc.containsKey("filterHuman")){
-	        singleAndPairReads | pFilterHuman
-		pFilterHuman.out.filteredSeqs | set {filteredSeqs}
+	            singleAndPairReads | pFilterHuman
+		        pFilterHuman.out.filteredSeqs | set {filteredSeqs}
+                pFilterHuman.out.interleaved | set {readsPairFinal}
+                pFilterHuman.out.unpaired | set {readsSingleFinal}
              } else {
-	        singleAndPairReads | set {filteredSeqs}
+	            singleAndPairReads | set {filteredSeqs}
+                readsPair | set {readsPairFinal}
+                readsSingle | set {readsSingleFinal}
              }
              filteredSeqs | (pNonpareil & pKMC)
-
       emit:
         nonpareilIndex = pNonpareil.out.nonpareilIndex
         kmerFrequencies = pKMC.out.histogram 
-        readsPair = readsPair
-        readsSingle = readsSingle
+        readsPair = readsPairFinal
+        readsSingle = readsSingleFinal
 }
 
 
