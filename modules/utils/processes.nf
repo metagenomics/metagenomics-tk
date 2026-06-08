@@ -43,17 +43,17 @@ process pDumpLogs {
     output:
     path("logs/*"), optional: true, emit: logs
 
-    shell:
-    '''
-    if [ !{maxLogLevel} -ge !{params.logLevel} ];
+    script:
+    """
+    if [ ${maxLogLevel} -ge ${params.logLevel} ];
     then
        mkdir -p logs
-       cp command.log  logs/!{ID}.log
-       cp command.err  logs/!{ID}.err
-       cp command.out  logs/!{ID}.out
-       cp command.sh  logs/!{ID}.sh
+       cp command.log  logs/${ID}.log
+       cp command.err  logs/${ID}.err
+       cp command.out  logs/${ID}.out
+       cp command.sh  logs/${ID}.sh
     fi
-    '''
+    """
 }
 
 
@@ -77,8 +77,8 @@ process pPublish {
     output:
     path("$in", includeInputs: true)
 
-    shell:
-    '''
-    '''
+    script:
+    """
+    """
 }
 
