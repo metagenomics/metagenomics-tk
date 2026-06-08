@@ -8,11 +8,9 @@ scratch: "/vol/scratch"
 steps:
   assemblyONT:
     input: test_data/assembly/samplesONT.tsv 
-    metaMDBG:
-      additionalParams:
-        metaMDBG: " "
-        # Optional - max k value is default
-        # kVal: 21
+    metaflye:
+      additionalParams: " -i 1 "
+      quality: " --nano-raw "
 resources:
   highmemLarge:
     cpus: 28

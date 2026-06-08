@@ -212,24 +212,10 @@
       "default": "",
       "fa_icon": "fas fa-bars-staggered",
       "properties": {
-        "steps.assemblyONT.metaflye.additionalParams": {
+        "steps.assemblyONT.metaMDBG.additionalParams.metaMDBG": {
           "type": "string",
-          "description": "Command line parameters for metaflye",
-          "default": " -i 1 ",
-          "hidden": true
-        },
-        "steps.assemblyONT.metaflye.quality": {
-          "description": "Quality mode for metaflye",
-          "default": "AUTO",
-          "enum": [
-            "AUTO",
-            "--pacbio-raw",
-            "--pacbio-corr",
-            "--pacbio-hifi",
-            "--nano-raw",
-            "--nano-corr",
-            "--nano-hq"
-          ],
+          "description": "Command line parameters for metaMDBG",
+          "default": " ",
           "hidden": true
         }
       }

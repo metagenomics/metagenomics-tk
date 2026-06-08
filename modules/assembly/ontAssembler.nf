@@ -28,10 +28,11 @@ def getMetaflyeQualityParam(medianQuality) {
 *
 */
 process pMetaflye {
-
-    label 'highmemLarge'
-
     tag "Sample: $sample"
+
+    memory { Utils.getMemoryResources(params.resources.highmemMedium, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.highmemMedium, "${sample}", task.attempt, params.resources) }
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaflye", filename) }
 
@@ -73,6 +74,77 @@ process pMetaflye {
     """
 }
 
+/*
+*
+* metaMDBG only runs for flowcells > 10.4.1 - it does not return an info file like metaFlye, so MetaCoAG does not work when using metaMDBG.
+*
+*/
+process pMetaMDBG {
+    tag "Sample: $sample"   
+    
+    memory { Utils.getMemoryResources(params.resources.highmemMedium, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.highmemMedium, "${sample}", task.attempt, params.resources) }
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaMDBG", filename) }
+
+    when params?.steps?.containsKey("assemblyONT") && params?.steps?.assemblyONT?.containsKey("metaMDBG")
+    
+    container "${params.metamdbg_image}"
+
+    input:
+    tuple val(sample), path(reads, stageAs: 'reads.fq.gz'), val(medianQuality)
+
+    output:
+    tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs
+    tuple val("${sample}"), path("${sample}_contigs_header_mapping.tsv"), emit: headerMapping
+    tuple val("${sample}"), path("${sample}_assembly_graph.gfa"), emit: graph
+    tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigsStats
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    script:
+    // Additional params, kVal can be set but doesn't need to be - per default the max k used in the assembly is used
+    additionalParams = params.steps.assemblyONT.metaMDBG.additionalParams.metaMDBG ?: ""
+    kVal = params.steps.assemblyONT.metaMDBG.additionalParams.kVal ?: ""
+    
+    """
+    ASSEMBLY_OUTPUT="${sample}_contigs.fa.gz"
+    HEADER_MAPPING_OUTPUT="${sample}_contigs_header_mapping.tsv"
+
+    #Assembly
+    metaMDBG asm --out-dir out --in-ont reads.fq.gz --threads ${task.cpus} ${additionalParams}
+    
+    #If kVal is set use that for graph generation, otherwise take the largest
+    K_VAL="${kVal}"
+
+    if [ -z "\$K_VAL" ]; then
+        #find biggest k:
+        K_VAL=\$(metaMDBG gfa --assembly-dir out --k 0 2>&1 | grep '-' | awk -F'-' '{print \$2}' | awk '{print \$1}' | sort -n | tail -n 1)    
+    fi
+
+    #Generate graph with K_VAL:
+    metaMDBG gfa --assembly-dir out --k \$K_VAL --threads ${task.cpus}
+
+    # Uncompress contigs to a temporary standard file (prevents stream errors in transform.sh)
+    gunzip -c out/contigs.fasta.gz > out/temp_contigs.fasta
+
+    # Header Transformation
+    transform.sh out/temp_contigs.fasta \$ASSEMBLY_OUTPUT \$HEADER_MAPPING_OUTPUT ${sample} ${task.cpus}
+
+    # Immediately remove the uncompressed file to save disk space
+    rm out/temp_contigs.fasta
+
+    # Find and rename assembly graph
+    GFA_FILE=\$(ls out/*.gfa 2>/dev/null | head -n 1)
+    if [ -n "\$GFA_FILE" ]; then
+        mv "\$GFA_FILE" ${sample}_assembly_graph.gfa
+    fi
+
+    # get basic contig stats
+    # Solved token error by using a physical tab character inside printf
+    paste -d"\$(printf '\t')" <(echo -e "SAMPLE\n${sample}") <(seqkit stat -Ta \$ASSEMBLY_OUTPUT) > ${sample}_contigs_stats.tsv
+    """
+}
 
 /*
  * Takes a list as input with the format [SAMPLE, READS]
@@ -126,10 +198,15 @@ workflow _wOntAssembly {
      take:
        readsList
      main:
-       readsList | pMetaflye 
+       readsList | pMetaflye
+       readsList | pMetaMDBG 
+       pMetaflye.out.contigs | mix(pMetaMDBG.out.contigs) | set { contigs }
+       pMetaflye.out.graph | mix(pMetaMDBG.out.graph) | set { graph }
+       pMetaflye.out.headerMapping | mix(pMetaMDBG.out.headerMapping) | set { headerMapping }
+
      emit:
-       contigs = pMetaflye.out.contigs
-       graph = pMetaflye.out.graph
-       mapping = pMetaflye.out.headerMapping
+       contigs = contigs
+       graph = graph
+       mapping = headerMapping
        info = pMetaflye.out.info
 }

@@ -339,8 +339,6 @@ process pMetabat {
 
     tag "$sample"
 
-    label 'small'
-
     memory { Utils.getMemoryResources(params.resources.small, "${sample}", task.attempt, params.resources) }
 
     cpus { Utils.getCPUsResources(params.resources.small, "${sample}", task.attempt, params.resources) }

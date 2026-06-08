@@ -20,9 +20,11 @@ steps:
     nanoplot:
       additionalParams: ""
   assemblyONT:
-    metaflye:
-      additionalParams: " -i 1 "
-      quality: "AUTO"
+    metaMDBG:
+      additionalParams:
+        metaMDBG: " "
+        # Optional - max k value is default
+        # kVal: 21
   binningONT:
     minimap:
       additionalParams: 

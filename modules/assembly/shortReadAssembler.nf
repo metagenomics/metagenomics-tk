@@ -132,8 +132,6 @@ process pMegahit {
 
 process pMetaspades {
 
-    label 'highmemLarge'
-
     tag "$sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaspades", filename) }
