@@ -178,7 +178,18 @@ workflow _wSplitReadsSheet {
          } else {
             idsFromPath | set {files}
          } 
-         files |  splitCsv(sep: '\t', header: true) | unique | set { fastqs } 
+         files |  splitCsv(sep: '\t', header: true) | branch { samples ->
+            interleaved:  samples.containsKey("READS")
+            split:  !samples.containsKey("READS")
+         } 
+         | set { fastqFormat } 
+
+         empty = file(params.tempdir + "/empty") 
+
+         // For interleaved format the 2nd fastq file is set to an empty file.
+         fastqFormat.interleaved 
+            | map { sample -> [SAMPLE:sample.SAMPLE, READS1:sample.READS, READS2:empty.toString()] }
+            | mix(fastqFormat.split) | unique | set { fastqs } 
        emit:
          fastqs
 }
@@ -191,12 +202,30 @@ workflow _wSplitReadsSheet {
 */
 workflow _wSplitReadsFiles {
        main:
-         def r1 = params.input.paired.r1.tokenize(' ')
-         def r2 = params.input.paired.r2.tokenize(' ')
-         def names = params.input.paired.names.tokenize(" ")
+        def r = null
+        def r1 = null
+        def r2 = null
+        if("r" in params.input.paired){
+            r = params.input.paired.r.tokenize(' ')
+        } else {
+            r1 = params.input.paired.r1.tokenize(' ')
+            r2 = params.input.paired.r2.tokenize(' ')
+        }
+        def names = params.input.paired.names.tokenize(" ")
 
-         if (r1.size() != r2.size() && r2.size() == r3.size() ) {
-            error "Mismatch detected: --input.paired.r1, --input.paired.r2 and --input.paired.names should have the same number of values."
+         if(r == null){
+            if (r1.size() != r2.size() || r2.size() != names.size() ) {
+                error "Mismatch detected: --input.paired.r1, --input.paired.r2 and --input.paired.names should have the same number of values."
+            }
+         } else {
+            if (r.size() != names.size() ) {
+                error "Mismatch detected: --input.paired.r and --input.paired.names should have the same number of values."
+            }
+            r1 = r
+
+            // For interleaved format the 2nd fastq file is set to an empty file.
+            empty = file(params.tempdir + "/empty") 
+            r2 = [empty.toString()] * r.size()
          }
 
          SAMPLE_IDX=0
@@ -208,8 +237,14 @@ workflow _wSplitReadsFiles {
          fastqs = channel.empty()
          if(params.input.paired.containsKey("binGroup")){
             def binGroup = params.input.paired.binGroup.tokenize(" ")
-            if (r1.size() != binGroup.size()) {
-                error "Mismatch detected: --input.paired.r and --input.paired.binGroup should have the same number of values."
+            if (r == null){
+                if (r1.size() != binGroup.size()) {
+                    error "Mismatch detected: --input.paired.r1, --input.paired.r2 and --input.paired.binGroup should have the same number of values."
+                }
+            } else {
+                if (r.size() != binGroup.size()) {
+                    error "Mismatch detected: --input.paired.r and --input.paired.binGroup should have the same number of values."
+                }
             }
 	        samples = [names, r1, r2, binGroup].transpose()
             channel.from(samples) 
@@ -725,9 +760,9 @@ workflow wInputFile {
             fastqs | mix(pairedChannel) | set { fastqs }
         }
 
-        if("r1" in params.input.paired || "r2" in params.input.paired) {
+        if("r1" in params.input.paired || "r2" in params.input.paired || "r" in params.input.paired) {
             // Make sure that always left and right read is provided and the sample names
-            if("r1" !in params.input.paired || "r2" !in params.input.paired || "names" !in params.input.paired){
+            if("r" !in params.input.paired && ("r1" !in params.input.paired || "r2" !in params.input.paired || "names" !in params.input.paired)){
                 error "Missing parameter: --input.paired.r1 and --input.paired.r2 must be provided!"
             }
 

@@ -7,11 +7,13 @@ scratch: "/vol/scratch"
 publishDirMode: "symlink"
 input:
   paired:
-    sheet: "test_data/fullPipeline/reads_split_interleaved.tsv"
+    sheet: "test_data/fullPipeline/reads_split_s3_interleaved.tsv"
     watch: false
 steps:
   qc:
     fastp:
+      download:
+        s5cmdParams: " --retry-count 30 --no-verify-ssl --no-sign-request --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "
       additionalParams:
         fastp: "  "
         reportOnly: false

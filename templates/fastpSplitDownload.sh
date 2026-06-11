@@ -2,13 +2,22 @@
 
 set -o pipefail
 
-s5cmd ${params.steps.qc.fastp.download.s5cmdParams} cat  --concurrency ${task.cpus} \${read1Url} 2> error1.log  > inputReads1.fq.gz
-s5cmd ${params.steps.qc.fastp.download.s5cmdParams} cat  --concurrency ${task.cpus} \${read2Url} 2> error2.log  > inputReads2.fq.gz
+if [[ "\${isInterleaved}" == "true" ]]; then
+    s5cmd ${params.steps.qc.fastp.download.s5cmdParams} cat  --concurrency ${task.cpus} \${read1Url} 2> error1.log  \\
+       | zcat | paste - - - - - - - -  | tee >(cut -f 1-4 | tr "\t" "\n" | pigz --best --processes ${task.cpus} > inputReads1.fq.gz)  \\
+       | cut -f 5-8 | tr "\t" "\n" | pigz --best --processes ${task.cpus} > inputReads2.fq.gz
+else
+    s5cmd ${params.steps.qc.fastp.download.s5cmdParams} cat  --concurrency ${task.cpus} \${read1Url} 2> error1.log  > inputReads1.fq.gz
+    s5cmd ${params.steps.qc.fastp.download.s5cmdParams} cat  --concurrency ${task.cpus} \${read2Url} 2> error2.log  > inputReads2.fq.gz
+fi
 
 fastp -i inputReads1.fq.gz \\
       -I inputReads2.fq.gz \\
-      -o read1.fastp.fq.gz -O read2.fastp.fq.gz -w ${task.cpus} -h ${sample}_report.html \\
-         --unpaired1 ${sample}_tmp_unpaired.qc.fq.gz --unpaired2 ${sample}_tmp_unpaired.qc.fq.gz ${params.steps.qc.fastp.additionalParams.fastp}
+      --stdout \\
+      -w ${task.cpus} \\
+      -h ${sample}_report.html \\
+       --unpaired1 ${sample}_tmp_unpaired.qc.fq.gz --unpaired2 ${sample}_tmp_unpaired.qc.fq.gz ${params.steps.qc.fastp.additionalParams.fastp} \\
+	| pigz --best --processes ${task.cpus} > ${sample}_tmp_interleaved.qc.fq.gz
 
 # This if statement solves issue https://github.com/pbelmann/meta-omics-toolkit/issues/166
 if grep -q "reset by peer" error1.log error2.log; then
@@ -27,12 +36,6 @@ cat empty.txt.gz >> \${UNPAIRED}
 
 # create statistics for unpaired fastq files
 paste -d\$'\\t' <(echo -e "SAMPLE\\n${sample}") <(seqkit stats -T \${UNPAIRED}) > ${sample}_unpaired_summary.tsv
-
-# create interleaved fastq file for further analysis
-paste <(zcat read1.fastp.fq.gz)  <(zcat read2.fastp.fq.gz) \\
-       | paste - - - - \\
-       | awk -v OFS="\\n" -v FS="\\t" '{print(\$1,\$3,\$5,\$7,\$2,\$4,\$6,\$8)}' \\
-       | pigz --best --processes ${task.cpus} > ${sample}_tmp_interleaved.qc.fq.gz
 
 # create tables of the fastp summary
 cat fastp.json | jq -r  ' [.summary.before_filtering] | (map(keys) | add | unique) as \$cols | map(. as \$row | \$cols | map(\$row[.])) as \$rows | \$cols, \$rows[] | @tsv ' > fastp_summary_before_tmp.tsv
