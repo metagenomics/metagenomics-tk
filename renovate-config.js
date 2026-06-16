@@ -12,12 +12,12 @@ module.exports = {
                          {  "matchDatasources": ["docker"], versioning: "loose" }
 		  ],
                   regexManagers: [
-				{
-				   "fileMatch": ["^nextflow.config$"],
-				   "matchStrings": [
-					"_image* = \"(?<depName>.*?):(?<currentValue>.*?)\""
-				],
-				   "datasourceTemplate": "docker"
-				}
+				  {
+      				fileMatch: ['^nextflow\\.config$'],
+      				matchStrings: [
+        				'[A-Za-z0-9_]+_image\\s*=\\s*configureImagePrefix\\("(?<depName>[^":]+(?:/[^":]+)+):(?<currentValue>[^"]+)"\\)'
+      				],
+      				datasourceTemplate: 'docker'
+    			  }
 		]
 };
