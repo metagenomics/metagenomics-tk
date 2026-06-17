@@ -7,17 +7,27 @@ module.exports = {
 		  platform: 'github',
 		  requireConfig: false,
 	          repositories: ["metagenomics/metagenomics-tk"],
-		  baseBranches: ["dev"],
-                  packageRules: [
-                         {  "matchDatasources": ["docker"], versioning: "loose" }
-		  ],
-                  regexManagers: [
-				  {
-      				fileMatch: ['^nextflow\\.config$'],
-      				matchStrings: [
-        				'[A-Za-z0-9_]+_image\\s*=\\s*configureImagePrefix\\("(?<depName>[^":]+(?:/[^":]+)+):(?<currentValue>[^"]+)"\\)'
-      				],
-      				datasourceTemplate: 'docker'
-    			  }
-		]
+		prHourlyLimit: 10,
+  		prConcurrentLimit: 50,
+  		packageRules: [
+    {
+      matchDatasources: ['docker'],
+      matchPackagePrefixes: ['quay.io/biocontainers/'],
+      versioning: 'regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)--[^_]+_(?<build>\\d+)$'
+    },
+    {
+      matchDatasources: ['docker'],
+      excludePackagePrefixes: ['quay.io/biocontainers/'],
+      versioning: 'loose'
+    }
+  ],
+  regexManagers: [
+    {
+      fileMatch: ['^nextflow\\.config$'],
+      matchStrings: [
+        '[A-Za-z0-9_]+_image\\s*=\\s*configureImagePrefix\\("(?<depName>[^":]+(?:/[^":]+)+):(?<currentValue>[^"]+)"\\)'
+      ],
+      datasourceTemplate: 'docker'
+    }
+  ]
 };
