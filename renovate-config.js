@@ -9,6 +9,7 @@ module.exports = {
 	          repositories: ["metagenomics/metagenomics-tk"],
 		prHourlyLimit: 10,
   		prConcurrentLimit: 50,
+		baseBranches: ["dev"],
   		packageRules: [
     {
       matchDatasources: ['docker'],
