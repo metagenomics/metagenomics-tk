@@ -254,7 +254,9 @@ workflow _wBinningLongRead {
             contigs,
         )
 
-        wMultiBinningSemiBin2ONT.out.bins | set { bins }
+        wMultiBinningSemiBin2ONT.out.bins 
+	| filter { sample, bins -> bins.size() > 0}
+	| set { bins }
 
         wMultiBinningSemiBin2ONT.out.notBinned | set { notBinned }
 
@@ -407,7 +409,9 @@ workflow _wBinningShortRead {
             contigs,
         )
 
-        wMultiBinningSemiBin2.out.bins | set { bins }
+        wMultiBinningSemiBin2.out.bins 
+	| filter { sample, bins -> bins.size() > 0}
+	| set { bins }
 
         wMultiBinningSemiBin2.out.notBinned | set { notBinned }
 

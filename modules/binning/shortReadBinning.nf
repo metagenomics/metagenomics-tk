@@ -34,7 +34,7 @@ process pMetabinner {
     tuple val(sample), path(contigs), path(bam)
 
     output:
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '1..*'), optional: true, emit: bins
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), emit: bins
     tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
@@ -80,7 +80,7 @@ process pMAGScoT {
     output:
     tuple val("${sample}"), file("${sample}_MagScoT.*"), optional: true, emit: scores
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '1..*'), optional: true, emit: bins
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), emit: bins
     tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
@@ -249,10 +249,11 @@ workflow _wRunBinningTools {
         binningInput | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY)),
     )
 
-    pMetabinner.out.bins
-        | mix(pMetabat.out.bins)
-        | mix(pSemiBin2.out.bins)
+    pMetabat.out.bins | filter { sample, bins -> bins.size() > 0}
+        | mix(pSemiBin2.out.bins | filter { sample, bins -> bins.size() > 0})
+        | mix(pMetabinner.out.bins | filter { sample, bins -> bins.size() > 0})
         | set { bins }
+
     pMetabinner.out.notBinned
         | mix(pSemiBin2.out.notBinned)
         | mix(pMetabat.out.notBinned)
