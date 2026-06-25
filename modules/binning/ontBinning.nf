@@ -38,7 +38,7 @@ process pMetaCoAG {
     tuple val(sample), path(graph), path(contigs), path(bam), path(headerMapping), path(flyeAssemblyInfo)
 
     output:
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '1..*'), optional: true, emit: bins
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), emit: bins
     tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
@@ -183,9 +183,9 @@ workflow _wRunBinningTools {
         contigs | join(mappedReads, by: SAMPLE_IDX),
     )
 
-    pMetabat.out.bins
-        | mix(pSemiBin2.out.bins)
-        | mix(pMetaCoAG.out.bins)
+    pMetabat.out.bins | filter { sample, bins -> bins.size() > 0}
+        | mix(pSemiBin2.out.bins | filter { sample, bins -> bins.size() > 0})
+        | mix(pMetaCoAG.out.bins | filter { sample, bins -> bins.size() > 0})
         | set { bins }
 
 

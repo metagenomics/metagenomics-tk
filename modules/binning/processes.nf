@@ -355,7 +355,7 @@ process pMetabat {
     tuple val(sample), path(contigs), path(bam), val(medianQuality)
 
     output:
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '1..*'), optional: true, emit: bins
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), emit: bins
     tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
@@ -390,7 +390,7 @@ process pSemiBin2 {
     tuple val(sample), path(contigs), path(bam)
 
     output:
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '1..*'), optional: true, emit: bins
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), emit: bins
     tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
@@ -459,7 +459,7 @@ process pSemiBin2Binning {
         path(featureOutput), path(compressedFeatureOutput), path(sampleGroupsFile) 
 
     output:
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '1..*'), optional: true, emit: bins
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), emit: bins
     tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
     tuple val("${sample}"), path("${sampleGroupsFile}", includeInputs: true), optional: true, emit: groupsFile 
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
