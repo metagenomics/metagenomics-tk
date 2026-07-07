@@ -818,3 +818,10 @@ workflow wFullPipeline {
    _wAggregate(ont.reads, ont.medianQuality, illumina.readsPair, illumina.readsSingle, binsStats, \
 	gtdb,  wAnalyseMetabolitesList.out.models)
 }
+
+/*
+* Entrypoint when no entrypoint is set - should be extended with different params.mode because entrypoints are deprecated. 
+*/
+workflow {
+    wFullPipeline()
+}
