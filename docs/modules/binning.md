@@ -10,7 +10,7 @@ then the sample is switched from multi-sample binning to per-sample binning.
 
 ## Short Read 
 
-For short-read data the Toolkit supports MetaBAT2 and Semibin2.
+For short-read data the Toolkit supports MetaBAT2, Semibin2 and QuickBin.
 
 ### Input
 

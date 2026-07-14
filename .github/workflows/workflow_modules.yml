@@ -558,6 +558,9 @@ jobs:
       - name: Test Metabat Binning 
         run: |
           bash ./scripts/modules/binning/test_binning.sh || exit 1
+      - name: Test Quickbin Binning 
+        run: |
+          bash ./scripts/modules/binning/test_binning_quickbin.sh || exit 1
       - name: Test Binning based on ONT data
         run: |
           bash ./scripts/modules/binning/test_binningONT.sh || exit 1

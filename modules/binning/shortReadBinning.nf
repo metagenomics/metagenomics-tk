@@ -43,6 +43,32 @@ process pMetabinner {
     template('metabinner.sh')
 }
 
+process pQuickBin {
+
+    container "${params.quickbin_image}"
+
+    tag "Sample: ${sample}"
+
+    label 'medium'
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
+        Output.getOutput("${sample}", params.runid, "quickbin", params.modules.binning, filename)
+    }
+
+    when params.steps.containsKey("binning") && params.steps.binning.containsKey("quickbin")
+
+    input:
+    tuple val(sample), path(contigs), path(bam)
+
+    output:
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '1..*'), optional: true, emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    script:
+    template('quickbin.sh')
+}
 
 /**
  * MAGScoT - Run MAGScoT binning refinement
@@ -223,7 +249,8 @@ workflow _wRunBinningTools {
     SAMPLE_IDX = 0
 
     contigs | join(mappedReads, by: SAMPLE_IDX) | set { binningInput }
-    pMetabinner(binningInput)
+    binningInput
+        | (pMetabinner & pQuickBin)
 
     pSemiBin2(
         channel.value(params?.steps?.containsKey("binning") && params?.steps?.binning.containsKey("semibin2")),
