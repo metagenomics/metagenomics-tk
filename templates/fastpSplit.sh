@@ -1,7 +1,11 @@
 # run fastp
 
 if [[ "\${isInterleaved}" == "true" ]]; then
-       fastp -i read1.fq.gz --interleaved_in  ${reportOnly} \\
+
+       # Fastp flag --interleaved_in fails in certain cases.
+       zcat read1.fq.gz | paste - - - - - - - -  | tee >(cut -f 1-4 | tr "\t" "\n" | pigz > f.fq.gz) | cut -f 5-8 | tr "\t" "\n" | pigz > r.fq.gz
+
+       fastp -i f.fq.gz -I r.fq.gz ${reportOnly} \\
               --stdout \\
        	-w ${task.cpus} -h ${sample}_report.html \\
        	--unpaired1 ${sample}_tmp_unpaired.qc.fq.gz --unpaired2 ${sample}_tmp_unpaired.qc.fq.gz ${params.steps.qc.fastp.additionalParams.fastp} \\
