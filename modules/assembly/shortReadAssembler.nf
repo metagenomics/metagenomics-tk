@@ -45,7 +45,9 @@ process pPredictFlavor {
     zcat ${interleavedReads} ${unpairedReads} | seqkit stats --all -T > seqkit.stats.tsv
     GC_CONTENT=\$(cut -d\$'\t' -f 16 seqkit.stats.tsv | tail -n 1)
     MAX_READ_LEN=\$(cut -d\$'\t' -f 7 seqkit.stats.tsv | tail -n 1)
-    if [ "\${MAX_READ_LEN}" -gt 71 ]; then
+    # Round decimal to integer
+    MAX_READ_INT=\$(printf "%.0f" "\${MAX_READ_LEN}")
+    if [ "\${MAX_READ_INT}" -gt 71 ]; then
     	MEMORY=\$(cli.py predict -m ${model} -k21 ${kmerFrequencies21} -k71 ${kmerFrequencies71} -k13 ${kmerFrequencies13} -e ${error} -g \${GC_CONTENT} -d ${nonpareilDiversity} -o .)
     else
         MEMORY="0"
