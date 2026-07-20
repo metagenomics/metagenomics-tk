@@ -47,9 +47,9 @@ process pClusterDistances {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "bottomUpClustering/clusterMashDist", filename) }
 
-    memory { Utils.getMemoryResources(params.resources.highmemMedium, "${sample}", task.attempt, params.resources) }
+    memory { Utils.getMemoryResources(params.resources.highmemMedium, "", task.attempt, params.resources) }
 
-    cpus { Utils.getCPUsResources(params.resources.highmemMedium, "${sample}", task.attempt, params.resources) }
+    cpus { Utils.getCPUsResources(params.resources.highmemMedium, "", task.attempt, params.resources) }
 
     output:
     tuple file("distances.tsv"), file('out/clusters.tsv'), emit: clusters
@@ -73,9 +73,9 @@ process pSelectRepresentative {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "bottomUpClustering/selectedRepresentatives", filename) }
 
-    memory { Utils.getMemoryResources(params.resources.highmemMedium, "${sample}", task.attempt, params.resources) }
+    memory { Utils.getMemoryResources(params.resources.highmemMedium, "", task.attempt, params.resources) }
 
-    cpus { Utils.getCPUsResources(params.resources.highmemMedium, "${sample}", task.attempt, params.resources) }
+    cpus { Utils.getCPUsResources(params.resources.highmemMedium, "", task.attempt, params.resources) }
 
     output:
     path("intermediate_clusters.tsv"), emit: clusters
