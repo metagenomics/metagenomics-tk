@@ -278,12 +278,14 @@ workflow _wRunBinningTools {
 
     pMetabat.out.bins | filter { sample, bins -> bins.size() > 0}
         | mix(pSemiBin2.out.bins | filter { sample, bins -> bins.size() > 0})
+        | mix(pQuickBin.out.bins | filter { sample, bins -> bins.size() > 0})
         | mix(pMetabinner.out.bins | filter { sample, bins -> bins.size() > 0})
         | set { bins }
 
     pMetabinner.out.notBinned
         | mix(pSemiBin2.out.notBinned)
         | mix(pMetabat.out.notBinned)
+        | mix(pQuickBin.out.notBinned)
         | set { notBinned }
 
     pMetabinner.out.binContigMapping
@@ -301,6 +303,11 @@ workflow _wRunBinningTools {
         | combine(channel.from("semibin2"))
         | join(pSemiBin2.out.bins, by: SAMPLE_IDX)
         | set { semibin2BinStatisticsInput }
+    pQuickBin.out.binContigMapping
+        | join(mappedReads, by: SAMPLE_IDX)
+        | combine(channel.from("quickbin"))
+        | join(pQuickBin.out.bins, by: SAMPLE_IDX)
+        | set { quickBinBinStatisticsInput }
 
     pMetabinner.out.binContigMapping
         | mix(pSemiBin2.out.binContigMapping)
@@ -310,6 +317,7 @@ workflow _wRunBinningTools {
     metabatBinStatisticsInput
         | mix(semibin2BinStatisticsInput)
         | mix(metabinnerBinStatisticsInput)
+        | mix(quickBinBinStatisticsInput)
         | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY))
         | set { binStatsInput }
 
