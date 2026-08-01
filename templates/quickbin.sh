@@ -1,4 +1,4 @@
-QUICKBIN_PARAMS=${params.steps.binning.quickbin.additionalParams}
+QUICKBIN_PARAMS="${params.steps.binning.quickbin.additionalParams}"
 
 # Create temporary directory
 TEMP_DIR=\$(mktemp -d -p .)
