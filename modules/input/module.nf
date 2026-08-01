@@ -178,7 +178,7 @@ workflow _wSplitReadsSheet {
          } else {
             idsFromPath | set {files}
          } 
-         files |  splitCsv(sep: '\t', header: true) | branch { samples ->
+         files |  splitCsv(sep: '\t', header: true, strip: true) | branch { samples ->
             interleaved:  samples.containsKey("READS")
             split:  !samples.containsKey("READS")
          } 
