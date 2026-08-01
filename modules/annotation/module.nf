@@ -260,7 +260,7 @@ process pProdigal {
 
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "prodigal", filename) }
 
-      when params.steps.containsKey("binning") && params?.steps.binning.containsKey("magscot")
+      when params.steps.containsKey("binRefinement") && params?.steps.binRefinement.containsKey("magscot")
 
    input:
       tuple val(sample), path(contigs)
@@ -272,7 +272,7 @@ process pProdigal {
 
    shell:
    '''
-   zcat !{contigs} | prodigal !{params.steps?.binning?.magscot?.prodigal?.additionalParams} -a !{sample}.prodigal.faa -d !{sample}.prodigal.ffn -o tmpfile
+   zcat !{contigs} | prodigal !{params.steps?.binRefinement?.magscot?.prodigal?.additionalParams} -a !{sample}.prodigal.faa -d !{sample}.prodigal.ffn -o tmpfile
    '''
 }
 
@@ -291,7 +291,7 @@ process pHmmSearch {
       // Re-Use the gtdb-tk container for Prodigal to safe space
       container "${params.gtdbtk_image}"
 
-      containerOptions Utils.getDockerMount(params?.steps?.binning?.magscot?.hmmSearch?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork()) 
+      containerOptions Utils.getDockerMount(params?.steps?.binRefinement?.magscot?.hmmSearch?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork()) 
 
       tag "Sample: $sample"
 
@@ -301,7 +301,7 @@ process pHmmSearch {
 
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "hmmSearch", filename) }
 
-      when params.steps.containsKey("binning") && params?.steps.binning.containsKey("magscot")
+      when params.steps.containsKey("binRefinement") && params?.steps.binRefinement.containsKey("magscot")
 
    input:
       tuple val(sample), file(faaFile)
@@ -317,14 +317,14 @@ process pHmmSearch {
 
    shell:
    output = getOutput("${sample}", params.runid, "hmmSearch", "")
-   EXTRACTED_DB=params.steps?.binning?.magscot?.hmmSearch?.database?.extractedDBPath ?: ""
-   DOWNLOAD_LINK=params.steps?.binning?.magscot?.hmmSearch?.database?.download?.source ?: ""
-   MD5SUM=params?.steps?.binning?.magscot?.hmmSearch?.database?.download?.md5sum ?: ""
-   S5CMD_PARAMS=params.steps?.binning?.magscot?.hmmSearch?.database?.download?.s5cmd?.params ?: ""
-   S3_gtdb_ACCESS=params.steps?.binning?.magscot?.hmmSearch?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_gtdb_ACCESS" : ""
-   S3_gtdb_SECRET=params.steps?.binning?.magscot?.hmmSearch?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_gtdb_SECRET" : ""
+   EXTRACTED_DB=params.steps?.binRefinement?.magscot?.hmmSearch?.database?.extractedDBPath ?: ""
+   DOWNLOAD_LINK=params.steps?.binRefinement?.magscot?.hmmSearch?.database?.download?.source ?: ""
+   MD5SUM=params?.steps?.binRefinement?.magscot?.hmmSearch?.database?.download?.md5sum ?: ""
+   S5CMD_PARAMS=params.steps?.binRefinement?.magscot?.hmmSearch?.database?.download?.s5cmd?.params ?: ""
+   S3_gtdb_ACCESS=params.steps?.binRefinement?.magscot?.hmmSearch?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_gtdb_ACCESS" : ""
+   S3_gtdb_SECRET=params.steps?.binRefinement?.magscot?.hmmSearch?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_gtdb_SECRET" : ""
    '''
-   ADDITIONAL_HMMSEARCH_PARAMS="!{params.steps?.binning?.magscot?.hmmSearch?.additionalParams}"
+   ADDITIONAL_HMMSEARCH_PARAMS="!{params.steps?.binRefinement?.magscot?.hmmSearch?.additionalParams}"
 
    gtdb_download.sh "!{EXTRACTED_DB}" "!{DOWNLOAD_LINK}" "!{S5CMD_PARAMS}" "!{task.cpus}" "!{params.polished.databases}" "!{MD5SUM}" "!{S3_gtdb_ACCESS}" "!{S3_gtdb_SECRET}" || exit 1 
 

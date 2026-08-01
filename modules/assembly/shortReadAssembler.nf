@@ -153,6 +153,9 @@ process pMetaspades {
     tuple val("${sample}"), path("${sample}_contigs.fa.gz"), emit: contigs
     tuple val("${sample}"), path("${sample}_contigs_stats.tsv"), emit: contigsStats
     tuple val("${sample}"), path("${sample}_contigs.fastg"), env(maxKmer), emit: fastg, optional: true
+    tuple val("${sample}"), path("${sample}_contigs.gfa"), env(maxKmer), emit: gfa, optional: true
+    tuple val("${sample}"), path("${sample}_contigs.paths"), env(maxKmer), emit: paths, optional: true
+    tuple val("${sample}"), path("${sample}_contigs_header_mapping.tsv"), emit: headerMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     script:
@@ -206,6 +209,8 @@ workflow wShortReadAssemblyList {
     emit:
       contigs = _wAssembly.out.contigs
       fastg = _wAssembly.out.fastg
+      gfa = _wAssembly.out.gfa
+      headerMapping = _wAssembly.out.headerMapping
 }
 
 
@@ -250,7 +255,7 @@ workflow wShortReadAssemblyFile {
 }
 
 /*
-* This method sets minimum memory and cpu if the predicted memory is below a user defined threshold.
+*This method sets minimum memory and cpu if the predicted memory is below a user defined threshold.
 *
 */
 def setMinLabel(assembler, labelMap, memoryLabelMap, sortedMemorySet, nextHigherMemoryIndex){
@@ -438,8 +443,14 @@ workflow _wAssembly {
        pMegahit.out.contigs | mix(pMetaspades.out.contigs) | set { contigs }
 
        pMegahit.out.fastg | mix(pMetaspades.out.fastg) | set { fastg }
+
+       pMetaspades.out.gfa | set { gfa }
+
+       pMetaspades.out.headerMapping | set { headerMapping }
        
     emit:
       contigs = contigs
       fastg = fastg
+      gfa = gfa
+      headerMapping = headerMapping
 }

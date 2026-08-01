@@ -7,7 +7,9 @@ include {
     pMetabat ;
     _wRunMappers
 } from './processes'
+include { wRefinementList } from './binRefinement'
 include { pProdigal ; pHmmSearch } from '../annotation/module'
+
 include { wSaveSettingsList } from '../config/module'
 include { createMap ; mapJoin } from '../utils/methods'
 
@@ -211,7 +213,7 @@ workflow wShortReadBinningFile {
 
     wSaveSettingsList(reads | map { it -> it[SAMPLE_IDX] })
 
-    _wBinning(contigs, reads)
+    _wBinning(contigs, reads, channel.empty(), channel.empty(), channel.empty())
 }
 
 
@@ -226,15 +228,19 @@ workflow wShortReadBinningList {
     take:
     contigs
     inputReads
+    fastg
+    gfa
+    headerMapping
 
     main:
-    _wBinning(contigs, inputReads)
+    _wBinning(contigs, inputReads, fastg, gfa, headerMapping)
 
     emit:
     binsStats = _wBinning.out.binsStats
     bins = _wBinning.out.bins
     mapping = _wBinning.out.mapping
     notBinnedContigs = _wBinning.out.notBinnedContigs
+    binContigMapping = _wBinning.out.binContigMapping
     unmappedReads = _wBinning.out.unmappedReads
     contigCoverage = _wBinning.out.contigCoverage
 }
@@ -331,6 +337,9 @@ workflow _wBinning {
     take:
     contigs
     inputReads
+    fastg
+    gfa
+    headerMapping
 
     main:
     // Map reads against assembly and retrieve mapping quality
@@ -383,28 +392,18 @@ workflow _wBinning {
     _wRunBinningTools.out.bins | set { bins }
     _wRunBinningTools.out.notBinned | set { notBinned }
     _wRunBinningTools.out.binStatsInput | set { binStatsInput }
+    _wRunBinningTools.out.binContigMapping | set { binContigMapping}
 
-    // Re-evaluate binning with MAGScoT
-    // ORF detection with Prodigal for MAGScoT
-    CONTIG_MAPPING_IDX = 1
-
-    magscot_input = channel.empty()
-    if (params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")) {
-        pProdigal(contigs)
-        pHmmSearch(pProdigal.out.prodigal_faa)
-        _wRunBinningTools.out.binContigMapping
-            | collectFile(keepHeader: false) { item -> ["${item[SAMPLE_IDX]}", item[CONTIG_MAPPING_IDX].text] }
-            | map { f -> [file(f).name, f] }
-            | join(pHmmSearch.out.allhits, by: SAMPLE_IDX)
-            | join(contigs, by: SAMPLE_IDX)
-            | set { magscot_input }
-    }
-    pMAGScoT(magscot_input)
-
-    // Only use MAGScoT bins if the user has selected the refinement step
-    if (params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")) {
-        pMAGScoT.out.bins | set { bins }
-        pMAGScoT.out.notBinned | set { notBinned }
+    if (params.steps.containsKey("binRefinement")) {
+        wRefinementList(contigs, binContigMapping, fastg, gfa, headerMapping)
+        wRefinementList.out.bins | set { bins }
+        wRefinementList.out.notBinned | set { notBinned }
+        wRefinementList.out.binContigMapping
+            | join(mappedReads, by: SAMPLE_IDX)
+            | combine(channel.from("refinement/" + params.steps.binRefinement.keySet()[0]))
+            | join(bins, by: SAMPLE_IDX)
+            | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY))
+            | set { binStatsInput }
     }
 
     emptyFile = file(params.tempdir + "/empty")
@@ -432,18 +431,6 @@ workflow _wBinning {
     // following entries [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
     bins | map { it -> Utils.flattenTuple(it) } | flatMap { it -> createMap(it) } | set { binMap }
 
-    // Compute bin statistcs (e.g. N50, average coverage depth, etc. ...)
-    // Only use the MAGScoT bin statistics if the user has selected the refinement step
-    if (params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")) {
-        pMAGScoT.out.binContigMapping
-            | join(mappedReads, by: SAMPLE_IDX)
-            | combine(channel.from("magscot"))
-            | join(pMAGScoT.out.bins, by: SAMPLE_IDX)
-            | set { magscotBinStatisticsInput }
-
-        magscotBinStatisticsInput | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY)) | set { binStatsInput }
-    }
-
     pGetBinStatistics(channel.value(params.modules.binning), binStatsInput)
 
     // Add bin statistics 
@@ -459,5 +446,6 @@ workflow _wBinning {
     mapping = mappedReads
     notBinnedContigs = notBinned
     unmappedReads = unmappedReads
+    binContigMapping = binContigMapping
     contigCoverage = pCovermContigsCoverage.out.coverage
 }

@@ -521,20 +521,47 @@ workflow _wProcessIllumina {
 
       wMultiBinningShortReadList(multiSamplesInput.contigs, multiSamplesInput.reads, multiSamplesInput.binningLabels)
 
-      singleSample | multiMap { sample, readsPair, readsSingle, contigs, group, groupSize  ->
+      singleSample 
+      | combine(wShortReadAssemblyList.out.fastg)
+      | combine(wShortReadAssemblyList.out.gfa)
+      | combine(wShortReadAssemblyList.out.headerMapping)
+      | multiMap { sample, readsPair, readsSingle, contigs, group, groupSize, fastg, maxKmerFastg, gfa, maxKmerGfa, headerMapping ->
             contigs: [sample, contigs]
+            fastg: [sample, fastg, maxKmerFastg]
+            gfa: [sample, gfa, maxKmerGfa]
+            headerMapping: [sample, headerMapping]
             reads: [sample, readsPair, readsSingle]
-        } | set { singleSampleInput } 
+      } | set { singleSampleInput } 
 
       wShortReadAssemblyList.out.contigs 
-	| combine(binningLabels 
-	| filter({sample, group, isMultiSample, groupCount -> !isMultiSample }), by: SAMPLE_IDX)  
-	| map { sample, contigs, group, isMultiSample, groupCount -> [sample, contigs] }  
-	| set { singleSampleContigs }
+      	| combine(binningLabels 
+	      | filter({sample, group, isMultiSample, groupCount -> !isMultiSample }), by: SAMPLE_IDX)  
+	      | map { sample, contigs, group, isMultiSample, groupCount -> [sample, contigs] }  
+      	| set { singleSampleContigs }
 
-      wShortReadBinningList(singleSampleContigs | mix(singleSampleInput.contigs),  sampleTypeReads.singleSample 
-        | map { sample -> [sample[SAMPLE_IDX], sample[READS_FILE_IDX], sample[READS_UNPAIRED_FILE_IDX]] } 
-        | mix(singleSampleInput.reads))
+      wShortReadAssemblyList.out.headerMapping
+      	| combine(binningLabels 
+	      | filter({sample, group, isMultiSample, groupCount -> !isMultiSample }), by: SAMPLE_IDX)  
+	      | map { sample, headerMapping, group, isMultiSample, groupCount -> [sample, headerMapping] }  
+      	| set { singleSampleHeaderMapping }
+
+      wShortReadAssemblyList.out.fastg 
+      	| combine(binningLabels 
+	      | filter({sample, group, isMultiSample, groupCount -> !isMultiSample }), by: SAMPLE_IDX)  
+	      | map { sample, fastg, maxKmer, group, isMultiSample, groupCount -> [sample, fastg, maxKmer] }  
+      	| set { singleSampleFastg }
+
+      wShortReadAssemblyList.out.gfa
+      	| combine(binningLabels 
+	      | filter({sample, group, isMultiSample, groupCount -> !isMultiSample }), by: SAMPLE_IDX)  
+	      | map { sample, gfa, maxKmer, group, isMultiSample, groupCount -> [sample, gfa, maxKmer] }  
+      	| set { singleSampleGfa }
+
+      wShortReadBinningList(singleSampleContigs | mix(singleSampleInput.contigs),  sampleTypeReads.singleSample
+        | map { sample -> [sample[SAMPLE_IDX], sample[READS_FILE_IDX], sample[READS_UNPAIRED_FILE_IDX]] } | mix(singleSampleInput.reads), 
+        singleSampleFastg | mix(singleSampleInput.fastg), 
+        singleSampleGfa | mix(singleSampleInput.gfa), 
+        singleSampleHeaderMapping | mix(singleSampleInput.headerMapping))
 
       wShortReadBinningList.out.notBinnedContigs 
         | mix(wMultiBinningShortReadList.out.notBinnedContigs)
