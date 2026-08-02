@@ -238,17 +238,50 @@ process pBinSpreader {
     }
 
     input:
-    tuple val(sample), path(contigMaps), path(gfa), path(gfa2), val(maxKmer), path(headerMapping)
+    tuple val(sample), path(contigMaps), path(contigs), path(gfa), val(maxKmer), path(paths), path(headerMapping)
 
     output:
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), emit: bins
-    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
+    tuple val("${sample}"), path("bins/${sample}_bin.*.fa", arity: '0..*'), emit: bins
+    tuple val("${sample}"), file("bins/${sample}_notBinned.fa"), optional: true, emit: notBinned
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     script:
     """
-    csvtk cut -t -f CONTIG,BIN_ID ${contigMaps} | tail -n +2 > binSpreaderInputMap.tsv
+    csvtk replace -t -f CONTIG -p "^(.+)\$" -r '{kv}' -k <(awk '{print \$2 "\t" \$1}' ${headerMapping}) ${contigMaps} \
+        | csvtk cut -t -f CONTIG,BIN_ID \
+        | tail -n +2 > binSpreaderInputMap.tsv
+
+    binspreader ${gfa} binSpreaderInputMap.tsv out -t ${task.cpus} --paths ${paths} ${params.steps.binRefinement.binSpreader.additionalParams}
+
+    csvtk replace -H -t -f 1 -p "^(.+)\$" -r '{kv}' -k ${headerMapping} out/binning.tsv  \
+       | csvtk cut -t -f 2,1 > renamed_contig_binning.tsv
+
+    OUTDIR="bins"
+
+    mkdir -p "\$OUTDIR"
+
+    cut -f1 renamed_contig_binning.tsv | sort -u | while read -r bin; do
+
+        # extract IDs belonging to this bin
+        awk -F'\t' -v b="\$bin" '\$1==b {print \$2}' renamed_contig_binning.tsv > "\$OUTDIR/\${bin}.ids.txt"
+
+        # fetch those sequences from the contigs file
+        seqkit grep -f "\$OUTDIR/\${bin}.ids.txt" ${contigs} > "\$OUTDIR/\${bin}"
+
+         rm "\$OUTDIR/\${bin}.ids.txt"
+    done
+
+    mkdir -p mapping
+
+    BIN_CONTIG_MAPPING=mapping/${sample}_bin_contig_mapping.tsv
+    sed '1i BIN_ID\tCONTIG\tBINNER' renamed_contig_binning.tsv  \
+     | sed '2,\$s/\$/\tBINSPREADER/' > \${BIN_CONTIG_MAPPING}
+
+    cut -f1 renamed_contig_binning.tsv | sort -u > "\$OUTDIR/binned_ids.txt"
+
+    seqkit grep -v -f "\$OUTDIR/binned_ids.txt" ${contigs} > "\$OUTDIR/${sample}_notBinned.fa"
+    rm "\$OUTDIR/binned_ids.txt"  
     """
 }
 
@@ -287,10 +320,11 @@ workflow wRefinementList {
     binContigMapping
     fastg
     gfa
+    paths
     headerMapping
 
     main:
-    _wRefinement(contigs, binContigMapping, fastg, gfa, headerMapping)
+    _wRefinement(contigs, binContigMapping, fastg, gfa, paths, headerMapping)
 
     emit:
     bins = _wRefinement.out.bins
@@ -311,6 +345,7 @@ workflow _wRefinement {
     binContigMapping
     fastg
     gfa
+    paths
     headerMapping
 
     main:
@@ -337,12 +372,18 @@ workflow _wRefinement {
         pBinette.out.binContigMapping | set { binContigMapping }
     }
 
-    fastg | pAsTools
-    binContigMapping
-     | combine(pAsTools.out.gfa, by: SAMPLE_IDX)
-     | combine(gfa, by: SAMPLE_IDX)
-     | combine(headerMapping, by: SAMPLE_IDX)
-   //  | pBinSpreader
+    if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("binSpreader")){
+        binContigMapping
+         | combine(contigs, by: SAMPLE_IDX)
+         | combine(gfa, by: SAMPLE_IDX)
+         | combine(paths, by: SAMPLE_IDX)
+         | combine(headerMapping, by: SAMPLE_IDX)
+         | pBinSpreader
+
+        pBinSpreader.out.bins | set { bins }
+        pBinSpreader.out.notBinned | set { notBinned }
+        pBinSpreader.out.binContigMapping | set { binContigMapping }
+    }
 
     emit:
     bins = bins
