@@ -211,6 +211,7 @@ workflow wShortReadAssemblyList {
       fastg = _wAssembly.out.fastg
       gfa = _wAssembly.out.gfa
       headerMapping = _wAssembly.out.headerMapping
+      paths = _wAssembly.out.paths
 }
 
 
@@ -447,9 +448,12 @@ workflow _wAssembly {
        pMetaspades.out.gfa | set { gfa }
 
        pMetaspades.out.headerMapping | set { headerMapping }
+
+       pMetaspades.out.paths | set { paths }
        
     emit:
       contigs = contigs
+      paths = paths 
       fastg = fastg
       gfa = gfa
       headerMapping = headerMapping

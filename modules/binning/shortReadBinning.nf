@@ -230,10 +230,11 @@ workflow wShortReadBinningList {
     inputReads
     fastg
     gfa
+    paths
     headerMapping
 
     main:
-    _wBinning(contigs, inputReads, fastg, gfa, headerMapping)
+    _wBinning(contigs, inputReads, fastg, gfa, paths, headerMapping)
 
     emit:
     binsStats = _wBinning.out.binsStats
@@ -347,6 +348,7 @@ workflow _wBinning {
     inputReads
     fastg
     gfa
+    paths
     headerMapping
 
     main:
@@ -403,7 +405,7 @@ workflow _wBinning {
     _wRunBinningTools.out.binContigMapping | set { binContigMapping}
 
     if (params.steps.containsKey("binRefinement")) {
-        wRefinementList(contigs, binContigMapping, fastg, gfa, headerMapping)
+        wRefinementList(contigs, binContigMapping, fastg, gfa, paths, headerMapping)
         wRefinementList.out.bins | set { bins }
         wRefinementList.out.notBinned | set { notBinned }
         wRefinementList.out.binContigMapping
