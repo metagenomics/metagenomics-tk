@@ -234,11 +234,13 @@ process pBinSpreader {
     containerOptions params.apptainer ? "" : Utils.getDockerNetwork()
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
-        Output.getOutput("${sample}", params.runid, "refinement/binSpreader", params.modules.binning, filename)
+        Output.getOutput("${sample}", params.runid, "${output}", params.modules.binning, filename)
     }
 
     input:
     tuple val(sample), path(contigMaps), path(contigs), path(gfa), val(maxKmer), path(paths), path(headerMapping)
+    val(parameters)
+    val(output)
 
     output:
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
@@ -252,7 +254,7 @@ process pBinSpreader {
         | csvtk cut -t -f CONTIG,BIN_ID \
         | tail -n +2 > binSpreaderInputMap.tsv
 
-    binspreader ${gfa} binSpreaderInputMap.tsv out -t ${task.cpus} --paths ${paths} ${params.steps.binRefinement.binSpreader.additionalParams}
+    binspreader ${gfa} binSpreaderInputMap.tsv out -t ${task.cpus} --paths ${paths} ${parameters}
 
     csvtk replace -H -t -f 1 -p "^(.+)\$" -r '{kv}' -k ${headerMapping} out/binning.tsv  \
        | csvtk cut -t -f 2,1 > renamed_contig_binning.tsv
@@ -313,6 +315,63 @@ workflow _wMAGScoT {
     binContigMapping = binContigMapping
 }
 
+
+workflow _wBinSpreaderPreProcessing {
+    take:
+        contigs
+        binContigMapping
+        gfa
+        paths
+        headerMapping
+        binSpreaderParameters
+    main:
+        SAMPLE_IDX = 0
+        binContigMapping
+         | combine(contigs, by: SAMPLE_IDX)
+         | combine(gfa, by: SAMPLE_IDX)
+         | combine(paths, by: SAMPLE_IDX)
+         | combine(headerMapping, by: SAMPLE_IDX)
+         | set { binSpreaderInput }
+        pBinSpreader(binSpreaderInput, binSpreaderParameters, channel.value("refinement/preBinSpreader"))
+
+        pBinSpreader.out.bins | set { bins }
+        pBinSpreader.out.notBinned | set { notBinned }
+        pBinSpreader.out.binContigMapping | set { binContigMapping }
+    emit:
+        bins = bins
+        notBinned = notBinned
+        binContigMapping = binContigMapping
+}
+
+
+workflow _wBinSpreaderPostProcessing {
+    take:
+        contigs
+        binContigMapping
+        gfa
+        paths
+        headerMapping
+        binSpreaderParameters
+    main:
+        SAMPLE_IDX = 0
+        binContigMapping
+         | combine(contigs, by: SAMPLE_IDX)
+         | combine(gfa, by: SAMPLE_IDX)
+         | combine(paths, by: SAMPLE_IDX)
+         | combine(headerMapping, by: SAMPLE_IDX)
+         | set { binSpreaderInput }
+
+        pBinSpreader(binSpreaderInput, binSpreaderParameters, channel.value("refinement/postBinSpreader"))
+
+        pBinSpreader.out.bins | set { bins }
+        pBinSpreader.out.notBinned | set { notBinned }
+        pBinSpreader.out.binContigMapping | set { binContigMapping }
+    emit:
+        bins = bins
+        notBinned = notBinned
+        binContigMapping = binContigMapping
+}
+
 workflow wRefinementList {
 
     take:
@@ -353,6 +412,14 @@ workflow _wRefinement {
 
     bins = channel.empty()
     notBinned = channel.empty()
+
+    if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("preBinSpreader")) {
+        _wBinSpreaderPreProcessing(contigs, binContigMapping, gfa, paths, headerMapping, channel.value(params.steps.binRefinement.preBinSpreader.additionalParams))
+        _wBinSpreaderPreProcessing.out.bins | set { bins }
+        _wBinSpreaderPreProcessing.out.notBinned | set { notBinned }
+        _wBinSpreaderPreProcessing.out.binContigMapping | set { binContigMapping }
+    }
+
     // Only use MAGScoT bins if the user has selected the refinement step
     if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("magscot")) {
         _wMAGScoT(contigs, binContigMapping)
@@ -372,17 +439,11 @@ workflow _wRefinement {
         pBinette.out.binContigMapping | set { binContigMapping }
     }
 
-    if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("binSpreader")){
-        binContigMapping
-         | combine(contigs, by: SAMPLE_IDX)
-         | combine(gfa, by: SAMPLE_IDX)
-         | combine(paths, by: SAMPLE_IDX)
-         | combine(headerMapping, by: SAMPLE_IDX)
-         | pBinSpreader
-
-        pBinSpreader.out.bins | set { bins }
-        pBinSpreader.out.notBinned | set { notBinned }
-        pBinSpreader.out.binContigMapping | set { binContigMapping }
+    if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("postBinSpreader")) {
+        _wBinSpreaderPostProcessing(contigs, binContigMapping, gfa, paths, headerMapping, channel.value(params.steps.binRefinement.postBinSpreader.additionalParams))
+        _wBinSpreaderPostProcessing.out.bins | set { bins }
+        _wBinSpreaderPostProcessing.out.notBinned | set { notBinned }
+        _wBinSpreaderPostProcessing.out.binContigMapping | set { binContigMapping }
     }
 
     emit:
