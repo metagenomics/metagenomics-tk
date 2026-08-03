@@ -61,7 +61,7 @@ process pMAGScoT {
     # Remove the header and pipe the remaining lines to xargs to run the script line by line
     sed 1d !{sample}_MagScoT.refined.contig_to_bin.out | xargs -n 2 sh -c '
         # Get the first column and separate the number, remove the leading zeros
-        binID=$(echo $0 | cut -d"_" -f4 | sed 's/^0*//')
+        binID=$(echo $0 | rev | cut -d"_" -f1 | rev | sed 's/^0*//')
         CONTIG=$1
         # Create a file with the contigs for each bin for reconstruction with seqkit
         echo $CONTIG >> !{sample}_bin.$binID.lst
