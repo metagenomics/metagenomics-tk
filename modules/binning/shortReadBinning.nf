@@ -228,13 +228,12 @@ workflow wShortReadBinningList {
     take:
     contigs
     inputReads
-    fastg
     gfa
     paths
     headerMapping
 
     main:
-    _wBinning(contigs, inputReads, fastg, gfa, paths, headerMapping)
+    _wBinning(contigs, inputReads, gfa, paths, headerMapping)
 
     emit:
     binsStats = _wBinning.out.binsStats
@@ -336,6 +335,55 @@ workflow _wRunBinningTools {
 }
 
 
+workflow _wPostProcessBins {
+    take:
+    mappedReads 
+    binStatsInput
+    bins
+
+    main:
+    SAMPLE_IDX=0
+    DO_NOT_ESTIMATE_IDENTITY = "-1"
+    emptyFile = file(params.tempdir + "/empty")
+
+    ALIGNMENT_INDEX = 2
+    pCovermGenomeCoverage(
+        channel.value(params?.steps?.binning.find { it.key == "genomeCoverage" }?.value),
+        channel.value(""),
+        channel.value(
+            [
+                params.modules.binning,
+                "genomeCoverage",
+                params?.steps?.binning?.genomeCoverage?.additionalParams,
+            ]
+        ),
+        mappedReads | join(bins, by: SAMPLE_IDX) | map { sample ->
+            sample.addAll(ALIGNMENT_INDEX, emptyFile)
+            sample
+        } | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY)),
+    )
+
+    pCovermGenomeCoverage.out.logs | pDumpLogs
+
+    // Flatten binning outputs per sample and create a map with the 
+    // following entries [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
+    bins | map { it -> Utils.flattenTuple(it) } | flatMap { it -> createMap(it) } | set { binMap }
+
+    pGetBinStatistics(channel.value(params.modules.binning), binStatsInput)
+
+    // Add bin statistics 
+    pGetBinStatistics.out.binsStats
+        | map { it -> file(it[1]) }
+        | splitCsv(sep: '\t', header: true)
+        | set { binsStats }
+    mapJoin(binsStats, binMap, "BIN_ID", "BIN_ID") | set { binMap }
+
+    emit:
+    binMap = binMap
+
+}
+
+
 /*
 *
 * This workflow takes an input_reads channel as input with the following format [SAMPLE, READS PAIRED, READS UNPAIRED]
@@ -346,7 +394,6 @@ workflow _wBinning {
     take:
     contigs
     inputReads
-    fastg
     gfa
     paths
     headerMapping
@@ -403,55 +450,10 @@ workflow _wBinning {
     _wRunBinningTools.out.notBinned | set { notBinned }
     _wRunBinningTools.out.binStatsInput | set { binStatsInput }
     _wRunBinningTools.out.binContigMapping | set { binContigMapping}
-
-    if (params.steps.containsKey("binRefinement")) {
-        wRefinementList(contigs, binContigMapping, fastg, gfa, paths, headerMapping)
-        wRefinementList.out.bins | set { bins }
-        wRefinementList.out.notBinned | set { notBinned }
-        wRefinementList.out.binContigMapping
-            | join(mappedReads, by: SAMPLE_IDX)
-            | combine(channel.from("refinement/" + params.steps.binRefinement.keySet()[0]))
-            | join(bins, by: SAMPLE_IDX)
-            | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY))
-            | set { binStatsInput }
-    }
-
-    emptyFile = file(params.tempdir + "/empty")
-
-    ALIGNMENT_INDEX = 2
-    pCovermGenomeCoverage(
-        channel.value(params?.steps?.binning.find { it.key == "genomeCoverage" }?.value),
-        channel.value(""),
-        channel.value(
-            [
-                params.modules.binning,
-                "genomeCoverage",
-                params?.steps?.binning?.genomeCoverage?.additionalParams,
-            ]
-        ),
-        mappedReads | join(bins, by: SAMPLE_IDX) | map { sample ->
-            sample.addAll(ALIGNMENT_INDEX, emptyFile)
-            sample
-        } | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY)),
-    )
-
-    pCovermGenomeCoverage.out.logs | pDumpLogs
-
-    // Flatten binning outputs per sample and create a map with the 
-    // following entries [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
-    bins | map { it -> Utils.flattenTuple(it) } | flatMap { it -> createMap(it) } | set { binMap }
-
-    pGetBinStatistics(channel.value(params.modules.binning), binStatsInput)
-
-    // Add bin statistics 
-    pGetBinStatistics.out.binsStats
-        | map { it -> file(it[1]) }
-        | splitCsv(sep: '\t', header: true)
-        | set { binsStats }
-    mapJoin(binsStats, binMap, "BIN_ID", "BIN_ID") | set { binMap }
+    _wPostProcessBins(mappedReads, binStatsInput, bins)
 
     emit:
-    binsStats = binMap
+    binsStats = _wPostProcessBins.out.binMap
     bins = bins
     mapping = mappedReads
     notBinnedContigs = notBinned

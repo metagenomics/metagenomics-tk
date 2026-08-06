@@ -8,7 +8,8 @@ include { wShortReadQualityControlFile; wShortReadQualityControlList} from './mo
 include { wOntQualityControlFile; wOntQualityControlList} from './modules/qualityControl/ontQC'
 include { wShortReadAssemblyFile; wShortReadAssemblyList; wTestMemSelection } from './modules/assembly/shortReadAssembler'
 include { wOntAssemblyFile; wOntAssemblyList } from './modules/assembly/ontAssembler'
-include { wShortReadBinningList; wShortReadBinningFile; } from './modules/binning/shortReadBinning'
+include { wShortReadBinningList; wShortReadBinningFile; _wPostProcessBins; } from './modules/binning/shortReadBinning'
+include { wRefinementList } from './modules/binning/binRefinement.nf'
 include { wMultiBinningShortReadList;
   wMultiBinningLongReadList; wMultiBinningShortReadFile; wMultiBinningLongReadFile; } from './modules/binning/multiBinning'
 include { wLongReadBinningList; wOntBinningFile; } from './modules/binning/ontBinning'
@@ -473,6 +474,7 @@ workflow _wProcessIllumina {
       reads
       binningLabels
     main:
+      DO_NOT_ESTIMATE_IDENTITY = "-1"
       SAMPLE_IDX=0
       GROUP_IDX=0
       GROUP_2_IDX=1
@@ -522,13 +524,11 @@ workflow _wProcessIllumina {
       wMultiBinningShortReadList(multiSamplesInput.contigs, multiSamplesInput.reads, multiSamplesInput.binningLabels)
 
       singleSample 
-      | combine(wShortReadAssemblyList.out.fastg)
-      | combine(wShortReadAssemblyList.out.gfa)
-      | combine(wShortReadAssemblyList.out.paths)
-      | combine(wShortReadAssemblyList.out.headerMapping)
-      | multiMap { sample, readsPair, readsSingle, contigs, group, groupSize, fastg, maxKmerFastg, gfa, maxKmerGfa, paths, maxKmerPaths, headerMapping ->
+      | combine(wShortReadAssemblyList.out.gfa, by: SAMPLE_IDX)
+      | combine(wShortReadAssemblyList.out.paths, by: SAMPLE_IDX)
+      | combine(wShortReadAssemblyList.out.headerMapping, by: SAMPLE_IDX)
+      | multiMap { sample, readsPair, readsSingle, contigs, group, groupSize, gfa, maxKmerGfa, paths, maxKmerPaths, headerMapping ->
             contigs: [sample, contigs]
-            fastg: [sample, fastg, maxKmerFastg]
             gfa: [sample, gfa, maxKmerGfa]
             paths: [sample, paths]
             headerMapping: [sample, headerMapping]
@@ -565,12 +565,89 @@ workflow _wProcessIllumina {
 	      | map { sample, paths, maxKmer, group, isMultiSample, groupCount -> [sample, paths] }  
       	| set { singleSamplePaths }
 
-      wShortReadBinningList(singleSampleContigs | mix(singleSampleInput.contigs),  sampleTypeReads.singleSample
-        | map { sample -> [sample[SAMPLE_IDX], sample[READS_FILE_IDX], sample[READS_UNPAIRED_FILE_IDX]] } | mix(singleSampleInput.reads), 
-        singleSampleFastg | mix(singleSampleInput.fastg), 
-        singleSampleGfa | mix(singleSampleInput.gfa), 
-        singleSamplePaths | mix(singleSampleInput.paths), 
-        singleSampleHeaderMapping | mix(singleSampleInput.headerMapping))
+      sampleTypeReads.singleSample
+            | map { sample -> [sample[SAMPLE_IDX], sample[READS_FILE_IDX], sample[READS_UNPAIRED_FILE_IDX]] } | mix(singleSampleInput.reads)
+            | set { singleSampleReadInput }
+
+      singleSampleGfa | mix(singleSampleInput.gfa) | set {singleSampleGfaInput}  
+
+      singleSamplePaths | mix(singleSampleInput.paths) | set {singleSamplePathsInput}
+
+      singleSampleHeaderMapping | mix(singleSampleInput.headerMapping) | set {singleSampleHeaderInput}
+
+        singleSampleContigs 
+            | mix(singleSampleInput.contigs)
+            | set { singleSampleContigsInput }
+
+      binContigMapping = channel.empty()
+
+      if(params.steps.containsKey("binRefinement") 
+        && params.steps.binRefinement.containsKey("mode")
+        && params.steps.binRefinement.mode == "all"){
+
+        singleSampleReadInput 
+            | mix(multiSamplesInput.reads)
+            | set { singleSampleReadInput }
+
+        singleSampleContigsInput
+            | mix(multiSamplesInput.contigs)
+            | set { singleSampleContigsInput }
+
+        multiSamples
+          | combine(wShortReadAssemblyList.out.gfa, by: SAMPLE_IDX)
+          | combine(wShortReadAssemblyList.out.paths, by: SAMPLE_IDX)
+          | combine(wShortReadAssemblyList.out.headerMapping, by: SAMPLE_IDX)
+          | multiMap { sample, readsPair, readsSingle, contigs, group, groupSize, gfa, maxKmerGfa, paths, maxKmerPaths, headerMapping ->
+                contigs: [sample, contigs]
+                gfa: [sample, gfa, maxKmerGfa]
+                paths: [sample, paths]
+                headerMapping: [sample, headerMapping]
+                reads: [sample, readsPair, readsSingle]
+        } | set { singleSampleShorReadInput } 
+
+        singleSampleGfaInput | mix(singleSampleShorReadInput.gfa) 
+            | set { singleSampleGfaInput }
+
+        singleSamplePathsInput | mix(singleSampleShorReadInput.paths)
+            | set { singleSamplePathsInput }
+
+        singleSampleHeaderInput | mix(singleSampleShorReadInput.headerMapping)
+            | set { singleSampleHeaderInput }
+
+        binContigMapping | mix(wMultiBinningShortReadList.out.binContigMapping) | set { binContigMapping } 
+      } 
+
+      wShortReadBinningList(singleSampleContigsInput,  
+        singleSampleReadInput,
+        singleSampleGfaInput, 
+        singleSamplePathsInput,
+        singleSampleHeaderInput)
+
+      wShortReadBinningList.out.binsStats | set { binStatsShort }
+
+      wShortReadBinningList.out.mapping | set { mappingShort }
+
+      if (params.steps.containsKey("binRefinement")) {
+
+        wRefinementList(singleSampleContigsInput, 
+        binContigMapping | mix(wShortReadBinningList.out.binContigMapping),
+        singleSampleGfaInput,
+        singleSamplePathsInput,
+        singleSampleHeaderInput) 
+        
+        wRefinementList.out.bins | set { bins }
+        wRefinementList.out.notBinned | set { notBinned }
+
+        wRefinementList.out.binContigMapping
+            | join(mappingShort, by: SAMPLE_IDX)
+            | combine(channel.from("refinement/" + params.steps.binRefinement.keySet()[0]))
+            | join(bins, by: SAMPLE_IDX)
+            | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY))
+            | set { binStatsInput }
+
+        _wPostProcessBins(mappingShort, binStatsInput, bins)
+        _wPostProcessBins.out.binMap | set { binsStatsShort }
+      }
 
       wShortReadBinningList.out.notBinnedContigs 
         | mix(wMultiBinningShortReadList.out.notBinnedContigs)
@@ -580,12 +657,11 @@ workflow _wProcessIllumina {
         | mix(wMultiBinningShortReadList.out.bins)
         | set { bins }
 
-      wShortReadBinningList.out.binsStats
+      binsStatsShort
         | mix(wMultiBinningShortReadList.out.binsStats)
         | set { binsStats }
 
-      wShortReadBinningList.out.mapping
-        | mix(wMultiBinningShortReadList.out.mapping)
+      mappingShort | mix(wMultiBinningShortReadList.out.mapping)
         | set { mapping }
 
       wShortReadBinningList.out.unmappedReads

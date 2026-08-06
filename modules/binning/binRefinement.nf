@@ -20,8 +20,6 @@ process pMAGScoT {
 
     label 'small'
 
-    executor "local"
-
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
         Output.getOutput("${sample}", params.runid, "refinement/magscot", params.modules.binning, filename)
     }
@@ -377,13 +375,12 @@ workflow wRefinementList {
     take:
     contigs
     binContigMapping
-    fastg
     gfa
     paths
     headerMapping
 
     main:
-    _wRefinement(contigs, binContigMapping, fastg, gfa, paths, headerMapping)
+    _wRefinement(contigs, binContigMapping, gfa, paths, headerMapping)
 
     emit:
     bins = _wRefinement.out.bins
@@ -402,7 +399,6 @@ workflow _wRefinement {
     take:
     contigs
     binContigMapping
-    fastg
     gfa
     paths
     headerMapping

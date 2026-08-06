@@ -98,6 +98,7 @@ workflow wMultiBinningShortReadList {
     notBinnedContigs = _wBinningShortRead.out.notBinnedContigs
     unmappedReads = _wBinningShortRead.out.unmappedReads
     contigCoverage = _wBinningShortRead.out.contigCoverage
+    binContigMapping = _wBinningShortRead.out.binContigMapping
 }
 
 
@@ -464,6 +465,7 @@ workflow _wBinningShortRead {
 
     emit:
     binsStats = binMap
+    binContigMapping = binContigMapping
     bins = bins
     mapping = mapping
     notBinnedContigs = notBinned
