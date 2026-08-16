@@ -575,15 +575,18 @@ workflow _wProcessIllumina {
 
       singleSampleHeaderMapping | mix(singleSampleInput.headerMapping) | set {singleSampleHeaderInput}
 
-        singleSampleContigs 
+      singleSampleContigs 
             | mix(singleSampleInput.contigs)
             | set { singleSampleContigsInput }
 
       binContigMapping = channel.empty()
 
+
       if(params.steps.containsKey("binRefinement") 
         && params.steps.binRefinement.containsKey("mode")
         && params.steps.binRefinement.mode == "all"){
+
+        wMultiBinningShortReadList.out.binsStats
 
         singleSampleReadInput 
             | mix(multiSamplesInput.reads)
@@ -614,7 +617,8 @@ workflow _wProcessIllumina {
         singleSampleHeaderInput | mix(singleSampleShorReadInput.headerMapping)
             | set { singleSampleHeaderInput }
 
-        binContigMapping | mix(wMultiBinningShortReadList.out.binContigMapping) | set { binContigMapping } 
+        binContigMapping | mix(wMultiBinningShortReadList.out.binContigMapping)
+            | set { binContigMapping } 
       } 
 
       wShortReadBinningList(singleSampleContigsInput,  
@@ -623,43 +627,59 @@ workflow _wProcessIllumina {
         singleSamplePathsInput,
         singleSampleHeaderInput)
 
-      wShortReadBinningList.out.binsStats | set { binStatsShort }
+      wShortReadBinningList.out.binsStatsInput | set { binsStatsInputShort }
 
       wShortReadBinningList.out.mapping | set { mappingShort }
 
-      if (params.steps.containsKey("binRefinement")) {
+      wShortReadBinningList.out.bins | set { bins }
 
+      wShortReadBinningList.out.notBinnedContigs  | set {notBinnedContigs}
+
+      binsStats = channel.empty()
+
+      if (params.steps.containsKey("binRefinement")) {
         wRefinementList(singleSampleContigsInput, 
         binContigMapping | mix(wShortReadBinningList.out.binContigMapping),
+        bins,
+        notBinnedContigs,
         singleSampleGfaInput,
         singleSamplePathsInput,
         singleSampleHeaderInput) 
         
         wRefinementList.out.bins | set { bins }
-        wRefinementList.out.notBinned | set { notBinned }
+        wRefinementList.out.notBinned | set { notBinnedContigs }
 
         wRefinementList.out.binContigMapping
+            | map { sample, method, binContigMapping -> [sample, binContigMapping]}
             | join(mappingShort, by: SAMPLE_IDX)
             | combine(channel.from("refinement/" + params.steps.binRefinement.keySet()[0]))
-            | join(bins, by: SAMPLE_IDX)
+            | join(bins | map { sample, method, bins -> [sample, bins]}, by: SAMPLE_IDX)
             | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY))
-            | set { binStatsInput }
+            | set { binsStatsInputShort }
+      }  
 
-        _wPostProcessBins(mappingShort, binStatsInput, bins)
-        _wPostProcessBins.out.binMap | set { binsStatsShort }
+      if(!params.steps.containsKey("binRefinement") || (!params.steps.binRefinement.containsKey("mode")
+             && params.steps.binRefinement.mode != "all")){
+                
+              binsStats | mix(wMultiBinningShortReadList.out.binsStats) 
+                | set {binsStats}
+
+              bins | mix(wMultiBinningShortReadList.out.bins)
+                | set { bins }
+
+              notBinnedContigs | mix(wMultiBinningShortReadList.out.notBinnedContigs)
+                | set { notBinnedContigs }
       }
 
-      wShortReadBinningList.out.notBinnedContigs 
-        | mix(wMultiBinningShortReadList.out.notBinnedContigs)
-        | set { notBinnedContigs }
+      _wPostProcessBins(mappingShort, binsStatsInputShort, 
+      bins | map { sample, method, bins -> [sample, bins]})
+      _wPostProcessBins.out.binMap | mix(binsStats) | set { binsStats }
 
-      wShortReadBinningList.out.bins
-        | mix(wMultiBinningShortReadList.out.bins)
+      bins | map { sample, method, bins -> [sample, bins]} 
         | set { bins }
 
-      binsStatsShort
-        | mix(wMultiBinningShortReadList.out.binsStats)
-        | set { binsStats }
+      notBinnedContigs | map { sample, method, notBinned -> [sample, notBinned]} 
+        | set { notBinnedContigs }
 
       mappingShort | mix(wMultiBinningShortReadList.out.mapping)
         | set { mapping }

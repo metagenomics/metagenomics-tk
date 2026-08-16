@@ -1,4 +1,5 @@
 include { pProdigal ; pHmmSearch } from '../annotation/module'
+include { pCheckM2Eval } from '../magAttributes/module'
 
 /**
  * MAGScoT - Run MAGScoT binning refinement
@@ -35,9 +36,9 @@ process pMAGScoT {
 
     output:
     tuple val("${sample}"), file("${sample}_MagScoT.*"), optional: true, emit: scores
-    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), emit: bins
-    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), val(["magscot"]), optional: true, emit: binContigMapping
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), val(["magscot"]), emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), val(["magscot"]), optional: true, emit: notBinned
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
@@ -113,9 +114,9 @@ process pBinette {
     tuple val(sample), path(contigMaps, name: "contigMaps/contigMap*.tsv"), path(contigs)
 
     output:
-    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), emit: bins
-    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), val("Binette"), optional: true, emit: binContigMapping
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), val("Binette"), emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), val("Binette"), optional: true, emit: notBinned
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     script:
@@ -192,40 +193,11 @@ process pBinette {
     """
 }
 
-
-
-process pAsTools {
-
-    container "${params.agtools_image}"
-
-    tag "Sample: ${sample}"
-
-    label 'small'
-
-    containerOptions params.apptainer ? "" : Utils.getDockerNetwork() + "-u \$(id -u):\$(id -g)" 
-
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
-        Output.getOutput("${sample}", params.runid, "refinement/binSpreader", params.modules.binning, filename)
-    }
-
-    input:
-    tuple val(sample), path(fastg), val(kmerSize)
-
-    output:
-    tuple val("${sample}"), file("${sample}_assembly.gfa"), optional: true, emit: gfa 
-    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
-
-    script:
-    """
-    agtools fastg2gfa --graph  ${fastg} --ksize ${kmerSize} --output  ${sample}_assembly.gfa
-    """
-}
-
 process pBinSpreader {
 
     container "${params.metaspades_image}"
 
-    tag "Sample: ${sample}"
+    tag "Sample: ${sample}, Method: ${method}"
 
     label 'small'
 
@@ -236,17 +208,18 @@ process pBinSpreader {
     }
 
     input:
-    tuple val(sample), path(contigMaps), path(contigs), path(gfa), val(maxKmer), path(paths), path(headerMapping)
+    tuple val(sample), path(contigMaps), val(method), path(contigs), path(gfa), val(maxKmer), path(paths), path(headerMapping)
     val(parameters)
     val(output)
 
     output:
-    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
-    tuple val("${sample}"), path("bins/${sample}_bin.*.fa", arity: '0..*'), emit: bins
-    tuple val("${sample}"), file("bins/${sample}_notBinned.fa"), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), val(outputMethodList), optional: true, emit: binContigMapping
+    tuple val("${sample}"), path("bins/${sample}_bin.*.fa", arity: '0..*'), val(outputMethodList), emit: bins
+    tuple val("${sample}"), file("bins/${sample}_notBinned.fa"), val(outputMethodList), optional: true, emit: notBinned
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     script:
+    outputMethodList = method + "BinSpreader"
     """
     csvtk replace -t -f CONTIG -p "^(.+)\$" -r '{kv}' -k <(awk '{print \$2 "\t" \$1}' ${headerMapping}) ${contigMaps} \
         | csvtk cut -t -f CONTIG,BIN_ID \
@@ -285,6 +258,116 @@ process pBinSpreader {
     """
 }
 
+process pSelectBestBins {
+
+    container "${params.metaspades_image}"
+
+    tag "Sample: ${sample}"
+
+    label 'small'
+
+    containerOptions params.apptainer ? "" : Utils.getDockerNetwork()
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
+        Output.getOutput("${sample}", params.runid, "refinement/evaluate/final", params.modules.binning, filename)
+    }
+
+    input:
+    tuple val(sample), path(checkmFiles), val(methods)
+
+
+    output:
+    tuple val("${sample}"), path("scores.tsv"), emit: scores
+    tuple val("${sample}"), env(SELECTED_BINNER), emit: binner
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    script:
+    formatted_methods = methods.collect { inner_list -> 
+        "\"" + inner_list.join('+') + "\"" 
+    }.join(' ')
+    """
+    CHECKM=( ${checkmFiles} )
+    METHODS=( ${formatted_methods} )
+    WEIGHT=${params.steps.binRefinement.evaluate.additionalParams.weight}
+
+    TOTAL_ITEMS=\${#CHECKM[@]}
+
+    for (( i=0; i<\${TOTAL_ITEMS}; i++ )); do
+        CURRENT_CHECKM=\${CHECKM[\$i]}
+        CURRENT_METHOD=\${METHODS[\$i]}
+        SCORE=\$(csvtk filter2 -t -f '\$COMPLETENESS > 50 && \$CONTAMINATION < 10' \${CURRENT_CHECKM}  \\
+        | csvtk mutate2 -t -e '\$COMPLETENESS - \$WEIGHT * \$CONTAMINATION' -n score \\
+        | csvtk summary -t -f "score:sum,score:count" | tail -n 1 )
+
+        if [[ "\$SCORE" =~ "score:count" ]]; then
+            SCORE="0\t0"
+        fi
+ 
+        echo -e "\${CURRENT_METHOD}\t\${SCORE}" >> scores_tmp.tsv
+    done
+
+    echo -e  "METHOD\tSCORE\tNUMBER_OF_BINS" > scores.tsv
+    sort -k 2,2 scores_tmp.tsv >> scores.tsv
+
+    SELECTED_BINNER=\$(cat scores.tsv | cut -f 1 | tail -n 1)
+    """
+}
+
+
+
+process pEvaluateBestResult {
+
+    container "${params.metaspades_image}"
+
+    tag "Sample: ${sample}"
+
+    label 'small'
+
+    containerOptions params.apptainer ? "" : Utils.getDockerNetwork()
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
+        Output.getOutput("${sample}", params.runid, "refinement/evaluate/final", params.modules.binning, filename)
+    }
+
+    input:
+    tuple val(sample), path(checkmFiles), val(methods)
+
+    output:
+    tuple val("${sample}"), path("scores.tsv"), emit: scores
+    tuple val("${sample}"), env(SELECTED_BINNER), emit: binner
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    script:
+    formatted_methods = methods.collect { inner_list -> 
+        "\"" + inner_list.join('+') + "\"" 
+    }.join(' ')
+    """
+    CHECKM=( ${checkmFiles} )
+    METHODS=( ${formatted_methods} )
+    WEIGHT=${params.steps.binRefinement.evaluate.additionalParams.weight}
+
+    TOTAL_ITEMS=\${#CHECKM[@]}
+
+    for (( i=0; i<\${TOTAL_ITEMS}; i++ )); do
+        CURRENT_CHECKM=\${CHECKM[\$i]}
+        CURRENT_METHOD=\${METHODS[\$i]}
+        SCORE=\$(csvtk filter2 -t -f '\$COMPLETENESS > 50 && \$CONTAMINATION < 10' \${CURRENT_CHECKM}  \\
+        | csvtk mutate2 -t -e '\$COMPLETENESS - \$WEIGHT * \$CONTAMINATION' -n score \\
+        | csvtk summary -t -f "score:sum,score:count" | tail -n 1 )
+
+        if [[ "\$SCORE" =~ "score:count" ]]; then
+            SCORE="0\t0"
+        fi
+ 
+        echo -e "\${CURRENT_METHOD}\t\${SCORE}" >> scores_tmp.tsv
+    done
+
+    echo -e  "METHOD\tSCORE\tNUMBER_OF_BINS" > scores.tsv
+    sort -k 2,2 scores_tmp.tsv >> scores.tsv
+
+    SELECTED_BINNER=\$(cat scores.tsv | cut -f 1 | tail -n 1)
+    """
+}
 
 workflow _wMAGScoT {
     take:
@@ -317,6 +400,7 @@ workflow _wMAGScoT {
 workflow _wBinSpreaderPreProcessing {
     take:
         contigs
+        inputBins
         binContigMapping
         gfa
         paths
@@ -324,15 +408,43 @@ workflow _wBinSpreaderPreProcessing {
         binSpreaderParameters
     main:
         SAMPLE_IDX = 0
+        METHOD_WITHOUT_BINSPREADER_IDX = 0
         binContigMapping
          | combine(contigs, by: SAMPLE_IDX)
          | combine(gfa, by: SAMPLE_IDX)
          | combine(paths, by: SAMPLE_IDX)
          | combine(headerMapping, by: SAMPLE_IDX)
          | set { binSpreaderInput }
+
         pBinSpreader(binSpreaderInput, binSpreaderParameters, channel.value("refinement/preBinSpreader"))
 
-        pBinSpreader.out.bins | set { bins }
+        //
+        pBinSpreader.out.bins | set { bins } 
+
+/*
+        inputBins 
+             | mix(bins)
+             | map { sample, bins, method -> [sample, bins, method, Output.getOutput(sample, params.runid, "refinement/evaluate", params.modules.binning, "")]} 
+             | pCheckM2Eval
+
+        pCheckM2Eval.out.checkm | set { evaluationInput }
+        
+
+        evaluationInput | branch {
+            sample, checkm, method ->
+                pre: method.size()<2
+                post: method.size()==2
+        } | set { evaluationInputStage }
+
+        evaluationInputStage.pre 
+            | combine(inputBins, by: [0,2]) 
+            | map {result -> return result + true} 
+
+        evaluationInputStage.post 
+            | combine(bins | map { sample, bins, method -> [sample, bins, method[METHOD_WITHOUT_BINSPREADER_IDX]]}, by: [0,2]) 
+            | map {result -> return result + false}
+*/
+    
         pBinSpreader.out.notBinned | set { notBinned }
         pBinSpreader.out.binContigMapping | set { binContigMapping }
     emit:
@@ -375,12 +487,14 @@ workflow wRefinementList {
     take:
     contigs
     binContigMapping
+    bins
+    notBinnedContigs
     gfa
     paths
     headerMapping
 
     main:
-    _wRefinement(contigs, binContigMapping, gfa, paths, headerMapping)
+    _wRefinement(contigs, binContigMapping, bins, notBinnedContigs, gfa, paths, headerMapping)
 
     emit:
     bins = _wRefinement.out.bins
@@ -399,6 +513,8 @@ workflow _wRefinement {
     take:
     contigs
     binContigMapping
+    inputBins
+    inputNotBinned
     gfa
     paths
     headerMapping
@@ -408,12 +524,24 @@ workflow _wRefinement {
 
     bins = channel.empty()
     notBinned = channel.empty()
+    allNotBinned = channel.empty()
+    allBinContigMapping = channel.empty()
+    binsToEvaluate = channel.empty()
+
+    allBinContigMapping | mix(binContigMapping) | set {allBinContigMapping} 
+    binsToEvaluate | mix(inputBins) | set {binsToEvaluate} 
+    
+    allNotBinned | mix(inputNotBinned) | set {allNotBinned}
 
     if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("preBinSpreader")) {
-        _wBinSpreaderPreProcessing(contigs, binContigMapping, gfa, paths, headerMapping, channel.value(params.steps.binRefinement.preBinSpreader.additionalParams))
+        _wBinSpreaderPreProcessing(contigs, inputBins, binContigMapping, gfa, paths, headerMapping, channel.value(params.steps.binRefinement.preBinSpreader.additionalParams))
         _wBinSpreaderPreProcessing.out.bins | set { bins }
         _wBinSpreaderPreProcessing.out.notBinned | set { notBinned }
         _wBinSpreaderPreProcessing.out.binContigMapping | set { binContigMapping }
+
+        binsToEvaluate | mix(bins) | set {binsToEvaluate} 
+        allNotBinned | mix(notBinned) | set {allNotBinned}
+        allBinContigMapping | mix(binContigMapping) | set {allBinContigMapping} 
     }
 
     // Only use MAGScoT bins if the user has selected the refinement step
@@ -422,6 +550,10 @@ workflow _wRefinement {
         _wMAGScoT.out.bins | set { bins }
         _wMAGScoT.out.notBinned | set { notBinned }
         _wMAGScoT.out.binContigMapping | set { binContigMapping }
+
+        binsToEvaluate | mix(bins) | set {binsToEvaluate} 
+        allNotBinned | mix(notBinned) | set {allNotBinned}
+        allBinContigMapping | mix(binContigMapping) | set {allBinContigMapping} 
     } else if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("binette")){
         SAMPLE_IDX = 0
         CONTIG_MAPPING_IDX = 1
@@ -433,6 +565,10 @@ workflow _wRefinement {
         pBinette.out.bins | set { bins }
         pBinette.out.notBinned | set { notBinned }
         pBinette.out.binContigMapping | set { binContigMapping }
+
+        binsToEvaluate | mix(bins) | set {binsToEvaluate} 
+        allNotBinned | mix(notBinned) | set {allNotBinned}
+        allBinContigMapping | mix(binContigMapping) | set {allBinContigMapping} 
     }
 
     if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("postBinSpreader")) {
@@ -440,6 +576,35 @@ workflow _wRefinement {
         _wBinSpreaderPostProcessing.out.bins | set { bins }
         _wBinSpreaderPostProcessing.out.notBinned | set { notBinned }
         _wBinSpreaderPostProcessing.out.binContigMapping | set { binContigMapping }
+
+        binsToEvaluate | mix(bins) | set {binsToEvaluate} 
+        allNotBinned | mix(notBinned) | set {allNotBinned}
+        allBinContigMapping | mix(binContigMapping) | set {allBinContigMapping} 
+    }
+
+
+    if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("evaluate")) {
+        binsToEvaluate 
+            | map { sample, bins, method -> [sample, bins, method, Output.getOutput(sample, params.runid, "refinement/evaluate", params.modules.binning, "")]} 
+            | pCheckM2Eval
+
+        pCheckM2Eval.out.checkm | groupTuple(by: SAMPLE_IDX) 
+            | pEvaluateBestResult
+        
+        METHOD_IDX=1
+        pEvaluateBestResult.out.binner | set { bestBinner } 
+
+        bestBinner | combine(binsToEvaluate 
+            | map { sample, bins, tools -> [sample, tools.join('+'), bins]}, by: [SAMPLE_IDX, METHOD_IDX])
+            | set {bins}
+
+        bestBinner | combine(allNotBinned 
+            | map { sample, notBinned, tools -> [sample, tools.join('+'), notBinned]}, by: [SAMPLE_IDX, METHOD_IDX])
+            | set {notBinned}
+
+        bestBinner | combine(allBinContigMapping 
+            | map { sample, binContigMapping, tools -> [sample, tools.join('+'), binContigMapping]}, by: [SAMPLE_IDX, METHOD_IDX])
+            | set {binContigMapping}
     }
 
     emit:

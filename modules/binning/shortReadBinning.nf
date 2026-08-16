@@ -36,9 +36,9 @@ process pMetabinner {
     tuple val(sample), path(contigs), path(bam)
 
     output:
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), emit: bins
-    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
-    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), val(["metabinner"]), emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), val(["metabinner"]), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), val(["metabinner"]), optional: true, emit: binContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
@@ -46,6 +46,10 @@ process pMetabinner {
 }
 
 process pQuickBin {
+
+    memory { Utils.getMemoryResources(params.resources.medium, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.medium, "${sample}", task.attempt, params.resources) }
 
     container "${params.quickbin_image}"
 
@@ -63,13 +67,42 @@ process pQuickBin {
     tuple val(sample), path(contigs), path(bam)
 
     output:
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '1..*'), optional: true, emit: bins
-    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
-    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '1..*'), val(["quickbin"]), optional: true, emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), val(["quickbin"]), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), val(["quickbin"]), optional: true, emit: binContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     script:
     template('quickbin.sh')
+}
+
+process pCOMEBin {
+
+    container "${params.comebin_image}"
+
+    tag "Sample: ${sample}"
+
+    memory { Utils.getMemoryResources(params.resources.large, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.large, "${sample}", task.attempt, params.resources) }
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
+        Output.getOutput("${sample}", params.runid, "comebin", params.modules.binning, filename)
+    }
+
+    when params.steps.containsKey("binning") && params.steps.binning.containsKey("comebin")
+
+    input:
+    tuple val(sample), path(contigs), path(bam, stageAs: "bam/*")
+
+    output:
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '1..*'), val(["comebin"]), optional: true, emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), val(["comebin"]), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), val(["comebin"]), optional: true, emit: binContigMapping
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    script:
+    template('comebin.sh')
 }
 
 /**
@@ -107,9 +140,9 @@ process pMAGScoT {
 
     output:
     tuple val("${sample}"), file("${sample}_MagScoT.*"), optional: true, emit: scores
-    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), emit: bins
-    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), val(["magscot"]), optional: true, emit: binContigMapping
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), val(["magscot"]), emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), val(["magscot"]), optional: true, emit: notBinned
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
@@ -236,7 +269,7 @@ workflow wShortReadBinningList {
     _wBinning(contigs, inputReads, gfa, paths, headerMapping)
 
     emit:
-    binsStats = _wBinning.out.binsStats
+    binsStatsInput = _wBinning.out.binsStatsInput
     bins = _wBinning.out.bins
     mapping = _wBinning.out.mapping
     notBinnedContigs = _wBinning.out.notBinnedContigs
@@ -256,7 +289,7 @@ workflow _wRunBinningTools {
 
     contigs | join(mappedReads, by: SAMPLE_IDX) | set { binningInput }
     binningInput
-        | (pMetabinner & pQuickBin)
+        | (pMetabinner & pQuickBin & pCOMEBin)
 
     pSemiBin2(
         channel.value(params?.steps?.containsKey("binning") && params?.steps?.binning.containsKey("semibin2")),
@@ -282,16 +315,18 @@ workflow _wRunBinningTools {
         binningInput | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY)),
     )
 
-    pMetabat.out.bins | filter { sample, bins -> bins.size() > 0}
-        | mix(pSemiBin2.out.bins | filter { sample, bins -> bins.size() > 0})
-        | mix(pQuickBin.out.bins | filter { sample, bins -> bins.size() > 0})
-        | mix(pMetabinner.out.bins | filter { sample, bins -> bins.size() > 0})
+    pMetabat.out.bins | filter { sample, bins, method -> bins.size() > 0}
+        | mix(pSemiBin2.out.bins | filter { sample, bins, method -> bins.size() > 0})
+        | mix(pQuickBin.out.bins | filter { sample, bins, method -> bins.size() > 0})
+        | mix(pCOMEBin.out.bins | filter { sample, bins, method -> bins.size() > 0})
+        | mix(pMetabinner.out.bins | filter { sample, bins, method -> bins.size() > 0})
         | set { bins }
 
     pMetabinner.out.notBinned
         | mix(pSemiBin2.out.notBinned)
         | mix(pMetabat.out.notBinned)
         | mix(pQuickBin.out.notBinned)
+        | mix(pCOMEBin.out.notBinned)
         | set { notBinned }
 
     pMetabinner.out.binContigMapping
@@ -314,9 +349,15 @@ workflow _wRunBinningTools {
         | combine(channel.from("quickbin"))
         | join(pQuickBin.out.bins, by: SAMPLE_IDX)
         | set { quickBinBinStatisticsInput }
-
+    pCOMEBin.out.binContigMapping
+        | join(mappedReads, by: SAMPLE_IDX)
+        | combine(channel.from("comebin"))
+        | join(pCOMEBin.out.bins, by: SAMPLE_IDX)
+        | set { comebinBinStatisticsInput }
     pMetabinner.out.binContigMapping
         | mix(pSemiBin2.out.binContigMapping)
+        | mix(pQuickBin.out.binContigMapping)
+        | mix(pCOMEBin.out.binContigMapping)
         | mix(pMetabat.out.binContigMapping)
         | set { binContigMapping }
 
@@ -324,6 +365,7 @@ workflow _wRunBinningTools {
         | mix(semibin2BinStatisticsInput)
         | mix(metabinnerBinStatisticsInput)
         | mix(quickBinBinStatisticsInput)
+        | mix(comebinBinStatisticsInput)
         | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY))
         | set { binStatsInput }
 
@@ -450,10 +492,9 @@ workflow _wBinning {
     _wRunBinningTools.out.notBinned | set { notBinned }
     _wRunBinningTools.out.binStatsInput | set { binStatsInput }
     _wRunBinningTools.out.binContigMapping | set { binContigMapping}
-    _wPostProcessBins(mappedReads, binStatsInput, bins)
 
     emit:
-    binsStats = _wPostProcessBins.out.binMap
+    binsStatsInput = binStatsInput
     bins = bins
     mapping = mappedReads
     notBinnedContigs = notBinned

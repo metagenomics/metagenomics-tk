@@ -60,6 +60,42 @@ process pCheckM {
 }
 
 
+process pCheckM2Eval {
+
+    container "${params.checkm2_image}"
+
+    tag "Sample: $sample, Method: $method"
+
+    secret { "${S3_checkm2_ACCESS}"!="" ? ["S3_checkm2_ACCESS", "S3_checkm2_SECRET"] : [] } 
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->  "${output}/${methodPath}/" + filename }, \
+      pattern: "*tsv"
+
+    containerOptions  Utils.getDockerMount(params.steps?.binRefinement?.evaluate?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork())
+
+    beforeScript Utils.getCreateDatabaseDirCommand("${params.polished.databases}")
+
+    label 'medium'
+
+    input:
+    tuple val(sample), path(bins), val(method), val(output)
+
+    output:
+    tuple val("${sample}"), path("${sample}_checkm2_*.tsv", type: "file"), val(method), emit: checkm
+
+    shell:
+    methodPath = method.join('_')
+    S5CMD_PARAMS=params?.steps?.binRefinement?.evaluate?.database?.download?.s5cmd?.params ?: "" 
+    DOWNLOAD_LINK=params?.steps?.binRefinement?.evaluate?.database?.download?.source ?: ""
+    MD5SUM=params.steps?.binRefinement?.evaluate?.database?.download?.md5sum ?: ""
+    EXTRACTED_DB=params.steps?.binRefinement?.evaluate?.database?.extractedDBPath ?: ""
+    S3_checkm2_ACCESS=params?.steps?.binRefinement?.evaluate?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm2_ACCESS" : ""
+    S3_checkm2_SECRET=params?.steps?.binRefinement?.evaluate?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm2_SECRET" : ""
+    template 'checkm2Eval.sh'
+}
+
+
+
 process pCheckM2 {
 
     container "${params.checkm2_image}"

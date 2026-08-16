@@ -355,9 +355,9 @@ process pMetabat {
     tuple val(sample), path(contigs), path(bam), val(medianQuality)
 
     output:
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), emit: bins
-    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
-    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), val(["metabat"]), emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), val(["metabat"]), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), val(["metabat"]), optional: true, emit: binContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     shell:
@@ -390,9 +390,9 @@ process pSemiBin2 {
     tuple val(sample), path(contigs), path(bam)
 
     output:
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), emit: bins
-    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
-    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), val(["semibin2"]), emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), val(["semibin2"]), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), val(["semibin2"]), optional: true, emit: binContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     script:
@@ -459,10 +459,10 @@ process pSemiBin2Binning {
         path(featureOutput), path(compressedFeatureOutput), path(sampleGroupsFile) 
 
     output:
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), emit: bins
-    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), val(["semibinMSB"]), emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), val(["semibinMSB"]), optional: true, emit: notBinned
     tuple val("${sample}"), path("${sampleGroupsFile}", includeInputs: true), optional: true, emit: groupsFile 
-    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), val(["semibinMSB"]), optional: true, emit: binContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     script:
@@ -491,7 +491,7 @@ process pSemiBin2Binning {
 
 	    # Create bin to contig mapping and add the used binner to each line
 	    grep ">" \${bin} | sed 's/>//g' \
-		    | sed "s/^/\${BIN_NAME}\t/g;s/\$/\tsemibin2/" >> \${BIN_CONTIG_MAPPING}
+		    | sed "s/^/\${BIN_NAME}\t/g;s/\$/\tsemibin2MSB/" >> \${BIN_CONTIG_MAPPING}
     done
 
     # return not binned fasta files
@@ -517,9 +517,9 @@ process pSemiBin2GenerateSequenceFeatures {
 
     tag "Group: $group"
 
-    memory { Utils.getMemoryResources(params.resources.small, "${group}", task.attempt, params.resources) }
+    memory { Utils.getMemoryResources(params.resources.medium, "${group}", task.attempt, params.resources) }
 
-    cpus { Utils.getCPUsResources(params.resources.small, "${group}", task.attempt, params.resources) }
+    cpus { Utils.getCPUsResources(params.resources.medium, "${group}", task.attempt, params.resources) }
 
     input:
     val(semibinParams)
