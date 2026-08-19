@@ -102,7 +102,9 @@ process pBinette {
 
     tag "Sample: ${sample}"
 
-    label 'small'
+    memory { Utils.getMemoryResources(params.resources.small, "${group}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.small, "${group}", task.attempt, params.resources) }
 
     containerOptions Utils.getDockerMount(params.steps?.binRefinement?.binette?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork()) + "-u \$(id -u):\$(id -g)" 
 
@@ -114,9 +116,9 @@ process pBinette {
     tuple val(sample), path(contigMaps, name: "contigMaps/contigMap*.tsv"), path(contigs)
 
     output:
-    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), val("Binette"), optional: true, emit: binContigMapping
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), val("Binette"), emit: bins
-    tuple val("${sample}"), file("${sample}_notBinned.fa"), val("Binette"), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), val(["Binette"]), optional: true, emit: binContigMapping
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), val(["Binette"]), emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), val(["Binette"]), optional: true, emit: notBinned
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     script:
@@ -262,58 +264,102 @@ process pSelectBestBins {
 
     container "${params.metaspades_image}"
 
-    tag "Sample: ${sample}"
+    tag "Sample: ${sample}, Method: ${method}"
 
     label 'small'
 
     containerOptions params.apptainer ? "" : Utils.getDockerNetwork()
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
-        Output.getOutput("${sample}", params.runid, "refinement/evaluate/final", params.modules.binning, filename)
+        Output.getOutput("${sample}", params.runid, "refinement/evaluate/binSpreaderImproved/${method}", params.modules.binning, filename)
     }
 
     input:
-    tuple val(sample), path(checkmFiles), val(methods)
-
+    tuple val(sample), val(method), path(checkmFiles), path(bins1, stageAs: 'bins1/*'), path(bins2, stageAs: 'bins2/*'), val(isProcessed), path(contigs) 
 
     output:
-    tuple val("${sample}"), path("scores.tsv"), emit: scores
-    tuple val("${sample}"), env(SELECTED_BINNER), emit: binner
+    tuple val("${sample}"), path("decisions.tsv"), emit: decisions
+    tuple val("${sample}"), path("final_bins/*"), val(outputMethodList), emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), val(outputMethodList), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), val(outputMethodList), emit: binContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     script:
-    formatted_methods = methods.collect { inner_list -> 
-        "\"" + inner_list.join('+') + "\"" 
-    }.join(' ')
+    outputMethodList = [method + "BinSpreaderImproved"]
+    POST = isProcessed.findIndexOf { it == true } 
+    PRE = isProcessed.findIndexOf { it == false } 
+    CHECKM_POST = checkmFiles[POST]
+    CHECKM_PRE = checkmFiles[PRE]
+    bins = [bins1, bins2]
+    BINS_POST = bins[POST]
+    BINS_PRE = bins[PRE]
+    WEIGHT = 1
     """
-    CHECKM=( ${checkmFiles} )
-    METHODS=( ${formatted_methods} )
-    WEIGHT=${params.steps.binRefinement.evaluate.additionalParams.weight}
+    mkdir final_bins
 
-    TOTAL_ITEMS=\${#CHECKM[@]}
+    TMPDIR=\$(mktemp -d)
+    csvtk mutate2 -t -e '\$COMPLETENESS - '"$WEIGHT"' * \$CONTAMINATION' -n score "$CHECKM_PRE" \
+    | csvtk cut -t -f BIN_ID,COMPLETENESS,CONTAMINATION,score \
+    | csvtk rename -t -f COMPLETENESS,CONTAMINATION,score \
+        -n completeness_pre,contamination_pre,score_pre > "\$TMPDIR/pre_scored.tsv"
 
-    for (( i=0; i<\${TOTAL_ITEMS}; i++ )); do
-        CURRENT_CHECKM=\${CHECKM[\$i]}
-        CURRENT_METHOD=\${METHODS[\$i]}
-        SCORE=\$(csvtk filter2 -t -f '\$COMPLETENESS > 50 && \$CONTAMINATION < 10' \${CURRENT_CHECKM}  \\
-        | csvtk mutate2 -t -e '\$COMPLETENESS - \$WEIGHT * \$CONTAMINATION' -n score \\
-        | csvtk summary -t -f "score:sum,score:count" | tail -n 1 )
-
-        if [[ "\$SCORE" =~ "score:count" ]]; then
-            SCORE="0\t0"
-        fi
+    csvtk mutate2 -t -e '\$COMPLETENESS - '"$WEIGHT"' * \$CONTAMINATION' -n score "$CHECKM_POST" \
+    | csvtk cut -t -f BIN_ID,COMPLETENESS,CONTAMINATION,score \
+    | csvtk rename -t -f COMPLETENESS,CONTAMINATION,score \
+        -n completeness_post,contamination_post,score_post > "\$TMPDIR/post_scored.tsv"
  
-        echo -e "\${CURRENT_METHOD}\t\${SCORE}" >> scores_tmp.tsv
+    csvtk join -t -f BIN_ID -O --na NA "\$TMPDIR/pre_scored.tsv" "\$TMPDIR/post_scored.tsv" > "\$TMPDIR/joined.tsv"
+
+    csvtk mutate2 -t \
+        -e '\$score_post - \$score_pre > 0 ? "keep_post" : "keep_pre"' \
+        -n decision "\$TMPDIR/joined.tsv" \
+    | csvtk mutate2 -t \
+        -e '\$score_post - \$score_pre' \
+        -n delta > decisions.tsv
+
+    csvtk cut -t  -f "BIN_ID,decision" decisions.tsv \
+        | while read -r BIN_ID decision; do   
+
+            matched_file=""
+
+            if [ "\${decision}" == "keep_pre" ]; then  
+                BINS_TO_COPY="${BINS_PRE}"
+            else 
+                BINS_TO_COPY="${BINS_POST}"
+            fi;  
+
+            # Loop through the string natively using Bash word-splitting.
+            for file in \${BINS_TO_COPY}; do
+                if [[ "\$file" == *"\${BIN_ID}."* ]]; then
+                    cp \$file final_bins
+                    break
+                fi
+            done
+        done
+
+    # Create bin to contig mapping
+    BIN_CONTIG_MAPPING=${sample}_bin_contig_mapping.tsv
+    echo -e "BIN_ID\tCONTIG\tBINNER" > \${BIN_CONTIG_MAPPING}
+
+    for bin in \$(find final_bins -name "*.fa"); do 
+	    BIN_NAME="\$(basename \$bin)"
+	    seqkit seq --name --only-id \${bin}  \\
+		    | sed "s/^/\${BIN_NAME}\t/g;s/\$/\t${method}+BinSpreaderImproved/" >> \${BIN_CONTIG_MAPPING}
     done
 
-    echo -e  "METHOD\tSCORE\tNUMBER_OF_BINS" > scores.tsv
-    sort -k 2,2 scores_tmp.tsv >> scores.tsv
-
-    SELECTED_BINNER=\$(cat scores.tsv | cut -f 1 | tail -n 1)
+    # return not binned fasta files
+    BINNED_IDS=binned.tsv
+    NOT_BINNED=${sample}_notBinned.fa
+    grep -h ">" \$(find final_bins/ -name "*.fa") | tr -d ">" > \${BINNED_IDS}
+    if [ -s \${BINNED_IDS} ]; then
+        # Get all not binned Ids
+        seqkit grep -vf \${BINNED_IDS} ${contigs} \\
+            | seqkit replace  -p '(.*)' -r "\\\${1} MAG=NotBinned" > \${NOT_BINNED}
+    else
+        seqkit replace  -p '(.*)' -r "\\\${1} MAG=NotBinned" ${contigs} > \${NOT_BINNED}
+    fi
     """
 }
-
-
 
 process pEvaluateBestResult {
 
@@ -345,14 +391,16 @@ process pEvaluateBestResult {
     CHECKM=( ${checkmFiles} )
     METHODS=( ${formatted_methods} )
     WEIGHT=${params.steps.binRefinement.evaluate.additionalParams.weight}
+    MAX_CONTAMINATION=${params.steps.binRefinement.evaluate.additionalParams.maxContamination}
+    MIN_COMPLETENESS=${params.steps.binRefinement.evaluate.additionalParams.minCompleteness}
 
     TOTAL_ITEMS=\${#CHECKM[@]}
 
     for (( i=0; i<\${TOTAL_ITEMS}; i++ )); do
         CURRENT_CHECKM=\${CHECKM[\$i]}
         CURRENT_METHOD=\${METHODS[\$i]}
-        SCORE=\$(csvtk filter2 -t -f '\$COMPLETENESS > 50 && \$CONTAMINATION < 10' \${CURRENT_CHECKM}  \\
-        | csvtk mutate2 -t -e '\$COMPLETENESS - \$WEIGHT * \$CONTAMINATION' -n score \\
+        SCORE=\$(csvtk filter2 -t -f "\\\$COMPLETENESS > \$MIN_COMPLETENESS && \\\$CONTAMINATION < \$MAX_CONTAMINATION" \${CURRENT_CHECKM}  \\
+        | csvtk mutate2 -t -e "\\\$COMPLETENESS - \${WEIGHT} * \\\$CONTAMINATION" -n score \\
         | csvtk summary -t -f "score:sum,score:count" | tail -n 1 )
 
         if [[ "\$SCORE" =~ "score:count" ]]; then
@@ -396,6 +444,54 @@ workflow _wMAGScoT {
     binContigMapping = binContigMapping
 }
 
+workflow _wImproveWithBinSpreader {
+    take:
+        binsPre
+        binsPost
+        contigs
+    main:
+        SAMPLE_IDX = 0
+        METHOD_WITHOUT_BINSPREADER_IDX = 0
+        binsPre
+             | mix(binsPost)
+             | map { sample, bins, method -> [sample, bins, method, Output.getOutput(sample, params.runid, "refinement/evaluate", params.modules.binning, "")]} 
+             | pCheckM2Eval
+
+        pCheckM2Eval.out.checkm | set { evaluationInput }
+
+        evaluationInput | branch {
+            sample, checkm, method ->
+                pre: method.size()<2
+                post: method.size()==2
+        } | set { evaluationInputStage }
+
+        evaluationInputStage.pre 
+            | map { sample, checkm, method -> [sample, checkm, method[METHOD_WITHOUT_BINSPREADER_IDX]]}
+            | combine(binsPre | map { sample, inputBins, method -> [sample, inputBins, method[METHOD_WITHOUT_BINSPREADER_IDX]]}, by: [SAMPLE_IDX,2]) 
+            | map {result -> return result + false} 
+            | set { evaluationInputStagePre }
+
+        evaluationInputStage.post 
+            | map { sample, checkm, method -> [sample, checkm, method[METHOD_WITHOUT_BINSPREADER_IDX]]}
+            | combine(binsPre | map { sample, bins, method -> [sample, bins, method[METHOD_WITHOUT_BINSPREADER_IDX]]}, by: [SAMPLE_IDX,2]) 
+            | map {result -> return result + true}
+            | set { evaluationInputStagePos }
+
+        evaluationInputStagePre | mix(evaluationInputStagePos)
+            | groupTuple(by: [SAMPLE_IDX,1], size: 2)
+            | combine(contigs, by: SAMPLE_IDX)
+            | map { sample, method, checkm, allBins, isProcessed, contigs -> [sample, [method], checkm, allBins[0], allBins[1], isProcessed, contigs] } 
+            | pSelectBestBins
+
+        pSelectBestBins.out.bins | set { bins } 
+        pSelectBestBins.out.notBinned | set { notBinned }
+        pSelectBestBins.out.binContigMapping | set { binContigMapping }
+    emit:
+        bins = bins
+        notBinned = notBinned
+        binContigMapping = binContigMapping
+}
+
 
 workflow _wBinSpreaderPreProcessing {
     take:
@@ -418,35 +514,19 @@ workflow _wBinSpreaderPreProcessing {
 
         pBinSpreader(binSpreaderInput, binSpreaderParameters, channel.value("refinement/preBinSpreader"))
 
-        //
         pBinSpreader.out.bins | set { bins } 
-
-/*
-        inputBins 
-             | mix(bins)
-             | map { sample, bins, method -> [sample, bins, method, Output.getOutput(sample, params.runid, "refinement/evaluate", params.modules.binning, "")]} 
-             | pCheckM2Eval
-
-        pCheckM2Eval.out.checkm | set { evaluationInput }
-        
-
-        evaluationInput | branch {
-            sample, checkm, method ->
-                pre: method.size()<2
-                post: method.size()==2
-        } | set { evaluationInputStage }
-
-        evaluationInputStage.pre 
-            | combine(inputBins, by: [0,2]) 
-            | map {result -> return result + true} 
-
-        evaluationInputStage.post 
-            | combine(bins | map { sample, bins, method -> [sample, bins, method[METHOD_WITHOUT_BINSPREADER_IDX]]}, by: [0,2]) 
-            | map {result -> return result + false}
-*/
-    
         pBinSpreader.out.notBinned | set { notBinned }
         pBinSpreader.out.binContigMapping | set { binContigMapping }
+
+        if (params.steps.containsKey("binRefinement") 
+            && params.steps.binRefinement.containsKey("preBinSpreader")
+            && params.steps.binRefinement.preBinSpreader.additionalParams.improve){
+
+            _wImproveWithBinSpreader(inputBins, bins, contigs)
+            _wImproveWithBinSpreader.out.bins | set { bins } 
+            _wImproveWithBinSpreader.out.notBinned | set { notBinned }
+            _wImproveWithBinSpreader.out.binContigMapping | set { binContigMapping }
+        }
     emit:
         bins = bins
         notBinned = notBinned
@@ -457,6 +537,7 @@ workflow _wBinSpreaderPreProcessing {
 workflow _wBinSpreaderPostProcessing {
     take:
         contigs
+        inputBins
         binContigMapping
         gfa
         paths
@@ -476,6 +557,17 @@ workflow _wBinSpreaderPostProcessing {
         pBinSpreader.out.bins | set { bins }
         pBinSpreader.out.notBinned | set { notBinned }
         pBinSpreader.out.binContigMapping | set { binContigMapping }
+
+        if (params.steps.containsKey("binRefinement") 
+            && params.steps.binRefinement.containsKey("postBinSpreader")
+            && params.steps.binRefinement.postBinSpreader.additionalParams.improve){
+
+            _wImproveWithBinSpreader(inputBins, bins, contigs)
+            _wImproveWithBinSpreader.out.bins | set { bins } 
+            _wImproveWithBinSpreader.out.notBinned | set { notBinned }
+            _wImproveWithBinSpreader.out.binContigMapping | set { binContigMapping }
+        }
+
     emit:
         bins = bins
         notBinned = notBinned
@@ -534,7 +626,7 @@ workflow _wRefinement {
     allNotBinned | mix(inputNotBinned) | set {allNotBinned}
 
     if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("preBinSpreader")) {
-        _wBinSpreaderPreProcessing(contigs, inputBins, binContigMapping, gfa, paths, headerMapping, channel.value(params.steps.binRefinement.preBinSpreader.additionalParams))
+        _wBinSpreaderPreProcessing(contigs, inputBins, binContigMapping, gfa, paths, headerMapping, channel.value(params.steps.binRefinement.preBinSpreader.additionalParams.binSpreader))
         _wBinSpreaderPreProcessing.out.bins | set { bins }
         _wBinSpreaderPreProcessing.out.notBinned | set { notBinned }
         _wBinSpreaderPreProcessing.out.binContigMapping | set { binContigMapping }
@@ -572,7 +664,7 @@ workflow _wRefinement {
     }
 
     if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("postBinSpreader")) {
-        _wBinSpreaderPostProcessing(contigs, binContigMapping, gfa, paths, headerMapping, channel.value(params.steps.binRefinement.postBinSpreader.additionalParams))
+        _wBinSpreaderPostProcessing(contigs, bins, binContigMapping, gfa, paths, headerMapping, channel.value(params.steps.binRefinement.postBinSpreader.additionalParams.binSpreader))
         _wBinSpreaderPostProcessing.out.bins | set { bins }
         _wBinSpreaderPostProcessing.out.notBinned | set { notBinned }
         _wBinSpreaderPostProcessing.out.binContigMapping | set { binContigMapping }
@@ -581,7 +673,6 @@ workflow _wRefinement {
         allNotBinned | mix(notBinned) | set {allNotBinned}
         allBinContigMapping | mix(binContigMapping) | set {allBinContigMapping} 
     }
-
 
     if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("evaluate")) {
         binsToEvaluate 
