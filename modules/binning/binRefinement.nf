@@ -106,7 +106,7 @@ process pBinette {
 
     cpus { Utils.getCPUsResources(params.resources.small, "${group}", task.attempt, params.resources) }
 
-    containerOptions Utils.getDockerMount(params.steps?.binRefinement?.binette?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork()) + "-u \$(id -u):\$(id -g)" 
+    containerOptions Utils.getDockerMount(params.steps?.binRefinement?.binette?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork()) 
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
         Output.getOutput("${sample}", params.runid, "refinement/binette", params.modules.binning, filename)
@@ -311,11 +311,12 @@ process pSelectBestBins {
     csvtk join -t -f BIN_ID -O --na NA "\$TMPDIR/pre_scored.tsv" "\$TMPDIR/post_scored.tsv" > "\$TMPDIR/joined.tsv"
 
     csvtk mutate2 -t \
-        -e '\$score_post - \$score_pre > 0 ? "keep_post" : "keep_pre"' \
-        -n decision "\$TMPDIR/joined.tsv" \
+    -e '\$score_pre == "NA" ? "keep_post" : (\$score_post == "NA" ? "keep_pre" : (\$score_post - \$score_pre > 0 ? "keep_post" : "keep_pre"))' \
+    -n decision "\$TMPDIR/joined.tsv" \
     | csvtk mutate2 -t \
-        -e '\$score_post - \$score_pre' \
+        -e '\$score_pre == "NA" ? "NA" : (\$score_post == "NA" ? "NA" : (\$score_post - \$score_pre))' \
         -n delta > decisions.tsv
+
 
     csvtk cut -t  -f "BIN_ID,decision" decisions.tsv \
         | while read -r BIN_ID decision; do   
