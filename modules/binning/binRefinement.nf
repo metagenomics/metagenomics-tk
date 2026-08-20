@@ -102,9 +102,9 @@ process pBinette {
 
     tag "Sample: ${sample}"
 
-    memory { Utils.getMemoryResources(params.resources.small, "${group}", task.attempt, params.resources) }
+    memory { Utils.getMemoryResources(params.resources.small, "${sample}", task.attempt, params.resources) }
 
-    cpus { Utils.getCPUsResources(params.resources.small, "${group}", task.attempt, params.resources) }
+    cpus { Utils.getCPUsResources(params.resources.small, "${sample}", task.attempt, params.resources) }
 
     containerOptions Utils.getDockerMount(params.steps?.binRefinement?.binette?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork()) 
 
@@ -113,7 +113,7 @@ process pBinette {
     }
 
     input:
-    tuple val(sample), path(contigMaps, name: "contigMaps/contigMap*.tsv"), path(contigs)
+    tuple val(sample), path(contigMaps, name: "contigMaps/contigMap*.tsv"), val(inputMethods), path(contigs)
 
     output:
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), val(["Binette"]), optional: true, emit: binContigMapping
