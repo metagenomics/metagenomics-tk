@@ -411,7 +411,7 @@ workflow _wBinningShortRead {
         )
 
         wMultiBinningSemiBin2.out.bins 
-	| filter { sample, bins -> bins.size() > 0}
+	| filter { sample, bins, method -> bins.size() > 0}
 	| set { bins }
 
         wMultiBinningSemiBin2.out.notBinned | set { notBinned }
@@ -432,7 +432,7 @@ workflow _wBinningShortRead {
                 params?.steps?.multiBinning?.genomeCoverage?.additionalParams,
             ]
         ),
-        mapping | join(bins, by: SAMPLE_IDX) | map { sample ->
+        mapping | join(bins | map { sample, bins, method -> [sample, bins]}, by: SAMPLE_IDX) | map { sample ->
             sample.addAll(ALIGNMENT_INDEX, emptyFile)
             sample
         } | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY)),
@@ -444,10 +444,10 @@ workflow _wBinningShortRead {
     // following entries [BIN_ID:bin.name, SAMPLE:sample, PATH:bin]
     bins | map { it -> Utils.flattenTuple(it) } | flatMap { it -> createMap(it) } | set { binMap }
 
-    binContigMapping
+    binContigMapping | map { sample, mapping, method -> [sample, mapping] }
         | join(mapping, by: SAMPLE_IDX)
         | combine(channel.from("semibin2"))
-        | join(bins, by: SAMPLE_IDX)
+        | join(bins | map { sample, bins, method -> [sample, bins] }, by: SAMPLE_IDX)
         | set { semibin2BinStatisticsInput }
 
     semibin2BinStatisticsInput
