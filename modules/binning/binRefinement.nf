@@ -412,7 +412,7 @@ process pEvaluateBestResult {
     done
 
     echo -e  "METHOD\tSCORE\tNUMBER_OF_BINS" > scores.tsv
-    sort -k 2,2 scores_tmp.tsv >> scores.tsv
+    sort -t\$'\t' -k 2,2 scores_tmp.tsv >> scores.tsv
 
     SELECTED_BINNER=\$(cat scores.tsv | cut -f 1 | tail -n 1)
     """
