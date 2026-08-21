@@ -285,7 +285,7 @@ process pSelectBestBins {
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     script:
-    outputMethodList = [method + "BinSpreaderImproved"]
+    outputMethodList = method + "BinSpreaderImproved"
     POST = isProcessed.findIndexOf { it == true } 
     PRE = isProcessed.findIndexOf { it == false } 
     CHECKM_POST = checkmFiles[POST]
@@ -474,7 +474,7 @@ workflow _wImproveWithBinSpreader {
 
         evaluationInputStage.post 
             | map { sample, checkm, method -> [sample, checkm, method[METHOD_WITHOUT_BINSPREADER_IDX]]}
-            | combine(binsPre | map { sample, bins, method -> [sample, bins, method[METHOD_WITHOUT_BINSPREADER_IDX]]}, by: [SAMPLE_IDX,2]) 
+            | combine(binsPost | map { sample, bins, method -> [sample, bins, method[METHOD_WITHOUT_BINSPREADER_IDX]]}, by: [SAMPLE_IDX,2]) 
             | map {result -> return result + true}
             | set { evaluationInputStagePos }
 
