@@ -592,9 +592,8 @@ workflow _wProcessIllumina {
             | mix(multiSamplesInput.reads)
             | set { singleSampleReadInput }
 
-        singleSampleContigsInput
-            | mix(multiSamplesInput.contigs)
-            | set { singleSampleContigsInput }
+        wShortReadAssemblyList.out.contigs 
+		| set { singleSampleContigsInput }
 
         multiSamples
           | combine(wShortReadAssemblyList.out.gfa, by: SAMPLE_IDX)
@@ -631,7 +630,8 @@ workflow _wProcessIllumina {
 
       wShortReadBinningList.out.mapping | set { mappingShort }
 
-      wShortReadBinningList.out.bins | set { bins }
+      wShortReadBinningList.out.bins 
+	| mix(wMultiBinningShortReadList.out.bins) | set { bins }
 
       wShortReadBinningList.out.notBinnedContigs  | set {notBinnedContigs}
 
