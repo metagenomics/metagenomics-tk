@@ -55,8 +55,6 @@ process pQuickBin {
 
     tag "Sample: ${sample}"
 
-    label 'medium'
-
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
         Output.getOutput("${sample}", params.runid, "quickbin", params.modules.binning, filename)
     }
@@ -74,6 +72,36 @@ process pQuickBin {
 
     script:
     template('quickbin.sh')
+}
+
+
+process pVAMB {
+
+    memory { Utils.getMemoryResources(params.resources.medium, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.medium, "${sample}", task.attempt, params.resources) }
+
+    container "${params.vamb_image}"
+
+    tag "Sample: ${sample}"
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
+        Output.getOutput("${sample}", params.runid, "quickbin", params.modules.binning, filename)
+    }
+
+    when params.steps.containsKey("binning") && params.steps.binning.containsKey("vamb")
+
+    input:
+    tuple val(sample), path(contigs), path(bam)
+
+    output:
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '1..*'), val(["vamb"]), optional: true, emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), val(["vamb"]), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), val(["vamb"]), optional: true, emit: binContigMapping
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    script:
+    template('vamb.sh')
 }
 
 process pCOMEBin {
@@ -289,7 +317,7 @@ workflow _wRunBinningTools {
 
     contigs | join(mappedReads, by: SAMPLE_IDX) | set { binningInput }
     binningInput
-        | (pMetabinner & pQuickBin & pCOMEBin)
+        | (pMetabinner & pQuickBin & pCOMEBin & pVAMB)
 
     pSemiBin2(
         channel.value(params?.steps?.containsKey("binning") && params?.steps?.binning.containsKey("semibin2")),
@@ -318,6 +346,7 @@ workflow _wRunBinningTools {
     pMetabat.out.bins | filter { sample, bins, method -> bins.size() > 0}
         | mix(pSemiBin2.out.bins | filter { sample, bins, method -> bins.size() > 0})
         | mix(pQuickBin.out.bins | filter { sample, bins, method -> bins.size() > 0})
+        | mix(pVAMB.out.bins | filter { sample, bins, method -> bins.size() > 0})
         | mix(pCOMEBin.out.bins | filter { sample, bins, method -> bins.size() > 0})
         | mix(pMetabinner.out.bins | filter { sample, bins, method -> bins.size() > 0})
         | set { bins }
@@ -326,6 +355,7 @@ workflow _wRunBinningTools {
         | mix(pSemiBin2.out.notBinned)
         | mix(pMetabat.out.notBinned)
         | mix(pQuickBin.out.notBinned)
+        | mix(pVAMB.out.notBinned)
         | mix(pCOMEBin.out.notBinned)
         | set { notBinned }
 
@@ -349,6 +379,11 @@ workflow _wRunBinningTools {
         | combine(channel.from("quickbin"))
         | join(pQuickBin.out.bins, by: SAMPLE_IDX)
         | set { quickBinBinStatisticsInput }
+    pVAMB.out.binContigMapping
+        | join(mappedReads, by: SAMPLE_IDX)
+        | combine(channel.from("VAMB"))
+        | join(pVAMB.out.bins, by: SAMPLE_IDX)
+        | set { vambBinStatisticsInput }
     pCOMEBin.out.binContigMapping
         | join(mappedReads, by: SAMPLE_IDX)
         | combine(channel.from("comebin"))
@@ -358,6 +393,7 @@ workflow _wRunBinningTools {
         | mix(pSemiBin2.out.binContigMapping)
         | mix(pQuickBin.out.binContigMapping)
         | mix(pCOMEBin.out.binContigMapping)
+        | mix(pVAMB.out.binContigMapping)
         | mix(pMetabat.out.binContigMapping)
         | set { binContigMapping }
 
@@ -366,6 +402,7 @@ workflow _wRunBinningTools {
         | mix(metabinnerBinStatisticsInput)
         | mix(quickBinBinStatisticsInput)
         | mix(comebinBinStatisticsInput)
+        | mix(vambBinStatisticsInput)
         | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY))
         | set { binStatsInput }
 
