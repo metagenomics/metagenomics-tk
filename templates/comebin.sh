@@ -6,7 +6,14 @@ mkdir old_bins
 zcat ${contigs}  \
 	| seqkit seq --min-len \${MIN_LENGTH} > contigs_unzipped.fa
 
+sed -i \
+  -e 's/realpath -e --/[ -e "\${OPTARG}" ] \\&\\& realpath/g' \
+  -e 's/realpath -m --/mkdir -p "\$(dirname "\${OPTARG}")" \\&\\& realpath/g' \
+  -e 's/realpath --/realpath/g' \
+  /usr/local/bin/run_comebin.sh
+
 run_comebin.sh -a contigs_unzipped.fa \
+-d cpu \
 -o old_bins \
 -p bam \
 -t ${task.cpus}
