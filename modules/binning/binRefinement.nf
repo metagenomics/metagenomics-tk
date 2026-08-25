@@ -418,6 +418,34 @@ process pEvaluateBestResult {
     """
 }
 
+
+process pExportBestResult {
+
+    container "${params.ubuntu_image}"
+
+    tag "Sample: ${sample}"
+
+    label 'small'
+
+    containerOptions params.apptainer ? "" : Utils.getDockerNetwork()
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
+        Output.getOutput("${sample}", params.runid, "refinement/evaluate/final", params.modules.binning, filename)
+    }
+
+    input:
+    tuple val(sample), val(method), path(bins, stageAs: 'bins/*'), path(notBinned), path(binToContigMapping) 
+
+    output:
+    tuple path("bins/*", includeInputs: true), path("method.txt"), path("${notBinned}", includeInputs: true), path("${binToContigMapping}", includeInputs: true)
+
+    script:
+    """
+    echo ${method}  > method.txt
+    """
+}
+
+
 workflow _wMAGScoT {
     take:
     contigs
@@ -614,6 +642,7 @@ workflow _wRefinement {
 
     main:
     SAMPLE_IDX = 0
+    METHOD_IDX=1
 
     bins = channel.empty()
     notBinned = channel.empty()
@@ -683,7 +712,6 @@ workflow _wRefinement {
         pCheckM2Eval.out.checkm | groupTuple(by: SAMPLE_IDX) 
             | pEvaluateBestResult
         
-        METHOD_IDX=1
         pEvaluateBestResult.out.binner | set { bestBinner } 
 
         bestBinner | combine(binsToEvaluate 
@@ -697,7 +725,19 @@ workflow _wRefinement {
         bestBinner | combine(allBinContigMapping 
             | map { sample, binContigMapping, tools -> [sample, tools.join('+'), binContigMapping]}, by: [SAMPLE_IDX, METHOD_IDX])
             | set {binContigMapping}
+    } else {
+        bins | map { sample, bins, tools -> [sample, tools.join('+'), bins]}
+             | set {bins}
+
+        binContigMapping | map { sample, binContigMapping, tools -> [sample, tools.join('+'), binContigMapping] }
+            | set {binContigMapping}
+
+        notBinned | map { sample, notBinned, tools -> [sample, tools.join('+'), notBinned]}
+            | set {notBinned}
     }
+
+    bins | combine(notBinned, by: [SAMPLE_IDX, METHOD_IDX]) 
+         | combine(binContigMapping, by: [SAMPLE_IDX, METHOD_IDX]) | view | pExportBestResult
 
     emit:
     bins = bins
