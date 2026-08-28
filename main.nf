@@ -583,8 +583,7 @@ workflow _wProcessIllumina {
 
 
       if(params.steps.containsKey("binRefinement") 
-        && params.steps.binRefinement.containsKey("mode")
-        && params.steps.binRefinement.mode == "all"){
+        && params.steps.binRefinement.mode.includeMultiSample){
 
         wMultiBinningShortReadList.out.binsStats
 
@@ -658,8 +657,8 @@ workflow _wProcessIllumina {
             | set { binsStatsInputShort }
       }  
 
-      if(!params.steps.containsKey("binRefinement") || (!params.steps.binRefinement.containsKey("mode")
-             && params.steps.binRefinement.mode != "all")){
+      if(!params.steps.containsKey("binRefinement") || 
+        !params.steps.binRefinement.mode.includeMultiSample){
                 
               binsStats | mix(wMultiBinningShortReadList.out.binsStats) 
                 | set {binsStats}

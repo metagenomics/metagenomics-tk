@@ -271,11 +271,11 @@ process pSelectBestBins {
     containerOptions params.apptainer ? "" : Utils.getDockerNetwork()
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
-        Output.getOutput("${sample}", params.runid, "refinement/evaluate/binSpreaderImproved/${method}", params.modules.binning, filename)
+        Output.getOutput("${sample}", params.runid, "refinement/evaluate/binSpreaderImproved/${method[0]}", params.modules.binning, filename)
     }
 
     input:
-    tuple val(sample), val(method), path(checkmFiles), path(bins1, stageAs: 'bins1/*'), path(bins2, stageAs: 'bins2/*'), val(isProcessed), path(contigs) 
+    tuple val(sample), val(method), path(checkmFiles, stageAs: 'checkm/checkm*'), path(bins1, stageAs: 'bins1/*'), path(bins2, stageAs: 'bins2/*'), val(isProcessed), path(contigs) 
 
     output:
     tuple val("${sample}"), path("decisions.tsv"), emit: decisions
@@ -377,7 +377,7 @@ process pEvaluateBestResult {
     }
 
     input:
-    tuple val(sample), path(checkmFiles), val(methods)
+    tuple val(sample), path(checkmFiles, stageAs: 'checkm/checkm*'), val(methods)
 
     output:
     tuple val("${sample}"), path("scores.tsv"), emit: scores
@@ -423,7 +423,7 @@ process pExportBestResult {
 
     container "${params.ubuntu_image}"
 
-    tag "Sample: ${sample}"
+    tag "Sample: ${sample}, Method: ${method}"
 
     label 'small'
 
@@ -478,13 +478,11 @@ workflow _wImproveWithBinSpreader {
         binsPre
         binsPost
         contigs
+        checkmInput
     main:
         SAMPLE_IDX = 0
         METHOD_WITHOUT_BINSPREADER_IDX = 0
-        binsPre
-             | mix(binsPost)
-             | map { sample, bins, method -> [sample, bins, method, Output.getOutput(sample, params.runid, "refinement/evaluate", params.modules.binning, "")]} 
-             | pCheckM2Eval
+        checkmInput | pCheckM2Eval
 
         pCheckM2Eval.out.checkm | set { evaluationInput }
 
@@ -509,6 +507,10 @@ workflow _wImproveWithBinSpreader {
         evaluationInputStagePre | mix(evaluationInputStagePos)
             | groupTuple(by: [SAMPLE_IDX,1], size: 2)
             | combine(contigs, by: SAMPLE_IDX)
+            | map { id, label, tsvs, fastas, bools, contigs ->
+                def zip = [tsvs, fastas, bools].transpose().sort { it[0] }
+                return [id, label, zip.collect{it[0]}, zip.collect{it[1]}, zip.collect{it[2]}, contigs]
+            }
             | map { sample, method, checkm, allBins, isProcessed, contigs -> [sample, [method], checkm, allBins[0], allBins[1], isProcessed, contigs] } 
             | pSelectBestBins
 
@@ -541,7 +543,7 @@ workflow _wBinSpreaderPreProcessing {
          | combine(headerMapping, by: SAMPLE_IDX)
          | set { binSpreaderInput }
 
-        pBinSpreader(binSpreaderInput, binSpreaderParameters, channel.value("refinement/preBinSpreader"))
+        pBinSpreader(binSpreaderInput, binSpreaderParameters, channel.value("refinement/postBinSpreader")) 
 
         pBinSpreader.out.bins | set { bins } 
         pBinSpreader.out.notBinned | set { notBinned }
@@ -551,7 +553,9 @@ workflow _wBinSpreaderPreProcessing {
             && params.steps.binRefinement.containsKey("preBinSpreader")
             && params.steps.binRefinement.preBinSpreader.additionalParams.improve){
 
-            _wImproveWithBinSpreader(inputBins, bins, contigs)
+            _wImproveWithBinSpreader(inputBins, bins, contigs, inputBins 
+                | mix(bins) 
+                | map { sample, bins, method -> [sample, bins, method, Output.getOutput(sample, params.runid, "refinement/preBinSpreader/checkm2", params.modules.binning, "")]}) 
             _wImproveWithBinSpreader.out.bins | set { bins } 
             _wImproveWithBinSpreader.out.notBinned | set { notBinned }
             _wImproveWithBinSpreader.out.binContigMapping | set { binContigMapping }
@@ -591,7 +595,9 @@ workflow _wBinSpreaderPostProcessing {
             && params.steps.binRefinement.containsKey("postBinSpreader")
             && params.steps.binRefinement.postBinSpreader.additionalParams.improve){
 
-            _wImproveWithBinSpreader(inputBins, bins, contigs)
+            _wImproveWithBinSpreader(inputBins, bins, contigs, inputBins 
+                | mix(bins) 
+                | map { sample, bins, method -> [sample, bins, method, Output.getOutput(sample, params.runid, "refinement/postBinSpreader/checkm2", params.modules.binning, "")]})
             _wImproveWithBinSpreader.out.bins | set { bins } 
             _wImproveWithBinSpreader.out.notBinned | set { notBinned }
             _wImproveWithBinSpreader.out.binContigMapping | set { binContigMapping }
@@ -622,7 +628,6 @@ workflow wRefinementList {
     notBinned = _wRefinement.out.notBinned
     binContigMapping = _wRefinement.out.binContigMapping
 }
-
 
 /*
 *
@@ -704,9 +709,9 @@ workflow _wRefinement {
         allBinContigMapping | mix(binContigMapping) | set {allBinContigMapping} 
     }
 
-    if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("evaluate")) {
+    if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.mode.compare) {
         binsToEvaluate 
-            | map { sample, bins, method -> [sample, bins, method, Output.getOutput(sample, params.runid, "refinement/evaluate", params.modules.binning, "")]} 
+            | map { sample, bins, method -> [sample, bins, method, Output.getOutput(sample, params.runid, "refinement/evaluate/checkm2/", params.modules.binning, "")]} 
             | pCheckM2Eval
 
         pCheckM2Eval.out.checkm | groupTuple(by: SAMPLE_IDX) 
@@ -737,7 +742,8 @@ workflow _wRefinement {
     }
 
     bins | combine(notBinned, by: [SAMPLE_IDX, METHOD_IDX]) 
-         | combine(binContigMapping, by: [SAMPLE_IDX, METHOD_IDX]) | view | pExportBestResult
+         | combine(binContigMapping, by: [SAMPLE_IDX, METHOD_IDX])
+         | pExportBestResult
 
     emit:
     bins = bins

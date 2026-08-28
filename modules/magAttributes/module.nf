@@ -81,7 +81,7 @@ process pCheckM2Eval {
     tuple val(sample), path(bins), val(method), val(output)
 
     output:
-    tuple val("${sample}"), path("${sample}_checkm2_*.tsv", type: "file"), val(method), emit: checkm
+    tuple val("${sample}"), path("${sample}_checkm2.tsv", type: "file"), val(method), emit: checkm
 
     shell:
     methodPath = method.join('_')
