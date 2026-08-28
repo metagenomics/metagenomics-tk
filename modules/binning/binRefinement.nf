@@ -210,7 +210,7 @@ process pBinSpreader {
     }
 
     input:
-    tuple val(sample), path(contigMaps), val(method), path(contigs), path(gfa), val(maxKmer), path(paths), path(headerMapping)
+    tuple val(sample), path(contigMaps), val(method), path(contigs), path(gfa), val(maxKmer), path(paths), path(headerMapping), path(readsPaired), path(readsUnpaired)
     val(parameters)
     val(output)
 
@@ -227,7 +227,17 @@ process pBinSpreader {
         | csvtk cut -t -f CONTIG,BIN_ID \
         | tail -n +2 > binSpreaderInputMap.tsv
 
-    binspreader ${gfa} binSpreaderInputMap.tsv out -t ${task.cpus} --paths ${paths} ${parameters}
+    cat > reads.yaml << 'EOF'
+    - orientation: "fr"
+      type: "paired-end"
+      interlaced reads:
+        - "${readsPaired}"
+    - type: "single"
+      single reads:
+        - "${readsUnpaired}"
+    EOF
+
+    binspreader ${gfa} binSpreaderInputMap.tsv out -t ${task.cpus} --dataset reads.yaml --paths ${paths} ${parameters}
 
     csvtk replace -H -t -f 1 -p "^(.+)\$" -r '{kv}' -k ${headerMapping} out/binning.tsv  \
        | csvtk cut -t -f 2,1 > renamed_contig_binning.tsv
@@ -532,6 +542,7 @@ workflow _wBinSpreaderPreProcessing {
         gfa
         paths
         headerMapping
+        reads
         binSpreaderParameters
     main:
         SAMPLE_IDX = 0
@@ -541,6 +552,7 @@ workflow _wBinSpreaderPreProcessing {
          | combine(gfa, by: SAMPLE_IDX)
          | combine(paths, by: SAMPLE_IDX)
          | combine(headerMapping, by: SAMPLE_IDX)
+         | combine(reads, by: SAMPLE_IDX)
          | set { binSpreaderInput }
 
         pBinSpreader(binSpreaderInput, binSpreaderParameters, channel.value("refinement/postBinSpreader")) 
@@ -575,6 +587,7 @@ workflow _wBinSpreaderPostProcessing {
         gfa
         paths
         headerMapping
+        reads
         binSpreaderParameters
     main:
         SAMPLE_IDX = 0
@@ -583,6 +596,7 @@ workflow _wBinSpreaderPostProcessing {
          | combine(gfa, by: SAMPLE_IDX)
          | combine(paths, by: SAMPLE_IDX)
          | combine(headerMapping, by: SAMPLE_IDX)
+         | combine(reads, by: SAMPLE_IDX)
          | set { binSpreaderInput }
 
         pBinSpreader(binSpreaderInput, binSpreaderParameters, channel.value("refinement/postBinSpreader"))
@@ -619,9 +633,10 @@ workflow wRefinementList {
     gfa
     paths
     headerMapping
+    reads
 
     main:
-    _wRefinement(contigs, binContigMapping, bins, notBinnedContigs, gfa, paths, headerMapping)
+    _wRefinement(contigs, binContigMapping, bins, notBinnedContigs, gfa, paths, headerMapping, reads)
 
     emit:
     bins = _wRefinement.out.bins
@@ -644,6 +659,7 @@ workflow _wRefinement {
     gfa
     paths
     headerMapping
+    reads
 
     main:
     SAMPLE_IDX = 0
@@ -661,7 +677,7 @@ workflow _wRefinement {
     allNotBinned | mix(inputNotBinned) | set {allNotBinned}
 
     if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("preBinSpreader")) {
-        _wBinSpreaderPreProcessing(contigs, inputBins, binContigMapping, gfa, paths, headerMapping, channel.value(params.steps.binRefinement.preBinSpreader.additionalParams.binSpreader))
+        _wBinSpreaderPreProcessing(contigs, inputBins, binContigMapping, gfa, paths, headerMapping, reads, channel.value(params.steps.binRefinement.preBinSpreader.additionalParams.binSpreader))
         _wBinSpreaderPreProcessing.out.bins | set { bins }
         _wBinSpreaderPreProcessing.out.notBinned | set { notBinned }
         _wBinSpreaderPreProcessing.out.binContigMapping | set { binContigMapping }
@@ -699,7 +715,7 @@ workflow _wRefinement {
     }
 
     if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("postBinSpreader")) {
-        _wBinSpreaderPostProcessing(contigs, bins, binContigMapping, gfa, paths, headerMapping, channel.value(params.steps.binRefinement.postBinSpreader.additionalParams.binSpreader))
+        _wBinSpreaderPostProcessing(contigs, bins, binContigMapping, gfa, paths, headerMapping, reads, channel.value(params.steps.binRefinement.postBinSpreader.additionalParams.binSpreader))
         _wBinSpreaderPostProcessing.out.bins | set { bins }
         _wBinSpreaderPostProcessing.out.notBinned | set { notBinned }
         _wBinSpreaderPostProcessing.out.binContigMapping | set { binContigMapping }

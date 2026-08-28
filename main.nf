@@ -643,7 +643,8 @@ workflow _wProcessIllumina {
         notBinnedContigs,
         singleSampleGfaInput,
         singleSamplePathsInput,
-        singleSampleHeaderInput) 
+        singleSampleHeaderInput,
+        qcReads) 
         
         wRefinementList.out.bins | set { bins }
         wRefinementList.out.notBinned | set { notBinnedContigs }
