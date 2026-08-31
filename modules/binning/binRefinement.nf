@@ -405,23 +405,57 @@ process pEvaluateBestResult {
     MAX_CONTAMINATION=${params.steps.binRefinement.evaluate.additionalParams.maxContamination}
     MIN_COMPLETENESS=${params.steps.binRefinement.evaluate.additionalParams.minCompleteness}
 
+    # MIMAG-style quality thresholds 
+    HQ_MIN_COMPLETENESS=90
+    HQ_MAX_CONTAMINATION=5
+    MQ_MIN_COMPLETENESS=50
+    MQ_MAX_CONTAMINATION=10
+
     TOTAL_ITEMS=\${#CHECKM[@]}
 
     for (( i=0; i<\${TOTAL_ITEMS}; i++ )); do
         CURRENT_CHECKM=\${CHECKM[\$i]}
         CURRENT_METHOD=\${METHODS[\$i]}
-        SCORE=\$(csvtk filter2 -t -f "\\\$COMPLETENESS > \$MIN_COMPLETENESS && \\\$CONTAMINATION < \$MAX_CONTAMINATION" \${CURRENT_CHECKM}  \\
-        | csvtk mutate2 -t -e "\\\$COMPLETENESS - \${WEIGHT} * \\\$CONTAMINATION" -n score \\
-        | csvtk summary -t -f "score:sum,score:count" | tail -n 1 )
 
-        if [[ "\$SCORE" =~ "score:count" ]]; then
-            SCORE="0\t0"
+        FILTERED_BINS=\$(csvtk filter2 -t -f "\\\$COMPLETENESS > \$MIN_COMPLETENESS && \\\$CONTAMINATION < \$MAX_CONTAMINATION" \${CURRENT_CHECKM})
+        FILTERED_SCORE=\$(echo -e "\$FILTERED_BINS" | csvtk mutate2 -t -e "\\\$COMPLETENESS - \${WEIGHT} * \\\$CONTAMINATION" -n score \\
+        | csvtk summary -t -f "score:sum,score:count" \\
+        | tail -n 1)
+
+        # Handle empty results if no bins pass the quality threshold
+        if [[ "\$FILTERED_SCORE" =~ "score:count" || -z "\$FILTERED_SCORE" ]]; then
+            FILTERED_SCORE="0\t0"
         fi
- 
-        echo -e "\${CURRENT_METHOD}\t\${SCORE}" >> scores_tmp.tsv
+
+        FILTERED_STATS=\$(echo -e "\$FILTERED_BINS" | csvtk summary -t -f "COMPLETENESS:mean,CONTAMINATION:mean,COMPLETENESS:stdev,CONTAMINATION:stdev" \\
+        | tail -n 1)
+
+        HQ_COUNT=\$(csvtk filter2 -t -f "\\\$COMPLETENESS > \$MIN_COMPLETENESS && \\\$CONTAMINATION < \$MAX_CONTAMINATION" \${CURRENT_CHECKM} \\
+        | csvtk filter2 -t -f "\\\$COMPLETENESS >= 90 && \\\$CONTAMINATION <= 5" | csvtk nrow -t)
+
+        MQ_COUNT=\$(csvtk filter2 -t -f "\\\$COMPLETENESS > \$MIN_COMPLETENESS && \\\$CONTAMINATION < \$MAX_CONTAMINATION" \${CURRENT_CHECKM} \\
+        | csvtk filter2 -t -f "\\\$COMPLETENESS >= 50 && \\\$COMPLETENESS < 90 && \\\$CONTAMINATION <= 10" | csvtk nrow -t)
+
+        HQ_COUNT_UNFILTERED=\$(cat \${CURRENT_CHECKM} | csvtk filter2 -t -f "\\\$COMPLETENESS >= 90 && \\\$CONTAMINATION <= 5" | csvtk nrow -t)
+
+        MQ_COUNT_UNFILTERED=\$(cat \${CURRENT_CHECKM} | csvtk filter2 -t -f "\\\$COMPLETENESS >= 50 && \\\$COMPLETENESS < 90 && \\\$CONTAMINATION <= 10" | csvtk nrow -t)
+
+        UNFILTERED_STATS=\$(csvtk summary -t -f "COMPLETENESS:count,COMPLETENESS:mean,CONTAMINATION:mean,COMPLETENESS:stdev,CONTAMINATION:stdev" \${CURRENT_CHECKM} \\
+        | tail -n 1)
+
+        if [[ "\$UNFILTERED_STATS" =~ "COMPLETENESS:count" || -z "\$UNFILTERED_STATS" ]]; then
+            UNFILTERED_STATS="0\t0\t0\t0\t0"
+        fi
+
+        # Combine all metrics into a temporary file
+        echo -e "\${CURRENT_METHOD}\t\${FILTERED_SCORE}\t\${FILTERED_STATS}\t\${HQ_COUNT}\t\${MQ_COUNT}\t\${UNFILTERED_STATS}\t\${HQ_COUNT_UNFILTERED}\t\${MQ_COUNT_UNFILTERED}" >> scores_tmp.tsv
     done
 
-    echo -e  "METHOD\tSCORE\tNUMBER_OF_BINS" > scores.tsv
+    HEADER="METHOD\tSCORE_ON_FILTERED\tNUMBER_OF_BINS_FILTERED\t"
+    HEADER_FILTERED="AVG_COMPLETENESS_FILTERED\tAVG_CONTAMINATION_FILTERED\tSTDDEV_COMPLETENESS_FILTERED\tSTDDEV_CONTAMINATION_FILTERED\tHIGH_QUALITY_BINS_FILTERED\tMEDIUM_QUALITY_BINS_FILTERED\t"
+    HEADER_UNFILTERED="NUMBER_OF_BINS_UNFILTERED\tAVG_COMPLETENESS_UNFILTERED\tAVG_CONTAMINATION_UNFILTERED\tSTDDEV_COMPLETENESS_UNFILTERED\tSTDDEV_CONTAMINATION_UNFILTERED\tHIGH_QUALITY_BINS_UNFILTERED\tMEDIUM_QUALITY_BINS_UNFILTERED"
+
+    echo -e "\$HEADER\$HEADER_FILTERED\$HEADER_UNFILTERED" > scores.tsv
     sort -t\$'\t' -gk 2,2 scores_tmp.tsv >> scores.tsv
 
     SELECTED_BINNER=\$(cat scores.tsv | cut -f 1 | tail -n 1)
