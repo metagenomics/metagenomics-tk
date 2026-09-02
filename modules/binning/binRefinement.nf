@@ -32,7 +32,7 @@ process pMAGScoT {
     when params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("magscot")
 
     input:
-    tuple val(sample), file(contigMaps), file(allHits), path(contigs)
+    tuple val(sample), path(contigMaps, name: "contigMaps/contigMap*.tsv"), path(allHits), path(contigs)
 
     output:
     tuple val("${sample}"), file("${sample}_MagScoT.*"), optional: true, emit: scores
@@ -43,10 +43,9 @@ process pMAGScoT {
 
     shell:
     '''
-    # Once in a blue moon Nextflow leaves the header in the file
     # Failsafe to remove header from contigMaps file if it exists
-    sed -i '/^BIN_ID\tCONTIG\tBINNER$/d' !{contigMaps}
-    Rscript /opt/MAGScoT.R !{params.steps?.binRefinement?.magscot?.additionalParams} -i !{contigMaps} --hmm !{allHits} -o !{sample}_MagScoT
+    sed  '/^BIN_ID\tCONTIG\tBINNER$/d' !{contigMaps} > contigMap.tsv
+    Rscript /opt/MAGScoT.R !{params.steps?.binRefinement?.magscot?.additionalParams} -i contigMap.tsv --hmm !{allHits} -o !{sample}_MagScoT
 
     # Create a new binning file according to the naming convention
     echo "Converting MAGScoT binning according to the naming convention"
@@ -55,7 +54,7 @@ process pMAGScoT {
     # Use head to get the first line, awk to print the first field (the filename),
     # and sed to remove everything up to and including the last dot (.) in the filename, leaving only the file extension.
     # Export the variable to use it in the xargs commands subshell further down
-    export EXT=$(head -n 1 !{contigMaps} | awk '{print $1}' | sed 's/.*\\.//')
+    export EXT=$(head -n 1 contigMap.tsv | awk '{print $1}' | sed 's/.*\\.//')
 
     # Remove the header and pipe the remaining lines to xargs to run the script line by line
     sed 1d !{sample}_MagScoT.refined.contig_to_bin.out | xargs -n 2 sh -c '
@@ -494,15 +493,19 @@ workflow _wMAGScoT {
     take:
     contigs
     binContigMapping
+    multiSampleLabels
 
     main:
         SAMPLE_IDX = 0
         CONTIG_MAPPING_IDX = 1
         pProdigal(contigs)
         pHmmSearch(pProdigal.out.prodigal_faa)
-        binContigMapping
-            | collectFile(keepHeader: false) { item -> ["${item[SAMPLE_IDX]}", item[CONTIG_MAPPING_IDX].text] }
-            | map { f -> [file(f).name, f] }
+
+        binContigMapping 
+            | combine(multiSampleLabels, by: SAMPLE_IDX) 
+            | map { sample, binContigMapping, method, group, isMultiSample, groupSize -> [sample, binContigMapping, method, getNumberOfBinningToolsForRefinement(isMultiSample)] } 
+            | map { sample, binContigMapping, method, numberOfBinningTools -> tuple( groupKey(sample, numberOfBinningTools), binContigMapping) } 
+            | groupTuple(by: SAMPLE_IDX)
             | join(pHmmSearch.out.allhits, by: SAMPLE_IDX)
             | join(contigs, by: SAMPLE_IDX)
             | set { magscot_input }
@@ -525,6 +528,7 @@ workflow _wImproveWithBinSpreader {
         checkmInput
     main:
         SAMPLE_IDX = 0
+        METHOD_IDX = 1
         METHOD_WITHOUT_BINSPREADER_IDX = 0
         checkmInput | pCheckM2Eval
 
@@ -549,7 +553,7 @@ workflow _wImproveWithBinSpreader {
             | set { evaluationInputStagePos }
 
         evaluationInputStagePre | mix(evaluationInputStagePos)
-            | groupTuple(by: [SAMPLE_IDX,1], size: 2)
+            | groupTuple(by: [SAMPLE_IDX, METHOD_IDX], size: 2)
             | combine(contigs, by: SAMPLE_IDX)
             | map { id, label, tsvs, fastas, bools, contigs ->
                 def zip = [tsvs, fastas, bools].transpose().sort { it[0] }
@@ -663,6 +667,7 @@ workflow wRefinementList {
     contigs
     binContigMapping
     bins
+    multiSampleLabels
     notBinnedContigs
     gfa
     paths
@@ -670,12 +675,48 @@ workflow wRefinementList {
     reads
 
     main:
-    _wRefinement(contigs, binContigMapping, bins, notBinnedContigs, gfa, paths, headerMapping, reads)
+    _wRefinement(contigs, binContigMapping, bins, multiSampleLabels, notBinnedContigs, gfa, paths, headerMapping, reads)
 
     emit:
     bins = _wRefinement.out.bins
     notBinned = _wRefinement.out.notBinned
     binContigMapping = _wRefinement.out.binContigMapping
+}
+
+def getNumberOfBinningTools(isMultiSample){
+    def excludes = ['bwa2', 'bowtie', 'contigsCoverage', 'genomeCoverage', 'mode', 'preBinSpreader', 'postBinSpreader', 'evaluate']
+    def binningTools = params.steps.binning.findAll { key, val -> !(key in excludes) }?.size()
+    def binRefiner = params.steps.binRefinement.findAll { key, val -> !(key in excludes) }?.size()
+    def multiSampleBinningTools = 0
+    def preBinSpreader = 1
+    def postBinSpreader = 1
+
+    if(isMultiSample && params.steps.containsKey("multiBinning")){
+       multiSampleBinningTools = params.steps.multiBinning.findAll { key, val -> !(key in excludes) }?.size()
+    }
+
+    if(params.steps.binRefinement.containsKey("preBinSpreader")){
+        preBinSpreader = 2
+    }
+
+    if(params.steps.binRefinement.containsKey("postBinSpreader")){
+        postBinSpreader = 2
+    }
+ 
+    return (binningTools + multiSampleBinningTools) * preBinSpreader + binRefiner * postBinSpreader
+}
+
+
+def getNumberOfBinningToolsForRefinement(isMultiSample){
+    def excludes = ['bwa2', 'bowtie', 'contigsCoverage', 'genomeCoverage']
+    def binningTools = params.steps.binning.findAll { key, val -> !(key in excludes) }?.size()
+    def multiSampleBinningTools = 0
+
+    if(isMultiSample && params.steps.containsKey("multiBinning")){
+       multiSampleBinningTools = params.steps.multiBinning.findAll { key, val -> !(key in excludes) }?.size()
+    }
+
+    return binningTools + multiSampleBinningTools
 }
 
 /*
@@ -689,6 +730,7 @@ workflow _wRefinement {
     contigs
     binContigMapping
     inputBins
+    multiSampleLabels
     inputNotBinned
     gfa
     paths
@@ -723,7 +765,7 @@ workflow _wRefinement {
 
     // Only use MAGScoT bins if the user has selected the refinement step
     if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("magscot")) {
-        _wMAGScoT(contigs, binContigMapping)
+        _wMAGScoT(contigs, binContigMapping, multiSampleLabels)
         _wMAGScoT.out.bins | set { bins }
         _wMAGScoT.out.notBinned | set { notBinned }
         _wMAGScoT.out.binContigMapping | set { binContigMapping }
@@ -734,7 +776,10 @@ workflow _wRefinement {
     } else if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("binette")){
         SAMPLE_IDX = 0
         CONTIG_MAPPING_IDX = 1
-        binContigMapping
+        binContigMapping 
+            | combine(multiSampleLabels, by: SAMPLE_IDX) 
+            | map { sample, binContigMapping, method, group, isMultiSample, groupSize -> [sample, binContigMapping, method, getNumberOfBinningToolsForRefinement(isMultiSample)] } 
+            | map { sample, binContigMapping, method, numberOfBinningTools -> tuple( groupKey(sample, numberOfBinningTools), binContigMapping, method) } 
             | groupTuple(by: SAMPLE_IDX)
             | join(contigs, by: SAMPLE_IDX)
             | pBinette
@@ -764,9 +809,13 @@ workflow _wRefinement {
             | map { sample, bins, method -> [sample, bins, method, Output.getOutput(sample, params.runid, "refinement/evaluate/checkm2/", params.modules.binning, "")]} 
             | pCheckM2Eval
 
-        pCheckM2Eval.out.checkm | groupTuple(by: SAMPLE_IDX) 
+        pCheckM2Eval.out.checkm 
+            | combine(multiSampleLabels, by: SAMPLE_IDX) 
+            | map { sample, checkm, method, group, isMultiSample, groupSize -> [sample, checkm, method, getNumberOfBinningTools(isMultiSample)] } 
+            | map { sample, checkm, method, numberOfBinningTools -> tuple( groupKey(sample, numberOfBinningTools), checkm, method) } 
+            | groupTuple(by: SAMPLE_IDX) 
             | pEvaluateBestResult
-        
+
         pEvaluateBestResult.out.binner | set { bestBinner } 
 
         bestBinner | combine(binsToEvaluate 

@@ -640,6 +640,7 @@ workflow _wProcessIllumina {
         wRefinementList(singleSampleContigsInput, 
         binContigMapping | mix(wShortReadBinningList.out.binContigMapping),
         bins,
+        binningLabels,
         notBinnedContigs,
         singleSampleGfaInput,
         singleSamplePathsInput,
