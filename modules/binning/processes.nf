@@ -370,7 +370,13 @@ process pMetabat {
 
 process pSemiBin2 {
 
-    container "${params.semibin2_image}"
+    container params.steps?.binning?.semibin2?.additionalParams?.gpu.enable ? "${params.semibin2GPU_image}" : "${params.semibin2_image}" 
+
+    containerOptions Utils.getDockerMount(params.steps?.binning?.semibin2?.database, params, apptainer=params.apptainer) \
+        + (params.steps?.binning?.semibin2?.additionalParams?.gpu.enable ? (params.apptainer ? "" : params.steps?.binning?.semibin2?.additionalParams?.gpu.containerOptions.replace('{', '${')) : "") \
+        + (params.apptainer ? "" : Utils.getDockerNetwork())
+
+    clusterOptions params.steps?.binning?.semibin2?.additionalParams?.gpu.enable ? params.steps?.binning?.semibin2?.additionalParams?.gpu.clusterOptions : ""
 
     tag "$sample"
 
@@ -396,6 +402,7 @@ process pSemiBin2 {
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     script:
+    COMP_TYPE=params?.steps?.binning?.semibin2?.additionalParams?.gpu?.enable ? "gpu" : "cpu"
     template 'semibin2.sh'
 }
 
@@ -404,16 +411,22 @@ process pSemiBin2 {
 */ 
 process pSemiBin2Training {
 
-    container "${params.semibin2_image}"
+    container params.steps?.multiBinning?.semibin2?.additionalParams?.gpu.enable ? "${params.semibin2GPU_image}" : "${params.semibin2_image}" 
+
+    containerOptions Utils.getDockerMount(params.steps?.multiBinning?.semibin2?.database, params, apptainer=params.apptainer) \
+        + (params.steps?.multiBinning?.semibin2?.additionalParams?.gpu.enable ? (params.apptainer ? "" : params.steps?.multiBinning?.semibin2?.additionalParams?.gpu.containerOptions.replace('{', '${')) : "") \
+        + (params.apptainer ? "" : Utils.getDockerNetwork())
+
+    clusterOptions params.steps?.multiBinning?.semibin2?.additionalParams?.gpu.enable ? params.steps?.multiBinning?.semibin2?.additionalParams?.gpu.clusterOptions : ""
 
     tag "Group: $group, Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", \
 	saveAs: { filename -> Output.getOutput("${sample}", params.runid, "${outputToolDir}", module, filename) }
 
-    memory { Utils.getMemoryResources(params.resources.large, "${group}", task.attempt, params.resources) }
+    memory { Utils.getMemoryResources(params.resources.small, "${group}", task.attempt, params.resources) }
 
-    cpus { Utils.getCPUsResources(params.resources.large, "${group}", task.attempt, params.resources) }
+    cpus { Utils.getCPUsResources(params.resources.small, "${group}", task.attempt, params.resources) }
 
     input:
     tuple val(module), val(outputToolDir), val(semibinParams)
@@ -425,12 +438,14 @@ process pSemiBin2Training {
     tuple path(".command.sh"), path(".command.out"), path(".command.err"), path(".command.log")
 
     script:
+    COMP_TYPE=params?.steps?.multiBinning?.semibin2?.additionalParams?.gpu?.enable ? "gpu" : "cpu"
     """
     SemiBin2 train_self ${semibinParams} \
         --processes ${task.cpus} \
         --data output/samples/${sample}_contigs/data.csv \
         --data-split output/samples/${sample}_contigs/data_split.csv \
-        --output ${sample}_output
+        --output ${sample}_output \
+        --engine ${COMP_TYPE}
     """
 }
 

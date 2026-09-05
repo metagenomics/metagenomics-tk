@@ -2,7 +2,6 @@ include {
     pGetBinStatistics ;
     pCovermContigsCoverage ;
     pCovermGenomeCoverage ;
-    pSemiBin2 ;
     pMinimap2 ;
     wGetMappingQuality ;
     wMultiBinningSemiBin2 ;

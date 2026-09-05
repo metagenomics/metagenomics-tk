@@ -1,3 +1,40 @@
+if [[ "$COMP_TYPE" == "cuda" ]]; then
+		# Check developer documentation
+		if [ -z "${EXTRACTED_DB}" ]
+		then
+			DATABASE=${params.databases}/checkm
+			LOCK_FILE=\${DATABASE}/lock.txt
+
+			export CHECKM_DATA_PATH=${params.databases}/checkm/out
+			echo '{"dataRoot": "!{params.databases}/checkm/out", "remoteManifestURL": "https://data.ace.uq.edu.au/public/CheckM_databases/", "manifestType": "CheckM", "remoteManifestName": ".dmanifest", "localManifestName": ".dmanifest"}' > /tmp/DATA_CONFIG
+
+			if [ ! -z "${S3_checkm_ACCESS}" ]
+			then
+				export AWS_ACCESS_KEY_ID=${S3_checkm_ACCESS}
+				export AWS_SECRET_ACCESS_KEY=${S3_checkm_SECRET}
+			fi
+
+			# Download checkm database if necessary
+			mkdir -p \${DATABASE}
+			flock \${LOCK_FILE} concurrentDownload.sh --output=\${DATABASE} \
+				--link=${DOWNLOAD_LINK} \
+				--httpsCommand="wgetStatic --no-check-certificate -qO- ${DOWNLOAD_LINK} | tar -xzv " \
+				--s3FileCommand="s5cmd ${S5CMD_PARAMS} cat --concurrency ${task.cpus} ${DOWNLOAD_LINK} | tar -xzv " \
+				--s3DirectoryCommand="s5cmd ${S5CMD_PARAMS} cp --concurrency ${task.cpus} ${DOWNLOAD_LINK} . " \
+				--s5cmdAdditionalParams="${S5CMD_PARAMS}" \
+				--localCommand="tar -xzvf ${DOWNLOAD_LINK}" \
+				--expectedMD5SUM=${MD5SUM}
+		else
+			export CHECKM_DATA_PATH=${EXTRACTED_DB}
+			echo '{"dataRoot": "!{EXTRACTED_DB}", "remoteManifestURL": "https://data.ace.uq.edu.au/public/CheckM_databases/", "manifestType": "CheckM", "remoteManifestName": ".dmanifest", "localManifestName": ".dmanifest"}' > /tmp/DATA_CONFIG
+		fi
+	
+		COMP_SCRIPT=/comebin_env/.pixi/envs/default/bin/run_comebin.sh
+else
+		COMP_SCRIPT=/usr/local/bin/run_comebin.sh
+fi
+
+
 COMEBIN_PARAMS="${params.steps.binning.comebin.additionalParams.comebin}"
 MIN_LENGTH="${params.steps.binning.comebin.additionalParams.length}"
 
@@ -10,13 +47,13 @@ sed -i \
   -e 's/realpath -e --/[ -e "\${OPTARG}" ] \\&\\& realpath/g' \
   -e 's/realpath -m --/mkdir -p "\$(dirname "\${OPTARG}")" \\&\\& realpath/g' \
   -e 's/realpath --/realpath/g' \
-  /usr/local/bin/run_comebin.sh
+  \${COMP_SCRIPT}
 
 run_comebin.sh -a contigs_unzipped.fa \
--d cpu \
+-d ${COMP_TYPE} \
 -o old_bins \
 -p bam \
--t ${task.cpus}
+-t ${task.cpus} \
 \${COMEBIN_PARAMS}
 
 BIN_CONTIG_MAPPING=${sample}_bin_contig_mapping.tsv

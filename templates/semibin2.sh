@@ -1,6 +1,8 @@
 mkdir output
 
-SemiBin2 single_easy_bin --compression none --processes ${task.cpus} -i ${contigs} -b ${bam} -o output ${semibinParams}
+SemiBin2 single_easy_bin --compression none \
+  --engine ${COMP_TYPE} \
+	--processes ${task.cpus} -i ${contigs} -b ${bam} -o output ${semibinParams}
 
 BIN_CONTIG_MAPPING=${sample}_bin_contig_mapping.tsv
 echo -e "BIN_ID\tCONTIG\tBINNER" > \${BIN_CONTIG_MAPPING}

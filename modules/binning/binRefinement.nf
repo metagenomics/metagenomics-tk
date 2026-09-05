@@ -382,7 +382,7 @@ process pEvaluateBestResult {
     containerOptions params.apptainer ? "" : Utils.getDockerNetwork()
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
-        Output.getOutput("${sample}", params.runid, "refinement/evaluate/final", params.modules.binning, filename)
+        Output.getOutput("${sample}", params.runid, "refinement/final", params.modules.binning, filename)
     }
 
     input:
@@ -473,7 +473,7 @@ process pExportBestResult {
     containerOptions params.apptainer ? "" : Utils.getDockerNetwork()
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
-        Output.getOutput("${sample}", params.runid, "refinement/evaluate/final", params.modules.binning, filename)
+        Output.getOutput("${sample}", params.runid, "refinement/final", params.modules.binning, filename)
     }
 
     input:

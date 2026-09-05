@@ -19,7 +19,7 @@ process pConfigUpload {
   tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
   script:
-  configStr = getYaml().dump(config)
+  configStr = getYaml().dump(config).replace('$', '\\$')
   workflowVersion = manifest.version
   workflowName = manifest.name
   timestamp = new java.util.Date().format('YYYYMMdd-HHmmss-SSS')

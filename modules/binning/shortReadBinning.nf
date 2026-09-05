@@ -106,13 +106,19 @@ process pVAMB {
 
 process pCOMEBin {
 
-    container "${params.comebin_image}"
+    container params.steps?.binning?.comebin?.additionalParams?.gpu.enable ? "${params.comebinGPU_image}" : "${params.comebin_image}" 
+
+    containerOptions Utils.getDockerMount(params.steps?.binning?.comebin?.database, params, apptainer=params.apptainer) \
+        + (params.steps?.binning?.comebin?.additionalParams?.gpu.enable ? (params.apptainer ? "" : params.steps?.binning?.comebin?.additionalParams?.gpu.containerOptions.replace('{', '${')) : "") \
+        + (params.apptainer ? "" : Utils.getDockerNetwork())
+
+    clusterOptions params.steps?.binning?.comebin?.additionalParams?.gpu.enable ? params.steps?.binning?.comebin?.additionalParams?.gpu.clusterOptions : ""
 
     tag "Sample: ${sample}"
 
-    memory { Utils.getMemoryResources(params.resources.large, "${sample}", task.attempt, params.resources) }
+    memory { Utils.getMemoryResources(params.resources.small, "${sample}", task.attempt, params.resources) }
 
-    cpus { Utils.getCPUsResources(params.resources.large, "${sample}", task.attempt, params.resources) }
+    cpus { Utils.getCPUsResources(params.resources.small, "${sample}", task.attempt, params.resources) }
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
         Output.getOutput("${sample}", params.runid, "comebin", params.modules.binning, filename)
@@ -130,6 +136,13 @@ process pCOMEBin {
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
     script:
+    S5CMD_PARAMS=params?.steps?.binning?.comebin?.database?.download?.s5cmd?.params ?: "" 
+    DOWNLOAD_LINK=params?.steps?.binning?.comebin?.database?.download?.source ?: ""
+    MD5SUM=params.steps?.binning?.comebin?.database?.download?.md5sum ?: ""
+    EXTRACTED_DB=params.steps?.binning?.comebin?.database?.extractedDBPath ?: ""
+    S3_checkm_ACCESS=params?.steps?.binning?.comebin?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm_ACCESS" : ""
+    S3_checkm_SECRET=params?.steps?.binning?.comebin?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_checkm_SECRET" : ""
+    COMP_TYPE=params?.steps?.binning?.comebin?.additionalParams?.gpu?.enable ? "cuda" : "cpu"
     template('comebin.sh')
 }
 
@@ -325,7 +338,7 @@ workflow _wRunBinningTools {
             [
                 params.modules.binning,
                 "semibin2",
-                params.steps?.binning?.semibin2?.additionalParams,
+                params.steps?.binning?.semibin2?.additionalParams?.semibin2,
             ]
         ),
         binningInput,

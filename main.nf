@@ -585,8 +585,6 @@ workflow _wProcessIllumina {
       if(params.steps.containsKey("binRefinement") 
         && params.steps.binRefinement.mode.includeMultiSample){
 
-        wMultiBinningShortReadList.out.binsStats
-
         singleSampleReadInput 
             | mix(multiSamplesInput.reads)
             | set { singleSampleReadInput }
@@ -653,7 +651,7 @@ workflow _wProcessIllumina {
         wRefinementList.out.binContigMapping
             | map { sample, method, binContigMapping -> [sample, binContigMapping]}
             | join(mappingShort, by: SAMPLE_IDX)
-            | combine(channel.from("refinement/" + params.steps.binRefinement.keySet()[0]))
+            | combine(channel.from("refinement/final"))
             | join(bins | map { sample, method, bins -> [sample, bins]}, by: SAMPLE_IDX)
             | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY))
             | set { binsStatsInputShort }
