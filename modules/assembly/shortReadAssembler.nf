@@ -155,6 +155,7 @@ process pMetaspades {
     tuple val("${sample}"), path("${sample}_contigs.fastg"), env(maxKmer), emit: fastg, optional: true
     tuple val("${sample}"), path("${sample}_contigs.gfa"), env(maxKmer), emit: gfa, optional: true
     tuple val("${sample}"), path("${sample}_contigs.paths"), env(maxKmer), emit: paths, optional: true
+    tuple val("${sample}"), path("${sample}_contigs_renamed.paths"), env(maxKmer), emit: pathsRenamed, optional: true
     tuple val("${sample}"), path("${sample}_contigs_header_mapping.tsv"), emit: headerMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
@@ -212,6 +213,7 @@ workflow wShortReadAssemblyList {
       gfa = _wAssembly.out.gfa
       headerMapping = _wAssembly.out.headerMapping
       paths = _wAssembly.out.paths
+      pathsRenamed = _wAssembly.out.pathsRenamed
 }
 
 
@@ -450,10 +452,14 @@ workflow _wAssembly {
        pMetaspades.out.headerMapping | set { headerMapping }
 
        pMetaspades.out.paths | set { paths }
+
+       pMetaspades.out.pathsRenamed | set { pathsRenamed }
+
        
     emit:
       contigs = contigs
       paths = paths 
+      pathsRenamed = pathsRenamed
       fastg = fastg
       gfa = gfa
       headerMapping = headerMapping

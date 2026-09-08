@@ -17,6 +17,28 @@ transform.sh \${ASSEMBLY_OUTPUT} \${ASSEMBLY_GZIPPED_OUTPUT} \${HEADER_MAPPING_O
 # get basic contig stats 
 paste -d\$'\\t' <(echo -e "SAMPLE\\n${sample}") <(seqkit stat -Ta \${ASSEMBLY_GZIPPED_OUTPUT}) > ${sample}_contigs_stats.tsv
 
+cat > rename_paths.awk << 'AWKEOF'
+NR == FNR {
+    map[\$1] = \$2
+    next
+}
+{
+    name = \$0
+    suffix = ""
+    if (substr(name, length(name), 1) == "'") {
+        suffix = "'"
+        name = substr(name, 1, length(name) - 1)
+    }
+    if (name in map) {
+        print map[name] suffix
+    } else {
+        print \$0
+    }
+}
+AWKEOF
+
+awk -f rename_paths.awk \${HEADER_MAPPING_OUTPUT} \${ASSEMBLY_GRAPH_PATHS_OUTPUT} > ${sample}_contigs_renamed.paths
+
 # Export assembly graph
 mv \${ASSEMBLY_GRAPH_GFA_OUTPUT} ${sample}_contigs.gfa
 mv \${ASSEMBLY_GRAPH_PATHS_OUTPUT} ${sample}_contigs.paths

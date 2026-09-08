@@ -302,11 +302,9 @@ workflow wShortReadBinningList {
     take:
     contigs
     inputReads
-    gfa
-    headerMapping
 
     main:
-    _wBinning(contigs, inputReads, gfa, headerMapping)
+    _wBinning(contigs, inputReads)
 
     emit:
     binsStatsInput = _wBinning.out.binsStatsInput
@@ -485,8 +483,6 @@ workflow _wBinning {
     take:
     contigs
     inputReads
-    gfa
-    headerMapping
 
     main:
     // Map reads against assembly and retrieve mapping quality

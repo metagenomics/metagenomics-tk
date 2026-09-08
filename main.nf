@@ -14,6 +14,7 @@ include { wRefinementList } from './modules/binning/binRefinement.nf'
 include { wMultiBinningShortReadList;
   wMultiBinningLongReadList; wMultiBinningShortReadFile; wMultiBinningLongReadFile; } from './modules/binning/multiBinning'
 include { wLongReadBinningList; wOntBinningFile; } from './modules/binning/ontBinning'
+include { wHydraBinFile; } from './modules/binning/hydraBin'
 include { wEMGBList; _wExportPipeline } from './modules/export/emgb'
 include { wMagAttributesFile; \
 	wMagAttributesList as wMagAttributesList; \
@@ -71,6 +72,10 @@ workflow wShortReadBinning {
 
 workflow wMultiBinningShortRead {
    wMultiBinningShortReadFile()
+}
+
+workflow wHydraBin {
+   wHydraBinFile()
 }
 
 workflow wMultiBinningLongRead {
@@ -490,9 +495,8 @@ workflow _wProcessIllumina {
         qcReads,
         wShortReadAssemblyList.out.contigs,
         binningLabels,
-        wShortReadAssemblyList.out.gfa,
-        wShortReadAssemblyList.out.paths,
-        wShortReadAssemblyList.out.headerMapping)
+        wShortReadAssemblyList.out.gfa | map { sample, gfa, maxKmer -> [sample, gfa]},
+        wShortReadAssemblyList.out.pathsRenamed | map { sample, paths, maxKmer -> [sample, paths]})
 
     emit:
       contigs = wShortReadAssemblyList.out.contigs 

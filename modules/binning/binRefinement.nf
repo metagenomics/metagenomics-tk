@@ -209,7 +209,7 @@ process pBinSpreader {
     }
 
     input:
-    tuple val(sample), path(contigMaps), val(method), path(contigs), path(gfa), val(maxKmer), path(paths), path(headerMapping), path(readsPaired), path(readsUnpaired)
+    tuple val(sample), path(contigMaps), val(method), path(contigs), path(gfa), path(paths), path(readsPaired), path(readsUnpaired)
     val(parameters)
     val(output)
 
@@ -222,9 +222,8 @@ process pBinSpreader {
     script:
     outputMethodList = method + "BinSpreader"
     """
-    csvtk replace -t -f CONTIG -p "^(.+)\$" -r '{kv}' -k <(awk '{print \$2 "\t" \$1}' ${headerMapping}) ${contigMaps} \
-        | csvtk cut -t -f CONTIG,BIN_ID \
-        | tail -n +2 > binSpreaderInputMap.tsv
+
+    csvtk cut -t -f CONTIG,BIN_ID ${contigMaps} | tail -n +2 > binSpreaderInputMap.tsv
 
     cat > reads.yaml << 'EOF'
     - orientation: "fr"
@@ -238,11 +237,9 @@ process pBinSpreader {
 
     binspreader ${gfa} binSpreaderInputMap.tsv out -t ${task.cpus} --dataset reads.yaml --paths ${paths} ${parameters}
 
-    csvtk replace -H -t -f 1 -p "^(.+)\$" -r '{kv}' -k ${headerMapping} out/binning.tsv  \
-       | csvtk cut -t -f 2,1 > renamed_contig_binning.tsv
+    csvtk cut -H -t -f 2,1 out/binning.tsv > renamed_contig_binning.tsv
 
     OUTDIR="bins"
-
     mkdir -p "\$OUTDIR"
 
     cut -f1 renamed_contig_binning.tsv | sort -u | while read -r bin; do
@@ -252,20 +249,21 @@ process pBinSpreader {
 
         # fetch those sequences from the contigs file
         seqkit grep -f "\$OUTDIR/\${bin}.ids.txt" ${contigs} > "\$OUTDIR/\${bin}"
-
-         rm "\$OUTDIR/\${bin}.ids.txt"
+        rm "\$OUTDIR/\${bin}.ids.txt"
     done
 
     mkdir -p mapping
 
     BIN_CONTIG_MAPPING=mapping/${sample}_bin_contig_mapping.tsv
-    sed '1i BIN_ID\tCONTIG\tBINNER' renamed_contig_binning.tsv  \
+
+    sed '1i BIN_ID\tCONTIG\tBINNER' renamed_contig_binning.tsv \
      | sed '2,\$s/\$/\tBINSPREADER/' > \${BIN_CONTIG_MAPPING}
 
     cut -f1 renamed_contig_binning.tsv | sort -u > "\$OUTDIR/binned_ids.txt"
 
     seqkit grep -v -f "\$OUTDIR/binned_ids.txt" ${contigs} > "\$OUTDIR/${sample}_notBinned.fa"
-    rm "\$OUTDIR/binned_ids.txt"  
+
+    rm "\$OUTDIR/binned_ids.txt"
     """
 }
 
@@ -579,7 +577,6 @@ workflow _wBinSpreaderPreProcessing {
         binContigMapping
         gfa
         paths
-        headerMapping
         reads
         binSpreaderParameters
     main:
@@ -589,7 +586,6 @@ workflow _wBinSpreaderPreProcessing {
          | combine(contigs, by: SAMPLE_IDX)
          | combine(gfa, by: SAMPLE_IDX)
          | combine(paths, by: SAMPLE_IDX)
-         | combine(headerMapping, by: SAMPLE_IDX)
          | combine(reads, by: SAMPLE_IDX)
          | set { binSpreaderInput }
 
@@ -624,7 +620,6 @@ workflow _wBinSpreaderPostProcessing {
         binContigMapping
         gfa
         paths
-        headerMapping
         reads
         binSpreaderParameters
     main:
@@ -633,7 +628,6 @@ workflow _wBinSpreaderPostProcessing {
          | combine(contigs, by: SAMPLE_IDX)
          | combine(gfa, by: SAMPLE_IDX)
          | combine(paths, by: SAMPLE_IDX)
-         | combine(headerMapping, by: SAMPLE_IDX)
          | combine(reads, by: SAMPLE_IDX)
          | set { binSpreaderInput }
 
@@ -671,11 +665,10 @@ workflow wRefinementList {
     notBinnedContigs
     gfa
     paths
-    headerMapping
     reads
 
     main:
-    _wRefinement(contigs, binContigMapping, bins, multiSampleLabels, notBinnedContigs, gfa, paths, headerMapping, reads)
+    _wRefinement(contigs, binContigMapping, bins, multiSampleLabels, notBinnedContigs, gfa, paths, reads)
 
     emit:
     bins = _wRefinement.out.bins
@@ -734,7 +727,6 @@ workflow _wRefinement {
     inputNotBinned
     gfa
     paths
-    headerMapping
     reads
 
     main:
@@ -753,7 +745,7 @@ workflow _wRefinement {
     allNotBinned | mix(inputNotBinned) | set {allNotBinned}
 
     if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("preBinSpreader")) {
-        _wBinSpreaderPreProcessing(contigs, inputBins, binContigMapping, gfa, paths, headerMapping, reads, channel.value(params.steps.binRefinement.preBinSpreader.additionalParams.binSpreader))
+        _wBinSpreaderPreProcessing(contigs, inputBins, binContigMapping, gfa, paths, reads, channel.value(params.steps.binRefinement.preBinSpreader.additionalParams.binSpreader))
         _wBinSpreaderPreProcessing.out.bins | set { bins }
         _wBinSpreaderPreProcessing.out.notBinned | set { notBinned }
         _wBinSpreaderPreProcessing.out.binContigMapping | set { binContigMapping }
@@ -794,7 +786,7 @@ workflow _wRefinement {
     }
 
     if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("postBinSpreader")) {
-        _wBinSpreaderPostProcessing(contigs, bins, binContigMapping, gfa, paths, headerMapping, reads, channel.value(params.steps.binRefinement.postBinSpreader.additionalParams.binSpreader))
+        _wBinSpreaderPostProcessing(contigs, bins, binContigMapping, gfa, paths, reads, channel.value(params.steps.binRefinement.postBinSpreader.additionalParams.binSpreader))
         _wBinSpreaderPostProcessing.out.bins | set { bins }
         _wBinSpreaderPostProcessing.out.notBinned | set { notBinned }
         _wBinSpreaderPostProcessing.out.binContigMapping | set { binContigMapping }
