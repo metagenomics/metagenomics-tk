@@ -9,6 +9,7 @@ include { wOntQualityControlFile; wOntQualityControlList} from './modules/qualit
 include { wShortReadAssemblyFile; wShortReadAssemblyList; wTestMemSelection } from './modules/assembly/shortReadAssembler'
 include { wOntAssemblyFile; wOntAssemblyList } from './modules/assembly/ontAssembler'
 include { wShortReadBinningList; wShortReadBinningFile; _wPostProcessBins; } from './modules/binning/shortReadBinning'
+include { _wProcessShortReadBinning; } from './modules/binning/hydraBin'
 include { wRefinementList } from './modules/binning/binRefinement.nf'
 include { wMultiBinningShortReadList;
   wMultiBinningLongReadList; wMultiBinningShortReadFile; wMultiBinningLongReadFile; } from './modules/binning/multiBinning'
@@ -485,221 +486,23 @@ workflow _wProcessIllumina {
       wShortReadAssemblyList(qcReads, wShortReadQualityControlList.out.nonpareil, 
       wShortReadQualityControlList.out.kmerFrequencies)
 
-      // Figure out whether the sample belongs to a multi binning group
-      IS_MULTI_SAMPLE_IDX = 4
-      READS_FILE_IDX = 1
-      READS_UNPAIRED_FILE_IDX = 2
-      qcReads | combine(binningLabels, by:SAMPLE_IDX ) | branch { sample ->
-        singleSample: !sample[IS_MULTI_SAMPLE_IDX]
-        multiSample: sample[IS_MULTI_SAMPLE_IDX]
-      } | set {sampleTypeReads}
-
-      // Make sure that the number of contigs per group matches the number of read samples per group because certain samples may fail.
-      sampleTypeReads.multiSample 
-        | map { sample -> [sample[SAMPLE_IDX], sample[READS_FILE_IDX], sample[READS_UNPAIRED_FILE_IDX]] } 
-        | combine(wShortReadAssemblyList.out.contigs, by: SAMPLE_IDX) | set { qualityCheckedData }
-      
-      // Check the number of samples per group
-      // If there is more than one sample then go on to multibinning
-      // otherwise continue with single binning
-      qualityCheckedData | join(binningLabels | map { sample -> [sample[SAMPLE_IDX], sample[GROUP_2_IDX], sample[GROUP_SIZE_IDX]]}, by: SAMPLE_IDX) 
-        | map { sample, readsPair, readsSingle, contigs, group, groupSize -> tuple( groupKey(group, groupSize), [sample, readsPair, readsSingle, contigs, group, groupSize]) }
-        | groupTuple(remainder: true)
-        | branch { group, samples ->
-            singleSample: samples.size() == 1
-            multiSample: samples.size() > 1
-            failedSample: samples.size() == 0 
-        } | set { checkedSamples }
-
-        checkedSamples.multiSample | map{ group, samples -> samples} | flatMap | set { multiSamples}
-
-        checkedSamples.singleSample | map{ group, samples -> samples} | flatMap | set { singleSample}
-
-        multiSamples | multiMap { sample, readsPair, readsSingle, contigs, group, groupSize  ->
-            contigs: [sample, contigs]
-            reads: [sample, readsPair, readsSingle]
-            binningLabels: [sample, group, groupSize]
-        } | set { multiSamplesInput } 
-
-      wMultiBinningShortReadList(multiSamplesInput.contigs, multiSamplesInput.reads, multiSamplesInput.binningLabels)
-
-      singleSample 
-      | combine(wShortReadAssemblyList.out.gfa, by: SAMPLE_IDX)
-      | combine(wShortReadAssemblyList.out.paths, by: SAMPLE_IDX)
-      | combine(wShortReadAssemblyList.out.headerMapping, by: SAMPLE_IDX)
-      | multiMap { sample, readsPair, readsSingle, contigs, group, groupSize, gfa, maxKmerGfa, paths, maxKmerPaths, headerMapping ->
-            contigs: [sample, contigs]
-            gfa: [sample, gfa, maxKmerGfa]
-            paths: [sample, paths]
-            headerMapping: [sample, headerMapping]
-            reads: [sample, readsPair, readsSingle]
-      } | set { singleSampleInput } 
-
-      wShortReadAssemblyList.out.contigs 
-      	| combine(binningLabels 
-	      | filter({sample, group, isMultiSample, groupCount -> !isMultiSample }), by: SAMPLE_IDX)  
-	      | map { sample, contigs, group, isMultiSample, groupCount -> [sample, contigs] }  
-      	| set { singleSampleContigs }
-
-      wShortReadAssemblyList.out.headerMapping
-      	| combine(binningLabels 
-	      | filter({sample, group, isMultiSample, groupCount -> !isMultiSample }), by: SAMPLE_IDX)  
-	      | map { sample, headerMapping, group, isMultiSample, groupCount -> [sample, headerMapping] }  
-      	| set { singleSampleHeaderMapping }
-
-      wShortReadAssemblyList.out.fastg 
-      	| combine(binningLabels 
-	      | filter({sample, group, isMultiSample, groupCount -> !isMultiSample }), by: SAMPLE_IDX)  
-	      | map { sample, fastg, maxKmer, group, isMultiSample, groupCount -> [sample, fastg, maxKmer] }  
-      	| set { singleSampleFastg }
-
-      wShortReadAssemblyList.out.gfa
-      	| combine(binningLabels 
-	      | filter({sample, group, isMultiSample, groupCount -> !isMultiSample }), by: SAMPLE_IDX)  
-	      | map { sample, gfa, maxKmer, group, isMultiSample, groupCount -> [sample, gfa, maxKmer] }  
-      	| set { singleSampleGfa }
-
-      wShortReadAssemblyList.out.paths
-      	| combine(binningLabels 
-	      | filter({sample, group, isMultiSample, groupCount -> !isMultiSample }), by: SAMPLE_IDX)  
-	      | map { sample, paths, maxKmer, group, isMultiSample, groupCount -> [sample, paths] }  
-      	| set { singleSamplePaths }
-
-      sampleTypeReads.singleSample
-            | map { sample -> [sample[SAMPLE_IDX], sample[READS_FILE_IDX], sample[READS_UNPAIRED_FILE_IDX]] } | mix(singleSampleInput.reads)
-            | set { singleSampleReadInput }
-
-      singleSampleGfa | mix(singleSampleInput.gfa) | set {singleSampleGfaInput}  
-
-      singleSamplePaths | mix(singleSampleInput.paths) | set {singleSamplePathsInput}
-
-      singleSampleHeaderMapping | mix(singleSampleInput.headerMapping) | set {singleSampleHeaderInput}
-
-      singleSampleContigs 
-            | mix(singleSampleInput.contigs)
-            | set { singleSampleContigsInput }
-
-      binContigMapping = channel.empty()
-
-
-      if(params.steps.containsKey("binRefinement") 
-        && params.steps.binRefinement.mode.includeMultiSample){
-
-        singleSampleReadInput 
-            | mix(multiSamplesInput.reads)
-            | set { singleSampleReadInput }
-
-        wShortReadAssemblyList.out.contigs 
-		| set { singleSampleContigsInput }
-
-        multiSamples
-          | combine(wShortReadAssemblyList.out.gfa, by: SAMPLE_IDX)
-          | combine(wShortReadAssemblyList.out.paths, by: SAMPLE_IDX)
-          | combine(wShortReadAssemblyList.out.headerMapping, by: SAMPLE_IDX)
-          | multiMap { sample, readsPair, readsSingle, contigs, group, groupSize, gfa, maxKmerGfa, paths, maxKmerPaths, headerMapping ->
-                contigs: [sample, contigs]
-                gfa: [sample, gfa, maxKmerGfa]
-                paths: [sample, paths]
-                headerMapping: [sample, headerMapping]
-                reads: [sample, readsPair, readsSingle]
-        } | set { singleSampleShorReadInput } 
-
-        singleSampleGfaInput | mix(singleSampleShorReadInput.gfa) 
-            | set { singleSampleGfaInput }
-
-        singleSamplePathsInput | mix(singleSampleShorReadInput.paths)
-            | set { singleSamplePathsInput }
-
-        singleSampleHeaderInput | mix(singleSampleShorReadInput.headerMapping)
-            | set { singleSampleHeaderInput }
-
-        binContigMapping | mix(wMultiBinningShortReadList.out.binContigMapping)
-            | set { binContigMapping } 
-      } 
-
-      wShortReadBinningList(singleSampleContigsInput,  
-        singleSampleReadInput,
-        singleSampleGfaInput, 
-        singleSamplePathsInput,
-        singleSampleHeaderInput)
-
-      wShortReadBinningList.out.binsStatsInput | set { binsStatsInputShort }
-
-      wShortReadBinningList.out.mapping | set { mappingShort }
-
-      wShortReadBinningList.out.bins 
-	| mix(wMultiBinningShortReadList.out.bins) | set { bins }
-
-      wShortReadBinningList.out.notBinnedContigs  | set {notBinnedContigs}
-
-      binsStats = channel.empty()
-
-      if (params.steps.containsKey("binRefinement")) {
-        wRefinementList(singleSampleContigsInput, 
-        binContigMapping | mix(wShortReadBinningList.out.binContigMapping),
-        bins,
+      _wProcessShortReadBinning(
+        qcReads,
+        wShortReadAssemblyList.out.contigs,
         binningLabels,
-        notBinnedContigs,
-        singleSampleGfaInput,
-        singleSamplePathsInput,
-        singleSampleHeaderInput,
-        qcReads) 
-        
-        wRefinementList.out.bins | set { bins }
-        wRefinementList.out.notBinned | set { notBinnedContigs }
-
-        wRefinementList.out.binContigMapping
-            | map { sample, method, binContigMapping -> [sample, binContigMapping]}
-            | join(mappingShort, by: SAMPLE_IDX)
-            | combine(channel.from("refinement/final"))
-            | join(bins | map { sample, method, bins -> [sample, bins]}, by: SAMPLE_IDX)
-            | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY))
-            | set { binsStatsInputShort }
-      }  
-
-      if(!params.steps.containsKey("binRefinement") || 
-        !params.steps.binRefinement.mode.includeMultiSample){
-                
-              binsStats | mix(wMultiBinningShortReadList.out.binsStats) 
-                | set {binsStats}
-
-              bins | mix(wMultiBinningShortReadList.out.bins)
-                | set { bins }
-
-              notBinnedContigs | mix(wMultiBinningShortReadList.out.notBinnedContigs)
-                | set { notBinnedContigs }
-      }
-
-      _wPostProcessBins(mappingShort, binsStatsInputShort, 
-      bins | map { sample, method, bins -> [sample, bins]})
-      _wPostProcessBins.out.binMap | mix(binsStats) | set { binsStats }
-
-      bins | map { sample, method, bins -> [sample, bins]} 
-        | set { bins }
-
-      notBinnedContigs | map { sample, method, notBinned -> [sample, notBinned]} 
-        | set { notBinnedContigs }
-
-      mappingShort | mix(wMultiBinningShortReadList.out.mapping)
-        | set { mapping }
-
-      wShortReadBinningList.out.unmappedReads
-        | mix(wMultiBinningShortReadList.out.unmappedReads)
-        | set { unmappedReads }
-
-      wShortReadBinningList.out.contigCoverage
-        | mix(wMultiBinningShortReadList.out.contigCoverage)
-        | set { contigCoverage }
+        wShortReadAssemblyList.out.gfa,
+        wShortReadAssemblyList.out.paths,
+        wShortReadAssemblyList.out.headerMapping)
 
     emit:
       contigs = wShortReadAssemblyList.out.contigs 
-      notBinnedContigs = notBinnedContigs 
-      bins = bins 
-      binsStats = binsStats
+      notBinnedContigs = _wProcessShortReadBinning.out.notBinnedContigs 
+      bins = _wProcessShortReadBinning.out.bins 
+      binsStats = _wProcessShortReadBinning.out.binsStats
       fastg = wShortReadAssemblyList.out.fastg
-      mapping = mapping
-      unmappedReads = unmappedReads
-      contigCoverage = contigCoverage
+      mapping = _wProcessShortReadBinning.out.mapping
+      unmappedReads = _wProcessShortReadBinning.out.unmappedReads
+      contigCoverage = _wProcessShortReadBinning.out.contigCoverage
       readsPair = wShortReadQualityControlList.out.readsPair
       readsSingle = wShortReadQualityControlList.out.readsSingle
       readsPairSingle = qcReads

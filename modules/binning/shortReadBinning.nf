@@ -287,7 +287,7 @@ workflow wShortReadBinningFile {
 
     wSaveSettingsList(reads | map { it -> it[SAMPLE_IDX] })
 
-    _wBinning(contigs, reads, channel.empty(), channel.empty(), channel.empty())
+    _wBinning(contigs, reads, channel.empty(), channel.empty())
 }
 
 
@@ -303,11 +303,10 @@ workflow wShortReadBinningList {
     contigs
     inputReads
     gfa
-    paths
     headerMapping
 
     main:
-    _wBinning(contigs, inputReads, gfa, paths, headerMapping)
+    _wBinning(contigs, inputReads, gfa, headerMapping)
 
     emit:
     binsStatsInput = _wBinning.out.binsStatsInput
@@ -487,7 +486,6 @@ workflow _wBinning {
     contigs
     inputReads
     gfa
-    paths
     headerMapping
 
     main:
