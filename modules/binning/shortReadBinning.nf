@@ -106,13 +106,13 @@ process pVAMB {
 
 process pCOMEBin {
 
-    container params.steps?.binning?.comebin?.additionalParams?.gpu.enable ? "${params.comebinGPU_image}" : "${params.comebin_image}" 
+    container params.steps?.binning?.comebin?.additionalParams?.gpu?.enable ? "${params.comebinGPU_image}" : "${params.comebin_image}" 
 
     containerOptions Utils.getDockerMount(params.steps?.binning?.comebin?.database, params, apptainer=params.apptainer) \
-        + (params.steps?.binning?.comebin?.additionalParams?.gpu.enable ? (params.apptainer ? "" : params.steps?.binning?.comebin?.additionalParams?.gpu.containerOptions.replace('{', '${')) : "") \
+        + (params.steps?.binning?.comebin?.additionalParams?.gpu?.enable ? (params.apptainer ? "" : params.steps?.binning?.comebin?.additionalParams?.gpu?.containerOptions.replace('{', '${')) : "") \
         + (params.apptainer ? "" : Utils.getDockerNetwork())
 
-    clusterOptions params.steps?.binning?.comebin?.additionalParams?.gpu.enable ? params.steps?.binning?.comebin?.additionalParams?.gpu.clusterOptions : ""
+    clusterOptions params.steps?.binning?.comebin?.additionalParams?.gpu?.enable ? params.steps?.binning?.comebin?.additionalParams?.gpu?.clusterOptions : ""
 
     tag "Sample: ${sample}"
 

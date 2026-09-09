@@ -370,13 +370,13 @@ process pMetabat {
 
 process pSemiBin2 {
 
-    container params.steps?.binning?.semibin2?.additionalParams?.gpu.enable ? "${params.semibin2GPU_image}" : "${params.semibin2_image}" 
+    container params.steps?.binning?.semibin2?.additionalParams?.gpu?.enable ? "${params.semibin2GPU_image}" : "${params.semibin2_image}" 
 
     containerOptions Utils.getDockerMount(params.steps?.binning?.semibin2?.database, params, apptainer=params.apptainer) \
-        + (params.steps?.binning?.semibin2?.additionalParams?.gpu.enable ? (params.apptainer ? "" : params.steps?.binning?.semibin2?.additionalParams?.gpu.containerOptions.replace('{', '${')) : "") \
+        + (params.steps?.binning?.semibin2?.additionalParams?.gpu?.enable ? (params.apptainer ? "" : params.steps?.binning?.semibin2?.additionalParams?.gpu.containerOptions.replace('{', '${')) : "") \
         + (params.apptainer ? "" : Utils.getDockerNetwork())
 
-    clusterOptions params.steps?.binning?.semibin2?.additionalParams?.gpu.enable ? params.steps?.binning?.semibin2?.additionalParams?.gpu.clusterOptions : ""
+    clusterOptions params.steps?.binning?.semibin2?.additionalParams?.gpu?.enable ? params.steps?.binning?.semibin2?.additionalParams?.gpu?.clusterOptions : ""
 
     tag "$sample"
 
@@ -411,13 +411,13 @@ process pSemiBin2 {
 */ 
 process pSemiBin2Training {
 
-    container params.steps?.multiBinning?.semibin2?.additionalParams?.gpu.enable ? "${params.semibin2GPU_image}" : "${params.semibin2_image}" 
+    container params.steps?.multiBinning?.semibin2?.additionalParams?.gpu?.enable ? "${params.semibin2GPU_image}" : "${params.semibin2_image}" 
 
     containerOptions Utils.getDockerMount(params.steps?.multiBinning?.semibin2?.database, params, apptainer=params.apptainer) \
-        + (params.steps?.multiBinning?.semibin2?.additionalParams?.gpu.enable ? (params.apptainer ? "" : params.steps?.multiBinning?.semibin2?.additionalParams?.gpu.containerOptions.replace('{', '${')) : "") \
+        + (params.steps?.multiBinning?.semibin2?.additionalParams?.gpu?.enable ? (params.apptainer ? "" : params.steps?.multiBinning?.semibin2?.additionalParams?.gpu.containerOptions.replace('{', '${')) : "") \
         + (params.apptainer ? "" : Utils.getDockerNetwork())
 
-    clusterOptions params.steps?.multiBinning?.semibin2?.additionalParams?.gpu.enable ? params.steps?.multiBinning?.semibin2?.additionalParams?.gpu.clusterOptions : ""
+    clusterOptions params.steps?.multiBinning?.semibin2?.additionalParams?.gpu?.enable ? params.steps?.multiBinning?.semibin2?.additionalParams?.gpu.clusterOptions : ""
 
     tag "Group: $group, Sample: $sample"
 
