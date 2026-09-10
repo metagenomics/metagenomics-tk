@@ -187,9 +187,14 @@ workflow _wSplitReadsSheet {
          empty = file(params.tempdir + "/empty") 
 
          // For interleaved format the 2nd fastq file is set to an empty file.
-         fastqFormat.interleaved 
-            | map { sample -> [SAMPLE:sample.SAMPLE, READS1:sample.READS, READS2:empty.toString(), MULTI_BINNING_GROUP: sample.containsKey("MULTI_BINNING_GROUP") ? sample.MULTI_BINNING_GROUP : null] }
-            | mix(fastqFormat.split) | unique | set { fastqs } 
+         fastqFormat.interleaved | map { 
+		sample -> 
+ 		def result = [SAMPLE: sample.SAMPLE, READS1: sample.READS, READS2: empty.toString()]
+       		if (sample.containsKey("MULTI_BINNING_GROUP")) {
+            		result.MULTI_BINNING_GROUP = sample.MULTI_BINNING_GROUP
+        	}
+        	return result 
+           } | mix(fastqFormat.split) | unique | set { fastqs } 
        emit:
          fastqs
 }
