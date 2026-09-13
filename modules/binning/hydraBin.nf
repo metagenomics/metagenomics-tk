@@ -13,7 +13,7 @@ workflow wHydraBinFile {
     channel.from(file(params.steps.hydraBin.input.samples))
         | splitCsv(sep: '\t', header: true)
         | multiMap { row ->
-            reads: [row.SAMPLE, row.READS, file('empty')]
+            reads: [row.SAMPLE, row.READS, row.containsKey("UNPAIRED") ? row.UNPAIRED : file('empty')]
             contigs: [row.SAMPLE, row.CONTIGS]
             binningLabels: [row.SAMPLE, row.MULTI_BINNING_GROUP]
             gfa: [row.SAMPLE, row.GFA]
