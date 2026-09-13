@@ -247,8 +247,12 @@ process pBinSpreader {
         # extract IDs belonging to this bin
         awk -F'\t' -v b="\$bin" '\$1==b {print \$2}' renamed_contig_binning.tsv > "\$OUTDIR/\${bin}.ids.txt"
 
+        ID=\$(echo \${bin} | rev | cut -d '.' -f 2 | rev)
+
         # fetch those sequences from the contigs file
-        seqkit grep -f "\$OUTDIR/\${bin}.ids.txt" ${contigs} > "\$OUTDIR/\${bin}"
+        seqkit grep -f "\$OUTDIR/\${bin}.ids.txt" ${contigs} \
+            | seqkit replace  -p '(.*)' -r "\\\${1} MAG=\${ID}" > "\$OUTDIR/\${bin}"
+
         rm "\$OUTDIR/\${bin}.ids.txt"
     done
 
@@ -261,7 +265,8 @@ process pBinSpreader {
 
     cut -f1 renamed_contig_binning.tsv | sort -u > "\$OUTDIR/binned_ids.txt"
 
-    seqkit grep -v -f "\$OUTDIR/binned_ids.txt" ${contigs} > "\$OUTDIR/${sample}_notBinned.fa"
+    seqkit grep -v -f "\$OUTDIR/binned_ids.txt" ${contigs} \
+        | seqkit replace  -p '(.*)' -r "\\\${1} MAG=NotBinned" > "\$OUTDIR/${sample}_notBinned.fa"
 
     rm "\$OUTDIR/binned_ids.txt"
     """
