@@ -574,55 +574,6 @@
       "default": "",
       "fa_icon": "fas fa-circle-notch",
       "properties": {
-        "steps.plasmid.SCAPP.additionalParams.bwa2": {
-          "type": "string",
-          "description": "Command line parameters for SCAPP bwa2.",
-          "displayName": "SCAPP bwa2 additional parameters",
-          "hidden": true,
-          "default": " "
-        },
-        "steps.plasmid.SCAPP.additionalParams.SCAPP": {
-          "type": "string",
-          "description": "Command line parameters for SCAPP.",
-          "displayName": "SCAPP additional parameters",
-          "hidden": true,
-          "default": " "
-        },
-        "steps.plasmid.SCAPP.additionalParams.covermONT": {
-          "type": "string",
-          "description": "Command line parameters for SCAPP coverm.",
-          "displayName": "SCAPP covermONT additional parameters",
-          "hidden": true,
-          "default": " --min-covered-fraction 0 --min-read-aligned-percent 100 "
-        },
-        "steps.plasmid.SCAPP.additionalParams.coverm": {
-          "type": "string",
-          "description": "Command line parameters for SCAPP coverm.",
-          "displayName": "SCAPP coverm additional parameters",
-          "hidden": true,
-          "default": " --min-covered-fraction 0 --min-read-percent-identity 100 --min-read-aligned-percent 100 "
-        },
-        "steps.plasmid.SCAPP.additionalParams.minimap": {
-          "type": "string",
-          "description": "Command line parameters for SCAPP minimap.",
-          "displayName": "SCAPP minimap additional parameters",
-          "hidden": true,
-          "default": " "
-        },
-        "steps.plasmid.SCAPP.additionalParams.samtoolsViewBwa2": {
-          "type": "string",
-          "description": "Command line parameters for SCAPP samtoolsViewBwa2.",
-          "displayName": "SCAPP samtoolsViewBwa2 additional parameters",
-          "hidden": true,
-          "default": " -F 3584 "
-        },
-        "steps.plasmid.SCAPP.additionalParams.samtoolsViewMinimap": {
-          "type": "string",
-          "description": "Command line parameters for SCAPP samtoolsViewMinimap.",
-          "displayName": "SCAPP samtoolsViewMinimap additional parameters",
-          "hidden": true,
-          "default": " "
-        },
         "steps.plasmid.ViralVerifyPlasmid.filter": {
           "type": "boolean",
           "description": "ViralVerifyPlasmid filter",
@@ -715,6 +666,86 @@
           "default": " -v 0.1 -d 0.1 "
         }
       }
+    },
+    "dereplication": {
+      "title": "Dereplication",
+      "type": "object",
+      "description": "",
+      "default": "",
+      "fa_icon": "fas fa-code-branch",
+      "properties": {
+        "steps.dereplication.bottomUpClustering.minimumCompleteness": {
+          "type": "integer",
+          "description": "Minimum completeness for MAGs in dereplication",
+          "displayName": "Minimum completeness",
+          "hidden": true,
+          "default": 50
+        },
+        "steps.dereplication.bottomUpClustering.maximumContamination": {
+          "type": "integer",
+          "description": "Maximum contamination for MAGs in dereplication",
+          "displayName": "Maximum contamination",
+          "hidden": true,
+          "default": 5
+        },
+        "steps.dereplication.bottomUpClustering.ANIBuffer": {
+          "type": "integer",
+          "description": "Buffer size for ANI calculation",
+          "displayName": "ANI buffer",
+          "hidden": true,
+          "default": 20
+        },
+        "steps.dereplication.bottomUpClustering.mashBuffer": {
+          "type": "integer",
+          "description": "Buffer size for Mash sketch",
+          "displayName": "Mash buffer",
+          "hidden": true,
+          "default": 2000
+        },
+        "steps.dereplication.bottomUpClustering.method": {
+          "type": "string",
+          "description": "Method for dereplication",
+          "displayName": "Dereplication method",
+          "enum": ["ANI", "MASH"],
+          "hidden": true,
+          "default": "ANI"
+        },
+        "steps.dereplication.bottomUpClustering.additionalParams.mash_sketch": {
+          "type": "string",
+          "description": "Additional parameters for Mash sketch",
+          "displayName": "Mash sketch additional parameters",
+          "hidden": true,
+          "default": " "
+        },
+        "steps.dereplication.bottomUpClustering.additionalParams.mash_dist": {
+          "type": "string",
+          "description": "Additional parameters for Mash dist",
+          "displayName": "Mash dist additional parameters",
+          "hidden": true,
+          "default": " "
+        },
+        "steps.dereplication.bottomUpClustering.additionalParams.cluster": {
+          "type": "string",
+          "description": "Additional parameters for clustering",
+          "displayName": "Cluster additional parameters",
+          "hidden": true,
+          "default": " -c 0.05 "
+        },
+        "steps.dereplication.bottomUpClustering.additionalParams.pyani": {
+          "type": "string",
+          "description": "Additional parameters for pyani",
+          "displayName": "Pyani additional parameters",
+          "hidden": true,
+          "default": " -m ANIb "
+        },
+        "steps.dereplication.bottomUpClustering.representativeAniCutoff": {
+          "type": "number",
+          "description": "ANI cutoff for representative MAG selection",
+          "displayName": "Representative ANI cutoff",
+          "hidden": true,
+          "default": 0.95
+        }
+      }
     }
   },
   "allOf": [
@@ -735,6 +766,9 @@
     },
     {
       "$ref": "#/definitions/plasmid"
+    },
+    {
+      "$ref": "#/definitions/dereplication"
     }
   ]
 }
