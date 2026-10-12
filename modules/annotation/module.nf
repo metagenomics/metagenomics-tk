@@ -260,6 +260,8 @@ process pProdigal {
 
       publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "prodigal", filename) }
 
+      containerOptions params.apptainer ? "" : " -u \$(id -u):\$(id -g) "
+
       when params.steps.containsKey("binRefinement") && params?.steps.binRefinement.containsKey("magscot")
 
    input:

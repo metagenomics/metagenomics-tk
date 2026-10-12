@@ -165,6 +165,8 @@ process pGetMappingQuality {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "readMappingQuality", module, filename) }
 
+    containerOptions params.apptainer ? "" : " -u \$(id -u):\$(id -g) "
+
     label 'tiny'
 
     input:
@@ -374,7 +376,8 @@ process pSemiBin2 {
 
     containerOptions Utils.getDockerMount(params.steps?.binning?.semibin2?.database, params, apptainer=params.apptainer) \
         + (params.steps?.binning?.semibin2?.additionalParams?.gpu?.enable ? (params.apptainer ? "" : params.steps?.binning?.semibin2?.additionalParams?.gpu.containerOptions.replace('{', '${')) : "") \
-        + (params.apptainer ? "" : Utils.getDockerNetwork())
+        + (params.apptainer ? "" : Utils.getDockerNetwork()) \
+        + (params.apptainer ? "" : " -u \$(id -u):\$(id -g) ")
 
     clusterOptions params.steps?.binning?.semibin2?.additionalParams?.gpu?.enable ? params.steps?.binning?.semibin2?.additionalParams?.gpu?.clusterOptions : ""
 

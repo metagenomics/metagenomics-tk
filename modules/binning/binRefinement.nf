@@ -202,7 +202,7 @@ process pBinSpreader {
 
     label 'small'
 
-    containerOptions params.apptainer ? "" : Utils.getDockerNetwork()
+    containerOptions params.apptainer ? "" : Utils.getDockerNetwork() + " -u \$(id -u):\$(id -g) "
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
         Output.getOutput("${sample}", params.runid, "${output}", params.modules.binning, filename)
@@ -280,7 +280,7 @@ process pSelectBestBins {
 
     label 'small'
 
-    containerOptions params.apptainer ? "" : Utils.getDockerNetwork()
+    containerOptions params.apptainer ? "" : Utils.getDockerNetwork() + " -u \$(id -u):\$(id -g) "
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
         Output.getOutput("${sample}", params.runid, "refinement/evaluate/binSpreaderImproved/${method[0]}", params.modules.binning, filename)
@@ -382,7 +382,7 @@ process pEvaluateBestResult {
 
     label 'small'
 
-    containerOptions params.apptainer ? "" : Utils.getDockerNetwork()
+    containerOptions params.apptainer ? "" : Utils.getDockerNetwork() + " -u \$(id -u):\$(id -g) "
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
         Output.getOutput("${sample}", params.runid, "refinement/final", params.modules.binning, filename)

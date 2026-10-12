@@ -89,6 +89,8 @@ process pVAMB {
         Output.getOutput("${sample}", params.runid, "vamb", params.modules.binning, filename)
     }
 
+    containerOptions params.apptainer ? "" : " -u \$(id -u):\$(id -g) "
+
     when params.steps.containsKey("binning") && params.steps.binning.containsKey("vamb")
 
     input:
