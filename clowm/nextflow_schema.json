@@ -746,6 +746,57 @@
           "default": 0.95
         }
       }
+    },
+    "readmapping": {
+      "title": "Abundance profile",
+      "type": "object",
+      "description": "",
+      "default": "",
+      "fa_icon": "fas fa-ranking-star",
+      "properties": {
+        "steps.readMapping.bwa2.additionalParams.bwa2_index": {
+          "type": "string",
+          "description": "Command line parameters for BWA2 index.",
+          "displayName": "BWA2 index additional parameters",
+          "hidden": true,
+          "default": " "
+        },
+        "steps.readMapping.bwa2.additionalParams.bwa2_mem": {
+          "type": "string",
+          "description": "Command line parameters for BWA2 MEM.",
+          "displayName": "BWA2 MEM additional parameters",
+          "hidden": true,
+          "default": " "
+        },
+        "steps.readMapping.coverm": {
+          "type": "string",
+          "description": "Command line parameters for coverm (Illumina).",
+          "displayName": "Coverm additional parameters",
+          "hidden": true,
+          "default": " --min-covered-fraction 80  --min-read-percent-identity 95 --min-read-aligned-percent 95 "
+        },
+        "steps.readMapping.covermONT": {
+          "type": "string",
+          "description": "Command line parameters for coverm (ONT).",
+          "displayName": "Coverm ONT additional parameters",
+          "hidden": true,
+          "default": " --min-covered-fraction 80  --min-read-aligned-percent 95 "
+        },
+        "steps.readMapping.minimap.additionalParams.minimap_index": {
+          "type": "string",
+          "description": "Command line parameters for Minimap index.",
+          "displayName": "Minimap index additional parameters",
+          "hidden": true,
+          "default": " "
+        },
+        "steps.readMapping.minimap.additionalParams.minimap": {
+          "type": "string",
+          "description": "Command line parameters for Minimap.",
+          "displayName": "Minimap additional parameters",
+          "hidden": true,
+          "default": " "
+        }
+      }
     }
   },
   "allOf": [
@@ -769,6 +820,9 @@
     },
     {
       "$ref": "#/definitions/dereplication"
+    },
+    {
+      "$ref": "#/definitions/readmapping"
     }
   ]
 }
