@@ -312,6 +312,7 @@ workflow _wRunBinningTools {
     pMetabinner.out.binContigMapping
         | mix(pSemiBin2.out.binContigMapping)
         | mix(pMetabat.out.binContigMapping)
+        | mix(pQuickBin.out.binContigMapping)
         | set { binContigMapping }
 
     metabatBinStatisticsInput
