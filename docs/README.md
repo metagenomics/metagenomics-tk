@@ -10,7 +10,7 @@ Furthermore, the Metagenomics-Toolkit includes a machine learning-optimized asse
 ## Schematic Overview
 
 The Toolkit can be applied in two steps which can be either applied in one execution or in two executions consecutively. 
-In addition, each module c0an be executed separately. 
+In addition, each module can be executed separately. 
 
 ### Per-Sample Pipeline Overview
 

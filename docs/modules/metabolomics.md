@@ -4,7 +4,7 @@ The metabolomics module runs genome scale metabolic modeling analysis based on a
 The module is able to use gapseq and carveme for analysing genomes and carveme for analysing predicted proteins
 which depends on the configuration you provide as input.
 
-**Note:** If carvem is specificed in fullPipeline mode then carveme is executed with proteins as input.
+**Note:** If carveme is specified in fullPipeline mode then carveme is executed with proteins as input.
 
 All generated models are used for further downstream analysis such as the "Minimum Resource Overlap" computation by smetana.
 
@@ -13,7 +13,7 @@ All generated models are used for further downstream analysis such as the "Minim
 === "Command"
 
     ```
-    -entry wMetabolomics -params-file example_params/metabolomics
+    -entry wMetabolomics -params-file example_params/metabolomics.yml
     ```
 
 === "Configuration file for providing genomes"

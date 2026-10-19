@@ -10,7 +10,8 @@ then the sample is switched from multi-sample binning to per-sample binning.
 
 ## Short Read 
 
-For short-read data the Toolkit supports MetaBAT2, Semibin2 and QuickBin.
+For short-read data the Toolkit supports MetaBAT2, SemiBin2, MetaBinner and QuickBin.
+Every binning tool that is specified in the `binning` section of the configuration file is executed.
 
 ### Input
 
@@ -18,6 +19,12 @@ For short-read data the Toolkit supports MetaBAT2, Semibin2 and QuickBin.
 
     ```
     ---8<--- "scripts/modules/binning/test_binning.sh:func"
+    ```
+
+=== "Example command with optional single-end reads (QuickBin)"
+
+    ```
+    ---8<--- "scripts/modules/binning/test_binning_quickbin.sh:func"
     ```
 
 === "TSV table short read"
@@ -37,6 +44,41 @@ For short-read data the Toolkit supports MetaBAT2, Semibin2 and QuickBin.
     ```TSV
     ---8<--- "test_data/binning/assembly.tsv"
     ```
+
+### MetaBinner
+
+[MetaBinner](https://github.com/ziyewang/MetaBinner) is an ensemble binner that combines coverage and k-mer composition profiles.
+It is enabled by adding a `metabinner` section to the `binning` configuration:
+
+```YAML
+steps:
+  binning:
+    metabinner:
+      minContigLength: 500
+      kmerSize: 4
+```
+
+where
+
+  * `minContigLength` is the minimum length of a contig. Shorter contigs are not used for binning.
+
+  * `kmerSize` is the k-mer size that is used for creating the k-mer composition profile.
+
+MetaBinner needs a lot of memory and is therefore executed on the `highmemLarge` flavor (see [resources](../configuration.md#configuration-of-computational-resources-used-for-pipeline-runs)).
+
+### QuickBin
+
+QuickBin is the binner of the [BBTools](https://sourceforge.net/projects/bbmap/) suite.
+It is enabled by adding a `quickbin` section to the `binning` configuration:
+
+```YAML
+steps:
+  binning:
+    quickbin:
+      additionalParams: " mincontig=100 minseed=2500 "
+```
+
+where `additionalParams` are parameters that are passed directly to QuickBin.
 
 ### Output
 
@@ -217,13 +259,13 @@ In addition to the files produced for short read data, the following files are a
 
 === "TSV for ONT reads"
 
-    
+    ```TSV
     ---8<--- "test_data/multiBinningONT/samplesONT.tsv"
     ```
 
 === "TSV for contigs"
 
-    
+    ```TSV
     ---8<--- "test_data/multiBinningONT/assemblyONT.tsv"
     ```
 
