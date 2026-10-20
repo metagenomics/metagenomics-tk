@@ -1,5 +1,5 @@
 {
-  "inputParameters": ["input.paired.path", "input.ont.path"],
+  "inputParameters": ["input.paired.sheet", "input.ont.sheet"],
   "outputParameters": ["output"],
   "resourceParameters": [
     "steps.export.emgb.titles.database.extractedDBPath",
@@ -19,8 +19,8 @@
     "steps.magAttributes.checkm2.database.extractedDBPath"
   ],
   "exampleParameters": {
-    "input.paired.path": "${projectDir}/test_data/fullPipeline/reads_split.tsv",
-    "input.ont.path": "${projectDir}/test_data/fullPipeline/ont.tsv"
+    "input.paired.sheet": "${projectDir}/test_data/fullPipeline/reads_split.tsv",
+    "input.ont.sheet": "${projectDir}/test_data/fullPipeline/ont.tsv"
   },
   "dois": ["10.1101/2024.10.22.619569"]
 }

@@ -53,6 +53,7 @@ The `*rgi.tsv` files contain the found CARD genes.
 ## Plasmids
 
 ### SCAPP
+*SCAPP is currently disabled due to runtime issues!*
 SCAPP detects plasmid sequences out of the samples assembly graph. It reports sequences as gzipped FASTA files
 (`*_plasmids.fasta.gz`). A basic statistic (`*_plasmids_stats.tsv`) per plasmid and a summary statistic
 (`*_plasmids_summary_stats.tsv`) over all plasmids is also generated. CoverM coverage metrics are generated for all
@@ -72,3 +73,13 @@ the found sequences is reported in `*.tsv` and the metadata of the filtered sequ
 ### Filtered
 All contigs that were identified as plasmids by all tools that were activated as a filter (e.g. `--steps.plasmid.PlasClass.filter`). 
 If `AND` is specified, only contigs reported as plasmid by all tools will be returned, otherwise all contigs reported as plasmid by at least one tool will be returned. Which tools detected a plasmid on which contig is saved in a file named `*_detection_tools.tsv`.
+
+## Dereplication
+
+Results of the dereplication can be found in the folder `AGGREGATED` where BINs (per default all BINs above medium quality) are clustered and a representative is chosen.
+
+### Clusters
+The clusters are found within the `dereplication` folder which contains the clusters as well as the selected represantatives in subfolders.
+
+### Abundance Table
+An abundance table with the abundance of all representative MAGs according to read mapping of the individual samples is located in the `readMapping` folder.
