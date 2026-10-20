@@ -32,7 +32,7 @@ Currently the following modules and tools are enabled for execution in CloWM:
 In addition to the per-sample-workflow the dereplication (1) and abundance table step (2) of the aggregation workflow is integrated in CloWM.
 
 **Schema of the Metagenomics-Toolkit aggregation workflow:**
-![aggregation-workflow](https://openstack.cebitec.uni-bielefeld.de:8080/clowm/IBG-5_Grafik-Veröffentlichung-A4_V11.png)IBG-5_Grafik-Veroeffentlichung-A4_SecondP_V02.jpg
+![aggregation-workflow](https://openstack.cebitec.uni-bielefeld.de:8080/clowm/IBG-5_Grafik-Veroeffentlichung-A4_SecondP_V02.jpg)
 
 
 ## Databases
