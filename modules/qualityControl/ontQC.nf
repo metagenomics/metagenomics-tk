@@ -183,7 +183,7 @@ process pNanoPlot {
 
     output:
     tuple val("${sample}"), path("*.html"), emit: html
-    tuple val("${sample}"), path("*.png"), emit: png
+    tuple val("${sample}"), path("*.png"), optional: true, emit: png
     tuple val("${sample}"), path("NanoStats.tsv"), emit: tsv
     tuple val("${sample}"), env(MEDIAN_QUALITY), emit: medianQuality
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
