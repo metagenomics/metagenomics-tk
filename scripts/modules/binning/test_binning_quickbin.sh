@@ -1,9 +1,9 @@
 # This file will be referenced on the online wiki
 
 # --8<-- [start:func]
-NXF_VER=25.10.4 nextflow run ./main.nf \
+NXF_VER=25.10.4 nextflow run metagenomics/metagenomics-tk \
 	  -profile standard \
-	  -params-file ./default/modules/binning/binningQuickBin.yml \
+	  -params-file https://raw.githubusercontent.com/metagenomics/metagenomics-tk/refs/heads/master/default/modules/binning/binningQuickBin.yml \
 	  -ansi-log false \
 	  -entry wShortReadBinning \
 	  -resume \

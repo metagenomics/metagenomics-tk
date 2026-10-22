@@ -1,8 +1,5 @@
 QUICKBIN_PARAMS="${params.steps.binning.quickbin.additionalParams}"
 
-# Create temporary directory
-TEMP_DIR=\$(mktemp -d -p .)
-
 quickbin.sh in=${contigs} out=old_bins/bin.%.fa \${QUICKBIN_PARAMS} ${bam} 
 
 TEMP_DIR=\$(basename \$(mktemp))
@@ -21,13 +18,13 @@ for bin in \$(find old_bins -name "bin*.fa"); do
 
 	# Create bin to contig mapping and add the used binner to each line
 	grep ">" \${bin} | sed 's/>//g' \\
-		| sed "s|^|\${BIN_NAME}\\t|g;s|\$|\\tmetabat|" >> \${BIN_CONTIG_MAPPING}
+		| sed "s|^|\${BIN_NAME}\\t|g;s|\$|\\tquickbin|" >> \${BIN_CONTIG_MAPPING}
 done
 
 # return not binned fasta files
 BINNED_IDS=binned.tsv
 NOT_BINNED=${sample}_notBinned.fa
-grep -h ">" \$(basename ${contigs})*/bin* | tr -d ">" > \${BINNED_IDS}
+find old_bins -name "bin*.fa" -exec grep -h ">" {} + | tr -d ">" > \${BINNED_IDS}
 if [ -s \${BINNED_IDS} ]; then
 	# Get all not binned Ids
 	seqkit grep -vf \${BINNED_IDS} ${contigs} \\

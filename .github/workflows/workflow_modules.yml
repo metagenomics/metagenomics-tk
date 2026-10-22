@@ -595,7 +595,7 @@ jobs:
         run: |
           cp /vol/spool/cos_installer-test.bin cplex/docker/ \
                 && cd cplex/docker \
-                && docker build --no-cache -t cplextest:${PR_NUMBER} .
+                && docker build --network=host --no-cache -t cplextest:${PR_NUMBER} .
       - name: Cleanup image
         if: always()
         run: |
@@ -892,7 +892,7 @@ jobs:
       - name: Build jsonschema container for testing
         working-directory: ./schema 
         run: |
-          docker build -t jsonschema:latest .
+          docker build --network=host -t jsonschema:latest .
       - uses: actions/checkout@v4
         with:
           path: toolkit

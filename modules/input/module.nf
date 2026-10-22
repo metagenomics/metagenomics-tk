@@ -60,6 +60,8 @@ process pGetSRAMetadataFromRemote {
     maxForks 3
 
     maxErrors 5
+
+    containerOptions (params.apptainer ? "" : Utils.getDockerNetwork())
     
     when:
     params?.input.containsKey("SRA")
@@ -112,6 +114,8 @@ process pGetSRAIDsFromRemote {
     label 'tiny'
 
     container "${params.pysradb_image}"
+
+    containerOptions (params.apptainer ? "" : Utils.getDockerNetwork())
 
     errorStrategy 'retry'
 
