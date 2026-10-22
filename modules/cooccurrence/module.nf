@@ -1,24 +1,5 @@
 include { pDumpLogs } from '../utils/processes'
 
-process pVerticalConcat {
-
-    label 'tiny'
-
-    cache 'deep'
-
-    when params.steps.containsKey("cooccurrence")
-
-    input:
-    file('sample?')
-
-    output:
-    path("abundance.tsv")
-
-    shell:
-    template("verticalConcat.sh")
-}
-
-
 process pBuildCorrelationNetwork {
 
     label 'highmemLarge'
@@ -45,7 +26,7 @@ process pBuildCorrelationNetwork {
     path("output_raw.graphml"), emit: graphRaw
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     batchSize = params.steps.cooccurrence.containsKey("metabolicAnnotation") \
 	? params.steps.cooccurrence.metabolicAnnotation.additionalParams.metabolicEdgeBatches : 1
     method = params.steps.cooccurrence.inference.additionalParams.method
@@ -93,7 +74,7 @@ process pBuildSpiecEasiNetwork {
     tuple path("output_raw.graphml"), env(STABILITY), val("${nlambda}"), emit: graphRaw
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     batchSize = params.steps.cooccurrence.containsKey("metabolicAnnotation") \
 	? params.steps.cooccurrence.metabolicAnnotation.additionalParams.metabolicEdgeBatches : 1
     method = 'spiec-easi'
@@ -120,32 +101,11 @@ process pUpdateNetwork {
     path("updated.graphml"), emit: updatedGraphml
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     """
-    Rscript /cooccurrence.R update --graph !{graph} --edgeattributes !{attributes} --output .
+    Rscript /cooccurrence.R update --graph ${graph} --edgeattributes ${attributes} --output .
     """
 }
-
-process pVerticalConcatFinal {
-
-    label 'tiny'
-
-    cache 'deep'
-
-    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Utils.getAggregatedOutput(params.runid, "matrix", params.modules.cooccurrence, filename) }
-
-    when params.steps.containsKey("cooccurrence")
-
-    input:
-    file('sample?')
-
-    output:
-    path("abundance.tsv")
-
-    shell:
-    template("verticalConcat.sh")
-}
-
 
 MAX_SMETANA_RETRIES = 10
 process pSmetanaEdges {
@@ -177,7 +137,7 @@ process pSmetanaEdges {
     tuple val("${edges}_${repeat}"), val(Utils.getAggregatedOutput(params.runid, "smetana", params.modules.cooccurrence, "")), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     template "smetanaEdges.sh"
 }
 

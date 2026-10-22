@@ -1,4 +1,5 @@
 *.log*
+.claude
 test_data/assets
 log
 work
