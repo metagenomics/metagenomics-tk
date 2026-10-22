@@ -30,6 +30,14 @@ The full docs are in `docs/` (published with mkdocs-material). Read `docs/develo
 - New tools that need a database follow the download strategy in `docs/database.md` and `docs/developer_guidelines.md`.
 - When adding or changing a tool, update its page in `docs/modules/` and add or adjust a test script and its CI step.
 
+## Credentials and secrets
+
+- Never read, print, or search `~/.docker/`, `~/.ssh/`, `.env*`, or any credentials/token files.
+- Never run `docker login` or any command that takes a password or token. If a registry login is
+  needed, stop and ask the user to do it in their own terminal.
+- If a command fails with an auth error, report it and wait; don't try to work around it.
+- Never put secrets in commands, files, or commit messages.
+
 ## Running tests
 
 Nextflow is not installed system-wide. Install it with `make nextflow` (downloads the version from `VERSIONS.txt`
