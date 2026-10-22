@@ -177,7 +177,7 @@ process pBinette {
 
       # Create bin to contig mapping and add the used binner to each line
       grep ">" \${bin} | sed 's/>//g' \
-        | sed "s/^/\${BIN_NAME}\t/g;s/\$/\tmetabat/" >> \${BIN_CONTIG_MAPPING}
+        | sed "s/^/\${BIN_NAME}\t/g;s/\$/\tbinette/" >> \${BIN_CONTIG_MAPPING}
     done
 
     # return not binned fasta files
