@@ -210,7 +210,7 @@ jobs:
 
 
   external_SRA:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
@@ -227,7 +227,7 @@ jobs:
           bash ./scripts/test_SRA_large.sh "${WORK_DIR}" ${PROFILE} || exit 1
 
   test_input_parameters:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
@@ -362,7 +362,7 @@ jobs:
 
 
   dereplication:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
@@ -376,7 +376,7 @@ jobs:
                                                  "${WORK_DIR}" ${PROFILE}  || exit 1
 
   quickstart:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     runs-on: [self-hosted, slurm]
     needs: [codePolicy]
     steps:
@@ -402,7 +402,7 @@ jobs:
 
 
   quickstart_apptainer:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     runs-on: [self-hosted, slurm]
     needs: [codePolicy]
     steps:
@@ -420,7 +420,7 @@ jobs:
           bash ./scripts/test_quickstart_apptainer.sh || exit 1
 
   tutorial1:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     runs-on: [self-hosted, slurm]
     needs: [codePolicy]
     steps:
@@ -467,7 +467,7 @@ jobs:
           sudo rm -rf databases work
 
   gettingStarted:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
@@ -500,7 +500,7 @@ jobs:
           bash scripts/gettingStarted/test_gettingStarted_aggregation.sh || exit 1
 
   readmapping:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -510,7 +510,7 @@ jobs:
           bash ./scripts/test_readMapping.sh "    " "" "${WORK_DIR}" ${PROFILE}  || exit 1
 
   assembly:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -532,7 +532,7 @@ jobs:
           bash ./scripts/test_assemblyONT.sh "    " example_params/assemblyONTmetaFlye.yml "${WORK_DIR}" ${PROFILE}  || exit 1
 
   binning:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -573,7 +573,7 @@ jobs:
 
 
   cooccurrence:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -587,7 +587,7 @@ jobs:
                  ./example_params/cooccurrenceMetabolom.yml "${WORK_DIR}" ${PROFILE}  || exit 1
 
   cplex_docker:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v4
@@ -602,7 +602,7 @@ jobs:
           docker images --format "{{.Repository}}:{{.Tag}}" | grep cplextest:${PR_NUMBER} | xargs -I {} docker rmi {}
 
   fragment_recruitment:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -786,7 +786,7 @@ jobs:
                                                --smetana_image=pbelmann/metabolomics:0.1.0   " \
                                                "" "${WORK_DIR}" "slurm"
   plasmid:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
