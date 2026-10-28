@@ -47,7 +47,7 @@ process pCheckM {
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = getOutput("${sample}", params.runid, "checkm", "")
     S5CMD_PARAMS=params?.steps?.magAttributes?.checkm?.database?.download?.s5cmd?.params ?: "" 
     DOWNLOAD_LINK=params?.steps?.magAttributes?.checkm?.database?.download?.source ?: ""
@@ -87,7 +87,7 @@ process pCheckM2 {
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = getOutput("${sample}", params.runid, "checkm2", "")
     S5CMD_PARAMS=params?.steps?.magAttributes?.checkm2?.database?.download?.s5cmd?.params ?: "" 
     DOWNLOAD_LINK=params?.steps?.magAttributes?.checkm2?.database?.download?.source ?: ""
@@ -134,7 +134,7 @@ process pGtdbtk {
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = getOutput("${sample}", params.runid, "gtdb", "")
     S5CMD_PARAMS=params?.steps?.magAttributes?.gtdb?.database?.download?.s5cmd?.params ?: ""
     DOWNLOAD_LINK=params?.steps?.magAttributes?.gtdb?.database?.download?.source ?: ""

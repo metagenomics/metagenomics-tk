@@ -35,10 +35,10 @@ process pCollectFile {
     output:
     tuple val("${sample}"), path("${sample}_${tool}_${type}${name}")
 
-    shell:
-    '''
-    csvtk -t -T concat !{gtdbSummaries} > !{sample}_!{tool}_!{type}!{name}
-    '''
+    script:
+    """
+    csvtk -t -T concat ${gtdbSummaries} > ${sample}_${tool}_${type}${name}
+    """
 }
 
 
