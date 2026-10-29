@@ -19,7 +19,7 @@ make run_small_full_test WORK_DIR=${WORK} \
 if [[ "$LOG_DIR" == s3://* ]]; then
   NEW_LOG_DIR=${WORK}/logs
   mkdir -p ${NEW_LOG_DIR}
-  ./bin/s5cmd --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 cp ${LOG_DIR}/* ${NEW_LOG_DIR}
+  ./bin/s5cmd --no-sign-request --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 cp ${LOG_DIR}/* ${NEW_LOG_DIR}
   LOG_DIR=${NEW_LOG_DIR}
 fi  
   

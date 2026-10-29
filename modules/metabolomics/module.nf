@@ -43,12 +43,12 @@ process pGapSeq {
       tuple val("${id}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = getOutput("${sample}", params.runid, "gapseq", "")
-    '''
-    gapseq doall !{mag} !{params.steps.metabolomics.gapseq.additionalParams}
-    mv $(ls -1 *.xml | grep -v -- "-draft.xml") !{id}.model.xml
-    '''
+    """
+    gapseq doall ${mag} ${params.steps.metabolomics.gapseq.additionalParams}
+    mv \$(ls -1 *.xml | grep -v -- "-draft.xml") ${id}.model.xml
+    """
 }
 
 
@@ -79,7 +79,7 @@ process pMemote {
       tuple val("${id}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = getOutput("${sample}", params.runid, "memote", "")
     template "memote.sh"
 }
@@ -110,7 +110,7 @@ process pSmetanaDetailed {
       path("${sample}_detailed.tsv")
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     template "smetanaDetailed.sh"
 }
 
@@ -141,7 +141,7 @@ process pSmetanaGlobal {
       path("${sample}_global.tsv")
       tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     template "smetanaGlobal.sh"
 }
 
@@ -166,25 +166,25 @@ process pAnalyse {
       tuple val("${id}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = getOutput("${sample}", params.runid, "gsmmTsv", "")
-    '''
-    PRODUCTS=!{id}_products.tsv
-    REACTIONS=!{id}_reactions.tsv
-    SUBSTRATS=!{id}_substrats.tsv
+    """
+    PRODUCTS=${id}_products.tsv
+    REACTIONS=${id}_reactions.tsv
+    SUBSTRATS=${id}_substrats.tsv
 
-    zcat -f !{magJson}  \
-	| jq -r '.|.reactions[] | .metabolites | to_entries | .[] | select(.value>=0) | .key ' |  tr -d '"' | sed -r '/^\s*$/d'  >  ${PRODUCTS} 
-    sed -i -e '1i BIN_ID\tPRODUCTS' -e "s/^/!{id}\t/" ${PRODUCTS}
+    zcat -f ${magJson}  \
+	| jq -r '.|.reactions[] | .metabolites | to_entries | .[] | select(.value>=0) | .key ' |  tr -d '"' | sed -r '/^\\s*\$/d'  >  \${PRODUCTS}
+    sed -i -e '1i BIN_ID\\tPRODUCTS' -e "s/^/${id}\\t/" \${PRODUCTS}
 
-    zcat -f !{magJson} \
-	| jq -r '.|.reactions[] |.name ' | sed -r '/^\s*$/d'  | sort > ${REACTIONS}
-    sed -i -e '1i BIN_ID\tREACTIONS' -e "s/^/!{id}\t/" ${REACTIONS}
+    zcat -f ${magJson} \
+	| jq -r '.|.reactions[] |.name ' | sed -r '/^\\s*\$/d'  | sort > \${REACTIONS}
+    sed -i -e '1i BIN_ID\\tREACTIONS' -e "s/^/${id}\\t/" \${REACTIONS}
 
-    zcat -f !{magJson} \
-	| jq -r '.|.reactions[] | .metabolites | to_entries | .[] | select(.value<0) | .key ' |  tr -d '"' | sed -r '/^\s*$/d' > ${SUBSTRATS}
-    sed -i -e '1i BIN_ID\tSUBSTRATS' -e "s/^/!{id}\t/" ${SUBSTRATS}
-    '''
+    zcat -f ${magJson} \
+	| jq -r '.|.reactions[] | .metabolites | to_entries | .[] | select(.value<0) | .key ' |  tr -d '"' | sed -r '/^\\s*\$/d' > \${SUBSTRATS}
+    sed -i -e '1i BIN_ID\\tSUBSTRATS' -e "s/^/${id}\\t/" \${SUBSTRATS}
+    """
 }
 
 
@@ -210,11 +210,11 @@ process pBuildJson {
       tuple val("${id}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = getOutput("${sample}", params.runid, "gsmmJson", "")
-    '''
-    sbml_to_json.py !{magXml} !{id}.json
-    '''
+    """
+    sbml_to_json.py ${magXml} ${id}.json
+    """
 }
 
 
@@ -240,7 +240,7 @@ workflow wAnalyseMetabolitesFile {
 
      SAMPLE_IDX = 0
      wSaveSettingsList(bins | mix(proteins) |  map { it[SAMPLE_IDX] } \
-	| unique | map { it -> it[SAMPLE_IDX] })
+	| unique)
 
      _wAnalyseMetabolites(bins, proteins, type)
   emit:

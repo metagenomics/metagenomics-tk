@@ -1,21 +1,32 @@
 name: Renovate
-on: [workflow_dispatch]
+
+on:
+  workflow_dispatch:
+
 jobs:
   renovate:
     runs-on: ubuntu-latest
+
     steps:
       - name: Get token
         id: get_token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           private-key: ${{ secrets.private_key }}
           app-id: ${{ secrets.app_id }}
           owner: ${{ github.repository_owner }}
-          repositories: 'metagenomics-tk'
+          repositories: metagenomics-tk
+          permission-contents: write
+          permission-pull-requests: write
+          permission-metadata: read
+
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Self-hosted Renovate
-        uses: renovatebot/github-action@v41.0.13
+        uses: renovatebot/github-action@v46.1.15
         with:
           configurationFile: renovate-config.js
-          token: '${{ steps.get_token.outputs.token }}'
+          token: ${{ steps.get_token.outputs.token }}
+        env:
+          LOG_LEVEL: debug

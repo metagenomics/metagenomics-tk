@@ -18,7 +18,7 @@ process pFastpSplit {
     time params.steps.containsKey("qc") ? Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastp.defaults, params.resources.highmemMedium) : ""
 
     input:
-    tuple val(sample), path(read1, stageAs: "read1.fq.gz"), path(read2, stageAs: "read2.fq.gz")
+    tuple val(sample), path(read1, stageAs: "read1.fq.gz"), path(read2, stageAs: "read2.fq.gz"), env(isInterleaved)
 
     output:
     tuple val("${sample}"), path("${sample}_interleaved.qc.fq.gz"), optional: true, emit: readsPair
@@ -47,6 +47,8 @@ process pFilterHuman {
     tag "Sample: $sample"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "filterHuman", params.modules.qc, filename) }
+
+    containerOptions Utils.getDockerMount(params.steps?.qc?.filterHuman?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork())
 
     when params.steps.containsKey("qc") && params?.steps?.qc.containsKey("filterHuman")
 
@@ -200,7 +202,7 @@ process pFastpSplitDownload {
     containerOptions (params.apptainer ? "" : Utils.getDockerNetwork())
 
     input:
-    tuple val(sample), env(read1Url), env(read2Url)
+    tuple val(sample), env(read1Url), env(read2Url), env(isInterleaved)
 
     output:
     tuple val("${sample}"), path("${sample}_interleaved.qc.fq.gz"), optional: true, emit: readsPair
@@ -222,34 +224,47 @@ workflow _wFastqSplit {
        take:
          reads
        main:
+            READS_IDX=1
+
             // Check if files are S3 URLs and if the download parameter is specified in the config
-            FASTP_FILE_IDX = 1
             reads | branch {
-              download: it[2].startsWith("s3://") && params?.steps?.qc.fastp.containsKey("download")
+              download: it[READS_IDX].startsWith("s3://") && params?.steps?.qc.fastp.containsKey("download")
               noDownload: !params?.steps?.qc.fastp.containsKey("download")
              } | set { samples }
 
-             samples.noDownload | pFastpSplit 
-             samples.download | pFastpSplitDownload
+             // Check whether fastq files are in interleaved format 
+             samples.noDownload
+                | map { sample, reads1, reads2 -> [sample, reads1, reads2,  file(reads2).name == "empty"? true: false]} 
+                | pFastpSplit 
+
+             samples.download 
+                | map { sample, reads1, reads2 -> [sample, reads1, reads2,  file(reads2).name == "empty"? true: false]} 
+                | pFastpSplitDownload
 
              pFastpSplit.out.readsPair | mix(pFastpSplitDownload.out.readsPair) | set {readsPair}
              pFastpSplit.out.readsSingle | mix(pFastpSplitDownload.out.readsSingle) | set {readsSingle}
 
              readsPair | join(readsSingle) | set{ singleAndPairReads }
-             filteredSeqs = Channel.empty()
+
+             filteredSeqs = channel.empty()
+             readsPairFinal = channel.empty()
+             readsSingleFinal = channel.empty()
              if(params.steps.containsKey("qc") && params.steps.qc.containsKey("filterHuman")){
-	        singleAndPairReads | pFilterHuman
-		pFilterHuman.out.filteredSeqs | set {filteredSeqs}
+	            singleAndPairReads | pFilterHuman
+		        pFilterHuman.out.filteredSeqs | set {filteredSeqs}
+                pFilterHuman.out.interleaved | set {readsPairFinal}
+                pFilterHuman.out.unpaired | set {readsSingleFinal}
              } else {
-	        singleAndPairReads | set {filteredSeqs}
+	            singleAndPairReads | set {filteredSeqs}
+                readsPair | set {readsPairFinal}
+                readsSingle | set {readsSingleFinal}
              }
              filteredSeqs | (pNonpareil & pKMC)
-
       emit:
         nonpareilIndex = pNonpareil.out.nonpareilIndex
         kmerFrequencies = pKMC.out.histogram 
-        readsPair = readsPair
-        readsSingle = readsSingle
+        readsPair = readsPairFinal
+        readsSingle = readsSingleFinal
 }
 
 

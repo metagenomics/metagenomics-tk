@@ -30,11 +30,11 @@ process pMashDist {
     path('distances.tsv'), emit: distance
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
-    '''
-    mash paste final_sketch !{sketches}
-    mash dist !{params.steps.dereplication.bottomUpClustering.additionalParams.mash_dist} -p !{task.cpus} final_sketch.msh final_sketch.msh | cut -f 1,2,3 > distances.tsv
-    '''
+    script:
+    """
+    mash paste final_sketch ${sketches}
+    mash dist ${params.steps.dereplication.bottomUpClustering.additionalParams.mash_dist} -p ${task.cpus} final_sketch.msh final_sketch.msh | cut -f 1,2,3 > distances.tsv
+    """
 }
 
 
@@ -47,17 +47,19 @@ process pClusterDistances {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "bottomUpClustering/clusterMashDist", filename) }
 
-    label 'highmemMedium'
+    memory { Utils.getMemoryResources(params.resources.highmemMedium, "", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.highmemMedium, "", task.attempt, params.resources) }
 
     output:
     tuple file("distances.tsv"), file('out/clusters.tsv'), emit: clusters
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log"), emit: log
 
-    shell:
-    '''
+    script:
+    """
     mkdir out
-    cluster.py -i distances.tsv !{params.steps.dereplication.bottomUpClustering.additionalParams.cluster} -o out
-    '''
+    cluster.py -i distances.tsv ${params.steps.dereplication.bottomUpClustering.additionalParams.cluster} -o out
+    """
 }
 
 
@@ -71,14 +73,16 @@ process pSelectRepresentative {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "bottomUpClustering/selectedRepresentatives", filename) }
 
-    label 'highmemMedium'
+    memory { Utils.getMemoryResources(params.resources.highmemMedium, "", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.highmemMedium, "", task.attempt, params.resources) }
 
     output:
     path("intermediate_clusters.tsv"), emit: clusters
     path("refinement/representatives_to_compare.tsv"), emit: representatives
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
+    script:
     template 'selectRepresentative.sh'
 }
 
@@ -103,7 +107,7 @@ process pANIb {
     tuple env(DIRECTORY), val("${output}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = getOutput(params.runid, "bottomUpClustering/ANIb", "") 
     template 'anib.sh'
 }
@@ -127,7 +131,7 @@ process pTETRA {
     when:
     params.steps.dereplication.bottomUpClustering.method.contains("TETRA")
 
-    shell:
+    script:
     def output = getOutput(params.runid, "bottomUpClustering/TETRA", "logs") 
     template 'tetra.sh'
 }
@@ -150,12 +154,12 @@ process pGetCluster {
     path 'ani_values.tsv', emit: aniValues
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
-    '''
+    script:
+    """
     mkdir out
-    cat <(echo "GENOME_A\tGENOME_B\tANI")  <(sed 's/ /\t/g' !{ani_values}) > ani_values.tsv
-    get_final_cluster.py -i !{genomeAttributes} -c !{cluster} -r ani_values.tsv -o . -a !{params.steps.dereplication.bottomUpClustering.additionalParams.representativeAniCutoff}
-    '''
+    cat <(echo "GENOME_A\tGENOME_B\tANI")  <(sed 's/ /\t/g' ${ani_values}) > ani_values.tsv
+    get_final_cluster.py -i ${genomeAttributes} -c ${cluster} -r ani_values.tsv -o . -a ${params.steps.dereplication.bottomUpClustering.additionalParams.representativeAniCutoff}
+    """
 }
 
 
@@ -170,10 +174,10 @@ process pFinalize {
     output:
     file 'clusters.tsv' 
 
-    shell:
-    '''
-    cp !{cluster} clusters.tsv
-    '''
+    script:
+    """
+    cp ${cluster} clusters.tsv
+    """
 }
 
 
@@ -201,21 +205,21 @@ process pSANS {
     tuple val("${clusterID}"), val("${output}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = getOutput(params.runid, "bottomUpClustering/sans", "") 
-    '''
+    """
     mkdir input
     # get ID from list of genomes
     for g in genome_* ; do 
-	line=$(echo $g | cut -d '_' -f 2)
-	ID=$(sed "${line}q;d" !{ids})
-	ln -s $(readlink -f $g) input/${ID}
+	line=\$(echo \$g | cut -d '_' -f 2)
+	ID=\$(sed "\${line}q;d" ${ids})
+	ln -s \$(readlink -f \$g) input/\${ID}
     done
     # Run SANS for a set of genomes and translate the newick tree to a set of clusters
-    find $PWD/input -type l > input.tsv
-    /sans/SANS-autoN.sh -i input.tsv !{params?.steps?.dereplication?.sans?.additionalParams} -N !{clusterID}_newick.txt
-    /sans/scripts/newick2clusters.py !{clusterID}_newick.txt > !{clusterID}_clusters.tsv
-    '''
+    find \$PWD/input -type l > input.tsv
+    /sans/SANS-autoN.sh -i input.tsv ${params?.steps?.dereplication?.sans?.additionalParams} -N ${clusterID}_newick.txt
+    /sans/scripts/newick2clusters.py ${clusterID}_newick.txt > ${clusterID}_clusters.tsv
+    """
 
 }
 
@@ -239,10 +243,10 @@ process pGetSansClusterRepresentatives {
     path 'clusters.tsv', emit: sansRepresentatives
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
-    shell:
-    '''
-    select_sans_representatives.py -i !{genomeAttributes} -c !{cluster} -o .
-    '''
+    script:
+    """
+    select_sans_representatives.py -i ${genomeAttributes} -c ${cluster} -o .
+    """
 }
 
 

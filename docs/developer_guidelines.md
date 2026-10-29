@@ -215,9 +215,9 @@ pProcess {
 
    ...
 
-  shell:
+  script:
   """
-  supertool !{params.steps.moduleName.processName.parameter}  !{params.steps.moduleName.processName.additionalParams}
+  supertool ${params.steps.moduleName.processName.parameter}  ${params.steps.moduleName.processName.additionalParams}
   """
 }
 
@@ -245,10 +245,10 @@ pProcess {
 
    ...
 
-  shell:
+  script:
   """
-  toolNameA --super-specific-number-flag !{params.steps.moduleName.parameter}
-  toolNameB --similar-flag-to-toolA !{params.steps.moduleName.parameter} 
+  toolNameA --super-specific-number-flag ${params.steps.moduleName.parameter}
+  toolNameB --similar-flag-to-toolA ${params.steps.moduleName.parameter} 
   """
 }
 

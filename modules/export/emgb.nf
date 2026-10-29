@@ -32,7 +32,7 @@ process pEMGBAnnotatedContigs {
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = Output.getOutput("${sample}", params.runid, "emgb", params.modules.export, "")
     template 'emgbAnnotatedContigs.sh'
 }
@@ -60,7 +60,7 @@ process pEMGBAnnotatedBins {
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = Output.getOutput("${sample}", params.runid, "emgb", params.modules.export, "")
     template 'emgbAnnotatedBins.sh'
 }
@@ -95,7 +95,7 @@ process pEMGBAnnotatedGenes {
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     TITLES_S5CMD_PARAMS=params?.steps?.export?.emgb?.titles?.database?.download?.s5cmd?.params ?: "" 
     TITLES_DOWNLOAD_LINK=params?.steps?.export?.emgb?.titles?.database?.download?.source ?: ""
     TITLES_MD5SUM=params.steps?.export?.emgb?.titles?.database?.download?.md5sum ?: ""

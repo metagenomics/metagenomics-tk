@@ -113,13 +113,14 @@ workflow wOutputTable {
         ILLUMINA: it.TYPE == "ILLUMINA"
    } | set { input }
      
-   input.ILLUMINA | map { sample ->  [ sample.SAMPLE, sample.TYPE, sample.MULTI_BINNING_GROUP, sample.READS1, sample.READS2 ] } \
+   input.ILLUMINA | map { sample ->  [ sample.SAMPLE, sample.TYPE, sample.MULTI_BINNING_GROUP, sample.READS1, file(sample.READS2).name == "empty" ? "": sample.READS2 ] } \
 	 | collectFile(newLine: true, seed: "SAMPLE\tINSTRUMENT\tMULTI_BINNING_GROUP\tREADS1\tREADS2"){ it -> [ "samplesILLUMINA.tsv", it[SAMPLE_IDX] \
         + "\t" + it[INSTRUMENT_IDX] \
         + "\t" + it[MULTI_BINNING_GROUP_IDX] \
 	+ "\t" + it[FASTQ_FILE_LEFT_IDX].toString() \
 	+ "\t" + it[FASTQ_FILE_RIGHT_IDX].toString()] } \
 	| set {illuminaFile} 
+
    illuminaFile | view({ it -> it.text })
    pPublishIllumina(params.logDir, illuminaFile)
 
@@ -352,7 +353,7 @@ workflow wAggregatePipeline {
     _wGetCheckm.out.checkm | set { checkm }
 
     // get gtdbtk summary files
-    Pattern gtdbPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_.*_combined.tsv$' )
+    Pattern gtdbPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_[^_]*_combined.tsv$' )
     selectedSRAMagAttributes | filter({ sra, path -> gtdbPattern.matcher(path.toString()).matches()}) \
      | map { sraID, bins -> bins } \
      | splitCsv(sep: '\t', header: true) \
@@ -830,4 +831,11 @@ workflow wFullPipeline {
    // Aggregate results of multiple samples (dereplication, read mapping, co-occurrence, ...)
    _wAggregate(ont.reads, ont.medianQuality, illumina.readsPair, illumina.readsSingle, binsStats, \
 	gtdb,  wAnalyseMetabolitesList.out.models)
+}
+
+/*
+* Entrypoint when no entrypoint is set - should be extended with different params.mode because entrypoints are deprecated. 
+*/
+workflow {
+    wFullPipeline()
 }
