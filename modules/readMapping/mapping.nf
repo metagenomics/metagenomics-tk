@@ -70,7 +70,11 @@ process pVerticalConcat {
 
 process pBwaIndex {
     container "${params.bwa_image}"
-    label 'highmemLarge'
+
+    memory { Utils.getMemoryResources(params.resources.highmemLarge, "", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.highmemLarge, "", task.attempt, params.resources) }
+
     when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa")
     input:
       path(representatives)
@@ -84,7 +88,11 @@ process pBwaIndex {
 
 process pBwa2Index {
     container "${params.bwa2_image}"
-    label 'highmemLarge'
+
+    memory { Utils.getMemoryResources(params.resources.highmemLarge, "", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.highmemLarge, "", task.attempt, params.resources) }
+
     when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa2")
     input:
       path(representatives)
@@ -97,7 +105,10 @@ process pBwa2Index {
 }
 
 process pMapBwa {
-    label 'highmemLarge'
+    memory { Utils.getMemoryResources(params.resources.highmemLarge, "${sampleID}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.highmemLarge, "${sampleID}", task.attempt, params.resources) }
+
     container "${params.samtools_bwa_image}"
     when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa")
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid ,"bwa", filename) }
@@ -114,7 +125,9 @@ process pMapBwa {
 
 
 process pMapBwa2 {
-    label 'highmemLarge'
+    memory { Utils.getMemoryResources(params.resources.highmemLarge, "${sampleID}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.highmemLarge, "${sampleID}", task.attempt, params.resources) }
     container "${params.samtools_bwa2_image}"
     when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa2")
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid ,"bwa2", filename) }
@@ -315,7 +328,7 @@ workflow _wReadMappingBwa {
      // Map ONT data
      samplesONT | combine(ontIndex) | set {ont}
      pMapMinimap2Long(Channel.value(params?.steps.containsKey("readMapping") \
-	&& Channel.value(params?.steps?.readMapping.containsKey("minimap"))), ont)
+	&& params?.steps?.readMapping.containsKey("minimap")), ont)
  
      DO_NOT_ESTIMATE_IDENTITY = "-1"
      pMapBwa.out.alignment | mix(pMapBwa2.out.alignment ) | combine(genomes | map {it -> file(it)} \

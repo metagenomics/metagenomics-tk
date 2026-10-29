@@ -24,7 +24,10 @@ jobs:
         run: |
           bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config    " \
                ./example_params/fullPipelineSRAQC.yml "${WORK_DIR}" ${PROFILE}  || exit 1
-
+      - name: Test if interleaved fastq input works
+        run: |
+          bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config    "   \
+               ./example_params/fullPipelineQC.yml "${WORK_DIR}" ${PROFILE} || exit 1
       - name: Test if SRA S3 Input module works with ONT data
         run: |
           bash ./scripts/test_fullPipeline.sh   " -c  test_data/assets/aws.config    " \
@@ -222,7 +225,7 @@ jobs:
 
 
   external_SRA:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
@@ -239,7 +242,7 @@ jobs:
           bash ./scripts/test_SRA_large.sh "${WORK_DIR}" ${PROFILE} || exit 1
 
   test_input_parameters:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
@@ -276,6 +279,12 @@ jobs:
                                       --input.SRA.S3.id 'ERR12263778 SRR29912082' --input.SRA.S3.sheet ./test_data/input/sraS3Input.tsv  \
                                       --input.SRA.S3.binGroup 'A A' " ./test_data/input/sraS3Expected.tsv "${WORK_DIR}" ${PROFILE}  || exit 1
 
+      - name: Test if combination of CLI based input for interleaved format works as expected
+        run: |
+          bash scripts/test_input.sh " -c  test_data/assets/aws.config \
+                                      --input.paired.r 'https://openstack.cebitec.uni-bielefeld.de:8080/swift/v1/meta_test/small/read1_1bla.fq.gz' \
+                                      --input.paired.names 'test1' \
+                                      " ./test_data/input/interleavedExpected.tsv "${WORK_DIR}" ${PROFILE} || exit 1
 
   mag_attributes_1:
     timeout-minutes: 2500
@@ -368,7 +377,7 @@ jobs:
 
 
   dereplication:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
@@ -382,7 +391,7 @@ jobs:
                                                  "${WORK_DIR}" ${PROFILE}  || exit 1
 
   quickstart:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     runs-on: [self-hosted, slurm]
     needs: [codePolicy]
     steps:
@@ -408,7 +417,7 @@ jobs:
 
 
   quickstart_apptainer:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     runs-on: [self-hosted, slurm]
     needs: [codePolicy]
     steps:
@@ -426,7 +435,7 @@ jobs:
           bash ./scripts/test_quickstart_apptainer.sh || exit 1
 
   tutorial1:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     runs-on: [self-hosted, slurm]
     needs: [codePolicy]
     steps:
@@ -473,7 +482,7 @@ jobs:
           sudo rm -rf databases work
 
   gettingStarted:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     runs-on: [ self-hosted, slurm]
     needs: [codePolicy]
     steps:
@@ -506,7 +515,7 @@ jobs:
           bash scripts/gettingStarted/test_gettingStarted_aggregation.sh || exit 1
 
   readmapping:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -516,7 +525,7 @@ jobs:
           bash ./scripts/test_readMapping.sh "    " "" "${WORK_DIR}" ${PROFILE}  || exit 1
 
   assembly:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -529,12 +538,16 @@ jobs:
         run: |
           bash ./scripts/test_assembly.sh "    " example_params/assemblyMetaspades.yml "${WORK_DIR}" ${PROFILE}  || exit 1
 
-      - name: Test Metaflye Assembly
+      - name: Test MetaMDBG Assembly
         run: |
           bash ./scripts/test_assemblyONT.sh "    " example_params/assemblyONT.yml "${WORK_DIR}" ${PROFILE}  || exit 1
+          
+      - name: Test metaFlye Assembly
+        run: |
+          bash ./scripts/test_assemblyONT.sh "    " example_params/assemblyONTmetaFlye.yml "${WORK_DIR}" ${PROFILE}  || exit 1
 
   binning:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -560,6 +573,9 @@ jobs:
       - name: Test Metabat Binning 
         run: |
           bash ./scripts/modules/binning/test_binning.sh || exit 1
+      - name: Test Quickbin Binning 
+        run: |
+          bash ./scripts/modules/binning/test_binning_quickbin.sh || exit 1
       - name: Test Binning based on ONT data
         run: |
           bash ./scripts/modules/binning/test_binningONT.sh || exit 1
@@ -572,7 +588,7 @@ jobs:
 
 
   cooccurrence:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -586,7 +602,7 @@ jobs:
                  ./example_params/cooccurrenceMetabolom.yml "${WORK_DIR}" ${PROFILE}  || exit 1
 
   cplex_docker:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     runs-on: [ self-hosted, slurm]
     steps:
       - uses: actions/checkout@v4
@@ -594,14 +610,14 @@ jobs:
         run: |
           cp /vol/spool/cos_installer-test.bin cplex/docker/ \
                 && cd cplex/docker \
-                && docker build --no-cache -t cplextest:${PR_NUMBER} .
+                && docker build --network=host --no-cache -t cplextest:${PR_NUMBER} .
       - name: Cleanup image
         if: always()
         run: |
           docker images --format "{{.Repository}}:{{.Tag}}" | grep cplextest:${PR_NUMBER} | xargs -I {} docker rmi {}
 
   fragment_recruitment:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -815,7 +831,7 @@ jobs:
                                                --smetana_image=pbelmann/metabolomics:0.1.0   " \
                                                "" "${WORK_DIR}" "slurm"
   plasmid:
-    timeout-minutes: 800
+    timeout-minutes: 1200
     needs: [codePolicy]
     runs-on: [ self-hosted, slurm]
     steps:
@@ -921,7 +937,7 @@ jobs:
       - name: Build jsonschema container for testing
         working-directory: ./schema 
         run: |
-          docker build -t jsonschema:latest .
+          docker build --network=host -t jsonschema:latest .
       - uses: actions/checkout@v4
         with:
           path: toolkit

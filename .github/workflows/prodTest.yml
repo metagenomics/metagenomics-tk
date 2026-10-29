@@ -25,6 +25,7 @@ jobs:
           bash ./scripts/test_fullPipeline.sh \
           " -c /vol/spool/aws.config --databases=/vol/scratch/databases/ \
            --output=s3://toolkit-dev-benchmark/${REF}/output \
+           --input.paired.sheet=test_data/fullPipeline/production_interleaved.tsv \
            --steps.metabolomics.smetana.beforeProcessScript=/vol/spool/dockerPull.sh \
            --smetana_image=pbelmann/metabolomics:0.1.0 --steps.cooccurrence.beforeProcessScript=/vol/spool/dockerPull.sh \
            --steps.fragmentRecruitment.mashScreen.genomes=/vol/spool/toolkit/gtdb/paths.tsv \

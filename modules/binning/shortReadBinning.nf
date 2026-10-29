@@ -34,7 +34,7 @@ process pMetabinner {
     tuple val(sample), path(contigs), path(bam)
 
     output:
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '1..*'), optional: true, emit: bins
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), emit: bins
     tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
@@ -43,6 +43,32 @@ process pMetabinner {
     template('metabinner.sh')
 }
 
+process pQuickBin {
+
+    container "${params.quickbin_image}"
+
+    tag "Sample: ${sample}"
+
+    label 'medium'
+
+    publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
+        Output.getOutput("${sample}", params.runid, "quickbin", params.modules.binning, filename)
+    }
+
+    when params.steps.containsKey("binning") && params.steps.binning.containsKey("quickbin")
+
+    input:
+    tuple val(sample), path(contigs), path(bam)
+
+    output:
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '1..*'), optional: true, emit: bins
+    tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
+    tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
+    tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
+
+    script:
+    template('quickbin.sh')
+}
 
 /**
  * MAGScoT - Run MAGScoT binning refinement
@@ -80,7 +106,7 @@ process pMAGScoT {
     output:
     tuple val("${sample}"), file("${sample}_MagScoT.*"), optional: true, emit: scores
     tuple val("${sample}"), file("${sample}_bin_contig_mapping.tsv"), optional: true, emit: binContigMapping
-    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '1..*'), optional: true, emit: bins
+    tuple val("${sample}"), path("${sample}_bin.*.fa", arity: '0..*'), emit: bins
     tuple val("${sample}"), file("${sample}_notBinned.fa"), optional: true, emit: notBinned
     tuple file(".command.sh"), file(".command.out"), file(".command.err"), file(".command.log")
 
@@ -224,7 +250,8 @@ workflow _wRunBinningTools {
     SAMPLE_IDX = 0
 
     contigs | join(mappedReads, by: SAMPLE_IDX) | set { binningInput }
-    pMetabinner(binningInput)
+    binningInput
+        | (pMetabinner & pQuickBin)
 
     pSemiBin2(
         channel.value(params?.steps?.containsKey("binning") && params?.steps?.binning.containsKey("semibin2")),
@@ -250,13 +277,16 @@ workflow _wRunBinningTools {
         binningInput | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY)),
     )
 
-    pMetabinner.out.bins
-        | mix(pMetabat.out.bins)
-        | mix(pSemiBin2.out.bins)
+    pMetabat.out.bins | filter { sample, bins -> bins.size() > 0}
+        | mix(pSemiBin2.out.bins | filter { sample, bins -> bins.size() > 0})
+        | mix(pQuickBin.out.bins | filter { sample, bins -> bins.size() > 0})
+        | mix(pMetabinner.out.bins | filter { sample, bins -> bins.size() > 0})
         | set { bins }
+
     pMetabinner.out.notBinned
         | mix(pSemiBin2.out.notBinned)
         | mix(pMetabat.out.notBinned)
+        | mix(pQuickBin.out.notBinned)
         | set { notBinned }
 
     pMetabinner.out.binContigMapping
@@ -274,15 +304,22 @@ workflow _wRunBinningTools {
         | combine(channel.from("semibin2"))
         | join(pSemiBin2.out.bins, by: SAMPLE_IDX)
         | set { semibin2BinStatisticsInput }
+    pQuickBin.out.binContigMapping
+        | join(mappedReads, by: SAMPLE_IDX)
+        | combine(channel.from("quickbin"))
+        | join(pQuickBin.out.bins, by: SAMPLE_IDX)
+        | set { quickBinBinStatisticsInput }
 
     pMetabinner.out.binContigMapping
         | mix(pSemiBin2.out.binContigMapping)
         | mix(pMetabat.out.binContigMapping)
+        | mix(pQuickBin.out.binContigMapping)
         | set { binContigMapping }
 
     metabatBinStatisticsInput
         | mix(semibin2BinStatisticsInput)
         | mix(metabinnerBinStatisticsInput)
+        | mix(quickBinBinStatisticsInput)
         | combine(channel.value(DO_NOT_ESTIMATE_IDENTITY))
         | set { binStatsInput }
 

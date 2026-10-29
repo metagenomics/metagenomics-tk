@@ -56,12 +56,12 @@ process pMashSketchGenome {
     tuple val("${binid}"), val("${binid}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
-    '''
-    ln -s g.fa !{binid}
-    mash sketch !{mashSketchParams} !{binid} -o !{binid}.msh
-    GENOME_PATH=$(readlink -f g.fa)
-    '''
+    script:
+    """
+    ln -s g.fa ${binid}
+    mash sketch ${mashSketchParams} ${binid} -o ${binid}.msh
+    GENOME_PATH=\$(readlink -f g.fa)
+    """
 }
 
 
@@ -88,10 +88,10 @@ process pMashPaste {
     tuple env(FILE_ID), val("${output}"), val(params.LOG_LEVELS.ALL), file(".command.sh"), \
 	file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
 
-    shell:
+    script:
     output = getAggregatedOutput(params.runid, module,"${outputToolDir}" , "")
-    '''
-    FILE_ID=$(mktemp XXXXXXXX)
-    mash paste final_sketch_${FILE_ID} !{sketches}
-    '''
+    """
+    FILE_ID=\$(mktemp XXXXXXXX)
+    mash paste final_sketch_\${FILE_ID} ${sketches}
+    """
 }

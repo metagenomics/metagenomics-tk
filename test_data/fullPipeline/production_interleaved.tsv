@@ -1,0 +1,3 @@
+SAMPLE	READS	MULTI_BINNING_GROUP
+sample_2	https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/sample_2_reads.fq.gz	A
+sample_3	https://openstack.cebitec.uni-bielefeld.de:8080/meta_test/sample_3_reads.fq.gz	A

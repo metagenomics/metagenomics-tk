@@ -15,11 +15,20 @@ input:
 
 The sample sheet must have the columns `SAMPLE`, `READS1` and `READS2`.
 The `SAMPLE` column must be unique and the `READS1` and `READS2` columns point to the repective left and right read files.
-`READS1` and `READS2` can be local paths, URLs or S3 paths. In case S3 is used, additional [configuration](pipeline_input.md#s3-Configuration) is necessary.
+`READS1` and `READS2` can be local paths, URLs or S3 paths. In case S3 is used, additional [configuration](configuration.md#s3-configuration) is necessary.
 
 Example:
 ```
 ---8<--- "test_data/fullPipeline/reads_split.tsv"
+
+```
+
+If the input reads are in interleaved format it is also possible to specify just a single column, i.e. `READS`.
+
+
+Example:
+```
+---8<--- "test_data/fullPipeline/reads_split_interleaved.tsv"
 
 ```
 
@@ -42,7 +51,10 @@ where
   * `--input.paired.names` are the sample names. If multiple samples are provided they must be enclosed in double ticks (e.g. "test1 test2").
     The number of sample names must match the number of files provided for `--input.paired.r1` and `--input.paired.r2`.
 
-The `--input.paired.r1` and `--input.paired.r2` can point to the same type of resources (URL, S3, etc.) as the `READS1` and `READS2` columns (see "Sample Sheet" section).
+  * The `--input.paired.r` parameter can be used to specify input reads in interleaved format instead of using the `--input.paired.r1` and `--input.paired.r2` options.
+
+The `--input.paired.r1`, `--input.paired.r2` and `--input.paired.r` parameters can point to the same type of resources (URL, S3, etc.) as 
+the `READS1` and `READS2` for split columns and `READS` for interleaved format (see "Sample Sheet" section).
 See [Quickstart](quickstart.md#run-the-toolkit) section for a working example.
 
 ### Nanopore
@@ -58,7 +70,7 @@ input:
 ```
 
 The sample sheet has the following content must have the columns `SAMPLE` and `READS` where `SAMPLE` is the sample name and `READS` points to the input reads.
-`READS` can be local paths, URLs or S3 paths. In case S3 is used, additional [configuration](pipeline_input.md#s3-Configuration) is necessary.
+`READS` can be local paths, URLs or S3 paths. In case S3 is used, additional [configuration](configuration.md#s3-configuration) is necessary.
 
 Example:
 ```
@@ -89,7 +101,7 @@ The toolkit is able to fetch fastq files based on SRA run accession IDs from the
 #### SRA Mirror
 
 !!! info "Additional Configuration"
-    For accessing the mirror via S3, additional [configuration](pipeline_input.md#s3-Configuration) is necessary.
+    For accessing the mirror via S3, additional [configuration](configuration.md#s3-configuration) is necessary.
 
 For the SRA Mirror it is possible to specify a SRA run accession or SRA project ID.
 
@@ -120,11 +132,11 @@ where:
      appended, the pipeline is triggered. The pipeline will never finish in this mode. Please note that watch currently only works
      if only one input type is specified (e.g "ont" or "paired" ...)
  
-  *  `patternONT` and `patternIllumina` are patterns that are applied on the specified mirror in order to select the correct input files.
+  *  `pattern.ont` and `pattern.illumina` are patterns that are applied on the specified mirror in order to select the correct input files.
 
   *  `skipDB` is a flag for skipping SRA run IDs from the local SRA database. This flag is only used for debugging.
 
-The sample sample sheet must have the column name `ACCESSION`.
+The sample sheet must have the column name `ACCESSION`.
 
 Example:
 ```
@@ -156,11 +168,11 @@ input:
       sheet: test_data/SRA/ncbi_samples.tsv 
 ```
 
-The sample sample sheet must have the column name `ACCESSION`.
+The sample sheet must have the column name `ACCESSION`.
 
 Example:
 ```
----8<--- "test_data/SRA/ONTsamples.tsv"
+---8<--- "test_data/SRA/ncbi_samples.tsv"
 ```
 
 ##### Command line
