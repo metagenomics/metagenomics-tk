@@ -11,8 +11,6 @@ process pFastpSplit {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "fastp", params.modules.qc, filename) }
 
-    when params?.steps.containsKey("qc") && params?.steps?.qc.containsKey("fastp")
-
     container "${params.fastp_image}"
 
     time params.steps.containsKey("qc") ? Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastp.defaults, params.resources.highmemMedium) : ""
@@ -49,8 +47,6 @@ process pFilterHuman {
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "filterHuman", params.modules.qc, filename) }
 
     containerOptions Utils.getDockerMount(params.steps?.qc?.filterHuman?.database, params, apptainer=params.apptainer) + (params.apptainer ? "" : Utils.getDockerNetwork())
-
-    when params.steps.containsKey("qc") && params?.steps?.qc.containsKey("filterHuman")
 
     container "${params.scrubber_image}"
 
@@ -90,8 +86,6 @@ process pNonpareil {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "nonpareil", params.modules.qc, filename) }
 
-    when params.steps.containsKey("qc") && params?.steps?.qc.containsKey("nonpareil")
-
     container "${params.nonpareil_image}"
 
     input:
@@ -123,8 +117,6 @@ process pKMC {
     container "${params.kmc_image}"
 
     time params.steps.containsKey("qc") && params?.steps?.qc.containsKey("kmc") ? Utils.setTimeLimit(params.steps.qc.kmc, params.modules.qc.process.kmc.defaults, params.resources.small) : ""
-
-    when params.steps.containsKey("qc") && params?.steps?.qc.containsKey("kmc")
 
     input:
     tuple val(sample), path(interleavedReads, stageAs: 'interleaved.fq.gz'), path(unpairedReads)
@@ -195,8 +187,6 @@ process pFastpSplitDownload {
 
     time params.steps.containsKey("qc") ? Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastpDownload.defaults, params.resources.highmemMedium) : ""
 
-    when params?.steps.containsKey("qc") && params?.steps?.qc.containsKey("fastp")
-
     container "${params.fastp_image}"
 
     containerOptions (params.apptainer ? "" : Utils.getDockerNetwork())
@@ -259,10 +249,20 @@ workflow _wFastqSplit {
                 readsPair | set {readsPairFinal}
                 readsSingle | set {readsSingleFinal}
              }
-             filteredSeqs | (pNonpareil & pKMC)
+             nonpareilIndex = channel.empty()
+             if(params.steps.containsKey("qc") && params.steps.qc.containsKey("nonpareil")){
+                filteredSeqs | pNonpareil
+                pNonpareil.out.nonpareilIndex | set {nonpareilIndex}
+             }
+
+             kmerFrequencies = channel.empty()
+             if(params.steps.containsKey("qc") && params.steps.qc.containsKey("kmc")){
+                filteredSeqs | pKMC
+                pKMC.out.histogram | set {kmerFrequencies}
+             }
       emit:
-        nonpareilIndex = pNonpareil.out.nonpareilIndex
-        kmerFrequencies = pKMC.out.histogram 
+        nonpareilIndex = nonpareilIndex
+        kmerFrequencies = kmerFrequencies
         readsPair = readsPairFinal
         readsSingle = readsSingleFinal
 }
