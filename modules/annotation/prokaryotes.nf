@@ -1,5 +1,6 @@
 include { pCollectFile } from './processes'
 include { pDumpLogs } from '../utils/processes'
+include { runMMSeqsTaxonomy } from './module'
 
 // Function to generate the right output path for each tool/process to be feed into the publishDir call of said processes.
 def getOutput(SAMPLE, RUNID, TOOL, filename){
