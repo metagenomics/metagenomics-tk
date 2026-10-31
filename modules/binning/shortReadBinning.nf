@@ -237,6 +237,7 @@ workflow wShortReadBinningList {
     notBinnedContigs = _wBinning.out.notBinnedContigs
     unmappedReads = _wBinning.out.unmappedReads
     contigCoverage = _wBinning.out.contigCoverage
+    binContigMapping = _wBinning.out.binContigMapping
 }
 
 workflow _wRunBinningTools {
@@ -393,6 +394,8 @@ workflow _wBinning {
     _wRunBinningTools.out.notBinned | set { notBinned }
     _wRunBinningTools.out.binStatsInput | set { binStatsInput }
 
+    _wRunBinningTools.out.binContigMapping | set { binContigMapping }
+
     // Re-evaluate binning with MAGScoT
     // ORF detection with Prodigal for MAGScoT
     CONTIG_MAPPING_IDX = 1
@@ -407,6 +410,7 @@ workflow _wBinning {
             | join(pHmmSearch.out.allhits, by: SAMPLE_IDX)
             | join(contigs, by: SAMPLE_IDX)
             | set { magscot_input }
+
     }
     pMAGScoT(magscot_input)
 
@@ -414,6 +418,7 @@ workflow _wBinning {
     if (params.steps.containsKey("binning") && params.steps.binning.containsKey("magscot")) {
         pMAGScoT.out.bins | set { bins }
         pMAGScoT.out.notBinned | set { notBinned }
+        pMAGScoT.out.binContigMapping | set { binContigMapping }
     }
 
     emptyFile = file(params.tempdir + "/empty")
@@ -467,6 +472,7 @@ workflow _wBinning {
     bins = bins
     mapping = mappedReads
     notBinnedContigs = notBinned
+    binContigMapping = binContigMapping
     unmappedReads = unmappedReads
     contigCoverage = pCovermContigsCoverage.out.coverage
 }

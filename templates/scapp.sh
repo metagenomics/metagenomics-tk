@@ -29,5 +29,5 @@ if [ -s *.confident_cycs.fasta ]; then
 
   echo -e "SAMPLE\\tID\\tLENGTH\\tGC" > \${PLASMID_STATS}
   seqkit fx2tab -l -g -n -i  \${PLASMIDS_OUTPUT} \\
-	| sed "s/^/${sample}\\t/g"  >> \${PLASMID_STATS} 
+	| sed "s/^/${sample}\\t/g" | csvtk cut -t -f 1-,1 | sed 's/SAMPLE/BIN_ID/' >> \${PLASMID_STATS} 
 fi

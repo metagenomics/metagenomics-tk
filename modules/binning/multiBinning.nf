@@ -92,6 +92,7 @@ workflow wMultiBinningShortReadList {
     _wBinningShortRead(contigs, inputReads, sampleGroups)
 
     emit:
+    binContigMapping = _wBinningShortRead.out.binContigMapping
     binsStats = _wBinningShortRead.out.binsStats
     bins = _wBinningShortRead.out.bins
     mapping = _wBinningShortRead.out.mapping
@@ -171,6 +172,7 @@ workflow wMultiBinningLongReadList {
     notBinnedContigs = _wBinningLongRead.out.notBinnedContigs
     unmappedReads = _wBinningLongRead.out.unmappedReads
     contigCoverage = _wBinningLongRead.out.contigCoverage
+    binContigMapping = _wBinningLongRead.out.binContigMapping
 }
 
 /*
@@ -314,6 +316,7 @@ workflow _wBinningLongRead {
     notBinnedContigs = notBinned
     unmappedReads = pMinimap2.out.unmappedReads
     contigCoverage = pCovermContigsCoverage.out.coverage
+    binContigMapping = binContigMapping
 }
 
 
@@ -468,5 +471,6 @@ workflow _wBinningShortRead {
     mapping = mapping
     notBinnedContigs = notBinned
     unmappedReads = unmappedReads
+    binContigMapping = binContigMapping
     contigCoverage = pCovermContigsCoverage.out.coverage
 }
