@@ -4,8 +4,7 @@ include { pDumpLogs } from '../utils/processes'
 include { pCollectFile } from './processes'
 include { _wAnalyseEukaryotes } from './eukaryotes'
 include { _wAnalyseProkaryotes } from './prokaryotes'
-
-
+include { runMMSeqsTaxonomy } from '../utils/methods'
 
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -23,17 +22,7 @@ def getOutput(SAMPLE, RUNID, TOOL, filename){
 }
 
 
-/*
-*
-* This function decides if the MMSeqs taxonomy process should be executed on MAGs.
-*
-*/
-def runMMSeqsTaxonomy(isMMSeqsTaxonomySettingSet, isBinned, isPlasmid, runOnBinned) {
-    // True if the MMSeqsTaxonomy setting is set and plasmids are not used as input and 
-    // either the sample is not binned 
-    // or should explicitly run on binned samples 
-    return isMMSeqsTaxonomySettingSet && !isPlasmid && (!isBinned || runOnBinned)
-}
+
 
 
 /**
