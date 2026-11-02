@@ -69,7 +69,7 @@ process pCountFilter {
 
     label 'tiny'
 
-    tag "Sample: $sample, BinID: $binID"
+    tag "Sample: $sample"
 
     container "${params.ubuntu_image}"
 
@@ -78,7 +78,7 @@ process pCountFilter {
     tuple val(sample), path(fasta), path(metadata), path(header)
 
     output:
-    tuple val("${sample}"), val("${binID}"), path("filtered/*"), path(metadata), env(COUNT) 
+    tuple val("${sample}"), path("filtered/*"), path(metadata), env(COUNT) 
 
     shell:
     '''
@@ -111,17 +111,19 @@ workflow _wSplitFasta {
     SAMPLE_IDX = 0
     FILE_FASTA_IDX = 1 
     FILE_BIN_CONTIG_IDX = 2 
+    FILE_BIN_CONTIG_IDX_2 = 1
     FILE_CONTIG_HEADERS_IDX = 3 
     FILE_BIN_CONTIG_2_IDX = 3 
-    COUNT_IDX = 4 
-    CHUNK_SIZE_IDX = 5
+    FILE_BIN_CONTIG_2_IDX_2 = 2
+    COUNT_IDX = 3 
+    CHUNK_SIZE_IDX = 4
 
     input | map { dataset -> [dataset[SAMPLE_IDX].toString(), dataset[FILE_FASTA_IDX], dataset[FILE_BIN_CONTIG_IDX], dataset[FILE_CONTIG_HEADERS_IDX]] } \
 	     | set { fastaFile } 
 
 	 pCountFilter(splitFasta, fastaFile) |  combine(chunkSize)  \
 	   | flatMap { sample -> \
-   	Utils.splitFilesIndex(Integer.parseInt(sample[COUNT_IDX]), sample[CHUNK_SIZE_IDX], [sample[SAMPLE_IDX], sample[FILE_BIN_CONTIG_IDX], sample[FILE_BIN_CONTIG_2_IDX]]) } \
+   	Utils.splitFilesIndex(Integer.parseInt(sample[COUNT_IDX]), sample[CHUNK_SIZE_IDX], [sample[SAMPLE_IDX], sample[FILE_BIN_CONTIG_IDX_2], sample[FILE_BIN_CONTIG_2_IDX_2]]) } \
 	   | set { chunks } 
   emit:
     chunks
