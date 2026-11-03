@@ -287,6 +287,7 @@ process pSelectBestBins {
     }
 
     input:
+    val(weight)
     tuple val(sample), val(method), path(checkmFiles, stageAs: 'checkm/checkm*'), path(bins1, stageAs: 'bins1/*'), path(bins2, stageAs: 'bins2/*'), val(isProcessed), path(contigs) 
 
     output:
@@ -305,7 +306,7 @@ process pSelectBestBins {
     bins = [bins1, bins2]
     BINS_POST = bins[POST]
     BINS_PRE = bins[PRE]
-    WEIGHT = 1
+    WEIGHT = weight
     """
     mkdir final_bins
 
@@ -525,6 +526,7 @@ workflow _wMAGScoT {
 
 workflow _wImproveWithBinSpreader {
     take:
+        weight
         binsPre
         binsPost
         contigs
@@ -563,7 +565,9 @@ workflow _wImproveWithBinSpreader {
                 return [id, label, zip.collect{it[0]}, zip.collect{it[1]}, zip.collect{it[2]}, contigs]
             }
             | map { sample, method, checkm, allBins, isProcessed, contigs -> [sample, [method], checkm, allBins[0], allBins[1], isProcessed, contigs] } 
-            | pSelectBestBins
+	    | set { pSelectBestBinsInput  }
+            
+        pSelectBestBins(weight, pSelectBestBinsInput)
 
         pSelectBestBins.out.bins | set { bins } 
         pSelectBestBins.out.notBinned | set { notBinned }
@@ -604,7 +608,7 @@ workflow _wBinSpreaderPreProcessing {
             && params.steps.binRefinement.containsKey("preBinSpreader")
             && params.steps.binRefinement.preBinSpreader.additionalParams.improve){
 
-            _wImproveWithBinSpreader(inputBins, bins, contigs, inputBins 
+            _wImproveWithBinSpreader(channel.value(params.steps.binRefinement.preBinSpreader.additionalParams.weight), inputBins, bins, contigs, inputBins 
                 | mix(bins) 
                 | map { sample, bins, method -> [sample, bins, method, Output.getOutput(sample, params.runid, "refinement/preBinSpreader/checkm2", params.modules.binning, "")]}) 
             _wImproveWithBinSpreader.out.bins | set { bins } 
@@ -646,7 +650,7 @@ workflow _wBinSpreaderPostProcessing {
             && params.steps.binRefinement.containsKey("postBinSpreader")
             && params.steps.binRefinement.postBinSpreader.additionalParams.improve){
 
-            _wImproveWithBinSpreader(inputBins, bins, contigs, inputBins 
+            _wImproveWithBinSpreader(channel.value(params.steps.binRefinement.postBinSpreader.additionalParams.weight), inputBins, bins, contigs, inputBins 
                 | mix(bins) 
                 | map { sample, bins, method -> [sample, bins, method, Output.getOutput(sample, params.runid, "refinement/postBinSpreader/checkm2", params.modules.binning, "")]})
             _wImproveWithBinSpreader.out.bins | set { bins } 
