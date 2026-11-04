@@ -92,7 +92,7 @@ jobs:
       - name: Test Full Pipeline run with eukaryotic sequences
         run: |
           bash ./scripts/test_fullPipeline.sh " -c test_data/assets/aws.config " \
-               ./example_params/fullPipeline_eukaryotes.yml "${WORK_DIR}" ${PROFILE}  || exit 1
+               ./example_params/fullPipeline_eukaryotes.yml "${WORK_DIR}/${{ github.job }}" ${PROFILE}  || exit 1
 
   full_pipeline_ont:
     timeout-minutes: 2500
