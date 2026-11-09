@@ -690,7 +690,7 @@ jobs:
                                MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
                                MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/kegg \
                                MODULE_DB_TEST_YML=example_params/annotation.yml \
-                               MODULE_DB_TEST_YML_PATH="'.steps.annotation.keggFromMMseqs2.database=env(database),del(.steps.annotation.rgi),.steps.annotation.metaeuk)'" \
+                               MODULE_DB_TEST_YML_PATH="'.steps.annotation.keggFromMMseqs2.database=env(database),del(.steps.annotation.rgi,.steps.annotation.metaeuk)'" \
                                MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/kegg_yaml_database_tests" \
                                MODULE_DB_TEST_SKIP_TESTS="https" \
                                MODULE_DB_TEST_REMOVE_DB="yes"
