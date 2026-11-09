@@ -182,7 +182,9 @@ process pPlasClass {
 
 process pPlaton {
 
-    label 'highmemMedium'
+    memory { Utils.getMemoryResources(params.resources.large, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.large, "${sample}", task.attempt, params.resources) }
 
     tag "Sample: $sample, BinId: $binID"
 

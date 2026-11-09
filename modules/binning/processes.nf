@@ -120,7 +120,9 @@ process pMinimap2 {
 
     container "${params.samtools_image}"
 
-    label 'highmemLarge'
+    memory { Utils.getMemoryResources(params.resources.large, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.large, "${sample}", task.attempt, params.resources) }
 
     tag "Sample: $sample"
 
@@ -198,7 +200,9 @@ process pBowtie2 {
 
     container "${params.bowtie_image}"
 
-    label 'highmemLarge'
+    memory { Utils.getMemoryResources(params.resources.large, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.large, "${sample}", task.attempt, params.resources) }
 
     tag "Sample: $sample"
 
@@ -245,7 +249,9 @@ process pBwa {
 
     container "${params.samtools_bwa_image}"
 
-    label 'highmemLarge'
+    memory { Utils.getMemoryResources(params.resources.large, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.large, "${sample}", task.attempt, params.resources) }
 
     cache 'deep'
 
@@ -291,7 +297,9 @@ process pBwa2 {
 
     container "${params.samtools_bwa2_image}"
 
-    label 'highmemLarge'
+    memory { Utils.getMemoryResources(params.resources.large, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.large, "${sample}", task.attempt, params.resources) }
 
     cache 'deep'
 
