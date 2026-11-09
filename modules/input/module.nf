@@ -17,9 +17,6 @@ process pGetSRAPath {
 
     tag "Accession: $sraid"
 
-    when:
-    params?.input.containsKey("SRA") && params?.input.SRA.containsKey("S3") 
-
     input:
     val(sraid)
 
@@ -63,9 +60,6 @@ process pGetSRAMetadataFromRemote {
 
     containerOptions (params.apptainer ? "" : Utils.getDockerNetwork())
     
-    when:
-    params?.input.containsKey("SRA")
-
     input:
     val(sraid)
 
@@ -93,9 +87,6 @@ process pGetSRAIDsFromDB {
     container "${params.ubuntu_image}"
 
     errorStrategy 'retry'
-
-    when:
-    params?.input.containsKey("SRA")
 
     input:
     val("sraids")
@@ -127,9 +118,6 @@ process pGetSRAIDsFromRemote {
 
     tag "Accession: $sraid"
     
-    when:
-    params?.input.containsKey("SRA")
-
     input:
     val(sraid)
 
