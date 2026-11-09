@@ -28,4 +28,14 @@ def mapJoin(channel_a, channel_b, key_a, key_b) {
         | map { it[0][1] + it[1][1] }
 }
 
-
+/*
+*
+* This function decides if the MMSeqs taxonomy process should be executed on MAGs.
+*
+*/
+def runMMSeqsTaxonomy(isMMSeqsTaxonomySettingSet, isBinned, isPlasmid, runOnBinned) {
+    // True if the MMSeqsTaxonomy setting is set and plasmids are not used as input and 
+    // either the sample is not binned 
+    // or should explicitly run on binned samples 
+    return isMMSeqsTaxonomySettingSet && !isPlasmid && (!isBinned || runOnBinned)
+}

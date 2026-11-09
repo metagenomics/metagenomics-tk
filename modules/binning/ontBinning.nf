@@ -131,6 +131,7 @@ workflow wLongReadBinningList {
     _wBinning(contigs, inputReads, inputGraph, headerMapping, assemblyInfo, medianQuality)
 
     emit:
+    binContigMapping = _wBinning.out.binContigMapping
     binsStats = _wBinning.out.binsStats
     bins = _wBinning.out.bins
     mapping = _wBinning.out.mapping
@@ -194,6 +195,11 @@ workflow _wRunBinningTools {
         | mix(pMetaCoAG.out.notBinned)
         | set { notBinned }
 
+    pMetabat.out.binContigMapping
+        | mix(pSemiBin2.out.binContigMapping)
+        | mix(pMetaCoAG.out.binContigMapping)
+        | set { binContigMapping }
+
     // Compute bin statistics (e.g. N50, average coverage depth, etc. ...)
     pMetabat.out.binContigMapping
         | join(mappedReads, by: SAMPLE_IDX)
@@ -221,6 +227,7 @@ workflow _wRunBinningTools {
     bins = bins
     notBinned = notBinned
     binStatsInput = binStatsInput
+    binContigMapping = binContigMapping
 }
 /*
 * The format of every channel is described in the corresponding File entrypoint.
@@ -272,6 +279,7 @@ workflow _wBinning {
     _wRunBinningTools.out.bins | set { bins }
     _wRunBinningTools.out.notBinned | set { notBinned }
     _wRunBinningTools.out.binStatsInput | set { binStatsInput }
+    _wRunBinningTools.out.binContigMapping | set { binContigMapping }
 
     emptyFile = file(params.tempdir + "/empty")
 
@@ -314,6 +322,7 @@ workflow _wBinning {
     binsStats = binMap
     bins = bins
     mapping = mappedReads
+    binContigMapping = binContigMapping
     notBinnedContigs = notBinned
     unmappedReads = pMinimap2.out.unmappedReads
     contigCoverage = pCovermContigsCoverage.out.coverage

@@ -181,4 +181,27 @@ Result `*.tsv` file filled with KEGG information (like modules, KO's, ...) which
 
 The `*rgi.tsv` files contain the found CARD genes.
 
+### MetaEuk
 
+MetaEuk is a modular toolkit designed for large-scale gene discovery and annotation in eukaryotic metagenomic contigs.
+Contigs that are labeled as eukaryotic by Whokaryote are provided as input to MetaEuk.
+
+`*.tax_per_contig.tsv`
+
+: The taxonomic classification for each input contig.
+
+`*.tax_per_pred.tsv`
+
+: The taxonomic classification for each predicted gene.
+
+`*.faa`
+
+: Protein Sequences
+
+`*.fas`
+
+: Nucleotide sequences of the predicted protein-coding genes
+
+`*.gff`
+
+: Sequences and annotation of the predicted protein-coding genes in GFF format.
