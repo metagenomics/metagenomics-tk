@@ -421,16 +421,18 @@ process pUnzipGroup {
   path(x, stageAs: "input/*")
 
   output:
-  path("*", type: "file")
+  path("output/*", type: "file")
 
   script:
   '''
+  mkdir -p output
   for f in input/*; do  
-	cp $f . ; 
 	name=$(basename $f); 
-	if gzip -t $name; then 
-		gunzip  -d $name ;
-	fi 
+	if gzip -t "$f" 2>/dev/null; then
+          gzip -dc "$f" > "output/${name%.gz}"
+      	else
+          cp -L "$f" "output/$name"
+      	fi
   done
   '''
 }
