@@ -26,8 +26,6 @@ process pPredictFlavor {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "predictFlavor", filename) }
 
-    when params?.steps.containsKey("assembly") && params?.steps?.assembly.containsKey("megahit")
-
     container "${params.assemblerResourceEstimator_image}"
 
     input:
@@ -112,8 +110,6 @@ process pMegahit {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "megahit", filename) }
 
-    when params?.steps.containsKey("assembly") && params?.steps?.assembly.containsKey("megahit")
-
     container "${params.megahit_image}"
 
     input:
@@ -141,8 +137,6 @@ process pMetaspades {
     memory { Utils.getMemoryResources(params.resources.highmemLarge, "${sample}", task.attempt, params.resources) }
 
     cpus { Utils.getCPUsResources(params.resources.highmemLarge, "${sample}", task.attempt, params.resources) }
-
-    when params?.steps.containsKey("assembly") && params?.steps?.assembly.containsKey("metaspades")
 
     container "${params.metaspades_image}"
 
@@ -385,8 +379,7 @@ workflow _wCalculateMegahitResources {
 
          model = Channel.empty()
          modelType = Channel.empty()
-         if(params.steps.containsKey("assembly") && params.steps.assembly.containsKey("megahit") \
-		&& params?.steps?.assembly?.megahit?.additionalParams.contains("meta-sensitive")){
+         if(params.steps.assembly.megahit.additionalParams.contains("meta-sensitive")){
          	model = Channel.value(file("${projectDir}/assets/models/assembler/megahit/sensitive.pkl"))
 		modelType = Channel.value("sensitive")
 	 } else {
@@ -427,17 +420,29 @@ workflow _wAssembly {
        nonpareil
        kmerFrequencies
      main:
-       _wCalculateMegahitResources(readsList, nonpareil, kmerFrequencies) | pMegahit
+       megahitContigs = channel.empty()
+       megahitFastg = channel.empty()
+       if(params.steps.containsKey("assembly") && params.steps.assembly.containsKey("megahit")) {
+         _wCalculateMegahitResources(readsList, nonpareil, kmerFrequencies) | pMegahit
+         pMegahit.out.contigs | set { megahitContigs }
+         pMegahit.out.fastg | set { megahitFastg }
+       }
 
        // Metaspades does only accept paired end
        // Thats why orphaned reads are filtered out
        PAIRED_END_ID = 1
        SAMPLE_IDX = 0
-       readsList | map { seq -> [seq[SAMPLE_IDX], seq[PAIRED_END_ID]] } | pMetaspades
+       metaspadesContigs = channel.empty()
+       metaspadesFastg = channel.empty()
+       if(params.steps.containsKey("assembly") && params.steps.assembly.containsKey("metaspades")) {
+         readsList | map { seq -> [seq[SAMPLE_IDX], seq[PAIRED_END_ID]] } | pMetaspades
+         pMetaspades.out.contigs | set { metaspadesContigs }
+         pMetaspades.out.fastg | set { metaspadesFastg }
+       }
 
-       pMegahit.out.contigs | mix(pMetaspades.out.contigs) | set { contigs }
+       megahitContigs | mix(metaspadesContigs) | set { contigs }
 
-       pMegahit.out.fastg | mix(pMetaspades.out.fastg) | set { fastg }
+       megahitFastg | mix(metaspadesFastg) | set { fastg }
        
     emit:
       contigs = contigs

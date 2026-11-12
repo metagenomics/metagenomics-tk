@@ -36,8 +36,6 @@ process pMetaflye {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaflye", filename) }
 
-    when params?.steps.containsKey("assemblyONT") && params?.steps?.assemblyONT.containsKey("metaflye")
-
     container "${params.metaflye_image}"
 
     input:
@@ -88,8 +86,6 @@ process pMetaMDBG {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput("${sample}", params.runid, "metaMDBG", filename) }
 
-    when params?.steps?.containsKey("assemblyONT") && params?.steps?.assemblyONT?.containsKey("metaMDBG")
-    
     container "${params.metamdbg_image}"
 
     input:
@@ -198,15 +194,35 @@ workflow _wOntAssembly {
      take:
        readsList
      main:
-       readsList | pMetaflye
-       readsList | pMetaMDBG 
-       pMetaflye.out.contigs | mix(pMetaMDBG.out.contigs) | set { contigs }
-       pMetaflye.out.graph | mix(pMetaMDBG.out.graph) | set { graph }
-       pMetaflye.out.headerMapping | mix(pMetaMDBG.out.headerMapping) | set { headerMapping }
+       metaflyeContigs = channel.empty()
+       metaflyeGraph = channel.empty()
+       metaflyeHeaderMapping = channel.empty()
+       metaflyeInfo = channel.empty()
+       if(params.steps.containsKey("assemblyONT") && params.steps.assemblyONT.containsKey("metaflye")) {
+         readsList | pMetaflye
+         pMetaflye.out.contigs | set { metaflyeContigs }
+         pMetaflye.out.graph | set { metaflyeGraph }
+         pMetaflye.out.headerMapping | set { metaflyeHeaderMapping }
+         pMetaflye.out.info | set { metaflyeInfo }
+       }
+
+       metamdbgContigs = channel.empty()
+       metamdbgGraph = channel.empty()
+       metamdbgHeaderMapping = channel.empty()
+       if(params.steps.containsKey("assemblyONT") && params.steps.assemblyONT.containsKey("metaMDBG")) {
+         readsList | pMetaMDBG
+         pMetaMDBG.out.contigs | set { metamdbgContigs }
+         pMetaMDBG.out.graph | set { metamdbgGraph }
+         pMetaMDBG.out.headerMapping | set { metamdbgHeaderMapping }
+       }
+
+       metaflyeContigs | mix(metamdbgContigs) | set { contigs }
+       metaflyeGraph | mix(metamdbgGraph) | set { graph }
+       metaflyeHeaderMapping | mix(metamdbgHeaderMapping) | set { headerMapping }
 
      emit:
        contigs = contigs
        graph = graph
        mapping = headerMapping
-       info = pMetaflye.out.info
+       info = metaflyeInfo
 }
