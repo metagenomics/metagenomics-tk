@@ -39,3 +39,18 @@ def runMMSeqsTaxonomy(isMMSeqsTaxonomySettingSet, isBinned, isPlasmid, runOnBinn
     // or should explicitly run on binned samples 
     return isMMSeqsTaxonomySettingSet && !isPlasmid && (!isBinned || runOnBinned)
 }
+
+/*
+*
+* The annotation step searches the proteins either with MMseqs2 or with DIAMOND, but never with both.
+* Results of both tools would be mixed up in the steps that use them (e.g. KEGG and the export).
+*
+*/
+def checkAnnotationSearchTool(annotationParams) {
+    if (annotationParams.containsKey("mmseqs2") && annotationParams.containsKey("diamond")) {
+        error "Only one of 'mmseqs2' and 'diamond' can be configured in the annotation step."
+    }
+    if (annotationParams.containsKey("keggFromMMseqs2")) {
+        error "The annotation key 'keggFromMMseqs2' was renamed to 'keggFromBlast'."
+    }
+}

@@ -244,35 +244,35 @@ workflow _wExportPipeline {
     selectedAnnotation | filter({ sra, path -> annotationMmseqsUnbinnedTaxonomyPattern.matcher(path.toString()).matches()}) \
      | map { sra, path -> [sra, TAXONOMY_DB, path, MAX_BIN_COUNTER]  } | set { mmseqsUnbinnedTaxonomy }
 
-    // get MMseqs binned taxonomy files   output/test2/1/annotation/1.0.0/mmseqs2/ncbi_nr/   test2_unbinned.ncbi_nr.105001.112000.blast.tsv
+    // get MMseqs binned taxonomy files  
     Pattern annotationMmseqsBinnedTaxonomyPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major \
 	+ '..*/mmseqs2_taxonomy/.*/.*_binned.' + TAXONOMY_DB + '.taxonomy.tsv$' )
     selectedAnnotation | filter({ sra, path -> annotationMmseqsBinnedTaxonomyPattern.matcher(path.toString()).matches()}) \
      | map { sra, path -> [sra, TAXONOMY_DB, path, MAX_BIN_COUNTER] } | mix(mmseqsUnbinnedTaxonomy) | set { mmseqsTaxonomy }
 
-    // get MMseqs unbinned blast files
-    Pattern annotationMmseqsUnirefUnbinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/mmseqs2/.*/.*_unbinned.' + BLAST_DB + '.blast.tsv$' )
-    selectedAnnotation | filter({ sra, path -> annotationMmseqsUnirefUnbinnedPattern.matcher(path.toString()).matches()}) \
-     | map { sra, path -> [sra, BLAST_DB, path, MAX_BIN_COUNTER] } | set { mmseqsUnirefUnbinnedBlast }
+    // get unbinned blast
+    Pattern annotationBlastUnirefUnbinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/(mmseqs2|diamond)/.*/.*_unbinned.' + BLAST_DB + '.blast.tsv$' )
+    selectedAnnotation | filter({ sra, path -> annotationBlastUnirefUnbinnedPattern.matcher(path.toString()).matches()}) \
+     | map { sra, path -> [sra, BLAST_DB, path, MAX_BIN_COUNTER] } | set { unirefUnbinnedBlast }
 
-    // get MMseqs binned blast files   output/test2/1/annotation/1.0.0/mmseqs2/ncbi_nr/   test2_unbinned.ncbi_nr.105001.112000.blast.tsv
-    Pattern annotationMmseqsUnirefBinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/mmseqs2/.*/.*_binned.' + BLAST_DB + '.blast.tsv$' )
-    selectedAnnotation | filter({ sra, path -> annotationMmseqsUnirefBinnedPattern.matcher(path.toString()).matches()}) \
+    // get binned blast files
+    Pattern annotationBlastUnirefBinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/(mmseqs2|diamond)/.*/.*_binned.' + BLAST_DB + '.blast.tsv$' )
+    selectedAnnotation | filter({ sra, path -> annotationBlastUnirefBinnedPattern.matcher(path.toString()).matches()}) \
      | map { sra, path -> [sra, BLAST_DB, path, MAX_BIN_COUNTER] } \
-     | mix(mmseqsUnirefUnbinnedBlast) | set { mmseqsUnirefBlast }
+     | mix(unirefUnbinnedBlast) | set { unirefBlast }
 
-    // get MMseqs unbinned kegg blast files
-    Pattern annotationMmseqsKeggUnbinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/mmseqs2/.*/.*_unbinned.kegg.blast.tsv$' )
-    selectedAnnotation | filter({ sra, path -> annotationMmseqsKeggUnbinnedPattern.matcher(path.toString()).matches()}) \
+    // get unbinned kegg blast files
+    Pattern annotationBlastKeggUnbinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/(mmseqs2|diamond)/.*/.*_unbinned.kegg.blast.tsv$' )
+    selectedAnnotation | filter({ sra, path -> annotationBlastKeggUnbinnedPattern.matcher(path.toString()).matches()}) \
      | map { sra, path -> [sra, "kegg", path, MAX_BIN_COUNTER] } \
-     | set { mmseqsKeggUnbinnedBlast }
+     | set { keggUnbinnedBlast }
 
-    // get MMseqs binned blast files
-    Pattern annotationMmseqsKeggBinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/mmseqs2/.*/.*_binned.kegg.blast.tsv$' )
-    selectedAnnotation | filter({ sra, path -> annotationMmseqsKeggBinnedPattern.matcher(path.toString()).matches()}) \
+    // get binned kegg blast files
+    Pattern annotationBlastKeggBinnedPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + '..*/(mmseqs2|diamond)/.*/.*_binned.kegg.blast.tsv$' )
+    selectedAnnotation | filter({ sra, path -> annotationBlastKeggBinnedPattern.matcher(path.toString()).matches()}) \
      | map { sra, path -> [sra, "kegg", path, MAX_BIN_COUNTER] } \
-     | mix(mmseqsKeggUnbinnedBlast) \
-     | set { mmseqsKeggBlast }
+     | mix(keggUnbinnedBlast) \
+     | set { keggBlast }
 
     // get gtdbtk summary files
     Pattern gtdbSummaryPattern = Pattern.compile('.*/magAttributes/' + params.modules.magAttributes.version.major + '..*/.*/.*_gtdbtk_generated_summary_raw_combined.tsv$' )
@@ -312,7 +312,7 @@ workflow _wExportPipeline {
         ffn, \
         faa, \
         mmseqsTaxonomy, \
-        mmseqsUnirefBlast | mix(mmseqsKeggBlast) \
+        unirefBlast | mix(keggBlast) \
     )
 }
 
@@ -327,7 +327,7 @@ workflow _wExportPipeline {
 * checkm: [test2, *_checkm_generated.tsv]
 * gff,ffn,faa: [test2, test2_bin.2.fa, /path/to/test2_bin.2.prokka.gff.gz, counter] where counter describes the number of input files to expect
 * mmseqsTaxonomy: [test1, ncbi_nr, /path/to/test1_binned.ncbi_nr.taxonomy.tsv, 10000]
-* mmseqsBlast:
+* blast:
 *  [test2, bacmet20_predicted, /path/to/*.bacmet20_predicted.blast.tsv]
 *  [test2, kegg, /path/to/*kegg.blast.tsv]
 */
@@ -342,7 +342,7 @@ workflow wEMGBList {
     ffn
     faa
     mmseqsTaxonomy
-    mmseqsBlast
+    blast
   main:
     SAMPLE_IDX = 0
     contigs |  combine(mapping, by: SAMPLE_IDX) | combine(bins, by: SAMPLE_IDX) | pEMGBAnnotatedContigs
@@ -357,7 +357,7 @@ workflow wEMGBList {
 	if(!params.steps.export.emgb.additionalParams.blastDB.trim().isEmpty()){
 		BLAST_DB = params.steps.export.emgb.additionalParams.blastDB
 	}
-    	mmseqsBlast | filter { sample, db, blastResult, counter -> db == BLAST_DB } \
+    	blast | filter { sample, db, blastResult, counter -> db == BLAST_DB } \
 		| map { sample, db, blastResult, counter -> tuple(groupKey(sample.toString(), counter), blastResult) } \
 		| groupTuple(remainder: true) | map { sample, blastResult -> [sample.toString(), blastResult] } | set { selectedDBBlastResults }
     }
@@ -375,7 +375,7 @@ workflow wEMGBList {
 		| map { sample, blastResults -> [sample.toString(), blastResults]} | set { selectedTaxonomyDBResult }
     }
 
-    mmseqsBlast | filter { sample, db, blastResult, counter -> db == "kegg" } \
+    blast | filter { sample, db, blastResult, counter -> db == "kegg" } \
 		| map { sample, db, blastResult, counter -> tuple(groupKey(sample, counter), blastResult) } \
 		| groupTuple(remainder: true) | map { sample, blastResult -> [sample.toString(), blastResult] } | set { selectedKeggBlastResults }
 

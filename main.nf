@@ -823,7 +823,7 @@ workflow wFullPipeline {
         wAnnotateBinsList.out.mmseqs2_taxonomy | mix(wAnnotateUnbinnedList.out.mmseqs2_taxonomy) \
 		| combine(binsCounter \
 		| map { sample, counter -> [sample, MMSEQS_TAX_RUN_ON_MAGS ? MMSEQS_TAX_RUN_MAGS_AND_NOT_BINNED:MMSEQS_TAX_RUN_ONLY_ON_NOT_BINNED ] }, by: SAMPLE_IDX), \
-        wAnnotateBinsList.out.mmseqs2_blast | mix(wAnnotateUnbinnedList.out.mmseqs2_blast)\
+        wAnnotateBinsList.out.blast | mix(wAnnotateUnbinnedList.out.blast)\
                 | map { sample, type, db, blastResult -> [sample, db, blastResult] } \
 		| combine(binsCounter | map { sample, counter -> [sample, counter+ADDITIONAL_NOT_BINNED] }, by: SAMPLE_IDX),  \
    )

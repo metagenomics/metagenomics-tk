@@ -510,7 +510,7 @@
           "displayName": "db path for mmseqs2_taxonomy vs gtdb.",
           "hidden": true
         },
-        "steps.annotation.keggFromMMseqs2.database.extractedDBPath": {
+        "steps.annotation.keggFromBlast.database.extractedDBPath": {
           "type": "string",
           "description": "db path for kegg from mmseqs2.",
           "displayName": "db path for kegg from mmseqs2.",

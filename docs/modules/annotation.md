@@ -73,9 +73,45 @@ nextflow secrets set S3_vfdb_ACCESS XXXXXXX
 nextflow secrets set S3_vfdb_SECRET XXXXXXX
 ```
 
+#### DIAMOND
+
+DIAMOND (https://github.com/bbuchfink/diamond) is used to search predicted proteins against protein databases.
+It is configured in the “diamond” section of the annotation step, replacing the “mmseqs2” section.
+Only one of these two sections can be configured. If both are present, the workflow will stop with an error at start-up.
+The taxonomic classification (`mmseqs2_taxonomy`), however, is a separate section and can be used alongside `diamond`.
+A DIAMOND database is a single “.dmnd” file that can be created using “diamond makedb”.
+This file is distributed in gzip format (”.dmnd.gz”), which is decompressed by the toolkit. Files that are not compressed (.dmnd) are also accepted.
+The “download.source” link must point directly to the file. The script “scripts/mmseqs2ToDiamond.sh” creates both files from an existing MMseqs2 database.
+See [database section](../database.md/#database-input-configuration) for possible download strategies.
+The optional “chunkSize” parameter defines how many sequences are searched in one task.
+DIAMOND parameters can be set via additionalParams.search. Additional output columns can be added via “additionalParams.additionalColumns” (see “--outfmt 6” in the DIAMOND documentation).
+Secrets for S3 access are configured in the same way as for MMseqs2 (`S3_<database>_ACCESS` and `S3_<database>_SECRET`).</database></database>).
+
+Example:
+
+```
+....
+      diamond:
+        chunkSize: 20000
+        bacmet:
+          additionalParams:
+            search: ' --very-sensitive --max-target-seqs 50 -e 1e-5'
+            additionalColumns: ""
+          database:
+            download:
+              source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet_out.dmnd
+              md5sum: d1dca282d2cbe62375d0289a8d8f9779
+....
+```
+
+The results of DIAMOND are used by the KEGG and the export step in the same way as the results of MMseqs2.
+The database names are the same as for MMseqs2: the KEGG step uses the database `kegg` and the export uses the database
+that is set via `blastDB` (see [export](export.md)).
+
 #### KEGGFromBlast
 
-KeGGFromBlast is only executed if genes are searched against a KEGG database. There must be a `kegg` identifier (see example configuration file) in the annotation section.
+KeGGFromBlast is only executed if genes are searched against a KEGG database. There must be a `kegg` identifier (see example configuration file) in the `mmseqs2` or `diamond` section of the annotation step.
+It is configured via `keggFromBlast` and its results are written to the `keggFromBlast` output directory, independent of the search tool. This key was called `keggFromMMseqs2` in earlier versions.
 KeGGFromBlast needs a kegg database as input which must be a tar.gz file.
 See [database section](../database.md) for possible download strategies.
 If you need credentials to access your files via S3 then please use the following command:
@@ -136,6 +172,15 @@ nextflow secrets set S3_rgi_SECRET XXXXXXX
 ### MMseqs2
 
 Calculated significant matches of a nucleotide/protein query which was compared against a user provided set of databases.
+The result is one tab separated file per bin and database.
+
+### DIAMOND
+
+Calculated significant matches of a protein query which was compared against a user provided set of DIAMOND databases.
+The result is one tab separated file per bin and database. It has the same columns as the MMseqs2 result
+(`query`, `target`, `pident`, `alnlen`, `mismatch`, `gapopen`, `qstart`, `qend`, `tstart`, `tend`, `evalue`, `bits`, `qlen`, `tlen`, `qcov`, `tcov`
+followed by `SAMPLE`, `BIN_ID` and `CONTIG` and the additional columns).
+The coverages `qcov` and `tcov` are given as fractions between 0 and 1.
 
 ### MMseqs2 - Taxonomy
 
