@@ -3,7 +3,9 @@ include { wSaveSettingsList } from '../config/module'
 
 process pFastpSplit {
 
-    label 'highmemMedium'
+    memory { Utils.getMemoryResources(params.resources.medium, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.medium, "${sample}", task.attempt, params.resources) }
 
     tag "Sample: $sample"
 
@@ -13,7 +15,7 @@ process pFastpSplit {
 
     container "${params.fastp_image}"
 
-    time params.steps.containsKey("qc") ? Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastp.defaults, params.resources.highmemMedium) : ""
+    time params.steps.containsKey("qc") ? Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastp.defaults, params.resources.medium) : ""
 
     input:
     tuple val(sample), path(read1, stageAs: "read1.fq.gz"), path(read2, stageAs: "read2.fq.gz"), env(isInterleaved)
@@ -177,7 +179,9 @@ process pKMC {
 
 process pFastpSplitDownload {
 
-    label 'highmemMedium'
+    memory { Utils.getMemoryResources(params.resources.medium, "${sample}", task.attempt, params.resources) }
+
+    cpus { Utils.getCPUsResources(params.resources.medium, "${sample}", task.attempt, params.resources) }
 
     tag "Sample: $sample"
 
@@ -185,7 +189,7 @@ process pFastpSplitDownload {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "fastp", params.modules.qc, filename) }
 
-    time params.steps.containsKey("qc") ? Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastpDownload.defaults, params.resources.highmemMedium) : ""
+    time params.steps.containsKey("qc") ? Utils.setTimeLimit(params.steps.qc.fastp, params.modules.qc.process.fastpDownload.defaults, params.resources.medium) : ""
 
     container "${params.fastp_image}"
 
