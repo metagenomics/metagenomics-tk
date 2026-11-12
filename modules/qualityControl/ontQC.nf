@@ -13,8 +13,6 @@ process pPorechop {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "porechop", params.modules.qcONT, filename) }, pattern: "{.command.sh,.command.out,.command.err,.command.log}"
 
-    when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("porechop")
-
     container "${params.porechop_image}"
 
     input:
@@ -45,8 +43,6 @@ process pCount {
 
     container "${params.ubuntu_image}"
 
-    when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("porechop")
-
     input:
     tuple val(sample), path(fastq)
 
@@ -72,8 +68,6 @@ process pCountDownload {
     tag "Sample: ${sample}"
 
     container "${params.ubuntu_image}"
-
-    when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("porechop")
 
     input:
     tuple val(sample), env(readUrl)
@@ -139,8 +133,6 @@ process pFilterHumanONT {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "filterHumanONT", params.modules.qcONT, filename) }
 
-    when params.steps.containsKey("qcONT") && params?.steps?.qcONT.containsKey("filterHumanONT")
-
     container "${params.scrubber_image}"
 
     input:
@@ -173,8 +165,6 @@ process pNanoPlot {
     tag "Sample: ${sample}"
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "nanoplot", params.modules.qcONT, filename) }
-
-    when params?.steps?.containsKey("qcONT") && params?.steps?.qcONT.containsKey("nanoplot")
 
     container "${params.nanoplot_image}"
 
@@ -269,11 +259,15 @@ workflow _wONTFastq {
         reads | set { filteredSeqs }
     }
 
-    filteredSeqs | pNanoPlot
+    medianQuality = Channel.empty()
+    if (params.steps.containsKey("qcONT") && params.steps.qcONT.containsKey("nanoplot")) {
+        filteredSeqs | pNanoPlot
+        pNanoPlot.out.medianQuality | set { medianQuality }
+    }
 
     emit:
     reads = reads
-    medianQuality = pNanoPlot.out.medianQuality
+    medianQuality = medianQuality
 }
 
 
