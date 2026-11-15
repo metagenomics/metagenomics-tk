@@ -118,3 +118,51 @@ workflow _wCollectMetaEuk {
         | combine(fileEnding)
         | pCollectFile
 }
+
+
+/**
+*
+* The pCount process is designed to count the number of sequences in a given FASTA file.
+* It uses the seqkit tool to calculate the sequence statistics of a FASTA file, specifically extracting the sequence count.
+*
+**/
+process pCount {
+
+    label 'tiny'
+
+    tag "Sample: $sample, BinID: $binID"
+
+    container "${params.ubuntu_image}"
+
+    input:
+    tuple val(sample), val(binID), path(fasta), path(metadata)
+
+    output:
+    tuple val("${sample}"), val("${binID}"), path(fasta), path(metadata), env(COUNT) 
+
+    shell:
+    '''
+    COUNT=$(seqkit stats -T <(cat !{fasta}) | cut -d$'\t' -f 4 | tail -n 1)
+    '''
+}
+
+workflow _wSplit {
+  take:
+    input
+    chunkSize
+  main:
+    SAMPLE_IDX = 0
+    FILE_IDX = 1
+    FILE_2_IDX = 2
+    FILE_3_IDX = 3
+    COUNT_IDX=4
+    CHUNK_SIZE_IDX=5
+    ID_PLACEHOLDER = ""
+
+    input | map { dataset -> [dataset[SAMPLE_IDX].toString(), ID_PLACEHOLDER, dataset[FILE_IDX], dataset[FILE_2_IDX]] } \
+	| pCount | combine(chunkSize) | flatMap { sample -> \
+   	Utils.splitFilesIndex(Integer.parseInt(sample[COUNT_IDX]), sample[CHUNK_SIZE_IDX], [sample[SAMPLE_IDX], sample[FILE_2_IDX], sample[FILE_3_IDX]]) } \
+	| set { chunks }   	
+  emit:
+    chunks
+}
