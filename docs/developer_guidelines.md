@@ -351,6 +351,10 @@ where
 You can test your tool against different database inputs by using the `make runDatabaseTest` command. You will have to specify multiple databases 
 that are accessible via https, S3, local path etc. Please check github actions file for how to run these tests.
 
+The configurations that are created for the different database inputs are tested in parallel.
+By default four configurations run at the same time. The number can be changed with the environment variable
+`MODULE_DB_TEST_PARALLEL` (e.g. `make runDatabaseTest MODULE_DB_TEST_PARALLEL=1 ...`). 
+
 ## Polished Variables
 
 Sometimes user input variables must be polished before they can used in our code.
