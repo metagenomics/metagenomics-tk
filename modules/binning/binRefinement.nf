@@ -205,7 +205,7 @@ process pBinSpreader {
     containerOptions params.apptainer ? "" : Utils.getDockerNetwork() + " -u \$(id -u):\$(id -g) "
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename ->
-        Output.getOutput("${sample}", params.runid, "${output}", params.modules.binning, filename)
+        Output.getOutput("${sample}", params.runid, "${output}/${methodOutput}", params.modules.binning, filename)
     }
 
     input:
@@ -221,6 +221,7 @@ process pBinSpreader {
 
     script:
     outputMethodList = method + "BinSpreader"
+    methodOutput = method.join("")
     """
 
     csvtk cut -t -f CONTIG,BIN_ID ${contigMaps} | tail -n +2 > binSpreaderInputMap.tsv
@@ -579,7 +580,7 @@ workflow _wImproveWithBinSpreader {
 }
 
 
-workflow _wBinSpreaderPreProcessing {
+workflow _wBinSpreaderAfterPerSample {
     take:
         contigs
         inputBins
@@ -598,7 +599,7 @@ workflow _wBinSpreaderPreProcessing {
          | combine(reads, by: SAMPLE_IDX)
          | set { binSpreaderInput }
 
-        pBinSpreader(binSpreaderInput, binSpreaderParameters, channel.value("refinement/postBinSpreader")) 
+        pBinSpreader(binSpreaderInput, binSpreaderParameters, channel.value("refinement/binSpreaderAfterPerSample")) 
 
         pBinSpreader.out.bins | set { bins } 
         pBinSpreader.out.notBinned | set { notBinned }
@@ -622,7 +623,7 @@ workflow _wBinSpreaderPreProcessing {
 }
 
 
-workflow _wBinSpreaderPostProcessing {
+workflow _wBinSpreaderAfterRefinement {
     take:
         contigs
         inputBins
@@ -640,7 +641,7 @@ workflow _wBinSpreaderPostProcessing {
          | combine(reads, by: SAMPLE_IDX)
          | set { binSpreaderInput }
 
-        pBinSpreader(binSpreaderInput, binSpreaderParameters, channel.value("refinement/postBinSpreader"))
+        pBinSpreader(binSpreaderInput, binSpreaderParameters, channel.value("refinement/binSpreaderAfterRefinement"))
 
         pBinSpreader.out.bins | set { bins }
         pBinSpreader.out.notBinned | set { notBinned }
@@ -754,10 +755,10 @@ workflow _wRefinement {
     allNotBinned | mix(inputNotBinned) | set {allNotBinned}
 
     if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("preBinSpreader")) {
-        _wBinSpreaderPreProcessing(contigs, inputBins, binContigMapping, gfa, paths, reads, channel.value(params.steps.binRefinement.preBinSpreader.additionalParams.binSpreader))
-        _wBinSpreaderPreProcessing.out.bins | set { bins }
-        _wBinSpreaderPreProcessing.out.notBinned | set { notBinned }
-        _wBinSpreaderPreProcessing.out.binContigMapping | set { binContigMapping }
+        _wBinSpreaderAfterPerSample(contigs, inputBins, binContigMapping, gfa, paths, reads, channel.value(params.steps.binRefinement.preBinSpreader.additionalParams.binSpreader))
+        _wBinSpreaderAfterPerSample.out.bins | set { bins }
+        _wBinSpreaderAfterPerSample.out.notBinned | set { notBinned }
+        _wBinSpreaderAfterPerSample.out.binContigMapping | set { binContigMapping }
 
         binsToEvaluate | mix(bins) | set {binsToEvaluate} 
         allNotBinned | mix(notBinned) | set {allNotBinned}
@@ -795,10 +796,10 @@ workflow _wRefinement {
     }
 
     if (params.steps.containsKey("binRefinement") && params.steps.binRefinement.containsKey("postBinSpreader")) {
-        _wBinSpreaderPostProcessing(contigs, bins, binContigMapping, gfa, paths, reads, channel.value(params.steps.binRefinement.postBinSpreader.additionalParams.binSpreader))
-        _wBinSpreaderPostProcessing.out.bins | set { bins }
-        _wBinSpreaderPostProcessing.out.notBinned | set { notBinned }
-        _wBinSpreaderPostProcessing.out.binContigMapping | set { binContigMapping }
+        _wBinSpreaderAfterRefinement(contigs, bins, binContigMapping, gfa, paths, reads, channel.value(params.steps.binRefinement.postBinSpreader.additionalParams.binSpreader))
+        _wBinSpreaderAfterRefinement.out.bins | set { bins }
+        _wBinSpreaderAfterRefinement.out.notBinned | set { notBinned }
+        _wBinSpreaderAfterRefinement.out.binContigMapping | set { binContigMapping }
 
         binsToEvaluate | mix(bins) | set {binsToEvaluate} 
         allNotBinned | mix(notBinned) | set {allNotBinned}
