@@ -1,0 +1,44 @@
+output: "output"
+runid: 1
+s3SignIn: false
+logDir: log
+tempdir: "tmp"
+scratch: "/vol/scratch"
+databases: "/vol/scratch/databases"
+publishDirMode: "symlink"
+steps:
+   annotation:
+      input: "test_data/annotation/input_small.tsv"
+      diamond:
+        chunkSize: 20000
+        bacmet:
+          additionalParams:
+            search: ' --very-sensitive --max-target-seqs 150 -e 1e-5'
+            additionalColumns: ""
+          database:
+            download:
+              source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/bacmet_out.dmnd
+              md5sum: d1dca282d2cbe62375d0289a8d8f9779
+      prokka:
+        prodigalMode: "meta"
+        defaultKingdom: false
+        additionalParams: " --mincontiglen 200 "
+resources:
+  highmemLarge:
+    cpus: 28
+    memory: 230
+  highmemMedium:
+    cpus: 14
+    memory: 113
+  large:
+    cpus: 28
+    memory: 58
+  medium:
+    cpus: 14
+    memory: 29
+  small:
+    cpus: 7
+    memory: 14
+  tiny:
+    cpus: 1
+    memory: 1

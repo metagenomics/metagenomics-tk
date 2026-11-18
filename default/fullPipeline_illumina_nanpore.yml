@@ -332,7 +332,7 @@ steps:
           download:
             source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r226_mmseqs_taxonomy.tar.gz
             md5sum: a1d77c776a16666ad97ce4945e5e7a35
-    keggFromMMseqs2:
+    keggFromBlast:
       database:
         download:
           source: s3://databases_internal/kegg-links-mirror-202506.tar.gz

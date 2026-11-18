@@ -13,7 +13,7 @@
     "steps.annotation.mmseqs2.uniref90.database.extractedDBPath",
     "steps.annotation.mmseqs2_taxonomy.gtdb.database.extractedDBPath",
     "steps.annotation.rgi.database.extractedDBPath",
-    "steps.annotation.keggFromMMseqs2.database.extractedDBPath",
+    "steps.annotation.keggFromBlast.database.extractedDBPath",
     "steps.plasmid.ViralVerifyPlasmid.database.extractedDBPath",
     "steps.plasmid.PLSDB.database.extractedDBPath",
     "steps.magAttributes.checkm2.database.extractedDBPath"
