@@ -42,17 +42,66 @@ bash ./scripts/createDatabaseYML.sh "${extractedPath}" "${md5sum}" "${https}" \
 	"${s5cmdCommand}" \
 	"${basePath}" "${yamlToTest}" "${yamlKey}" "${skipTests}"
 
-# Run tests on all configuration files
-for yml in ${basePath}/* ; do 
-	echo "Configuration File ${yml}"; 
-        workDir=${workDirBasePath}/work_$(basename ${yml})
-	mkdir -p ${workDir}
-	databaseDir="/vol/scratch/databases_$(cat /proc/sys/kernel/random/uuid)/"
-	bash ${scriptToTest} " --databases=${databaseDir} ${additionalYAMLParams} " ${yml} "${workDir}" "slurm" || exit 1
+# Run tests on all configuration files. The configurations are tested in parallel.
+# Every run gets its own work directory, log file, output directory and database directory.
+parallel="${MODULE_DB_TEST_PARALLEL:-4}"
+
+resultDir="${workDirBasePath}/results"
+rm -rf "${resultDir}"
+mkdir -p "${resultDir}"
+
+# Tests one configuration file. The output is written to a log file and the exit code to a separate file,
+# so that all configurations are tested even if one of them fails.
+function testConfiguration() {
+	local yml="$1"
+	local name
+	name=$(basename "${yml}")
+	local workDir="${workDirBasePath}/work_${name}"
+	mkdir -p "${workDir}"
+	local databaseDir="/vol/scratch/databases_$(cat /proc/sys/kernel/random/uuid)/"
+
+	# Parallel runs must not resume the session of another run, and need their own nextflow log file and output directory.
+	(
+		export RESUME=""
+		export NXF_LOG_FILE="${workDir}/nextflow.log"
+		bash "${scriptToTest}" " --databases=${databaseDir} --output=${workDir}/output ${additionalYAMLParams} " "${yml}" "${workDir}" "slurm"
+	) > "${resultDir}/${name}.log" 2>&1
+	echo $? > "${resultDir}/${name}.exit"
+
 	# Cleanup scratch directory
-        if [[ "$deleteScratchDir" == "yes" ]]; then
+	if [[ "$deleteScratchDir" == "yes" ]]; then
 		sinfo -o " %n %t"   | tail -n +2 | sed 's/^ //g' | grep -v " down" \
 			| grep -v " drain" | grep -v "dummy" \
 			| cut -d ' ' -f 1 | xargs -P 10 -I {}  ssh -tt ubuntu@{} " sudo rm -rf ${databaseDir} "
 	fi
+}
+export -f testConfiguration
+export resultDir workDirBasePath scriptToTest additionalYAMLParams deleteScratchDir
+
+echo "Testing configuration files in ${basePath} (max. ${parallel} in parallel)"
+find "${basePath}" -maxdepth 1 -type f | sort \
+	| xargs -P "${parallel}" -I {} bash -c 'testConfiguration "$1"' _ {}
+
+# Print the results. The logs of all configurations are printed as groups in GitHub Actions.
+failed=0
+for yml in $(find "${basePath}" -maxdepth 1 -type f | sort); do
+	name=$(basename "${yml}")
+	exitCode=$(cat "${resultDir}/${name}.exit" 2> /dev/null || echo "missing")
+	if [[ "${GITHUB_ACTIONS}" == "true" ]]; then echo "::group::Configuration File ${name} (exit code: ${exitCode})"; fi
+	echo "Configuration File ${yml}"
+	cat "${resultDir}/${name}.log" 2> /dev/null
+	if [[ "${GITHUB_ACTIONS}" == "true" ]]; then echo "::endgroup::"; fi
+	if [[ "${exitCode}" != "0" ]]; then failed=$((failed + 1)); fi
 done
+
+echo "Summary:"
+for yml in $(find "${basePath}" -maxdepth 1 -type f | sort); do
+	name=$(basename "${yml}")
+	exitCode=$(cat "${resultDir}/${name}.exit" 2> /dev/null || echo "missing")
+	if [[ "${exitCode}" == "0" ]]; then echo "  PASSED ${name}"; else echo "  FAILED ${name} (exit code: ${exitCode})"; fi
+done
+
+if [[ "${failed}" -gt 0 ]]; then
+	echo "${failed} configuration(s) failed."
+	exit 1
+fi
