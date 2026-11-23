@@ -2,6 +2,7 @@ include { _wAnalyseMMseqs2; _wAnalyseMMseqs2Taxonomy } from './mmseqs2'
 include { _wAnalyseDiamond } from './diamond'
 include { pDumpLogs } from '../utils/processes'
 include { checkAnnotationSearchTool } from '../utils/methods'
+include { _wCreateTaxonomy } from './taxonomy'
 
 /**
 *
@@ -85,17 +86,17 @@ process pKEGGFromBlast {
       '''
 }
 
-
 /**
 *
 * Analyses the predicted proteins of prokaryotic sequences.
 * DIAMOND or MMseqs2 is used for protein search.
-* The taxonomic classification is done via MMseqs2 (mmseqs2_taxonomy).
+* The taxonomic classification (MMseqs2 or Metabuli) is done in _wCreateTaxonomy.
 *
 **/
 workflow _wAnalyseProkaryotes {
   take:
     sourceChannel
+    contigs
     contig2GeneMapping
     proteins
     fastaCounter
@@ -112,7 +113,7 @@ workflow _wAnalyseProkaryotes {
     }
 
     // The taxonomic classification is independent of the search tool
-    _wAnalyseMMseqs2Taxonomy(sourceChannel, proteins, fastaCounter)
+    _wCreateTaxonomy(sourceChannel, contigs, proteins, fastaCounter, contig2GeneMapping)
 
     // The kegg database result is selected and adjusted for further analysis via pKEGGFromBlast
     collectedBlast
@@ -123,8 +124,8 @@ workflow _wAnalyseProkaryotes {
     pKEGGFromBlast.out.logs | pDumpLogs
   emit:
     keggAnnotation = pKEGGFromBlast.out.keggPaths
-    mmseqs2_kronaHtml = _wAnalyseMMseqs2Taxonomy.out.mmseqs2_kronaHtml
-    mmseqs2_krakenTaxonomy = _wAnalyseMMseqs2Taxonomy.out.mmseqs2_krakenTaxonomy
-    mmseqs2_taxonomy = _wAnalyseMMseqs2Taxonomy.out.mmseqs2_taxonomy
+    mmseqs2_kronaHtml = _wCreateTaxonomy.out.kronaHtml
+    mmseqs2_krakenTaxonomy = _wCreateTaxonomy.out.mmseqs2_krakenTaxonomy
+    mmseqs2_taxonomy = _wCreateTaxonomy.out.taxonomy
     blast = collectedBlast
 }

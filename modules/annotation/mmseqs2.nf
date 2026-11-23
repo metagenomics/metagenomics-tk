@@ -63,9 +63,12 @@ process pMMseqs2_taxonomy {
 
       secret { "${S3_TAX_DB_ACCESS}"!="" ? ["S3_TAX_${dbType}_ACCESS", "S3_TAX_${dbType}_SECRET"] : [] } 
 
-      publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", params.modules.annotation, filename) }, \
-         pattern: "{*.out,*.html,*.tsv}"
- 
+      publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "taxonomy/mmseqs2/${dbType}", params.modules.annotation, filename) }, \
+         pattern: "{*.out,*.html}"
+
+      publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> Output.getOutput("${sample}", params.runid, "taxonomy/emgb/${dbType}", params.modules.annotation, filename) }, \
+         pattern: "*.taxonomy.tsv"
+
       when:
       runMMSeqsTaxonomy(params?.steps.containsKey("annotation") && params?.steps.annotation.containsKey("mmseqs2_taxonomy"), \
 	   binType.equals("binned"), \
@@ -85,7 +88,7 @@ process pMMseqs2_taxonomy {
 
 
    shell:
-   output = Output.getOutput("${sample}", params.runid, "mmseqs2_taxonomy/${dbType}", params.modules.annotation, "")
+   output = Output.getOutput("${sample}", params.runid, "taxonomy/mmseqs2/${dbType}", params.modules.annotation, "")
    // The maximum possible sensitivity is reduced each time the process is retried.
    // The reason for this behaviour is a bug that occurs at higher sensitivity levels.
    S3_TAX_DB_ACCESS=params.steps?.annotation?.mmseqs2_taxonomy?."${dbType}"?.database?.download?.s5cmd && S5CMD_PARAMS.indexOf("--no-sign-request") == -1 ? "\$S3_TAX_${dbType}_ACCESS" : ""

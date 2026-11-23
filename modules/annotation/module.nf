@@ -431,32 +431,6 @@ process pCountFilter {
 * 
 * This method splits the input file in chunks.
 *
-workflow _wSplit {
-  take:
-    input
-    chunkSize
-  main:
-    SAMPLE_IDX = 0
-    FILE_IDX = 1
-    FILE_2_IDX = 2
-    FILE_3_IDX = 3
-    COUNT_IDX=4
-    CHUNK_SIZE_IDX=5
-    ID_PLACEHOLDER = ""
-
-    input | map { dataset -> [dataset[SAMPLE_IDX].toString(), ID_PLACEHOLDER, dataset[FILE_IDX], dataset[FILE_2_IDX]] } \
-	| pCount | combine(chunkSize) | flatMap { sample -> \
-   	Utils.splitFilesIndex(Integer.parseInt(sample[COUNT_IDX]), sample[CHUNK_SIZE_IDX], [sample[SAMPLE_IDX], sample[FILE_2_IDX], sample[FILE_3_IDX]]) } \
-	| set { chunks }   	
-  emit:
-    chunks
-}
-*/
-
-/*
-* 
-* This method splits the input file in chunks.
-*
 */
 workflow _wSplitFasta {
   take:
@@ -534,7 +508,7 @@ workflow _wAnnotation {
 	     |  map { sample, path, size -> tuple( groupKey(sample, size), path ) } | groupTuple() | set { contig2GeneMapping }
 
       // Analyse prokaryotic sequences
-      _wAnalyseProkaryotes(sourceChannel, contig2GeneMapping,pProkka.out.faa, fastaCounter)
+      _wAnalyseProkaryotes(sourceChannel, fasta, contig2GeneMapping, pProkka.out.faa, fastaCounter)
 
       // Run Resistance Gene Identifier with amino acid outputs
       pProkka.out.faa | pResistanceGeneIdentifier

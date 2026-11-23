@@ -201,24 +201,14 @@ steps:
         download:
           source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/card_broadstreet-v4.0.1.tar.bz2
           md5sum: 2396eaf95f2d35c58c135f7db2211dbb
-    mmseqs2_taxonomy:
+    metabuli:
       runOnMAGs: true
       gtdb:
-        params: ' --orf-filter-s 1 -e 1e-15'
-        ramMode: false
-        initialMaxSensitivity: 1
+        params: ' '
         database:
           download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/gtdb_r226_mmseqs_taxonomy.tar.gz
-            md5sum: a1d77c776a16666ad97ce4945e5e7a35
-      ncbi_nr:
-        params: ' --orf-filter-s 1 -e 1e-15'
-        ramMode: false
-        initialMaxSensitivity: 1
-        database:
-          download:
-            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/nr_2023-04-29_mmseqs_taxonomy.tar.zst
-            md5sum: 79b9fb6b3dada41e602d70e12e7351c2
+            source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/metabuli_gtdb226.tar.gz
+            md5sum: 7b76a4b3de759795a0cab37c5a49449f
     keggFromBlast:
       database:
         extractedDBPath: "/vol/spool/toolkit/kegg-links-mirror-202506/" 
