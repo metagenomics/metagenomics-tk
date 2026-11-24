@@ -801,10 +801,9 @@ workflow wFullPipeline {
     MMSEQS_TAX_RUN_ON_MAGS = false 
     MMSEQS_TAX_RUN_ONLY_ON_NOT_BINNED = 1
     MMSEQS_TAX_RUN_MAGS_AND_NOT_BINNED = 2 
-    if(params.steps.containsKey("annotation") \
-	&& params.steps.annotation.containsKey("mmseqs2_taxonomy") \
-	&& params.steps.annotation.mmseqs2_taxonomy.containsKey("runOnMAGs")){
-        MMSEQS_TAX_RUN_ON_MAGS = true 
+    // MMseqs2 taxonomy and Metabuli are mutually exclusive and both feed the EMGB export.
+    if(params.steps?.annotation?.mmseqs2_taxonomy?.runOnMAGs || params.steps?.annotation?.metabuli?.runOnMAGs){
+        MMSEQS_TAX_RUN_ON_MAGS = true
     }
 
 

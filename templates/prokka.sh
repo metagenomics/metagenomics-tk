@@ -36,16 +36,15 @@ if [ -s !{metabatCoverage} ] && [ -s !{defaultCoverage} ]; then
 		| csvtk cut -d$'\t' -T -f -SAMPLE  > ${PROKKA_COV_TMP_TSV}
 	csvtk join -d$'\t' -T -f "CONTIG;CHR" !{defaultCoverage} ${PROKKA_COV_TMP_TSV} > ${PROKKA_TSV}
 else
-	# A dumy c tag is used as a placeholer, as contig information is not available
-	sed -i -e "2,$ s/^/!{sample}\tc\t/g" \
-	       -e '1s/^/SAMPLE\tCONTIG\t/' ${PROKKA_TMP_TSV}
-
-	cp ${PROKKA_TMP_TSV} ${PROKKA_TSV}
+	# Merge the Contig information from prokka tsv if gene2contig mapping is not provided.
+ 	paste -d$'\t' <(csvtk -t cut -f CHR ${PROKKA_TMP_TSV}) ${PROKKA_TMP_TSV} \
+                | sed -e "2,$ s/^/!{sample}\t/g" \
+                -e '1s/^CHR\t/CONTIG\t/' \
+                -e '1s/^/SAMPLE\t/' > ${PROKKA_TSV}
 fi
 
 # Create SAMPLE and CONTIG ids file
 csvtk -t cut -f SAMPLE,CONTIG,locus_tag $PROKKA_TSV > prokka_tags_tmp.tsv
-
 
 # Add BIN_ID column
 sed -i -e "1s/^/BIN_ID\t/" -e "2,$ s/^/${BIN_ID}\t/" ${PROKKA_TSV}

@@ -155,6 +155,38 @@ nextflow secrets set S3_TAX_gtdb_ACCESS XXXXXXX
 nextflow secrets set S3_TAX_gtdb_SECRET XXXXXXX
 ```
 
+#### Metabuli
+
+[Metabuli](https://github.com/steineggerlab/Metabuli) classifies contigs and MAGs taxonomically by comparing their DNA sequences
+against a Metabuli reference database. It is configured in the `metabuli` section of the annotation step.
+The section `metabuli` can not be combined with `mmseqs2_taxonomy`, since both write to `taxonomy/emgb`.
+The database must be a `.tar.gz` archive that contains one Metabuli database directory (the one holding the `db.parameters` file).
+See [database section](../database.md/#database-input-configuration) for possible download strategies.
+If you need credentials to access your files via S3 then please use the following command:
+
+```
+nextflow secrets set S3_TAX_db_ACCESS XXXXXXX
+nextflow secrets set S3_TAX_db_SECRET XXXXXXX
+```
+
+where `db` is the name of the database that you use in your config file.
+Example:
+
+```
+....
+    metabuli:
+      runOnMAGs: false
+      gtdb:
+        params: ' --orf-filter-s 1 -e 1e-15'
+        database:
+          download:
+            source: s3://databases/gtdb_metabuli.tar.gz
+            md5sum: a1d77c776a16666ad97ce4945e5e7a35
+            s5cmd:
+              params: " --retry-count 30 --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "
+....
+```
+
 #### RGI
 
 RGI needs a CARD database which can be fetched via this link:  https://card.mcmaster.ca/latest/data.
@@ -188,6 +220,13 @@ By identifying homologous through searches against a provided MMseqs2 taxonomy-d
 This lowest common ancestor is a robust taxonomic label for unknown sequences.
 These labels are presented in form of an `*.taxonomy.tsv` file, a `*.krakenStyleTaxonomy.out` formatted in accordance to the [KRAKEN tool](https://ccb.jhu.edu/software/kraken/) outputs and
 an interactive [KRONA](https://github.com/marbl/Krona/wiki) plot in form of a html website `*.krona.html`.
+
+### Metabuli
+
+Metabuli assigns a taxonomic label to every contig (or MAG) by matching metamers against the Metabuli database.
+The result per database are a `*_classifications.tsv` file, a `*_report.tsv` file in Kraken style report format
+and an interactive [KRONA](https://github.com/marbl/Krona/wiki) plot `*_krona.html`.
+The classifications are also converted to the format used by the EMGB export.
 
 ### Prokka
 

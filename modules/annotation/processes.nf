@@ -1,9 +1,9 @@
 /**
-*
-* The pCollectFile process is designed to collect and concatenate BLAST and other MMseqs/MetaEuck output files.
-* It first concatenates all files and splits them based on the BIN_ID.
-*
-**/
+ *
+ * The pCollectFile process is designed to collect and concatenate BLAST and other MMseqs/MetaEuk output files.
+ * It first concatenates all files and splits them based on the BIN_ID.
+ *
+ **/
 process pCollectFile {
 
     memory { Utils.getMemoryResources(params.resources.small, "${sample}", task.attempt, params.resources) }
@@ -102,35 +102,28 @@ workflow _wCollectMetaEuk {
 
     ELEM_PATH_IDX = 3
 
-    metaEukOut
-        | map { db, sample, type, start, stop, chunks, out -> [db + "_-_" + sample + "_-_" + type, db, sample, type, start, stop, chunks, out] }
-        | map { key, db, sample, type, _start, _stop, chunks, out -> tuple(groupKey(key, chunks.toInteger()), [db, sample, type, out]) }
-        | groupTuple()
-        | map { _key, dataset ->
-            [
-                dataset[FIRST_ELEM_IDX][FIRST_ELEM_DB_IDX],
-                dataset[FIRST_ELEM_IDX][FIRST_ELEM_SAMPLE_IDX],
-                dataset[FIRST_ELEM_IDX][FIRST_ELEM_TYPE_IDX],
-                dataset.stream().map { elem -> elem[ELEM_PATH_IDX] }.collect(),
-            ]
-        }
-        | combine(Channel.value("metaeuk"))
-        | combine(fileEnding)
-        | pCollectFile
+    metaEukOut | map { db, sample, type, start, stop, chunks, out -> [db + "_-_" + sample + "_-_" + type, db, sample, type, start, stop, chunks, out] } | map { key, db, sample, type, _start, _stop, chunks, out -> tuple(groupKey(key, chunks.toInteger()), [db, sample, type, out]) } | groupTuple() | map { _key, dataset ->
+        [
+            dataset[FIRST_ELEM_IDX][FIRST_ELEM_DB_IDX],
+            dataset[FIRST_ELEM_IDX][FIRST_ELEM_SAMPLE_IDX],
+            dataset[FIRST_ELEM_IDX][FIRST_ELEM_TYPE_IDX],
+            dataset.stream().map { elem -> elem[ELEM_PATH_IDX] }.collect(),
+        ]
+    } | combine(channel.value("metaeuk")) | combine(fileEnding) | pCollectFile
 }
 
 
 /**
-*
-* The pCount process is designed to count the number of sequences in a given FASTA file.
-* It uses the seqkit tool to calculate the sequence statistics of a FASTA file, specifically extracting the sequence count.
-*
-**/
+ *
+ * The pCount process is designed to count the number of sequences in a given FASTA file.
+ * It uses the seqkit tool to calculate the sequence statistics of a FASTA file, specifically extracting the sequence count.
+ *
+ **/
 process pCount {
 
     label 'tiny'
 
-    tag "Sample: $sample, BinID: $binID"
+    tag "Sample: ${sample}, BinID: ${binID}"
 
     container "${params.ubuntu_image}"
 
@@ -138,7 +131,7 @@ process pCount {
     tuple val(sample), val(binID), path(fasta), path(metadata)
 
     output:
-    tuple val("${sample}"), val("${binID}"), path(fasta), path(metadata), env(COUNT) 
+    tuple val("${sample}"), val("${binID}"), path(fasta), path(metadata), env(COUNT)
 
     shell:
     '''
@@ -147,22 +140,23 @@ process pCount {
 }
 
 workflow _wSplit {
-  take:
+    take:
     input
     chunkSize
-  main:
+
+    main:
     SAMPLE_IDX = 0
     FILE_IDX = 1
     FILE_2_IDX = 2
     FILE_3_IDX = 3
-    COUNT_IDX=4
-    CHUNK_SIZE_IDX=5
+    COUNT_IDX = 4
+    CHUNK_SIZE_IDX = 5
     ID_PLACEHOLDER = ""
 
-    input | map { dataset -> [dataset[SAMPLE_IDX].toString(), ID_PLACEHOLDER, dataset[FILE_IDX], dataset[FILE_2_IDX]] } \
-	| pCount | combine(chunkSize) | flatMap { sample -> \
-   	Utils.splitFilesIndex(Integer.parseInt(sample[COUNT_IDX]), sample[CHUNK_SIZE_IDX], [sample[SAMPLE_IDX], sample[FILE_2_IDX], sample[FILE_3_IDX]]) } \
-	| set { chunks }   	
-  emit:
+    input | map { dataset -> [dataset[SAMPLE_IDX].toString(), ID_PLACEHOLDER, dataset[FILE_IDX], dataset[FILE_2_IDX]] } | pCount | combine(chunkSize) | flatMap { sample ->
+        Utils.splitFilesIndex(Integer.parseInt(sample[COUNT_IDX]), sample[CHUNK_SIZE_IDX], [sample[SAMPLE_IDX], sample[FILE_2_IDX], sample[FILE_3_IDX]])
+    } | set { chunks }
+
+    emit:
     chunks
 }

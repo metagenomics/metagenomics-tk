@@ -240,13 +240,13 @@ workflow _wExportPipeline {
 
     // get MMseqs unbinned taxonomy files
     Pattern annotationMmseqsUnbinnedTaxonomyPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major + \
-	'..*/mmseqs2_taxonomy/.*/.*_unbinned.' + TAXONOMY_DB + '.taxonomy.tsv$' )
+	'..*/taxonomy/emgb/.*/.*_unbinned.' + TAXONOMY_DB + '.taxonomy.tsv$' )
     selectedAnnotation | filter({ sra, path -> annotationMmseqsUnbinnedTaxonomyPattern.matcher(path.toString()).matches()}) \
      | map { sra, path -> [sra, TAXONOMY_DB, path, MAX_BIN_COUNTER]  } | set { mmseqsUnbinnedTaxonomy }
 
     // get MMseqs binned taxonomy files  
     Pattern annotationMmseqsBinnedTaxonomyPattern = Pattern.compile('.*/annotation/' + params.modules.annotation.version.major \
-	+ '..*/mmseqs2_taxonomy/.*/.*_binned.' + TAXONOMY_DB + '.taxonomy.tsv$' )
+	+ '..*/taxonomy/emgb/.*/.*_binned.' + TAXONOMY_DB + '.taxonomy.tsv$' )
     selectedAnnotation | filter({ sra, path -> annotationMmseqsBinnedTaxonomyPattern.matcher(path.toString()).matches()}) \
      | map { sra, path -> [sra, TAXONOMY_DB, path, MAX_BIN_COUNTER] } | mix(mmseqsUnbinnedTaxonomy) | set { mmseqsTaxonomy }
 

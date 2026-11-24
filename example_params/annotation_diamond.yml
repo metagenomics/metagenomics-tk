@@ -23,6 +23,14 @@ steps:
         prodigalMode: "meta"
         defaultKingdom: false
         additionalParams: " --mincontiglen 200 "
+      metabuli:
+        runOnMAGs: false
+        gtdb:
+          params: ' '
+          database:
+            download:
+              source: https://openstack.cebitec.uni-bielefeld.de:8080/databases/metabuli_gtdb226.tar.gz
+              md5sum: 7b76a4b3de759795a0cab37c5a49449f
 resources:
   highmemLarge:
     cpus: 28

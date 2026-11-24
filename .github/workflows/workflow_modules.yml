@@ -711,6 +711,35 @@ jobs:
                                MODULE_DB_TEST_REMOVE_DB="yes" \
                                MODULE_DB_TEST_ADDITIONAL_YAML_PARAMS="--steps.annotation.keggFromBlast.database.extractedDBPath=/vol/spool/toolkit/kegg-links-mirror-202506/"
 
+  annotation_metabuli_database_tests:
+    timeout-minutes: 2200
+    needs: [codePolicy]
+    runs-on: [ self-hosted, slurm]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set Secrets
+        run: |
+          make set_secrets SECRET_NAME=S3_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+          make set_secrets SECRET_NAME=S3_TAX_gtdb_ACCESS SECRET_VALUE=${{ secrets.S3_ACCESS }}
+          make set_secrets SECRET_NAME=S3_TAX_gtdb_SECRET SECRET_VALUE=${{ secrets.S3_VALUE }}
+      - name: Test Metabuli against different database configurations
+        run: |
+          make runDatabaseTest MODULE_DB_TEST_EXTRACTED="/vol/spool/toolkit/gtdb+human+virus" \
+                               MODULE_DB_TEST_MD5SUM="7b76a4b3de759795a0cab37c5a49449f" \
+                               MODULE_DB_TEST_HTTPS="https://openstack.cebitec.uni-bielefeld.de:8080/databases/metabuli_gtdb226.tar.gz" \
+                               MODULE_DB_TEST_PATH="/vol/spool/toolkit/metabuli_gtdb226.tar.gz" MODULE_DB_TEST_S3PATH="s3://databases/metabuli_gtdb226.tar.gz" \
+                               MODULE_DB_TEST_S3_DIRECTORY_PATH="s3://databases/gtdb+human+virus/*" \
+                               MODULE_DB_TEST_S5CMD_COMMAND='" --retry-count 30 --no-verify-ssl --endpoint-url https://openstack.cebitec.uni-bielefeld.de:8080 "' \
+                               MODULE_DB_TEST_CREDENTIALS=/vol/spool/credentials \
+                               MODULE_DB_TEST_GENERATED_YML=${WORK_DIR}/generated_yamls/metabuli \
+                               MODULE_DB_TEST_YML=example_params/annotation_diamond.yml \
+                               MODULE_DB_TEST_YML_PATH="'.steps.annotation.metabuli.gtdb.database=env(database),del(.steps.annotation.diamond)'" \
+                               MODULE_DB_TEST_YML_SCRIPT="./scripts/test_annotation.sh" \
+                               MODULE_DB_TEST_GENERATED_YML_DIR="${WORK_DIR}/metabuli_yaml_database_tests" \
+                               MODULE_DB_TEST_SKIP_TESTS="" \
+                               MODULE_DB_TEST_REMOVE_DB="yes"
+
   annotation_database_tests_part_1:
     timeout-minutes: 2200
     needs: [codePolicy]
