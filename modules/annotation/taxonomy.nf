@@ -94,9 +94,13 @@ workflow _wCreateTaxonomy {
         | mix(pMetabuliTaxonomy.out.krakenReport)
         | set { krakenReport }
 
+    pMMseqs2_taxonomy.out.kronaHtml
+        | mix(pMetabuliTaxonomy.out.kronaHtml)
+        | set { kronaHtml }
+
  emit:
     kronaHtml = kronaHtml
-    mmseqs2_krakenTaxonomy = pMMseqs2_taxonomy.out.krakenReport
+    mmseqs2_krakenTaxonomy = krakenReport
     taxonomy = taxonomy
 }
 
