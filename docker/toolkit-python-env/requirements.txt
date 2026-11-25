@@ -1,4 +1,4 @@
-cycler==0.11.0
+cycler==0.12.1
 fastcluster==1.1.26
 kiwisolver==1.3.2
 matplotlib==3.2.0
