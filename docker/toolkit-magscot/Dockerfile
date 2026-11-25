@@ -1,1 +1,1 @@
-FROM ikmb/magscot:1.0.0
+FROM ikmb/magscot:v1.1
