@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:18.10
 WORKDIR /usr/local/bin
 ENV LC_ALL=C.UTF-8 
 RUN apt update &&  \
