@@ -111,10 +111,16 @@ wiki_venv: python_version_check ## Install virtual environment for wiki
 	. wiki_venv/bin/activate && pip install -r wiki_scripts/requirements.txt
 
 wiki_publish: wiki_venv ## Publish the local wiki to ghpages
+	# The scripts embedded in the docs point to master. For a release they are copied and pinned to the release tag.
+	rm -rf wiki_snippets && mkdir -p wiki_snippets && cp -r scripts wiki_snippets/scripts
+	find wiki_snippets -name '*.sh' -exec sed -i \
+		-e 's#refs/heads/master#refs/tags/${TOOLKIT_TAG}#g' \
+		-e 's#nextflow run metagenomics/metagenomics-tk#& -r ${TOOLKIT_TAG}#' {} +
 	( \
 		. wiki_venv/bin/activate; \
-                ./wiki_venv/bin/mike deploy --config-file wiki_scripts/mkdocs.yml --push --update-aliases ${TOOLKIT_TAG} latest; \
+		WIKI_SNIPPET_BASE=$$(pwd)/wiki_snippets ./wiki_venv/bin/mike deploy --config-file wiki_scripts/mkdocs.yml --push --update-aliases ${TOOLKIT_TAG} latest; \
 	)
+	rm -rf wiki_snippets
 	
 dev_wiki: wiki_venv ## Start mkdocs developer session
 	( \

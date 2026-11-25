@@ -18,6 +18,7 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true 
   - pymdownx.snippets:
+      base_path: [!ENV [WIKI_SNIPPET_BASE, "."], "."]
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
