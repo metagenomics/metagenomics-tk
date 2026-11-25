@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:22.10
 ENV VERSION=3.1.0
 RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime && \
     apt update && apt install software-properties-common  wget git -y && \
