@@ -5,6 +5,7 @@ include { pMinimap2Index as pMinimap2IndexLong; \
           pMapMinimap2 as pMapMinimap2Long; } from './processes'
 
 include { pDumpLogs } from '../utils/processes'
+include { checkReadMappingShortReadTool } from '../utils/methods'
 
 include { pCovermGenomeCoverage as pCovermGenomeCoverage; \
           pCovermGenomeCoverage as pCovermGenomeCoverageONT; \
@@ -32,8 +33,6 @@ process pVerticalConcatFinal {
 
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid, "abundanceMatrix", "${name}") }
 
-    when params.steps.containsKey("readMapping")
-
     input:
     file('sample?')
     val(name)
@@ -51,8 +50,6 @@ process pVerticalConcat {
     label 'tiny'
 
     cache 'deep'
-
-    when params.steps.containsKey("readMapping")
 
     input:
     file('sample?')
@@ -75,11 +72,12 @@ process pBwaIndex {
 
     cpus { Utils.getCPUsResources(params.resources.highmemLarge, "", task.attempt, params.resources) }
 
-    when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa")
     input:
       path(representatives)
+
     output:
       path('*.{amb,ann,bwt,pac,sa,fa}')
+
     script:
       """
       bwa index ${params.steps.readMapping.bwa.additionalParams.bwa_index} ${representatives}
@@ -93,11 +91,12 @@ process pBwa2Index {
 
     cpus { Utils.getCPUsResources(params.resources.highmemLarge, "", task.attempt, params.resources) }
 
-    when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa2")
     input:
       path(representatives)
+
     output:
       path('*.{0123,amb,ann,64,pac}')
+
     script:
       """
       bwa-mem2 index ${params.steps.readMapping.bwa2.additionalParams.bwa2_index} ${representatives}
@@ -110,27 +109,31 @@ process pMapBwa {
     cpus { Utils.getCPUsResources(params.resources.highmemLarge, "${sampleID}", task.attempt, params.resources) }
 
     container "${params.samtools_bwa_image}"
-    when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa")
+
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid ,"bwa", filename) }
+
     input:
       tuple val(sampleID), path(sample, stageAs: "sample*"), path(representatives), path(index, stageAs: "*") 
+
     output:
       tuple val("${sampleID}"), path("*bam"), path("*bai"), emit: alignment
       tuple val("${sampleID}"), val("${output}"), val(params.LOG_LEVELS.INFO), file(".command.sh"), \
         file(".command.out"), file(".command.err"), file(".command.log"), emit: logs
+
     script:
     output = getOutput(params.runid, "bwa", "")
     template 'bwa.sh'
 }
 
-
 process pMapBwa2 {
     memory { Utils.getMemoryResources(params.resources.highmemLarge, "${sampleID}", task.attempt, params.resources) }
 
     cpus { Utils.getCPUsResources(params.resources.highmemLarge, "${sampleID}", task.attempt, params.resources) }
+
     container "${params.samtools_bwa2_image}"
-    when params.steps.containsKey("readMapping") && params.steps.readMapping.containsKey("bwa2")
+
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid ,"bwa2", filename) }
+
     input:
       tuple val(sampleID), path(sample, stageAs: "sample*"), path(representatives), path(index, stageAs: "*") 
 
@@ -294,53 +297,77 @@ workflow _wReadMappingBwa {
      genomes | collectFile(tempDir: genomesTempDir){ item -> [ "mergedGenomes.fasta", item.text ] } \
       | set { genomesMerged }
 
-     // Create BWA and Minimap index of all genomes
+     checkReadMappingShortReadTool(params.steps.readMapping)
+
      BWA_INDEX_IDX=0
      GENOMES_IDX=1
      MERGED_GENOME_IDX=2
-      
-     pMinimap2IndexLong(Channel.value(params?.steps.containsKey("readMapping") \
-	&& Channel.value(params?.steps?.readMapping.containsKey("minimap"))), \
-	Channel.value("map-ont"), samplesONT | combine(genomesMerged) \
-	| map { sample -> sample[MERGED_GENOME_IDX] } ) | set { ontIndex }
-
-     // Create BWA index
-     genomesMerged | pBwaIndex | map{ bwaIndex -> [bwaIndex]} \
-      | combine(genomesMerged)  \
-      | map{ it -> [it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
-      | set  {shortPairedReadIndex}
-
-     // Create BWA2 index
-     genomesMerged | pBwa2Index | map{ bwa2Index -> [bwa2Index]} \
-      | combine(genomesMerged)  \
-      | map{ it -> [it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
-      | set  {shortPairedReadIndex}
-
-     // Combine index with samples
-     samplesPaired | join(samplesSingle, remainder: true) \
-       | map { sample -> [sample[SAMPLE_NAME_IDX], sample.findAll().tail()] } \
-       | combine(shortPairedReadIndex) | set {illumina}
-
-     pMapBwa(illumina)
-
-     pMapBwa2(illumina)
 
      // Map ONT data
-     samplesONT | combine(ontIndex) | set {ont}
-     pMapMinimap2Long(Channel.value(params?.steps.containsKey("readMapping") \
-	&& params?.steps?.readMapping.containsKey("minimap")), ont)
- 
+     ontAlignment = channel.empty()
+     ontMappingLogs = channel.empty()
+
+     if(params.steps.readMapping.containsKey("minimap")){
+       pMinimap2IndexLong(channel.value("map-ont"), \
+         samplesONT | combine(genomesMerged) | map { sample -> sample[MERGED_GENOME_IDX] }) \
+         | set { ontIndex }
+
+       samplesONT | combine(ontIndex) | set { ont }
+
+       pMapMinimap2Long(ont)
+
+       pMapMinimap2Long.out.alignment | set { ontAlignment }
+       pMapMinimap2Long.out.logs | set { ontMappingLogs }
+     }
+
+     // Map short reads. BWA and BWA2 are mutually exclusive.
+     shortReadAlignment = channel.empty()
+     shortReadMappingLogs = channel.empty()
+
+     if(params.steps.readMapping.containsKey("bwa")){
+       genomesMerged | pBwaIndex | map { bwaIndex -> [bwaIndex] } \
+         | combine(genomesMerged) \
+         | map { it -> [it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
+         | set { shortPairedReadIndex }
+
+       samplesPaired | join(samplesSingle, remainder: true) \
+         | map { sample -> [sample[SAMPLE_NAME_IDX], sample.findAll().tail()] } \
+         | combine(shortPairedReadIndex) | set { illumina }
+
+       pMapBwa(illumina)
+
+       pMapBwa.out.alignment | set { shortReadAlignment }
+       pMapBwa.out.logs | set { shortReadMappingLogs }
+     } else if(params.steps.readMapping.containsKey("bwa2")){
+       genomesMerged | pBwa2Index | map { bwa2Index -> [bwa2Index] } \
+         | combine(genomesMerged) \
+         | map { it -> [it[GENOMES_IDX], it[BWA_INDEX_IDX]] } \
+         | set { shortPairedReadIndex }
+
+       samplesPaired | join(samplesSingle, remainder: true) \
+         | map { sample -> [sample[SAMPLE_NAME_IDX], sample.findAll().tail()] } \
+         | combine(shortPairedReadIndex) | set { illumina }
+
+       pMapBwa2(illumina)
+
+       pMapBwa2.out.alignment | set { shortReadAlignment }
+       pMapBwa2.out.logs | set { shortReadMappingLogs }
+     }
+
+     // Combine the alignments with the genomes for coverage calculation
      DO_NOT_ESTIMATE_IDENTITY = "-1"
-     pMapBwa.out.alignment | mix(pMapBwa2.out.alignment ) | combine(genomes | map {it -> file(it)} \
-      | toList() | map { it -> [it]})  \
+     shortReadAlignment | combine(genomes | map {it -> file(it)} \
+      | toList() | map { it -> [it]}) \
       | combine(Channel.value(DO_NOT_ESTIMATE_IDENTITY)) \
       | set { covermBWAInput }
 
-     pMapMinimap2Long.out.alignment | combine(genomes | map {it -> file(it)} \
+     ontAlignment | combine(genomes | map {it -> file(it)} \
       | toList() | map { it -> [it]}) \
       | join(ontMedianQuality, by: SAMPLE_NAME_IDX) | set { covermMinimapInput }
 
+     // Calculate coverage for short reads and ONT reads
      ALIGNMENT_INDEX = 2
+
      pCovermGenomeCoverage(Channel.value(params.steps?.readMapping?.find{ it.key == "coverm" }?.value), \
 	Channel.value("AGGREGATED"), \
 	Channel.value([params.modules.readMapping, \
@@ -353,8 +380,7 @@ workflow _wReadMappingBwa {
 	"genomeCoverage", params.steps?.readMapping?.covermONT]), \
 	covermMinimapInput)
 
-     pMapBwa2.out.logs | mix(pMapBwa.out.logs) \
-	| mix(pMapMinimap2Long.out.logs) \
+     shortReadMappingLogs | mix(ontMappingLogs) \
 	| mix(pCovermGenomeCoverage.out.logs, pCovermGenomeCoverageONT.out.logs) | pDumpLogs
 
      pCovermGenomeCoverage.out.trimmedMean \
@@ -373,6 +399,7 @@ workflow _wReadMappingBwa {
      _wCreateRelativeAbundanceMatrix(relativeAbundance)
      _wCreateRPKMMatrix(rpkm)
      _wCreateTPMMatrix(tpm)
+
    emit:
      trimmedMeanMatrix = _wCreateTrimmedMeanMatrix.out.trimmedMeanMatrix
      relativeAbundanceMatrix = _wCreateRelativeAbundanceMatrix.out.relativeAbundanceMatrix

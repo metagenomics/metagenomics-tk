@@ -15,11 +15,7 @@ process pMinimap2Index {
 
     label 'highmemLarge'
 
-    when:
-    run
-
     input:
-      val(run)
       val(seqType)
       path(representatives)
 
@@ -37,13 +33,9 @@ process pMapMinimap2 {
 
     container "${params.samtools_bwa_image}"
 
-    when:
-    run
-
     publishDir params.output, mode: "${params.publishDirMode}", saveAs: { filename -> getOutput(params.runid ,"minimap", filename) }
 
     input:
-      val(run)
       tuple val(sampleID), path(sample, stageAs: "sample*"), path(index)
 
     output:

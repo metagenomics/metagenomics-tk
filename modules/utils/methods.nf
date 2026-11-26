@@ -54,3 +54,9 @@ def checkAnnotationSearchTool(annotationParams) {
         error "The annotation key 'keggFromMMseqs2' was renamed to 'keggFromBlast'."
     }
 }
+
+def checkReadMappingShortReadTool(readMappingParams) {
+    if (readMappingParams.containsKey("bwa") && readMappingParams.containsKey("bwa2")) {
+        error "Only one of 'bwa' and 'bwa2' can be configured in the readMapping step."
+    }
+}
